@@ -203,6 +203,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    commentvotes (id) {
+        id -> Int8,
+        user_id -> Int4,
+        vote_type -> Int4,
+        comment_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        creation_ip -> Nullable<Varchar>,
+        app_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     contributors (id) {
         id -> Int4,
         user_id -> Int4,
@@ -423,7 +435,6 @@ diesel::table! {
         downvotes -> Nullable<Int4>,
         creation_region -> Nullable<Varchar>,
         app_id -> Nullable<Int4>,
-        awards -> Nullable<Int4>,
     }
 }
 
@@ -439,6 +450,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    titles (id) {
+        id -> Int4,
+        is_before -> Nullable<Bool>,
+        title_text -> Nullable<Varchar>,
+        qualification_expr -> Nullable<Varchar>,
+        requirement_string -> Nullable<Varchar>,
+        title_color -> Nullable<Varchar>,
+        bg_color_1 -> Nullable<Varchar>,
+        bg_color_2 -> Nullable<Varchar>,
+        gradient_angle -> Nullable<Int4>,
+        box_shadow_color -> Nullable<Varchar>,
+        text_shadow_color -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
     useragents (id) {
         id -> Int4,
         kwd -> Nullable<Varchar>,
@@ -446,6 +473,15 @@ diesel::table! {
         banned_by -> Nullable<Int4>,
         mock -> Nullable<Varchar>,
         status_code -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    userblocks (id) {
+        id -> Int4,
+        user_id -> Int4,
+        target_id -> Int4,
+        created_utc -> Nullable<Int4>,
     }
 }
 
@@ -508,6 +544,18 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    votes (id) {
+        id -> Int8,
+        user_id -> Int4,
+        vote_type -> Int4,
+        submission_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        creation_ip -> Nullable<Varchar>,
+        app_id -> Nullable<Int4>,
+    }
+}
+
 diesel::allow_tables_to_appear_in_same_query!(
     alts,
     badge_defs,
@@ -523,6 +571,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     client_auths,
     commentflags,
     comments,
+    commentvotes,
     contributors,
     domains,
     flags,
@@ -541,6 +590,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     subcategories,
     submissions,
     subscriptions,
+    titles,
     useragents,
+    userblocks,
     users,
+    votes,
 );

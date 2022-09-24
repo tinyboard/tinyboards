@@ -274,8 +274,7 @@ CREATE TABLE submissions(
     upvotes INTEGER DEFAULT 1,
     downvotes INTEGER DEFAULT 0,
     creation_region VARCHAR(2) DEFAULT NULL,
-    app_id INTEGER DEFAULT NULL,
-    awards INTEGER DEFAULT NULL
+    app_id INTEGER DEFAULT NULL
 );
 
 CREATE TABLE badge_defs(
@@ -430,4 +429,45 @@ CREATE TABLE follows(
     target_id INTEGER NOT NULL,
     created_utc INTEGER DEFAULT 0,
     get_notifs BOOLEAN DEFAULT false
+);
+
+CREATE TABLE titles(
+    id SERIAL PRIMARY KEY,
+    is_before BOOLEAN DEFAULT true,
+    title_text VARCHAR(64) DEFAULT '',
+    qualification_expr VARCHAR(256) DEFAULT '',
+    requirement_string VARCHAR(512) DEFAULT '',
+    title_color VARCHAR(6) DEFAULT '888888',
+    bg_color_1 VARCHAR(6) DEFAULT NULL,
+    bg_color_2 VARCHAR(6) DEFAULT NULL,
+    gradient_angle INTEGER DEFAULT 0,
+    box_shadow_color VARCHAR(32) DEFAULT NULL,
+    text_shadow_color VARCHAR(32) DEFAULT NULL
+);
+
+CREATE TABLE userblocks(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    target_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE votes(
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    vote_type INTEGER NOT NULL,
+    submission_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    creation_ip VARCHAR(64) DEFAULT '',
+    app_id INTEGER DEFAULT NULL
+);
+
+CREATE TABLE commentvotes(
+    id BIGSERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    vote_type INTEGER NOT NULL,
+    comment_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    creation_ip VARCHAR(64) DEFAULT '',
+    app_id INTEGER DEFAULT NULL
 );
