@@ -155,7 +155,9 @@ CREATE TABLE boards(
     subcat_id INTEGER DEFAULT 0,
     secondary_color VARCHAR(6) DEFAULT 'ffffff',
     public_chat BOOLEAN DEFAULT false,
-    motd VARCHAR(1000) DEFAULT ''         
+    motd VARCHAR(1000) DEFAULT '',
+    css_nonce INTEGER DEFAULT 0,
+    css VARCHAR(65536) DEFAULT ''     
 );
 
 CREATE TABLE badlinks(
@@ -177,7 +179,31 @@ CREATE TABLE domains(
 );
 
 CREATE TABLE oauth_apps(
-    id SERIAL PRIMARY KEY
+    id SERIAL PRIMARY KEY,
+    client_id VARCHAR(64) NOT NULL,
+    client_secret VARCHAR(128) NOT NULL,
+    app_name VARCHAR(50) NOT NULL,
+    redirect_uri VARCHAR(4096) NOT NULL,
+    author_id INTEGER NOT NULL,
+    is_banned BOOLEAN DEFAULT false,
+    app_description VARCHAR(256) DEFAULT ''
+);
+
+CREATE TABLE client_auths(
+    id SERIAL PRIMARY KEY,
+    oauth_client INTEGER NOT NULL,
+    oauth_code VARCHAR(128) DEFAULT '',
+    user_id INTEGER NOT NULL,
+    scope_identity BOOLEAN DEFAULT false,
+    scope_create BOOLEAN DEFAULT false,
+    scope_read BOOLEAN DEFAULT false,
+    scope_update BOOLEAN DEFAULT false,
+    scope_delete BOOLEAN DEFAULT false,
+    scope_vote BOOLEAN DEFAULT false,
+    scope_moderator BOOLEAN DEFAULT false,
+    access_token VARCHAR(128) DEFAULT '',
+    refresh_token VARCHAR(128) DEFAULT '',
+    access_token_expire_utc INTEGER DEFAULT 0
 );
 
 CREATE TABLE submissions(
@@ -204,4 +230,26 @@ CREATE TABLE badge_defs(
     badge_kind SMALLINT DEFAULT 1,
     badge_rank SMALLINT DEFAULT 1,
     qualification_expr VARCHAR(128) DEFAULT NULL
+);
+
+CREATE TABLE badges(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    badge_id INTEGER NOT NULL,
+    badge_description VARCHAR(64) DEFAULT '',
+    badge_url VARCHAR(256) DEFAULT '',
+    created_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE alts(
+    id SERIAL PRIMARY KEY,
+    user1 INTEGER NOT NULL,
+    user2 INTEGER NOT NULL,
+    is_manual BOOLEAN DEFAULT false
+);
+
+CREATE TABLE badwords(
+    id SERIAL PRIMARY KEY,
+    keyword VARCHAR(64) DEFAULT '',
+    regex VARCHAR(256) DEFAULT ''
 );

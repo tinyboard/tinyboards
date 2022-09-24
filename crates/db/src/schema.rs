@@ -1,6 +1,15 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    alts (id) {
+        id -> Int4,
+        user1 -> Int4,
+        user2 -> Int4,
+        is_manual -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
     badge_defs (id) {
         id -> Int4,
         badge_name -> Nullable<Varchar>,
@@ -13,11 +22,30 @@ diesel::table! {
 }
 
 diesel::table! {
+    badges (id) {
+        id -> Int4,
+        user_id -> Int4,
+        badge_id -> Int4,
+        badge_description -> Nullable<Varchar>,
+        badge_url -> Nullable<Varchar>,
+        created_utc -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     badlinks (id) {
         id -> Int4,
         reason -> Int4,
         link -> Varchar,
         autoban -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    badwords (id) {
+        id -> Int4,
+        keyword -> Nullable<Varchar>,
+        regex -> Nullable<Varchar>,
     }
 }
 
@@ -72,6 +100,8 @@ diesel::table! {
         secondary_color -> Nullable<Varchar>,
         public_chat -> Nullable<Bool>,
         motd -> Nullable<Varchar>,
+        css_nonce -> Nullable<Int4>,
+        css -> Nullable<Varchar>,
     }
 }
 
@@ -94,6 +124,25 @@ diesel::table! {
         board_id -> Int4,
         created_utc -> Nullable<Int4>,
         banning_mod_id -> Int4,
+    }
+}
+
+diesel::table! {
+    client_auths (id) {
+        id -> Int4,
+        oauth_client -> Int4,
+        oauth_code -> Nullable<Varchar>,
+        user_id -> Int4,
+        scope_identity -> Nullable<Bool>,
+        scope_create -> Nullable<Bool>,
+        scope_read -> Nullable<Bool>,
+        scope_update -> Nullable<Bool>,
+        scope_delete -> Nullable<Bool>,
+        scope_vote -> Nullable<Bool>,
+        scope_moderator -> Nullable<Bool>,
+        access_token -> Nullable<Varchar>,
+        refresh_token -> Nullable<Varchar>,
+        access_token_expire_utc -> Nullable<Int4>,
     }
 }
 
@@ -140,6 +189,13 @@ diesel::table! {
 diesel::table! {
     oauth_apps (id) {
         id -> Int4,
+        client_id -> Varchar,
+        client_secret -> Varchar,
+        app_name -> Varchar,
+        redirect_uri -> Varchar,
+        author_id -> Int4,
+        is_banned -> Nullable<Bool>,
+        app_description -> Nullable<Varchar>,
     }
 }
 
@@ -247,13 +303,17 @@ diesel::table! {
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
+    alts,
     badge_defs,
+    badges,
     badlinks,
+    badwords,
     bans,
     boardblocks,
     boards,
     categories,
     chatbans,
+    client_auths,
     contributors,
     domains,
     mods,
