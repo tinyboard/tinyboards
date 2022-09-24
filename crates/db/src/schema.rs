@@ -147,6 +147,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    commentflags (id) {
+        id -> Int4,
+        user_id -> Int4,
+        comment_id -> Int4,
+        created_utc -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    comments (id) {
+        id -> Int4,
+    }
+}
+
+diesel::table! {
     contributors (id) {
         id -> Int4,
         user_id -> Int4,
@@ -167,6 +182,15 @@ diesel::table! {
         show_thumbnail -> Nullable<Bool>,
         embed_function -> Nullable<Varchar>,
         embed_template -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    flags (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        created_utc -> Nullable<Int4>,
     }
 }
 
@@ -216,6 +240,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    reports (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        created_utc -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     subcategories (id) {
         id -> Int4,
         cat_id -> Int4,
@@ -228,6 +261,14 @@ diesel::table! {
 diesel::table! {
     submissions (id) {
         id -> Int8,
+        title -> Nullable<Varchar>,
+        post_url -> Nullable<Varchar>,
+        body -> Nullable<Varchar>,
+        body_html -> Nullable<Varchar>,
+        ban_reason -> Nullable<Varchar>,
+        embed_url -> Nullable<Varchar>,
+        meta_title -> Nullable<Varchar>,
+        meta_description -> Nullable<Varchar>,
         author_id -> Int4,
         repost_id -> Nullable<Int4>,
         edited_utc -> Nullable<Int4>,
@@ -240,6 +281,33 @@ diesel::table! {
         created_str -> Nullable<Varchar>,
         stickied -> Nullable<Bool>,
         domain_ref -> Nullable<Int4>,
+        domain_obj -> Nullable<Varchar>,
+        flags -> Int4,
+        is_approved -> Int4,
+        approved_utc -> Nullable<Int4>,
+        board_id -> Int4,
+        original_board_id -> Int4,
+        over_18 -> Nullable<Bool>,
+        creation_ip -> Nullable<Varchar>,
+        mod_approved -> Nullable<Int4>,
+        accepted_utc -> Nullable<Int4>,
+        has_thumb -> Nullable<Bool>,
+        post_public -> Nullable<Bool>,
+        score_hot -> Nullable<Numeric>,
+        score_disputed -> Nullable<Numeric>,
+        score_top -> Nullable<Numeric>,
+        score_best -> Nullable<Numeric>,
+        score_activity -> Nullable<Numeric>,
+        is_offensive -> Nullable<Bool>,
+        is_nsfl -> Nullable<Bool>,
+        is_pinned -> Nullable<Bool>,
+        reports -> Int4,
+        is_bot -> Nullable<Bool>,
+        upvotes -> Nullable<Int4>,
+        downvotes -> Nullable<Int4>,
+        creation_region -> Nullable<Varchar>,
+        app_id -> Nullable<Int4>,
+        awards -> Nullable<Int4>,
     }
 }
 
@@ -314,12 +382,16 @@ diesel::allow_tables_to_appear_in_same_query!(
     categories,
     chatbans,
     client_auths,
+    commentflags,
+    comments,
     contributors,
     domains,
+    flags,
     mods,
     oauth_apps,
     postrels,
     posts,
+    reports,
     subcategories,
     submissions,
     users,

@@ -114,7 +114,7 @@ CREATE TABLE categories(
     category_name VARCHAR(20) DEFAULT '',
     category_description VARCHAR(250) DEFAULT '',
     category_icon VARCHAR(256) DEFAULT '',
-    category_color VARCHAR(128) default '805ad5',
+    category_color VARCHAR(128) DEFAULT '805ad5',
     visible BOOLEAN DEFAULT true,
     is_nsfw BOOLEAN DEFAULT false
 );
@@ -206,8 +206,37 @@ CREATE TABLE client_auths(
     access_token_expire_utc INTEGER DEFAULT 0
 );
 
+CREATE TABLE flags(
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE commentflags(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    comment_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE reports(
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0
+);
+
 CREATE TABLE submissions(
     id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(500) DEFAULT NULL,
+    post_url VARCHAR(500) DEFAULT NULL,
+    body VARCHAR(10000) DEFAULT '',
+    body_html VARCHAR(20000) DEFAULT '',
+    ban_reason VARCHAR(128) DEFAULT '',
+    embed_url VARCHAR(256) DEFAULT '',
+    meta_title VARCHAR(512) DEFAULT '',
+    meta_description VARCHAR(1024) DEFAULT '',
     author_id INTEGER NOT NULL,
     repost_id INTEGER DEFAULT 0,
     edited_utc INTEGER DEFAULT 0,
@@ -219,7 +248,34 @@ CREATE TABLE submissions(
     gm_distinguish SMALLINT DEFAULT 0,
     created_str VARCHAR(255) DEFAULT NULL,
     stickied BOOLEAN DEFAULT false,
-    domain_ref INTEGER DEFAULT 0
+    domain_ref INTEGER DEFAULT 0,
+    domain_obj VARCHAR(512) DEFAULT '',
+    flags INTEGER NOT NULL,
+    is_approved INTEGER NOT NULL,
+    approved_utc INTEGER DEFAULT 0,
+    board_id INTEGER NOT NULL,
+    original_board_id INTEGER NOT NULL,
+    over_18 BOOLEAN DEFAULT false,
+    creation_ip VARCHAR(15) DEFAULT '',
+    mod_approved INTEGER DEFAULT NULL,
+    accepted_utc INTEGER DEFAULT 0,
+    has_thumb BOOLEAN DEFAULT false,
+    post_public BOOLEAN DEFAULT true,
+    score_hot NUMERIC DEFAULT 0.0,
+    score_disputed NUMERIC DEFAULT 0.0,
+    score_top NUMERIC DEFAULT 0.0,
+    score_best NUMERIC DEFAULT 0.0,
+    score_activity NUMERIC DEFAULT 0.0,
+    is_offensive BOOLEAN DEFAULT false,
+    is_nsfl BOOLEAN DEFAULT false,
+    is_pinned BOOLEAN DEFAULT false,
+    reports INTEGER NOT NULL,
+    is_bot BOOLEAN DEFAULT false,
+    upvotes INTEGER DEFAULT 1,
+    downvotes INTEGER DEFAULT 0,
+    creation_region VARCHAR(2) DEFAULT NULL,
+    app_id INTEGER DEFAULT NULL,
+    awards INTEGER DEFAULT NULL
 );
 
 CREATE TABLE badge_defs(
@@ -252,4 +308,8 @@ CREATE TABLE badwords(
     id SERIAL PRIMARY KEY,
     keyword VARCHAR(64) DEFAULT '',
     regex VARCHAR(256) DEFAULT ''
+);
+
+CREATE TABLE comments(
+    id SERIAL PRIMARY KEY
 );
