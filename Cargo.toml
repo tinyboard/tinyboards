@@ -1,0 +1,11 @@
+[workspace]
+members = [
+    "crates/api",
+    "crates/db",
+    "crates/server"
+]
+
+#[dependencies]
+#porpl-api = { path = "./crates/api" }
+#porpl-db = { path = "./crates/db" }
+#porpl-server = { path = "./crates/server" }
