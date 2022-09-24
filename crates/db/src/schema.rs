@@ -1,11 +1,44 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    badge_defs (id) {
+        id -> Int4,
+        badge_name -> Nullable<Varchar>,
+        badge_description -> Nullable<Varchar>,
+        badge_icon -> Nullable<Varchar>,
+        badge_kind -> Nullable<Int2>,
+        badge_rank -> Nullable<Int2>,
+        qualification_expr -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
     badlinks (id) {
         id -> Int4,
         reason -> Int4,
         link -> Varchar,
         autoban -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    bans (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        banning_mod_id -> Int4,
+        is_active -> Int4,
+        mod_note -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    boardblocks (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Nullable<Int4>,
     }
 }
 
@@ -43,6 +76,39 @@ diesel::table! {
 }
 
 diesel::table! {
+    categories (id) {
+        id -> Int4,
+        category_name -> Nullable<Varchar>,
+        category_description -> Nullable<Varchar>,
+        category_icon -> Nullable<Varchar>,
+        category_color -> Nullable<Varchar>,
+        visible -> Nullable<Bool>,
+        is_nsfw -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    chatbans (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        banning_mod_id -> Int4,
+    }
+}
+
+diesel::table! {
+    contributors (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Int4,
+        is_active -> Nullable<Bool>,
+        approving_mod_id -> Int4,
+    }
+}
+
+diesel::table! {
     domains (id) {
         id -> Int4,
         domain -> Varchar,
@@ -58,12 +124,30 @@ diesel::table! {
 diesel::table! {
     mods (id) {
         id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        accepted -> Nullable<Bool>,
+        invite_rescinded -> Nullable<Bool>,
+        perm_content -> Nullable<Bool>,
+        perm_appearance -> Nullable<Bool>,
+        perm_config -> Nullable<Bool>,
+        perm_access -> Nullable<Bool>,
+        perm_full -> Nullable<Bool>,
     }
 }
 
 diesel::table! {
     oauth_apps (id) {
         id -> Int4,
+    }
+}
+
+diesel::table! {
+    postrels (id) {
+        id -> Int8,
+        post_id -> Int4,
+        board_id -> Int4,
     }
 }
 
@@ -78,6 +162,10 @@ diesel::table! {
 diesel::table! {
     subcategories (id) {
         id -> Int4,
+        cat_id -> Int4,
+        subcat_name -> Nullable<Varchar>,
+        subcat_description -> Nullable<Varchar>,
+        _visible -> Nullable<Bool>,
     }
 }
 
@@ -159,11 +247,18 @@ diesel::table! {
 }
 
 diesel::allow_tables_to_appear_in_same_query!(
+    badge_defs,
     badlinks,
+    bans,
+    boardblocks,
     boards,
+    categories,
+    chatbans,
+    contributors,
     domains,
     mods,
     oauth_apps,
+    postrels,
     posts,
     subcategories,
     submissions,

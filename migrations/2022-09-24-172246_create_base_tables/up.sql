@@ -56,14 +56,76 @@ CREATE TABLE users(
 );
 
 CREATE TABLE mods(
-    id SERIAL PRIMARY KEY
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    accepted BOOLEAN DEFAULT false,
+    invite_rescinded BOOLEAN DEFAULT false,
+    perm_content BOOLEAN DEFAULT false,
+    perm_appearance BOOLEAN DEFAULT false,
+    perm_config BOOLEAN DEFAULT false,
+    perm_access BOOLEAN DEFAULT false,
+    perm_full BOOLEAN DEFAULT false
 );
 
+CREATE TABLE bans(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    banning_mod_id INTEGER NOT NULL,
+    is_active INTEGER NOT NULL,
+    mod_note VARCHAR(128) DEFAULT ''
+);
+
+CREATE TABLE chatbans(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    banning_mod_id INTEGER NOT NULL
+);
+
+CREATE TABLE contributors(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    approving_mod_id INTEGER NOT NULL
+);
+
+CREATE TABLE postrels(
+    id BIGSERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL  
+);
+
+CREATE TABLE boardblocks(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE categories(
+    id SERIAL PRIMARY KEY,
+    category_name VARCHAR(20) DEFAULT '',
+    category_description VARCHAR(250) DEFAULT '',
+    category_icon VARCHAR(256) DEFAULT '',
+    category_color VARCHAR(128) default '805ad5',
+    visible BOOLEAN DEFAULT true,
+    is_nsfw BOOLEAN DEFAULT false
+);
 
 CREATE TABLE subcategories(
-    id SERIAL PRIMARY KEY
+    id SERIAL PRIMARY KEY,
+    cat_id INTEGER NOT NULL,
+    subcat_name VARCHAR(20) DEFAULT '',
+    subcat_description VARCHAR(250) DEFAULT '',
+    _visible BOOLEAN DEFAULT true
 );
-
 
 CREATE TABLE boards(
     id SERIAL PRIMARY KEY,
@@ -132,4 +194,14 @@ CREATE TABLE submissions(
     created_str VARCHAR(255) DEFAULT NULL,
     stickied BOOLEAN DEFAULT false,
     domain_ref INTEGER DEFAULT 0
+);
+
+CREATE TABLE badge_defs(
+    id SERIAL PRIMARY KEY,
+    badge_name VARCHAR(64) DEFAULT '',
+    badge_description VARCHAR(64) DEFAULT '',
+    badge_icon VARCHAR(64) DEFAULT '',
+    badge_kind SMALLINT DEFAULT 1,
+    badge_rank SMALLINT DEFAULT 1,
+    qualification_expr VARCHAR(128) DEFAULT NULL
 );
