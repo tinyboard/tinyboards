@@ -393,3 +393,41 @@ CREATE TABLE lodges(
     board_id INTEGER NOT NULL,
     created_utc INTEGER DEFAULT 0
 );
+
+CREATE TABLE modactions(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    kind VARCHAR(32) DEFAULT '',
+    target_user_id INTEGER DEFAULT 0,
+    target_submission_id INTEGER DEFAULT 0,
+    target_comment_id INTEGER DEFAULT 0,
+    note VARCHAR(256) DEFAULT NULL,
+    created_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE rules(
+    id SERIAL PRIMARY KEY,
+    board_id INTEGER NOT NULL,
+    rule_body VARCHAR(256) DEFAULT '',
+    rule_html VARCHAR(512) DEFAULT '',
+    created_utc INTEGER DEFAULT 0,
+    edited_utc INTEGER DEFAULT 0
+);
+
+CREATE TABLE subscriptions(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    get_notifs BOOLEAN DEFAULT false
+);
+
+CREATE TABLE follows(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    target_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    get_notifs BOOLEAN DEFAULT false
+);

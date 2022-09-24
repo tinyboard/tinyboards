@@ -236,6 +236,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    follows (id) {
+        id -> Int4,
+        user_id -> Int4,
+        target_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        get_notifs -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
     images (id) {
         id -> Int4,
         img_state -> Nullable<Varchar>,
@@ -261,6 +271,20 @@ diesel::table! {
         lodge_description -> Nullable<Varchar>,
         user_id -> Int4,
         board_id -> Int4,
+        created_utc -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    modactions (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        kind -> Nullable<Varchar>,
+        target_user_id -> Nullable<Int4>,
+        target_submission_id -> Nullable<Int4>,
+        target_comment_id -> Nullable<Int4>,
+        note -> Nullable<Varchar>,
         created_utc -> Nullable<Int4>,
     }
 }
@@ -330,6 +354,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    rules (id) {
+        id -> Int4,
+        board_id -> Int4,
+        rule_body -> Nullable<Varchar>,
+        rule_html -> Nullable<Varchar>,
+        created_utc -> Nullable<Int4>,
+        edited_utc -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     subcategories (id) {
         id -> Int4,
         cat_id -> Int4,
@@ -389,6 +424,17 @@ diesel::table! {
         creation_region -> Nullable<Varchar>,
         app_id -> Nullable<Int4>,
         awards -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    subscriptions (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Nullable<Int4>,
+        is_active -> Nullable<Bool>,
+        get_notifs -> Nullable<Bool>,
     }
 }
 
@@ -480,17 +526,21 @@ diesel::allow_tables_to_appear_in_same_query!(
     contributors,
     domains,
     flags,
+    follows,
     images,
     ips,
     lodges,
+    modactions,
     mods,
     notifications,
     oauth_apps,
     postrels,
     posts,
     reports,
+    rules,
     subcategories,
     submissions,
+    subscriptions,
     useragents,
     users,
 );
