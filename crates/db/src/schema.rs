@@ -1,10 +1,62 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    badlinks (id) {
+        id -> Int4,
+        reason -> Int4,
+        link -> Varchar,
+        autoban -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    boards (id) {
+        id -> Int4,
+    }
+}
+
+diesel::table! {
+    domains (id) {
+        id -> Int4,
+        domain -> Varchar,
+        can_submit -> Nullable<Bool>,
+        can_comment -> Nullable<Bool>,
+        reason -> Nullable<Int4>,
+        show_thumbnail -> Nullable<Bool>,
+        embed_function -> Nullable<Varchar>,
+        embed_template -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    oauth_apps (id) {
+        id -> Int4,
+    }
+}
+
+diesel::table! {
     posts (id) {
         id -> Int4,
         title -> Varchar,
         body -> Text,
+    }
+}
+
+diesel::table! {
+    submissions (id) {
+        id -> Int8,
+        author_id -> Int4,
+        repost_id -> Nullable<Int4>,
+        edited_utc -> Nullable<Int4>,
+        created_utc -> Nullable<Int4>,
+        is_banned -> Nullable<Bool>,
+        deleted_utc -> Nullable<Int4>,
+        purged_utc -> Nullable<Int4>,
+        distinguish_level -> Nullable<Int2>,
+        gm_distinguish -> Nullable<Int2>,
+        created_str -> Nullable<Varchar>,
+        stickied -> Nullable<Bool>,
+        domain_ref -> Nullable<Int4>,
     }
 }
 
@@ -67,7 +119,16 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(submissions -> boards (gm_distinguish));
+diesel::joinable!(submissions -> domains (domain_ref));
+diesel::joinable!(submissions -> users (author_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
+    badlinks,
+    boards,
+    domains,
+    oauth_apps,
     posts,
+    submissions,
     users,
 );

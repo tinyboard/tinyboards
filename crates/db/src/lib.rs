@@ -6,3 +6,4 @@ mod schema;
 
 pub use database::Database;
 pub use models::post::*;
+pub use models::users::*;

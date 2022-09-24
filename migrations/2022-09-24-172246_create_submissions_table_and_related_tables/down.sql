@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS submissions;
+DROP TABLE IF EXISTS boards;
+DROP TABLE IF EXISTS domains;
+DROP TABLE IF EXISTS badlinks;
+DROP TABLE IF EXISTS oauth_apps;
