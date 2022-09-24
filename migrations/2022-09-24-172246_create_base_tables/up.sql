@@ -7,7 +7,7 @@ CREATE TABLE users(
     admin_level SMALLINT NOT NULL,
     is_activated BOOLEAN NOT NULL DEFAULT false,
     over_18 BOOLEAN NOT NULL DEFAULT false,
-    creation_ip VARCHAR(15) NOT NULL DEFAULT '',
+    creation_ip VARCHAR(64) NOT NULL DEFAULT '',
     bio VARCHAR(1000) DEFAULT '',
     bio_html VARCHAR(1000) DEFAULT '',
     referred_by INT DEFAULT NULL,
@@ -41,8 +41,8 @@ CREATE TABLE users(
     discord_id VARCHAR(64) DEFAULT NULL,
     creation_region VARCHAR(2) DEFAULT NULL,
     ban_evade INT DEFAULT 0,
-    profile_upload_ip VARCHAR(15) DEFAULT '',
-    banner_upload_ip VARCHAR(15) DEFAULT '',
+    profile_upload_ip VARCHAR(64) DEFAULT '',
+    banner_upload_ip VARCHAR(64) DEFAULT '',
     profile_upload_region VARCHAR(2) DEFAULT '',
     banner_upload_region VARCHAR(2) DEFAULT '',
     color VARCHAR(6) DEFAULT '805ad5',
@@ -256,7 +256,7 @@ CREATE TABLE submissions(
     board_id INTEGER NOT NULL,
     original_board_id INTEGER NOT NULL,
     over_18 BOOLEAN DEFAULT false,
-    creation_ip VARCHAR(15) DEFAULT '',
+    creation_ip VARCHAR(64) DEFAULT '',
     mod_approved INTEGER DEFAULT NULL,
     accepted_utc INTEGER DEFAULT 0,
     has_thumb BOOLEAN DEFAULT false,
@@ -311,5 +311,85 @@ CREATE TABLE badwords(
 );
 
 CREATE TABLE comments(
-    id SERIAL PRIMARY KEY
+    id SERIAL PRIMARY KEY,
+    body VARCHAR(10000) DEFAULT NULL,
+    body_html VARCHAR(20000) DEFAULT NULL,
+    ban_reason VARCHAR(256) DEFAULT '',
+    author_id INTEGER NOT NULL,
+    parent_submission INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0,
+    edited_utc INTEGER DEFAULT 0,
+    is_banned BOOLEAN DEFAULT false,
+    gm_distinguish INTEGER DEFAULT 0,
+    distinguished_board INTEGER DEFAULT NULL,
+    deleted_utc INTEGER DEFAULT 0,
+    purged_utc INTEGER DEFAULT 0,
+    is_approved INTEGER DEFAULT 0,
+    approved_utc INTEGER DEFAULT 0,
+    creation_ip VARCHAR(64) DEFAULT '',
+    score_disputed NUMERIC DEFAULT 0.0,
+    score_hot NUMERIC DEFAULT 0.0,
+    score_top NUMERIC DEFAULT 0.0,
+    comment_level INTEGER DEFAULT 0,
+    parent_comment_id INTEGER DEFAULT 0,
+    original_board_id INTEGER DEFAULT 0,
+    over_18 BOOLEAN DEFAULT false,
+    is_offensive BOOLEAN DEFAULT false,
+    is_nsfl BOOLEAN DEFAULT false,
+    is_bot BOOLEAN DEFAULT false,
+    is_pinned BOOLEAN DEFAULT false,
+    creation_region VARCHAR(2) DEFAULT NULL,
+    app_id INTEGER DEFAULT NULL,
+    flags INTEGER DEFAULT NULL,
+    upvotes INTEGER DEFAULT 1,
+    downvotes INTEGER DEFAULT 0
+);
+
+CREATE TABLE notifications(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    comment_id INTEGER DEFAULT NULL,
+    submission_id INTEGER DEFAULT NULL,
+    notification_read BOOLEAN DEFAULT false
+);
+
+CREATE TABLE images(
+    id SERIAL PRIMARY KEY,
+    img_state VARCHAR(8) DEFAULT NULL,
+    img_number INTEGER DEFAULT NULL,
+    img_text VARCHAR(64) DEFAULT NULL
+);
+
+CREATE TABLE badpics(
+    id SERIAL PRIMARY KEY,
+    badpic_description VARCHAR(255) DEFAULT NULL,
+    phash VARCHAR(64) DEFAULT '',
+    ban_reason VARCHAR(64) DEFAULT '',
+    ban_time INTEGER DEFAULT 0
+);
+
+CREATE TABLE ips(
+    id SERIAL PRIMARY KEY,
+    addr VARCHAR(64) DEFAULT '',
+    reason VARCHAR(256) DEFAULT '',
+    banned_by INTEGER DEFAULT 1
+);
+
+CREATE TABLE useragents(
+    id SERIAL PRIMARY KEY,
+    kwd VARCHAR(64) DEFAULT '',
+    reason VARCHAR(256) DEFAULT '',
+    banned_by INTEGER DEFAULT 1,
+    mock VARCHAR(256) DEFAULT '',
+    status_code INTEGER DEFAULT 418
+);
+
+CREATE TABLE lodges(
+    id SERIAL PRIMARY KEY,
+    lodge_name VARCHAR(20) DEFAULT '',
+    lodge_color VARCHAR(6) DEFAULT '',
+    lodge_description VARCHAR(250) DEFAULT '',
+    user_id INTEGER NOT NULL,
+    board_id INTEGER NOT NULL,
+    created_utc INTEGER DEFAULT 0
 );

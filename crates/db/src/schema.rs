@@ -42,6 +42,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    badpics (id) {
+        id -> Int4,
+        badpic_description -> Nullable<Varchar>,
+        phash -> Nullable<Varchar>,
+        ban_reason -> Nullable<Varchar>,
+        ban_time -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     badwords (id) {
         id -> Int4,
         keyword -> Nullable<Varchar>,
@@ -158,6 +168,37 @@ diesel::table! {
 diesel::table! {
     comments (id) {
         id -> Int4,
+        body -> Nullable<Varchar>,
+        body_html -> Nullable<Varchar>,
+        ban_reason -> Nullable<Varchar>,
+        author_id -> Int4,
+        parent_submission -> Int4,
+        created_utc -> Nullable<Int4>,
+        edited_utc -> Nullable<Int4>,
+        is_banned -> Nullable<Bool>,
+        gm_distinguish -> Nullable<Int4>,
+        distinguished_board -> Nullable<Int4>,
+        deleted_utc -> Nullable<Int4>,
+        purged_utc -> Nullable<Int4>,
+        is_approved -> Nullable<Int4>,
+        approved_utc -> Nullable<Int4>,
+        creation_ip -> Nullable<Varchar>,
+        score_disputed -> Nullable<Numeric>,
+        score_hot -> Nullable<Numeric>,
+        score_top -> Nullable<Numeric>,
+        comment_level -> Nullable<Int4>,
+        parent_comment_id -> Nullable<Int4>,
+        original_board_id -> Nullable<Int4>,
+        over_18 -> Nullable<Bool>,
+        is_offensive -> Nullable<Bool>,
+        is_nsfl -> Nullable<Bool>,
+        is_bot -> Nullable<Bool>,
+        is_pinned -> Nullable<Bool>,
+        creation_region -> Nullable<Varchar>,
+        app_id -> Nullable<Int4>,
+        flags -> Nullable<Int4>,
+        upvotes -> Nullable<Int4>,
+        downvotes -> Nullable<Int4>,
     }
 }
 
@@ -195,6 +236,36 @@ diesel::table! {
 }
 
 diesel::table! {
+    images (id) {
+        id -> Int4,
+        img_state -> Nullable<Varchar>,
+        img_number -> Nullable<Int4>,
+        img_text -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    ips (id) {
+        id -> Int4,
+        addr -> Nullable<Varchar>,
+        reason -> Nullable<Varchar>,
+        banned_by -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    lodges (id) {
+        id -> Int4,
+        lodge_name -> Nullable<Varchar>,
+        lodge_color -> Nullable<Varchar>,
+        lodge_description -> Nullable<Varchar>,
+        user_id -> Int4,
+        board_id -> Int4,
+        created_utc -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     mods (id) {
         id -> Int4,
         user_id -> Int4,
@@ -207,6 +278,16 @@ diesel::table! {
         perm_config -> Nullable<Bool>,
         perm_access -> Nullable<Bool>,
         perm_full -> Nullable<Bool>,
+    }
+}
+
+diesel::table! {
+    notifications (id) {
+        id -> Int4,
+        user_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        submission_id -> Nullable<Int4>,
+        notification_read -> Nullable<Bool>,
     }
 }
 
@@ -312,6 +393,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    useragents (id) {
+        id -> Int4,
+        kwd -> Nullable<Varchar>,
+        reason -> Nullable<Varchar>,
+        banned_by -> Nullable<Int4>,
+        mock -> Nullable<Varchar>,
+        status_code -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Int4,
         username -> Varchar,
@@ -375,6 +467,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     badge_defs,
     badges,
     badlinks,
+    badpics,
     badwords,
     bans,
     boardblocks,
@@ -387,12 +480,17 @@ diesel::allow_tables_to_appear_in_same_query!(
     contributors,
     domains,
     flags,
+    images,
+    ips,
+    lodges,
     mods,
+    notifications,
     oauth_apps,
     postrels,
     posts,
     reports,
     subcategories,
     submissions,
+    useragents,
     users,
 );
