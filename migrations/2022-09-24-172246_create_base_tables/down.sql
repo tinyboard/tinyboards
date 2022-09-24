@@ -35,3 +35,4 @@ DROP TABLE IF EXISTS titles;
 DROP TABLE IF EXISTS userblocks;
 DROP TABLE IF EXISTS votes;
 DROP TABLE IF EXISTS commentvotes;
+DROP TABLE IF EXISTS save_relationship;

@@ -471,3 +471,9 @@ CREATE TABLE commentvotes(
     creation_ip VARCHAR(64) DEFAULT '',
     app_id INTEGER DEFAULT NULL
 );
+
+CREATE TABLE save_relationship(
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    submission_id INTEGER NOT NULL
+);

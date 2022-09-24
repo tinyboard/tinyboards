@@ -1,1 +1,24 @@
--- This file should undo anything in `up.sql`
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_author_id;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_repost_id;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_gm_distinguish;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_domain_ref;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_is_approved;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_board_id;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_original_board_id;
+ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_app_id;
+
+ALTER TABLE IF EXISTS save_relationship DROP CONSTRAINT fk_user_id;
+
+ALTER TABLE IF EXISTS alts DROP CONSTRAINT fk_user1;
+ALTER TABLE IF EXISTS alts DROP CONSTRAINT fk_user2;
+
+ALTER TABLE IF EXISTS badges DROP CONSTRAINT fk_badge_id;
+ALTER TABLE IF EXISTS badges DROP CONSTRAINT fk_user_id;
+
+ALTER TABLE IF EXISTS mods DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS mods DROP CONSTRAINT fk_board_id;
+
+ALTER TABLE IF EXISTS bans DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS bans DROP CONSTRAINT fk_board_id;
+ALTER TABLE IF EXISTS bans DROP CONSTRAINT fk_banning_mod_id;
+

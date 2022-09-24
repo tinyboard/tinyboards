@@ -377,6 +377,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    save_relationship (id) {
+        id -> Int4,
+        user_id -> Int4,
+        submission_id -> Int4,
+    }
+}
+
+diesel::table! {
     subcategories (id) {
         id -> Int4,
         cat_id -> Int4,
@@ -556,6 +564,11 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(badges -> badge_defs (badge_id));
+diesel::joinable!(bans -> users (banning_mod_id));
+diesel::joinable!(submissions -> domains (domain_ref));
+diesel::joinable!(submissions -> oauth_apps (app_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
     alts,
     badge_defs,
@@ -587,6 +600,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     posts,
     reports,
     rules,
+    save_relationship,
     subcategories,
     submissions,
     subscriptions,
