@@ -12,6 +12,33 @@ diesel::table! {
 diesel::table! {
     boards (id) {
         id -> Int4,
+        board_name -> Varchar,
+        created_utc -> Nullable<Int4>,
+        board_description -> Nullable<Varchar>,
+        board_description_html -> Nullable<Varchar>,
+        over_18 -> Nullable<Bool>,
+        is_nsfl -> Nullable<Bool>,
+        is_banned -> Nullable<Bool>,
+        has_banner -> Nullable<Bool>,
+        has_profile -> Nullable<Bool>,
+        creator_id -> Int4,
+        ban_reason -> Nullable<Varchar>,
+        color -> Nullable<Varchar>,
+        restricted_posting -> Nullable<Bool>,
+        disallowbots -> Nullable<Bool>,
+        hide_banner_data -> Nullable<Bool>,
+        profile_nonce -> Nullable<Int4>,
+        banner_nonce -> Nullable<Int4>,
+        is_private -> Nullable<Bool>,
+        color_nonce -> Nullable<Int4>,
+        rank_trending -> Nullable<Numeric>,
+        stored_subscriber_count -> Nullable<Int4>,
+        all_opt_out -> Nullable<Bool>,
+        is_locked_category -> Nullable<Bool>,
+        subcat_id -> Nullable<Int4>,
+        secondary_color -> Nullable<Varchar>,
+        public_chat -> Nullable<Bool>,
+        motd -> Nullable<Varchar>,
     }
 }
 
@@ -29,6 +56,12 @@ diesel::table! {
 }
 
 diesel::table! {
+    mods (id) {
+        id -> Int4,
+    }
+}
+
+diesel::table! {
     oauth_apps (id) {
         id -> Int4,
     }
@@ -39,6 +72,12 @@ diesel::table! {
         id -> Int4,
         title -> Varchar,
         body -> Text,
+    }
+}
+
+diesel::table! {
+    subcategories (id) {
+        id -> Int4,
     }
 }
 
@@ -119,16 +158,14 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(submissions -> boards (gm_distinguish));
-diesel::joinable!(submissions -> domains (domain_ref));
-diesel::joinable!(submissions -> users (author_id));
-
 diesel::allow_tables_to_appear_in_same_query!(
     badlinks,
     boards,
     domains,
+    mods,
     oauth_apps,
     posts,
+    subcategories,
     submissions,
     users,
 );
