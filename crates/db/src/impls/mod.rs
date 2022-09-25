@@ -1,2 +1,1 @@
-mod post;
-mod users;
+mod alts;

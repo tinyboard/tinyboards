@@ -2,8 +2,9 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
-pub struct Users {
-    pub id: i32,
-    pub username: String,
-    
+pub struct Alts{
+    id: i32,
+    user1: i32,
+    user2: i32,
+    is_manual: Nullable<Bool>
 }
