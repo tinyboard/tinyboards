@@ -27,6 +27,9 @@ ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_app_id
 ALTER TABLE IF EXISTS save_relationship ADD CONSTRAINT fk_user_id
     FOREIGN KEY(user_id)
         REFERENCES users(id);
+ALTER TABLE IF EXISTS save_relationship ADD CONSTRAINT fk_submission_id
+    FOREIGN KEY(submission_id)
+        REFERENCES submissions(id);
 -- alts constraints
 ALTER TABLE IF EXISTS alts ADD CONSTRAINT fk_user1
     FOREIGN KEY(user1)
@@ -179,3 +182,68 @@ ALTER TABLE IF EXISTS lodges ADD CONSTRAINT fk_user_id
 ALTER TABLE IF EXISTS lodges ADD CONSTRAINT fk_board_id
     FOREIGN KEY(board_id)
         REFERENCES boards(id);
+-- modactions constraints
+ALTER TABLE IF EXISTS modactions ADD CONSTRAINT fk_user_id
+    FOREIGN KEY(user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS modactions ADD CONSTRAINT fk_board_id
+    FOREIGN KEY(board_id)
+        REFERENCES boards(id);
+ALTER TABLE IF EXISTS modactions ADD CONSTRAINT fk_target_user_id
+    FOREIGN KEY(target_user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS modactions ADD CONSTRAINT fk_target_submission_id
+    FOREIGN KEY(target_submission_id)
+        REFERENCES submissions(id);
+ALTER TABLE IF EXISTS modactions ADD CONSTRAINT fk_target_comment_id
+    FOREIGN KEY(target_comment_id)
+        REFERENCES comments(id);
+-- rules constraints
+ALTER TABLE IF EXISTS rules ADD CONSTRAINT fk_board_id
+    FOREIGN KEY(board_id)
+        REFERENCES boards(id);
+-- subscriptions constraints
+ALTER TABLE IF EXISTS subscriptions ADD CONSTRAINT fk_user_id
+    FOREIGN KEY(user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS subscriptions ADD CONSTRAINT fk_board_id
+    FOREIGN KEY(board_id)
+        REFERENCES boards(id);
+-- follows constraints
+ALTER TABLE IF EXISTS follows ADD CONSTRAINT fk_user_id
+    FOREIGN KEY(user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS follows ADD CONSTRAINT fk_target_id
+    FOREIGN KEY(target_id)
+        REFERENCES users(id);
+-- users constraints
+ALTER TABLE IF EXISTS users ADD CONSTRAINT fk_title_id
+    FOREIGN KEY(title_id)
+        REFERENCES titles(id);
+-- userblocks constraints
+ALTER TABLE IF EXISTS userblocks ADD CONSTRAINT fk_user_id
+    FOREIGN KEY(user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS userblocks ADD CONSTRAINT fk_target_id
+    FOREIGN KEY(target_id)
+        REFERENCES users(id);
+-- votes constraints
+ALTER TABLE IF EXISTS votes ADD CONSTRAINT fk_user_id
+    FOREIGN KEY(user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS votes ADD CONSTRAINT fk_submission_id
+    FOREIGN KEY(submission_id)
+        REFERENCES submissions(id);
+ALTER TABLE IF EXISTS votes ADD CONSTRAINT fk_app_id
+    FOREIGN KEY(app_id)
+        REFERENCES oauth_apps(id);
+-- commentvotes constraints
+ALTER TABLE IF EXISTS commentvotes ADD CONSTRAINT fk_user_id
+    FOREIGN KEY(user_id)
+        REFERENCES users(id);
+ALTER TABLE IF EXISTS commentvotes ADD CONSTRAINT fk_comment_id
+    FOREIGN KEY(comment_id)
+        REFERENCES comments(id);
+ALTER TABLE IF EXISTS commentvotes ADD CONSTRAINT fk_app_id
+    FOREIGN KEY(app_id)
+        REFERENCES oauth_apps(id);

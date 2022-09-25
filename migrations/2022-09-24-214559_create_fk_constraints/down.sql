@@ -8,6 +8,7 @@ ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_original_board_id;
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_app_id;
 
 ALTER TABLE IF EXISTS save_relationship DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS save_relationship DROP CONSTRAINT fk_submission_id;
 
 ALTER TABLE IF EXISTS alts DROP CONSTRAINT fk_user1;
 ALTER TABLE IF EXISTS alts DROP CONSTRAINT fk_user2;
@@ -71,3 +72,30 @@ ALTER TABLE IF EXISTS useragents DROP CONSTRAINT fk_banned_by;
 
 ALTER TABLE IF EXISTS lodges DROP CONSTRAINT fk_user_id;
 ALTER TABLE IF EXISTS lodges DROP CONSTRAINT fk_board_id;
+
+ALTER TABLE IF EXISTS modactions DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS modactions DROP CONSTRAINT fk_board_id;
+ALTER TABLE IF EXISTS modactions DROP CONSTRAINT fk_target_user_id;
+ALTER TABLE IF EXISTS modactions DROP CONSTRAINT fk_target_submission_id;
+ALTER TABLE IF EXISTS modactions DROP CONSTRAINT fk_target_comment_id;
+
+ALTER TABLE IF EXISTS rules DROP CONSTRAINT fk_board_id;
+
+ALTER TABLE IF EXISTS subscriptions DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS subscriptions DROP CONSTRAINT fk_board_id;
+
+ALTER TABLE IF EXISTS follows DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS follows DROP CONSTRAINT fk_target_id;
+
+ALTER TABLE IF EXISTS users DROP CONSTRAINT fk_title_id;
+
+ALTER TABLE IF EXISTS userblocks DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS userblocks DROP CONSTRAINT fk_target_id;
+
+ALTER TABLE IF EXISTS votes DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS votes DROP CONSTRAINT fk_submission_id;
+ALTER TABLE IF EXISTS votes DROP CONSTRAINT fk_app_id;
+
+ALTER TABLE IF EXISTS commentvotes DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS commentvotes DROP CONSTRAINT fk_comment_id;
+ALTER TABLE IF EXISTS commentvotes DROP CONSTRAINT fk_app_id;
