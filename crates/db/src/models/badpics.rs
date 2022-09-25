@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 pub struct BadPics{
     id: i32,
     badpic_description: Nullable<String>,
-    phash: Nullable<String>,
-    ban_reason: Nullable<String>,
-    ban_time: Nullable<i32>
+    phash: String,
+    ban_reason: String,
+    ban_time: i32,
 }

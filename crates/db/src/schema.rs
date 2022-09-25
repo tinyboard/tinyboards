@@ -472,7 +472,7 @@ diesel::table! {
         reason -> Varchar,
         banned_by -> Int4,
         mock -> Varchar,
-        status_code -> Nullable<Int4>,
+        status_code -> Int4,
     }
 }
 
@@ -568,6 +568,7 @@ diesel::joinable!(modactions -> submissions (target_submission_id));
 diesel::joinable!(modactions -> users (target_user_id));
 diesel::joinable!(subcategories -> categories (cat_id));
 diesel::joinable!(submissions -> domains (domain_ref));
+diesel::joinable!(submissions -> users (is_approved));
 diesel::joinable!(users -> titles (title_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

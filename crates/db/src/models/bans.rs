@@ -9,5 +9,5 @@ pub struct Bans {
     created_utc: i32,
     banning_mod_id: i32,
     is_active: i32,
-    mod_note: Nullable<String>
+    mod_note: String,
 }

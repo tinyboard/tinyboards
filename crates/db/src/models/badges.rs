@@ -6,7 +6,7 @@ pub struct Badges{
     id: i32,
     user_id: i32,
     badge_id: i32,
-    badge_description: Nullable<String>,
-    badge_url: Nullable<String>,
-    created_utc: i32
+    badge_description: String,
+    badge_url: String,
+    created_utc: i32,
 }
