@@ -377,6 +377,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    save_relationship (id) {
+        id -> Int4,
+        user_id -> Int4,
+        submission_id -> Int4,
+    }
+}
+
+diesel::table! {
     subcategories (id) {
         id -> Int4,
         cat_id -> Int4,
@@ -506,6 +514,7 @@ diesel::table! {
         defaulttime -> Nullable<Varchar>,
         feed_nonce -> Nullable<Int4>,
         login_nonce -> Nullable<Int4>,
+        title_id -> Nullable<Int4>,
         has_profile -> Nullable<Bool>,
         has_banner -> Nullable<Bool>,
         reserved -> Nullable<Varchar>,
@@ -556,6 +565,20 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(badges -> badge_defs (badge_id));
+diesel::joinable!(boards -> subcategories (subcat_id));
+diesel::joinable!(boards -> users (creator_id));
+diesel::joinable!(client_auths -> oauth_apps (oauth_client));
+diesel::joinable!(comments -> submissions (parent_submission));
+diesel::joinable!(contributors -> users (approving_mod_id));
+diesel::joinable!(modactions -> comments (target_comment_id));
+diesel::joinable!(modactions -> submissions (target_submission_id));
+diesel::joinable!(modactions -> users (target_user_id));
+diesel::joinable!(subcategories -> categories (cat_id));
+diesel::joinable!(submissions -> domains (domain_ref));
+diesel::joinable!(submissions -> users (is_approved));
+diesel::joinable!(users -> titles (title_id));
+
 diesel::allow_tables_to_appear_in_same_query!(
     alts,
     badge_defs,
@@ -587,6 +610,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     posts,
     reports,
     rules,
+    save_relationship,
     subcategories,
     submissions,
     subscriptions,
