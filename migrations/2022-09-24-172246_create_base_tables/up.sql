@@ -117,8 +117,7 @@ CREATE TABLE categories(
     category_icon VARCHAR(256) DEFAULT '',
     category_color VARCHAR(128) DEFAULT '805ad5',
     visible BOOLEAN DEFAULT true,
-    is_nsfw BOOLEAN DEFAULT false,
-    _subcats INTEGER DEFAULT NULL
+    is_nsfw BOOLEAN DEFAULT false
 );
 
 CREATE TABLE subcategories(
