@@ -107,7 +107,7 @@ diesel::table! {
         all_opt_out -> Bool,
         is_locked_category -> Bool,
         subcat_id -> Int4,
-        secondary_color -> Nullable<Varchar>,
+        secondary_color -> Varchar,
         public_chat -> Bool,
         motd -> Varchar,
         css_nonce -> Int4,
@@ -456,7 +456,7 @@ diesel::table! {
         title_text -> Varchar,
         qualification_expr -> Varchar,
         requirement_string -> Varchar,
-        title_color -> Nullable<Varchar>,
+        title_color -> Varchar,
         bg_color_1 -> Nullable<Varchar>,
         bg_color_2 -> Nullable<Varchar>,
         gradient_angle -> Int4,
@@ -534,8 +534,8 @@ diesel::table! {
         banner_upload_ip -> Varchar,
         profile_upload_region -> Varchar,
         banner_upload_region -> Varchar,
-        color -> Nullable<Varchar>,
-        secondary_color -> Nullable<Varchar>,
+        color -> Varchar,
+        secondary_color -> Varchar,
         comment_signature -> Varchar,
         comment_signature_html -> Varchar,
         profile_set_utc -> Int4,
@@ -568,7 +568,6 @@ diesel::joinable!(modactions -> submissions (target_submission_id));
 diesel::joinable!(modactions -> users (target_user_id));
 diesel::joinable!(subcategories -> categories (cat_id));
 diesel::joinable!(submissions -> domains (domain_ref));
-diesel::joinable!(submissions -> users (is_approved));
 diesel::joinable!(users -> titles (title_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
