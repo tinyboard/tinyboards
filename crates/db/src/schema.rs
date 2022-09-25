@@ -5,18 +5,18 @@ diesel::table! {
         id -> Int4,
         user1 -> Int4,
         user2 -> Int4,
-        is_manual -> Nullable<Bool>,
+        is_manual -> Bool,
     }
 }
 
 diesel::table! {
     badge_defs (id) {
         id -> Int4,
-        badge_name -> Nullable<Varchar>,
-        badge_description -> Nullable<Varchar>,
-        badge_icon -> Nullable<Varchar>,
-        badge_kind -> Nullable<Int2>,
-        badge_rank -> Nullable<Int2>,
+        badge_name -> Varchar,
+        badge_description -> Varchar,
+        badge_icon -> Varchar,
+        badge_kind -> Int2,
+        badge_rank -> Int2,
         qualification_expr -> Nullable<Varchar>,
     }
 }
@@ -26,9 +26,9 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         badge_id -> Int4,
-        badge_description -> Nullable<Varchar>,
-        badge_url -> Nullable<Varchar>,
-        created_utc -> Nullable<Int4>,
+        badge_description -> Varchar,
+        badge_url -> Varchar,
+        created_utc -> Int4,
     }
 }
 
@@ -37,7 +37,7 @@ diesel::table! {
         id -> Int4,
         reason -> Int4,
         link -> Varchar,
-        autoban -> Nullable<Bool>,
+        autoban -> Bool,
     }
 }
 
@@ -45,17 +45,17 @@ diesel::table! {
     badpics (id) {
         id -> Int4,
         badpic_description -> Nullable<Varchar>,
-        phash -> Nullable<Varchar>,
-        ban_reason -> Nullable<Varchar>,
-        ban_time -> Nullable<Int4>,
+        phash -> Varchar,
+        ban_reason -> Varchar,
+        ban_time -> Int4,
     }
 }
 
 diesel::table! {
     badwords (id) {
         id -> Int4,
-        keyword -> Nullable<Varchar>,
-        regex -> Nullable<Varchar>,
+        keyword -> Varchar,
+        regex -> Varchar,
     }
 }
 
@@ -64,10 +64,10 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
         banning_mod_id -> Int4,
         is_active -> Int4,
-        mod_note -> Nullable<Varchar>,
+        mod_note -> Varchar,
     }
 }
 
@@ -76,7 +76,7 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -84,46 +84,46 @@ diesel::table! {
     boards (id) {
         id -> Int4,
         board_name -> Varchar,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
         board_description -> Nullable<Varchar>,
         board_description_html -> Nullable<Varchar>,
-        over_18 -> Nullable<Bool>,
-        is_nsfl -> Nullable<Bool>,
-        is_banned -> Nullable<Bool>,
-        has_banner -> Nullable<Bool>,
-        has_profile -> Nullable<Bool>,
+        over_18 -> Bool,
+        is_nsfl -> Bool,
+        is_banned -> Bool,
+        has_banner -> Bool,
+        has_profile -> Bool,
         creator_id -> Int4,
         ban_reason -> Nullable<Varchar>,
         color -> Nullable<Varchar>,
-        restricted_posting -> Nullable<Bool>,
-        disallowbots -> Nullable<Bool>,
-        hide_banner_data -> Nullable<Bool>,
-        profile_nonce -> Nullable<Int4>,
-        banner_nonce -> Nullable<Int4>,
-        is_private -> Nullable<Bool>,
-        color_nonce -> Nullable<Int4>,
-        rank_trending -> Nullable<Numeric>,
-        stored_subscriber_count -> Nullable<Int4>,
-        all_opt_out -> Nullable<Bool>,
-        is_locked_category -> Nullable<Bool>,
-        subcat_id -> Nullable<Int4>,
+        restricted_posting -> Bool,
+        disallowbots -> Bool,
+        hide_banner_data -> Bool,
+        profile_nonce -> Int4,
+        banner_nonce -> Int4,
+        is_private -> Bool,
+        color_nonce -> Int4,
+        rank_trending -> Numeric,
+        stored_subscriber_count -> Int4,
+        all_opt_out -> Bool,
+        is_locked_category -> Bool,
+        subcat_id -> Int4,
         secondary_color -> Nullable<Varchar>,
-        public_chat -> Nullable<Bool>,
-        motd -> Nullable<Varchar>,
-        css_nonce -> Nullable<Int4>,
-        css -> Nullable<Varchar>,
+        public_chat -> Bool,
+        motd -> Varchar,
+        css_nonce -> Int4,
+        css -> Varchar,
     }
 }
 
 diesel::table! {
     categories (id) {
         id -> Int4,
-        category_name -> Nullable<Varchar>,
-        category_description -> Nullable<Varchar>,
-        category_icon -> Nullable<Varchar>,
+        category_name -> Varchar,
+        category_description -> Varchar,
+        category_icon -> Varchar,
         category_color -> Nullable<Varchar>,
-        visible -> Nullable<Bool>,
-        is_nsfw -> Nullable<Bool>,
+        visible -> Bool,
+        is_nsfw -> Bool,
     }
 }
 
@@ -132,7 +132,7 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
         banning_mod_id -> Int4,
     }
 }
@@ -141,18 +141,18 @@ diesel::table! {
     client_auths (id) {
         id -> Int4,
         oauth_client -> Int4,
-        oauth_code -> Nullable<Varchar>,
+        oauth_code -> Varchar,
         user_id -> Int4,
-        scope_identity -> Nullable<Bool>,
-        scope_create -> Nullable<Bool>,
-        scope_read -> Nullable<Bool>,
-        scope_update -> Nullable<Bool>,
-        scope_delete -> Nullable<Bool>,
-        scope_vote -> Nullable<Bool>,
-        scope_moderator -> Nullable<Bool>,
-        access_token -> Nullable<Varchar>,
-        refresh_token -> Nullable<Varchar>,
-        access_token_expire_utc -> Nullable<Int4>,
+        scope_identity -> Bool,
+        scope_create -> Bool,
+        scope_read -> Bool,
+        scope_update -> Bool,
+        scope_delete -> Bool,
+        scope_vote -> Bool,
+        scope_moderator -> Bool,
+        access_token -> Varchar,
+        refresh_token -> Varchar,
+        access_token_expire_utc -> Int4,
     }
 }
 
@@ -161,7 +161,7 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         comment_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -170,35 +170,35 @@ diesel::table! {
         id -> Int4,
         body -> Nullable<Varchar>,
         body_html -> Nullable<Varchar>,
-        ban_reason -> Nullable<Varchar>,
+        ban_reason -> Varchar,
         author_id -> Int4,
         parent_submission -> Int4,
-        created_utc -> Nullable<Int4>,
-        edited_utc -> Nullable<Int4>,
-        is_banned -> Nullable<Bool>,
-        gm_distinguish -> Nullable<Int4>,
+        created_utc -> Int4,
+        edited_utc -> Int4,
+        is_banned -> Bool,
+        gm_distinguish -> Int4,
         distinguished_board -> Nullable<Int4>,
-        deleted_utc -> Nullable<Int4>,
-        purged_utc -> Nullable<Int4>,
-        is_approved -> Nullable<Int4>,
-        approved_utc -> Nullable<Int4>,
-        creation_ip -> Nullable<Varchar>,
-        score_disputed -> Nullable<Numeric>,
-        score_hot -> Nullable<Numeric>,
-        score_top -> Nullable<Numeric>,
-        comment_level -> Nullable<Int4>,
-        parent_comment_id -> Nullable<Int4>,
-        original_board_id -> Nullable<Int4>,
-        over_18 -> Nullable<Bool>,
-        is_offensive -> Nullable<Bool>,
-        is_nsfl -> Nullable<Bool>,
-        is_bot -> Nullable<Bool>,
-        is_pinned -> Nullable<Bool>,
+        deleted_utc -> Int4,
+        purged_utc -> Int4,
+        is_approved -> Int4,
+        approved_utc -> Int4,
+        creation_ip -> Varchar,
+        score_disputed -> Numeric,
+        score_hot -> Numeric,
+        score_top -> Numeric,
+        comment_level -> Int4,
+        parent_comment_id -> Int4,
+        original_board_id -> Int4,
+        over_18 -> Bool,
+        is_offensive -> Bool,
+        is_nsfl -> Bool,
+        is_bot -> Bool,
+        is_pinned -> Bool,
         creation_region -> Nullable<Varchar>,
         app_id -> Nullable<Int4>,
         flags -> Nullable<Int4>,
-        upvotes -> Nullable<Int4>,
-        downvotes -> Nullable<Int4>,
+        upvotes -> Int4,
+        downvotes -> Int4,
     }
 }
 
@@ -208,8 +208,8 @@ diesel::table! {
         user_id -> Int4,
         vote_type -> Int4,
         comment_id -> Int4,
-        created_utc -> Nullable<Int4>,
-        creation_ip -> Nullable<Varchar>,
+        created_utc -> Int4,
+        creation_ip -> Varchar,
         app_id -> Nullable<Int4>,
     }
 }
@@ -220,7 +220,7 @@ diesel::table! {
         user_id -> Int4,
         board_id -> Int4,
         created_utc -> Int4,
-        is_active -> Nullable<Bool>,
+        is_active -> Bool,
         approving_mod_id -> Int4,
     }
 }
@@ -229,10 +229,10 @@ diesel::table! {
     domains (id) {
         id -> Int4,
         domain -> Varchar,
-        can_submit -> Nullable<Bool>,
-        can_comment -> Nullable<Bool>,
-        reason -> Nullable<Int4>,
-        show_thumbnail -> Nullable<Bool>,
+        can_submit -> Bool,
+        can_comment -> Bool,
+        reason -> Int4,
+        show_thumbnail -> Bool,
         embed_function -> Nullable<Varchar>,
         embed_template -> Nullable<Varchar>,
     }
@@ -243,7 +243,7 @@ diesel::table! {
         id -> Int4,
         post_id -> Int4,
         user_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -252,8 +252,8 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         target_id -> Int4,
-        created_utc -> Nullable<Int4>,
-        get_notifs -> Nullable<Bool>,
+        created_utc -> Int4,
+        get_notifs -> Bool,
     }
 }
 
@@ -269,21 +269,21 @@ diesel::table! {
 diesel::table! {
     ips (id) {
         id -> Int4,
-        addr -> Nullable<Varchar>,
-        reason -> Nullable<Varchar>,
-        banned_by -> Nullable<Int4>,
+        addr -> Varchar,
+        reason -> Varchar,
+        banned_by -> Int4,
     }
 }
 
 diesel::table! {
     lodges (id) {
         id -> Int4,
-        lodge_name -> Nullable<Varchar>,
-        lodge_color -> Nullable<Varchar>,
-        lodge_description -> Nullable<Varchar>,
+        lodge_name -> Varchar,
+        lodge_color -> Varchar,
+        lodge_description -> Varchar,
         user_id -> Int4,
         board_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -292,12 +292,12 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
-        kind -> Nullable<Varchar>,
-        target_user_id -> Nullable<Int4>,
-        target_submission_id -> Nullable<Int4>,
-        target_comment_id -> Nullable<Int4>,
+        kind -> Varchar,
+        target_user_id -> Int4,
+        target_submission_id -> Int4,
+        target_comment_id -> Int4,
         note -> Nullable<Varchar>,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -306,14 +306,14 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
-        created_utc -> Nullable<Int4>,
-        accepted -> Nullable<Bool>,
-        invite_rescinded -> Nullable<Bool>,
-        perm_content -> Nullable<Bool>,
-        perm_appearance -> Nullable<Bool>,
-        perm_config -> Nullable<Bool>,
-        perm_access -> Nullable<Bool>,
-        perm_full -> Nullable<Bool>,
+        created_utc -> Int4,
+        accepted -> Bool,
+        invite_rescinded -> Bool,
+        perm_content -> Bool,
+        perm_appearance -> Bool,
+        perm_config -> Bool,
+        perm_access -> Bool,
+        perm_full -> Bool,
     }
 }
 
@@ -323,7 +323,7 @@ diesel::table! {
         user_id -> Int4,
         comment_id -> Nullable<Int4>,
         submission_id -> Nullable<Int4>,
-        notification_read -> Nullable<Bool>,
+        notification_read -> Bool,
     }
 }
 
@@ -335,8 +335,8 @@ diesel::table! {
         app_name -> Varchar,
         redirect_uri -> Varchar,
         author_id -> Int4,
-        is_banned -> Nullable<Bool>,
-        app_description -> Nullable<Varchar>,
+        is_banned -> Bool,
+        app_description -> Varchar,
     }
 }
 
@@ -353,7 +353,7 @@ diesel::table! {
         id -> Int4,
         post_id -> Int4,
         user_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -361,10 +361,10 @@ diesel::table! {
     rules (id) {
         id -> Int4,
         board_id -> Int4,
-        rule_body -> Nullable<Varchar>,
-        rule_html -> Nullable<Varchar>,
-        created_utc -> Nullable<Int4>,
-        edited_utc -> Nullable<Int4>,
+        rule_body -> Varchar,
+        rule_html -> Varchar,
+        created_utc -> Int4,
+        edited_utc -> Int4,
     }
 }
 
@@ -380,9 +380,9 @@ diesel::table! {
     subcategories (id) {
         id -> Int4,
         cat_id -> Int4,
-        subcat_name -> Nullable<Varchar>,
-        subcat_description -> Nullable<Varchar>,
-        _visible -> Nullable<Bool>,
+        subcat_name -> Varchar,
+        subcat_description -> Varchar,
+        _visible -> Bool,
     }
 }
 
@@ -391,48 +391,48 @@ diesel::table! {
         id -> Int8,
         title -> Nullable<Varchar>,
         post_url -> Nullable<Varchar>,
-        body -> Nullable<Varchar>,
-        body_html -> Nullable<Varchar>,
-        ban_reason -> Nullable<Varchar>,
-        embed_url -> Nullable<Varchar>,
-        meta_title -> Nullable<Varchar>,
-        meta_description -> Nullable<Varchar>,
+        body -> Varchar,
+        body_html -> Varchar,
+        ban_reason -> Varchar,
+        embed_url -> Varchar,
+        meta_title -> Varchar,
+        meta_description -> Varchar,
         author_id -> Int4,
-        repost_id -> Nullable<Int4>,
-        edited_utc -> Nullable<Int4>,
-        created_utc -> Nullable<Int4>,
-        is_banned -> Nullable<Bool>,
-        deleted_utc -> Nullable<Int4>,
-        purged_utc -> Nullable<Int4>,
-        distinguish_level -> Nullable<Int2>,
-        gm_distinguish -> Nullable<Int2>,
+        repost_id -> Int4,
+        edited_utc -> Int4,
+        created_utc -> Int4,
+        is_banned -> Bool,
+        deleted_utc -> Int4,
+        purged_utc -> Int4,
+        distinguish_level -> Int2,
+        gm_distinguish -> Int2,
         created_str -> Nullable<Varchar>,
-        stickied -> Nullable<Bool>,
-        domain_ref -> Nullable<Int4>,
-        domain_obj -> Nullable<Varchar>,
+        stickied -> Bool,
+        domain_ref -> Int4,
+        domain_obj -> Varchar,
         flags -> Int4,
         is_approved -> Int4,
-        approved_utc -> Nullable<Int4>,
+        approved_utc -> Int4,
         board_id -> Int4,
         original_board_id -> Int4,
-        over_18 -> Nullable<Bool>,
-        creation_ip -> Nullable<Varchar>,
+        over_18 -> Bool,
+        creation_ip -> Varchar,
         mod_approved -> Nullable<Int4>,
-        accepted_utc -> Nullable<Int4>,
-        has_thumb -> Nullable<Bool>,
-        post_public -> Nullable<Bool>,
-        score_hot -> Nullable<Numeric>,
-        score_disputed -> Nullable<Numeric>,
-        score_top -> Nullable<Numeric>,
-        score_best -> Nullable<Numeric>,
-        score_activity -> Nullable<Numeric>,
-        is_offensive -> Nullable<Bool>,
-        is_nsfl -> Nullable<Bool>,
-        is_pinned -> Nullable<Bool>,
+        accepted_utc -> Int4,
+        has_thumb -> Bool,
+        post_public -> Bool,
+        score_hot -> Numeric,
+        score_disputed -> Numeric,
+        score_top -> Numeric,
+        score_best -> Numeric,
+        score_activity -> Numeric,
+        is_offensive -> Bool,
+        is_nsfl -> Bool,
+        is_pinned -> Bool,
         reports -> Int4,
-        is_bot -> Nullable<Bool>,
-        upvotes -> Nullable<Int4>,
-        downvotes -> Nullable<Int4>,
+        is_bot -> Bool,
+        upvotes -> Int4,
+        downvotes -> Int4,
         creation_region -> Nullable<Varchar>,
         app_id -> Nullable<Int4>,
     }
@@ -443,23 +443,23 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         board_id -> Int4,
-        created_utc -> Nullable<Int4>,
-        is_active -> Nullable<Bool>,
-        get_notifs -> Nullable<Bool>,
+        created_utc -> Int4,
+        is_active -> Bool,
+        get_notifs -> Bool,
     }
 }
 
 diesel::table! {
     titles (id) {
         id -> Int4,
-        is_before -> Nullable<Bool>,
-        title_text -> Nullable<Varchar>,
-        qualification_expr -> Nullable<Varchar>,
-        requirement_string -> Nullable<Varchar>,
+        is_before -> Bool,
+        title_text -> Varchar,
+        qualification_expr -> Varchar,
+        requirement_string -> Varchar,
         title_color -> Nullable<Varchar>,
         bg_color_1 -> Nullable<Varchar>,
         bg_color_2 -> Nullable<Varchar>,
-        gradient_angle -> Nullable<Int4>,
+        gradient_angle -> Int4,
         box_shadow_color -> Nullable<Varchar>,
         text_shadow_color -> Nullable<Varchar>,
     }
@@ -468,10 +468,10 @@ diesel::table! {
 diesel::table! {
     useragents (id) {
         id -> Int4,
-        kwd -> Nullable<Varchar>,
-        reason -> Nullable<Varchar>,
-        banned_by -> Nullable<Int4>,
-        mock -> Nullable<Varchar>,
+        kwd -> Varchar,
+        reason -> Varchar,
+        banned_by -> Int4,
+        mock -> Varchar,
         status_code -> Nullable<Int4>,
     }
 }
@@ -481,7 +481,7 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         target_id -> Int4,
-        created_utc -> Nullable<Int4>,
+        created_utc -> Int4,
     }
 }
 
@@ -496,52 +496,52 @@ diesel::table! {
         is_activated -> Bool,
         over_18 -> Bool,
         creation_ip -> Varchar,
-        bio -> Nullable<Varchar>,
-        bio_html -> Nullable<Varchar>,
+        bio -> Varchar,
+        bio_html -> Varchar,
         referred_by -> Nullable<Int4>,
-        is_banned -> Nullable<Bool>,
-        unban_utc -> Nullable<Int4>,
-        ban_reason -> Nullable<Varchar>,
+        is_banned -> Bool,
+        unban_utc -> Int4,
+        ban_reason -> Varchar,
         defaultsorting -> Nullable<Varchar>,
         defaulttime -> Nullable<Varchar>,
-        feed_nonce -> Nullable<Int4>,
-        login_nonce -> Nullable<Int4>,
+        feed_nonce -> Int4,
+        login_nonce -> Int4,
         title_id -> Nullable<Int4>,
-        has_profile -> Nullable<Bool>,
-        has_banner -> Nullable<Bool>,
+        has_profile -> Bool,
+        has_banner -> Bool,
         reserved -> Nullable<Varchar>,
-        is_nsfw -> Nullable<Bool>,
-        tos_agreed_utc -> Nullable<Int4>,
-        profile_nonce -> Nullable<Int4>,
-        banner_nonce -> Nullable<Int4>,
+        is_nsfw -> Bool,
+        tos_agreed_utc -> Int4,
+        profile_nonce -> Int4,
+        banner_nonce -> Int4,
         mfa_secret -> Nullable<Varchar>,
-        hide_offensive -> Nullable<Bool>,
-        hide_bot -> Nullable<Bool>,
-        show_nsfl -> Nullable<Bool>,
-        is_private -> Nullable<Bool>,
-        is_deleted -> Nullable<Bool>,
-        delete_reason -> Nullable<Varchar>,
-        filter_nsfw -> Nullable<Bool>,
-        stored_karma -> Nullable<Int4>,
-        stored_subscriber_count -> Nullable<Int4>,
-        auto_join_chat -> Nullable<Bool>,
-        is_nofollow -> Nullable<Bool>,
-        custom_filter_list -> Nullable<Varchar>,
+        hide_offensive -> Bool,
+        hide_bot -> Bool,
+        show_nsfl -> Bool,
+        is_private -> Bool,
+        is_deleted -> Bool,
+        delete_reason -> Varchar,
+        filter_nsfw -> Bool,
+        stored_karma -> Int4,
+        stored_subscriber_count -> Int4,
+        auto_join_chat -> Bool,
+        is_nofollow -> Bool,
+        custom_filter_list -> Varchar,
         discord_id -> Nullable<Varchar>,
         creation_region -> Nullable<Varchar>,
-        ban_evade -> Nullable<Int4>,
-        profile_upload_ip -> Nullable<Varchar>,
-        banner_upload_ip -> Nullable<Varchar>,
-        profile_upload_region -> Nullable<Varchar>,
-        banner_upload_region -> Nullable<Varchar>,
+        ban_evade -> Int4,
+        profile_upload_ip -> Varchar,
+        banner_upload_ip -> Varchar,
+        profile_upload_region -> Varchar,
+        banner_upload_region -> Varchar,
         color -> Nullable<Varchar>,
         secondary_color -> Nullable<Varchar>,
-        comment_signature -> Nullable<Varchar>,
-        comment_signature_html -> Nullable<Varchar>,
-        profile_set_utc -> Nullable<Int4>,
-        bannner_set_utc -> Nullable<Int4>,
-        original_username -> Nullable<Varchar>,
-        name_changed_utc -> Nullable<Int4>,
+        comment_signature -> Varchar,
+        comment_signature_html -> Varchar,
+        profile_set_utc -> Int4,
+        bannner_set_utc -> Int4,
+        original_username -> Varchar,
+        name_changed_utc -> Int4,
     }
 }
 
@@ -551,8 +551,8 @@ diesel::table! {
         user_id -> Int4,
         vote_type -> Int4,
         submission_id -> Int4,
-        created_utc -> Nullable<Int4>,
-        creation_ip -> Nullable<Varchar>,
+        created_utc -> Int4,
+        creation_ip -> Varchar,
         app_id -> Nullable<Int4>,
     }
 }
