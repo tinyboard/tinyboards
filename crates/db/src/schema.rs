@@ -124,6 +124,7 @@ diesel::table! {
         category_color -> Nullable<Varchar>,
         visible -> Nullable<Bool>,
         is_nsfw -> Nullable<Bool>,
+        _subcats -> Nullable<Int4>,
     }
 }
 
@@ -563,11 +564,6 @@ diesel::table! {
         app_id -> Nullable<Int4>,
     }
 }
-
-diesel::joinable!(badges -> badge_defs (badge_id));
-diesel::joinable!(bans -> users (banning_mod_id));
-diesel::joinable!(submissions -> domains (domain_ref));
-diesel::joinable!(submissions -> oauth_apps (app_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     alts,

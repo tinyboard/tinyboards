@@ -22,3 +22,52 @@ ALTER TABLE IF EXISTS bans DROP CONSTRAINT fk_user_id;
 ALTER TABLE IF EXISTS bans DROP CONSTRAINT fk_board_id;
 ALTER TABLE IF EXISTS bans DROP CONSTRAINT fk_banning_mod_id;
 
+ALTER TABLE IF EXISTS chatbans DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS chatbans DROP CONSTRAINT fk_board_id;
+ALTER TABLE IF EXISTS chatbans DROP CONSTRAINT fk_banning_mod_id;
+
+ALTER TABLE IF EXISTS contributors DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS contributors DROP CONSTRAINT fk_board_id;
+ALTER TABLE IF EXISTS contributors DROP CONSTRAINT fk_approving_mod_id;
+
+ALTER TABLE IF EXISTS postrels DROP CONSTRAINT fk_board_id;
+ALTER TABLE IF EXISTS postrels DROP CONSTRAINT fk_post_id;
+
+ALTER TABLE IF EXISTS boardblocks DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS boardblocks DROP CONSTRAINT fk_board_id;
+
+ALTER TABLE IF EXISTS boards DROP CONSTRAINT fk_creator_id;
+ALTER TABLE IF EXISTS boards DROP CONSTRAINT fk_subcat_id;
+
+ALTER TABLE IF EXISTS subcategories DROP CONSTRAINT fk_cat_id;
+
+ALTER TABLE IF EXISTS oauth_apps DROP CONSTRAINT fk_author_id;
+
+ALTER TABLE IF EXISTS client_auths DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS client_auths DROP CONSTRAINT fk_oauth_client;
+
+ALTER TABLE IF EXISTS comments DROP CONSTRAINT fk_author_id;
+ALTER TABLE IF EXISTS comments DROP CONSTRAINT fk_parent_submission;
+ALTER TABLE IF EXISTS comments DROP CONSTRAINT fk_gm_distinguish;
+ALTER TABLE IF EXISTS comments DROP CONSTRAINT fk_parent_comment_id;
+ALTER TABLE IF EXISTS comments DROP CONSTRAINT fk_original_board_id;
+ALTER TABLE IF EXISTS comments DROP CONSTRAINT fk_app_id;
+
+ALTER TABLE IF EXISTS notifications DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS notifications DROP CONSTRAINT fk_comment_id;
+ALTER TABLE IF EXISTS notifications DROP CONSTRAINT fk_submission_id;
+
+ALTER TABLE IF EXISTS flags DROP CONSTRAINT fk_post_id;
+ALTER TABLE IF EXISTS flags DROP CONSTRAINT fk_user_id;
+
+ALTER TABLE IF EXISTS commentflags DROP CONSTRAINT fk_comment_id;
+ALTER TABLE IF EXISTS commentflags DROP CONSTRAINT fk_user_id;
+
+ALTER TABLE IF EXISTS reports DROP CONSTRAINT fk_post_id;
+ALTER TABLE IF EXISTS reports DROP CONSTRAINT fk_user_id;
+
+ALTER TABLE IF EXISTS ips DROP CONSTRAINT fk_banned_by;
+ALTER TABLE IF EXISTS useragents DROP CONSTRAINT fk_banned_by;
+
+ALTER TABLE IF EXISTS lodges DROP CONSTRAINT fk_user_id;
+ALTER TABLE IF EXISTS lodges DROP CONSTRAINT fk_board_id;
