@@ -196,7 +196,6 @@ diesel::table! {
         is_pinned -> Bool,
         creation_region -> Nullable<Varchar>,
         app_id -> Nullable<Int4>,
-        flags -> Nullable<Int4>,
         upvotes -> Int4,
         downvotes -> Int4,
     }
@@ -568,6 +567,7 @@ diesel::joinable!(modactions -> submissions (target_submission_id));
 diesel::joinable!(modactions -> users (target_user_id));
 diesel::joinable!(subcategories -> categories (cat_id));
 diesel::joinable!(submissions -> domains (domain_ref));
+diesel::joinable!(submissions -> users (is_approved));
 diesel::joinable!(users -> titles (title_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

@@ -10,3 +10,4 @@ porpl-db = { path = "../db" }
 porpl-api = { path = "../api" }
 actix-web = "4"
 serde = "1.0.145"
+bigdecimal = "0.3.0"

@@ -340,7 +340,6 @@ CREATE TABLE comments(
     is_pinned BOOLEAN NOT NULL DEFAULT false,
     creation_region VARCHAR(2) DEFAULT NULL,
     app_id INTEGER DEFAULT NULL,
-    flags INTEGER DEFAULT NULL,
     upvotes INTEGER NOT NULL DEFAULT 1,
     downvotes INTEGER NOT NULL DEFAULT 0
 );

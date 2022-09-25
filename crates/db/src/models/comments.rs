@@ -1,0 +1,37 @@
+use diesel::prelude::*;
+use serde::{Serialize, Deserialize};
+
+#[derive(Queryable, Serialize, Deserialize)]
+pub struct Comments {
+    id: i32,
+    body: Nullable<String>,
+    body_html: Nullable<String>,
+    ban_reason: String,
+    author_id: i32,
+    parent_submission: i32,
+    created_utc: i32,
+    edited_utc: i32,
+    is_banned: Bool,
+    gm_distinguish: i32,
+    distinguished_board: i32,
+    deleted_utc: i32,
+    purged_utc: i32,
+    is_approved: i32,
+    approved_utc: i32,
+    creation_ip: String,
+    score_disputed: BigDecimal,
+    score_hot: BigDecimal,
+    score_top: BigDecimal,
+    comment_level: i32,
+    parent_comment_id: i32,
+    original_board_id: i32,
+    over_18: Bool,
+    is_offensive: Bool,
+    is_nsfl: Bool,
+    is_bot: Bool,
+    is_pinned: Bool,
+    creation_region: Nullable<String>,
+    app_id: Nullable<i32>,
+    upvotes: i32,
+    downvotes: i32,
+}
