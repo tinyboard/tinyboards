@@ -29,3 +29,6 @@ pub mod reports;
 pub mod rules;
 pub mod save_relationship;
 pub mod subcategories;
+pub mod submissions;
+pub mod subscriptions;
+pub mod titles;
