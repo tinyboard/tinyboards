@@ -6,5 +6,5 @@ pub struct Alts{
     id: i32,
     user1: i32,
     user2: i32,
-    is_manual: Nullable<Bool>
+    is_manual: Bool,
 }

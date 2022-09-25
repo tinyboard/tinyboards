@@ -12,3 +12,4 @@ porpl-db = { path = "../db" }
 diesel = { version = "2.0.0", features = ["postgres"] }
 serde = { version = "1.0.145", features = ["derive"] }
 derive_more = "0.99.17"
+bigdecimal = "0.3.0"
