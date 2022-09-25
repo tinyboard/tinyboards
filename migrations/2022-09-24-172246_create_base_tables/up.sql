@@ -381,7 +381,7 @@ CREATE TABLE useragents(
     reason VARCHAR(256) NOT NULL DEFAULT '',
     banned_by INTEGER NOT NULL DEFAULT 1,
     mock VARCHAR(256) NOT NULL DEFAULT '',
-    status_code INTEGER DEFAULT 418
+    status_code INTEGER NOT NULL DEFAULT 418
 );
 
 CREATE TABLE lodges(
