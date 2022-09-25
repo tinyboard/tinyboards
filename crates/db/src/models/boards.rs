@@ -28,28 +28,9 @@ pub struct Boards {
     all_opt_out: Bool,
     is_locked_category: Bool,
     subcat_id: i32,
-    secondary_color: String
-
-
-
-}
-
-
-
-
-diesel::table! {
-    boards (id) {
-
-
-        rank_trending -> Numeric,
-        stored_subscriber_count -> Int4,
-        all_opt_out -> Bool,
-        is_locked_category -> Bool,
-        subcat_id -> Int4,
-        secondary_color -> Nullable<Varchar>,
-        public_chat -> Bool,
-        motd -> Varchar,
-        css_nonce -> Int4,
-        css -> Varchar,
-    }
+    secondary_color: String,
+    public_chat: Bool,
+    motd: String,
+    css_nonce: i32,
+    css: String
 }
