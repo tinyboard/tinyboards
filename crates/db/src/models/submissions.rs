@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Submissions {
-    id: i32,
+    id: i64,
     title: Nullable<String>,
     post_url: Nullable<String>,
     body: String,
