@@ -8,9 +8,9 @@ ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_repost_id
 ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_gm_distinguish
     FOREIGN KEY(gm_distinguish)
         REFERENCES boards(id);
-ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_domain_ref
-    FOREIGN KEY(domain_ref)
-        REFERENCES domains(id);
+--ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_domain_ref
+  --  FOREIGN KEY(domain_ref)
+    --    REFERENCES domains(id);
 ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_is_approved
     FOREIGN KEY(is_approved)
         REFERENCES users(id);

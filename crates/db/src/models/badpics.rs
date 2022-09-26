@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
-pub struct BadPics{
+pub struct BadPics {
     id: i32,
-    badpic_description: Nullable<String>,
+    badpic_description: Option<String>,
     phash: String,
     ban_reason: String,
     ban_time: i32,

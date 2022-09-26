@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Follows {
@@ -7,5 +7,5 @@ pub struct Follows {
     user_id: i32,
     target_id: i32,
     created_utc: i32,
-    get_notifs: Bool,
+    get_notifs: bool,
 }

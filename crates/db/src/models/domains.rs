@@ -1,14 +1,14 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Domains {
     id: i32,
     domain: String,
-    can_submit: Bool,
-    can_comment: Bool,
+    can_submit: bool,
+    can_comment: bool,
     reason: i32,
-    show_thumbnail: Bool,
-    embed_function: Nullable<String>,
-    embed_template: Nullable<String>
+    show_thumbnail: bool,
+    embed_function: Option<String>,
+    embed_template: Option<String>,
 }

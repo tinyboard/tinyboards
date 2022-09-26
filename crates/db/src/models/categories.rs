@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Categories {
@@ -7,7 +7,7 @@ pub struct Categories {
     category_name: String,
     category_description: String,
     category_icon: String,
-    category_color: Nullable<String>,
-    visible: Bool,
-    is_nsfw: Bool
+    category_color: Option<String>,
+    visible: bool,
+    is_nsfw: bool,
 }

@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Mods {
@@ -7,11 +7,11 @@ pub struct Mods {
     user_id: i32,
     board_id: i32,
     created_utc: i32,
-    accepted: Bool,
-    invite_rescinded: Bool,
-    perm_content: Bool,
-    perm_appearance: Bool,
-    perm_config: Bool,
-    perm_access: Bool,
-    perm_full: Bool,
+    accepted: bool,
+    invite_rescinded: bool,
+    perm_content: bool,
+    perm_appearance: bool,
+    perm_config: bool,
+    perm_access: bool,
+    perm_full: bool,
 }

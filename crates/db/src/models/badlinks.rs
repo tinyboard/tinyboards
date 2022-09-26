@@ -6,5 +6,5 @@ pub struct BadLinks {
     id: i32,
     reason: i32,
     link: String,
-    autoban: Bool,
+    autoban: bool,
 }

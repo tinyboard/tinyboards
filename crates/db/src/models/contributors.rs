@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Contributors {
@@ -7,6 +7,6 @@ pub struct Contributors {
     user_id: i32,
     board_id: i32,
     created_utc: i32,
-    is_active: Bool,
+    is_active: bool,
     approving_mod_id: i32,
 }

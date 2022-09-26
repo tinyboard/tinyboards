@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Subcategories {
@@ -7,5 +7,5 @@ pub struct Subcategories {
     cat_id: i32,
     subcat_name: String,
     subcat_description: String,
-    _visible: Bool,
+    _visible: bool,
 }

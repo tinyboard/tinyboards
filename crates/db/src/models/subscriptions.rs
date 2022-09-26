@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Subscriptions {
@@ -7,6 +7,6 @@ pub struct Subscriptions {
     user_id: i32,
     board_id: i32,
     created_utc: i32,
-    is_active: Bool,
-    get_notifs: Bool,
+    is_active: bool,
+    get_notifs: bool,
 }

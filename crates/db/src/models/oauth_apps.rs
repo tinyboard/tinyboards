@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct OAuthApps {
@@ -9,6 +9,6 @@ pub struct OAuthApps {
     app_name: String,
     redirect_uri: String,
     author_id: i32,
-    is_banned: Bool,
+    is_banned: bool,
     app_description: String,
 }

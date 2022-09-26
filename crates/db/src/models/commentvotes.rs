@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct CommentVotes {
@@ -9,5 +9,5 @@ pub struct CommentVotes {
     comment_id: i32,
     created_utc: i32,
     creation_ip: String,
-    app_id: Nullable<i32>,
+    app_id: Option<i32>,
 }
