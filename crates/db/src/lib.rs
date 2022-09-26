@@ -35,6 +35,7 @@ pub use models::modactions::*;
 pub use models::mods::*;
 pub use models::notifications::*;
 pub use models::oauth_apps::*;
+pub use models::post::*;
 pub use models::postrels::*;
 pub use models::reports::*;
 pub use models::rules::*;

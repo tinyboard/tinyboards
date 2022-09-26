@@ -395,7 +395,7 @@ diesel::table! {
 
 diesel::table! {
     submissions (id) {
-        id -> Int8,
+        id -> Int4,
         title -> Nullable<Varchar>,
         post_url -> Nullable<Varchar>,
         body -> Varchar,

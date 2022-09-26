@@ -1,7 +1,7 @@
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_author_id;
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_repost_id;
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_gm_distinguish;
-ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_domain_ref;
+--ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_domain_ref;
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_is_approved;
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_board_id;
 ALTER TABLE IF EXISTS submissions DROP CONSTRAINT fk_original_board_id;
