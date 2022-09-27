@@ -1,10 +1,10 @@
 CREATE TABLE users(
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
     passhash VARCHAR(255) NOT NULL,
     created_utc INTEGER NOT NULL,
-    admin_level SMALLINT NOT NULL,
+    admin_level SMALLINT NOT NULL DEFAULT 0,
     is_activated BOOLEAN NOT NULL DEFAULT false,
     over_18 BOOLEAN NOT NULL DEFAULT false,
     creation_ip VARCHAR(64) NOT NULL DEFAULT '',

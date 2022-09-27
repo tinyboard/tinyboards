@@ -489,7 +489,7 @@ diesel::table! {
     users (id) {
         id -> Int4,
         username -> Varchar,
-        email -> Varchar,
+        email -> Nullable<Varchar>,
         passhash -> Varchar,
         created_utc -> Int4,
         admin_level -> Int2,

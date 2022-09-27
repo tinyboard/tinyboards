@@ -1,8 +1,9 @@
-use crate::{Perform, PorplError};
+use crate::Perform;
 use serde::{Deserialize, Serialize};
 
 use crate::data::PorplContext;
 use porpl_db::models::post::Post;
+use porpl_utils::PorplError;
 
 use crate::utils::blocking;
 
@@ -20,15 +21,17 @@ pub struct GetPostsResponse {
 impl Perform for GetPosts {
     type Response = GetPostsResponse;
 
-    async fn perform(&self, context: &PorplContext) -> Result<Self::Response, PorplError> {
-        let data: &GetPosts = self;
+    async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
+        let data: &GetPosts = &self;
 
         let limit = match data.limit {
             Some(n) => n,
             None => 25,
         };
 
-        let posts = blocking(&context.pool(), move |conn| Post::load(conn, limit)).await?;
+        let posts = blocking(&context.pool(), move |conn| Post::load(conn, limit))
+            .await?
+            .map_err(|e| PorplError::new(e.0, e.1))?;
 
         Ok(GetPostsResponse { listing: posts })
     }

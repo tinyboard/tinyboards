@@ -1,9 +1,10 @@
-use crate::{Perform, PorplError};
+use crate::Perform;
 //use crate::PerformInsert;
 use serde::{Deserialize, Serialize};
 
 use crate::data::PorplContext;
-use porpl_db::models::users::Users;
+use porpl_db::models::user::User;
+use porpl_utils::PorplError;
 //use porpl_db::models::users::InsertUser;
 
 use crate::utils::blocking;
@@ -15,7 +16,7 @@ pub struct GetUsers {
 
 #[derive(Serialize)]
 pub struct GetUsersResponse {
-    listing: Vec<Users>,
+    listing: Vec<User>,
 }
 
 #[derive(Serialize)]
@@ -27,21 +28,49 @@ pub struct GetInsertUserToDbResponse {
 impl Perform for GetUsers {
     type Response = GetUsersResponse;
 
-    async fn perform(&self, context: &PorplContext) -> Result<Self::Response, PorplError> {
-
-        let data: &GetUsers = self;
+    async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
+        let data: &GetUsers = &self;
 
         let limit: i64 = match data.limit {
             Some(n) => n,
-            None => 25
+            None => 25,
         };
 
-        let users = blocking(&context.pool(), move|conn| Users::load(conn, limit)).await?;
+        let users = blocking(&context.pool(), move |conn| User::load(conn, limit)).await??;
 
         Ok(GetUsersResponse { listing: users })
     }
 }
 
+#[derive(Deserialize)]
+pub struct CreateUser {
+    pub username: String,
+    pub password: String,
+    pub email: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct CreateUserResponse {
+    pub message: String,
+}
+
+#[async_trait::async_trait]
+impl Perform for CreateUser {
+    type Response = CreateUserResponse;
+
+    async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
+        let data: CreateUser = self;
+
+        let _new_user = blocking(context.pool(), move |conn| {
+            User::insert(conn, data.username, data.password)
+        })
+        .await??;
+
+        Ok(CreateUserResponse {
+            message: String::from("User created!"),
+        })
+    }
+}
 
 // has an error, but I think this theoretically should be the right way to implement this function... (still learning)
 

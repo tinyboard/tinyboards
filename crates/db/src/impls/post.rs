@@ -6,7 +6,7 @@ impl Post {
     /**
      * Load up to `limit` amount of posts. Requires a **mutable** reference to a database connection.
      */
-    pub fn load(conn: &mut PgConnection, limit: i64) -> Vec<Self> {
+    pub fn load(conn: &mut PgConnection, limit: i64) -> Result<Vec<Self>, (u16, String)> {
         use crate::schema::posts::dsl::*;
 
         // TODO: make this a (way) more complex query later
@@ -14,6 +14,6 @@ impl Post {
         posts
             .limit(limit)
             .load::<Self>(conn)
-            .expect("Failed to load posts")
+            .map_err(|_| (500, String::from("Well shit :\\")))
     }
 }

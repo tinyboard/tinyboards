@@ -1,7 +1,7 @@
 use actix_web::web;
 use porpl_db::database::PgPool;
 
-use crate::error::PorplError;
+use porpl_utils::PorplError;
 
 /**
  * Use this function to do db operations.

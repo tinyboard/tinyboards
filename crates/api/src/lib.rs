@@ -1,9 +1,8 @@
 pub mod data;
-pub mod error;
 pub mod post;
 pub mod users;
 pub mod utils;
-use error::PorplError;
+use porpl_utils::PorplError;
 
 use data::PorplContext;
 use serde::Serialize;
@@ -12,9 +11,8 @@ use serde::Serialize;
 pub trait Perform {
     type Response: Serialize;
 
-    async fn perform(&self, context: &PorplContext) -> Result<Self::Response, PorplError>;
+    async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError>;
 }
-
 
 // #[async_trait::async_trait]
 // pub trait PerformInsert {

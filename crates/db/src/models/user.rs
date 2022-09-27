@@ -1,12 +1,12 @@
-use diesel::prelude::*;
 use crate::schema::users;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
-pub struct Users {
+pub struct User {
     id: i32,
     username: String,
-    email: String,
+    email: Option<String>,
     passhash: String,
     created_utc: i32,
     admin_level: i16,
@@ -61,17 +61,14 @@ pub struct Users {
     name_changed_utc: i32,
 }
 
-
 #[derive(Insertable, Serialize, Deserialize)]
-#[diesel(table_name = users)] 
+#[diesel(table_name = users)]
 /**
  * not sure if these are all the fields required to insert into the users table, might need more
  */
 pub struct InsertUser {
-    username: String,
-    email: String,
-    passhash: String,
-    created_utc: i32,
+    pub username: String,
+    pub email: String,
+    pub passhash: String,
+    pub created_utc: i32,
 }
-
-

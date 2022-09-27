@@ -1,6 +1,6 @@
 use crate::models::badge_defs::BadgeDefs;
-use diesel::prelude::*;
-use diesel::PgConnection;
+/*use diesel::prelude::*;
+use diesel::PgConnection;*/
 
 impl BadgeDefs {
     /**
