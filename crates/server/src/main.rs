@@ -4,6 +4,7 @@ use actix_web::{web, App, HttpResponse, HttpServer, Result};
 use porpl_api::data::PorplContext;
 use porpl_api::error::PorplError;
 use porpl_api::post::GetPosts;
+use porpl_api::users::GetUsers;
 use porpl_api::Perform;
 
 use serde::Deserialize;
