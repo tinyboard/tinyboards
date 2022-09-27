@@ -21,6 +21,10 @@ impl PorplError {
             error_code,
         }
     }
+
+    pub fn err_500() -> Self {
+        Self::new(500, String::from("Internal Server Error :\\"))
+    }
 }
 
 impl std::fmt::Display for PorplError {

@@ -11,8 +11,8 @@ impl User {
     pub fn load(conn: &mut PgConnection, limit: i64) -> Result<Vec<Self>, PorplError> {
         use crate::schema::users::dsl::*;
         users.limit(limit).load::<Self>(conn).map_err(|e| {
-            eprintln!("ERROR: {}", e.to_string());
-            PorplError::new(500, String::from("Internal server error :\\"))
+            eprintln!("ERROR: {}", e);
+            PorplError::err_500()
         })
     }
 
@@ -34,8 +34,8 @@ impl User {
             .values(&new_user)
             .get_result(conn)
             .map_err(|e| {
-                eprintln!("ERROR: {}", e.to_string());
-                PorplError::new(500, String::from("Internal Server Error"))
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
             })
     }
 }

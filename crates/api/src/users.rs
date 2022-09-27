@@ -31,12 +31,9 @@ impl Perform for GetUsers {
     async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
         let data: &GetUsers = &self;
 
-        let limit: i64 = match data.limit {
-            Some(n) => n,
-            None => 25,
-        };
+        let limit = data.limit.unwrap_or(25);
 
-        let users = blocking(&context.pool(), move |conn| User::load(conn, limit)).await??;
+        let users = blocking(context.pool(), move |conn| User::load(conn, limit)).await??;
 
         Ok(GetUsersResponse { listing: users })
     }
