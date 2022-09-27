@@ -17,7 +17,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(PorplContext::init()))
             .route("/", web::get().to(perform_get::<GetPosts>))
             .route("/api/users", web::get().to(perform_get::<GetUsers>))
-            .route("/api/register", web::post().to(perform_post::<CreateUser>))
+            .route("/api/signup", web::post().to(perform_post::<CreateUser>))
     })
     .bind(("127.0.0.1", 8080))?
     .run()
