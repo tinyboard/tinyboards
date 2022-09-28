@@ -16,18 +16,70 @@ impl User {
         })
     }
 
+    /// Checks if an account with specified username/email already exists.
+    fn check_reserved(
+        conn: &mut PgConnection,
+        name: &str,
+        email_addr: &Option<String>,
+    ) -> Result<(), PorplError> {
+        use crate::schema::users::dsl::*;
+
+        // this feels too repetitive, maybe I'll do something with it someday
+        let user = if let Some(email_addr) = email_addr {
+            // if an email address is provided, add an extra check for whether it's already taken
+            users
+                .select(id)
+                .filter(username.ilike(name))
+                .or_filter(email.ilike(email_addr))
+                .first::<i32>(conn)
+                .optional()
+                .map_err(|e| {
+                    eprintln!("ERROR: {}", e);
+                    PorplError::err_500()
+                })
+        } else {
+            // else check for username only
+            users
+                .select(id)
+                .filter(username.ilike(name))
+                .first(conn)
+                .optional()
+                .map_err(|e| {
+                    eprintln!("ERROR: {}", e);
+                    PorplError::err_500()
+                })
+        }?;
+
+        // if the query above has returned a record, the name/email is already taken; throw error
+        if user.is_some() {
+            return Err(PorplError::new(
+                409,
+                String::from("Username/email already taken!"),
+            ));
+        }
+
+        Ok(())
+    }
+
     pub fn insert(
         conn: &mut PgConnection,
         username: String,
         password: String,
-        email: Option<String>
+        email: Option<String>,
     ) -> Result<Self, PorplError> {
         use crate::schema::users;
 
+        // escape wildcards
+        let username = username.replace('%', "\\%").replace('_', "\\_");
+        let email: Option<String> =
+            email.map(|email| email.replace('%', "\\%").replace('_', "\\_"));
+
+        Self::check_reserved(conn, &username, &email)?;
+
         let new_user = InsertUser {
             username,
-            passhash: password,
-            email: email,
+            passhash: porpl_utils::hash_password(password),
+            email,
             created_utc: 12,
         };
 

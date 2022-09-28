@@ -39,7 +39,7 @@ impl Perform for GetUsers {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct CreateUser {
     pub username: String,
     pub password: String,
@@ -57,7 +57,6 @@ impl Perform for CreateUser {
 
     async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
         let data: CreateUser = self;
-
         let _new_user = blocking(context.pool(), move |conn| {
             User::insert(conn, data.username, data.password, data.email)
         })
