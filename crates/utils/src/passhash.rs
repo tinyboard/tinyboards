@@ -1,10 +1,14 @@
 use argon2::{self, Config};
+use uuid::Uuid;
 
 pub fn hash_password(pwd: &str) -> String {
     
-    let salt = std::env::var("PASS_SALT").expect("ERROR: You need to set PASS_SALT in your .env file!");
+    let salt_uuid = Uuid::new_v4();
+    let salt_suffix = std::env::var("SALT_SUFFIX").expect("ERROR: You need to set SALT_SUFFIX in your .env file!");
+    let salt = &[salt_uuid.as_bytes(), salt_suffix.as_bytes()].concat();
+    
     let config = Config::default();
-    let hashed_pwd = argon2::hash_encoded(pwd.as_bytes(), salt.as_bytes(), &config).unwrap();
+    let hashed_pwd = argon2::hash_encoded(pwd.as_bytes(), salt, &config).unwrap();
 
     hashed_pwd
 }
