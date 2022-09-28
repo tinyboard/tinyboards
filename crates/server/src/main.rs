@@ -2,20 +2,23 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Result};
 
 use porpl_api::data::PorplContext;
-use porpl_api::post::GetPosts;
 use porpl_api::users::CreateUser;
 use porpl_api::users::GetUsers;
 use porpl_api::Perform;
 use porpl_utils::PorplError;
 
 use serde::Deserialize;
+use dotenv::dotenv;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
+    // get them environment variables at runtime yo!
+    dotenv().ok();
+
     HttpServer::new(|| {
         App::new()
             .app_data(web::Data::new(PorplContext::init()))
-            .route("/", web::get().to(perform_get::<GetPosts>))
             .route("/api/users", web::get().to(perform_get::<GetUsers>))
             .route("/api/signup", web::post().to(perform_post::<CreateUser>))
     })

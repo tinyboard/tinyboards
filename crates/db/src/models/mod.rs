@@ -24,7 +24,6 @@ pub mod modactions;
 pub mod mods;
 pub mod notifications;
 pub mod oauth_apps;
-pub mod post;
 pub mod postrels;
 pub mod reports;
 pub mod rules;

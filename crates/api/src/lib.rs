@@ -1,5 +1,4 @@
 pub mod data;
-pub mod post;
 pub mod users;
 pub mod utils;
 use porpl_utils::PorplError;

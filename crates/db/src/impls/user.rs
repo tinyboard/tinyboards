@@ -20,13 +20,14 @@ impl User {
         conn: &mut PgConnection,
         username: String,
         password: String,
+        email: Option<String>
     ) -> Result<Self, PorplError> {
         use crate::schema::users;
 
         let new_user = InsertUser {
             username,
             passhash: password,
-            email: "".to_owned(),
+            email: email,
             created_utc: 12,
         };
 

@@ -68,7 +68,7 @@ pub struct User {
  */
 pub struct InsertUser {
     pub username: String,
-    pub email: String,
+    pub email: Option<String>,
     pub passhash: String,
     pub created_utc: i32,
 }

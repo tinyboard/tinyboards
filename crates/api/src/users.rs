@@ -59,7 +59,7 @@ impl Perform for CreateUser {
         let data: CreateUser = self;
 
         let _new_user = blocking(context.pool(), move |conn| {
-            User::insert(conn, data.username, data.password)
+            User::insert(conn, data.username, data.password, data.email)
         })
         .await??;
 

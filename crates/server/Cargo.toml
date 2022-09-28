@@ -12,3 +12,4 @@ porpl-utils = { path = "../utils" }
 actix-web = "4"
 serde = "1.0.145"
 bigdecimal = "0.3.0"
+dotenv = "0.15.0"
