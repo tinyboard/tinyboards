@@ -32,23 +32,18 @@ impl User {
                 .filter(username.ilike(name))
                 .or_filter(email.ilike(email_addr))
                 .first::<i32>(conn)
-                .optional()
-                .map_err(|e| {
-                    eprintln!("ERROR: {}", e);
-                    PorplError::err_500()
-                })
         } else {
             // else check for username only
             users
                 .select(id)
                 .filter(username.ilike(name))
-                .first(conn)
-                .optional()
-                .map_err(|e| {
-                    eprintln!("ERROR: {}", e);
-                    PorplError::err_500()
-                })
-        }?;
+                .first::<i32>(conn)
+        }
+        .optional()
+        .map_err(|e| {
+            eprintln!("ERROR: {}", e);
+            PorplError::err_500()
+        })?;
 
         // if the query above has returned a record, the name/email is already taken; throw error
         if user.is_some() {
