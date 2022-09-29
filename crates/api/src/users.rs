@@ -27,7 +27,11 @@ pub struct GetInsertUserToDbResponse {
 impl Perform for GetUsers {
     type Response = GetUsersResponse;
 
-    async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
+    async fn perform(
+        self,
+        context: &PorplContext,
+        _: Option<&str>,
+    ) -> Result<Self::Response, PorplError> {
         let data: &GetUsers = &self;
 
         let limit = data.limit.unwrap_or(25);
@@ -63,7 +67,11 @@ fn validate_username(username: &str) -> Result<(), PorplError> {
 impl Perform for CreateUser {
     type Response = CreateUserResponse;
 
-    async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
+    async fn perform(
+        self,
+        context: &PorplContext,
+        _: Option<&str>,
+    ) -> Result<Self::Response, PorplError> {
         let data: CreateUser = self;
 
         validate_username(&data.username)?;
