@@ -50,10 +50,13 @@ pub struct CreateUserResponse {
     pub message: String,
 }
 
-fn validate_username(username: &str) -> bool {
-    let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{7,29}$").unwrap();
-    let valid = re.is_match(username);
-    valid
+fn validate_username(username: &str) -> Result<(), PorplError> {
+    let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
+    if re.is_match(username) {
+        Ok(())
+    } else {
+        Err(PorplError::new(400, String::from("Invalid username!")))
+    }
 }
 
 #[async_trait::async_trait]
@@ -63,21 +66,15 @@ impl Perform for CreateUser {
     async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
         let data: CreateUser = self;
 
-        let valid_username = validate_username(&data.username);
-        
-        if valid_username {
+        validate_username(&data.username)?;
 
-            let _new_user = blocking(context.pool(), move |conn| {
-                User::insert(conn, data.username, data.password, data.email)
-            })
-            .await??;
-    
-            Ok(CreateUserResponse {
-                message: String::from("User created!"),
-            })
-        } 
-        else {
-            Err(PorplError::new(409, String::from("Error: Invalid Username")))
-        }
+        let _new_user = blocking(context.pool(), move |conn| {
+            User::insert(conn, data.username, data.password, data.email)
+        })
+        .await??;
+
+        Ok(CreateUserResponse {
+            message: String::from("User created!"),
+        })
     }
 }
