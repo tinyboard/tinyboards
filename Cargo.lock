@@ -891,6 +891,7 @@ dependencies = [
  "diesel",
  "porpl-db",
  "porpl-utils",
+ "regex",
  "serde",
 ]
 

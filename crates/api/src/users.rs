@@ -1,11 +1,10 @@
 use crate::Perform;
-//use crate::PerformInsert;
 use serde::{Deserialize, Serialize};
 
 use crate::data::PorplContext;
 use porpl_db::models::user::User;
 use porpl_utils::PorplError;
-//use porpl_db::models::users::InsertUser;
+use regex::Regex;
 
 use crate::utils::blocking;
 
@@ -51,34 +50,34 @@ pub struct CreateUserResponse {
     pub message: String,
 }
 
+fn validate_username(username: &str) -> bool {
+    let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{7,29}$").unwrap();
+    let valid = re.is_match(username);
+    valid
+}
+
 #[async_trait::async_trait]
 impl Perform for CreateUser {
     type Response = CreateUserResponse;
 
     async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError> {
         let data: CreateUser = self;
-        let _new_user = blocking(context.pool(), move |conn| {
-            User::insert(conn, data.username, data.password, data.email)
-        })
-        .await??;
 
-        Ok(CreateUserResponse {
-            message: String::from("User created!"),
-        })
+        let valid_username = validate_username(&data.username);
+        
+        if valid_username {
+
+            let _new_user = blocking(context.pool(), move |conn| {
+                User::insert(conn, data.username, data.password, data.email)
+            })
+            .await??;
+    
+            Ok(CreateUserResponse {
+                message: String::from("User created!"),
+            })
+        } 
+        else {
+            Err(PorplError::new(409, String::from("Error: Invalid Username")))
+        }
     }
 }
-
-// has an error, but I think this theoretically should be the right way to implement this function... (still learning)
-
-// #[async_trait::async_trait]
-// impl PerformInsert for InsertUser {
-//     type Response = GetInsertUserToDbResponse;
-
-//     async fn perform_insert(&self, context: &PorplContext, user_form: &InsertUser) -> Result<Self::Response, PorplError> {
-
-//         let result = blocking(&context.pool(), move|conn| InsertUser::insert(conn, &user_form)).await?;
-
-//         Ok(GetInsertUserToDbResponse { rows_returned: result.ok() })
-
-//     }
-// }

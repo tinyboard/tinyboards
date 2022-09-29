@@ -12,10 +12,3 @@ pub trait Perform {
 
     async fn perform(self, context: &PorplContext) -> Result<Self::Response, PorplError>;
 }
-
-// #[async_trait::async_trait]
-// pub trait PerformInsert {
-//     type Response: Serialize;
-
-//     async fn perform_insert(&self, context: &PorplContext, user_form: &porpl_db::InsertUser) -> Result<Self::Response, PorplError>;
-// }
