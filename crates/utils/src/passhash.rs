@@ -16,3 +16,14 @@ pub fn verify_password(encoded: &str, pwd: &str) -> bool {
     let pwd_matched = argon2::verify_encoded(encoded, pwd.as_bytes()).unwrap();
     pwd_matched
 }
+
+
+#[test]
+fn most_secure_password() {
+    temp_env::with_var("SALT_SUFFIX", Some("somesaltsuffix"),|| {
+
+        let most_secure_hash = hash_password(String::from("hunter2"));
+        let most_secure_verification = verify_password(&most_secure_hash, "hunter2");
+        assert_eq!(most_secure_verification, true);
+    })
+}

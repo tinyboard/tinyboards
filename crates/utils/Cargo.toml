@@ -13,6 +13,7 @@ rust-argon2 = "1.0"
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
 chrono = "0.4.22"
+temp-env = "0.3.0"
 
 [dependencies.uuid]
 version = "1.1.2"
