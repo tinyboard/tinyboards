@@ -16,7 +16,7 @@ impl User {
         })
     }
 
-    pub fn get_login_details(conn: &mut PgConnection, name: String) -> Result<(i32, String, i32), PorplError> {
+    pub fn get_login_details(conn: &mut PgConnection, name: String) -> Result<(i32, String, i64), PorplError> {
         use crate::schema::users::dsl::*;
         
         let result = users
@@ -26,15 +26,15 @@ impl User {
                 login_nonce,
             ))
             .filter(username.ilike(name))
-            .first::<(i32, String, i32)>(conn).unwrap();
+            .first::<(i32, String, i64)>(conn).unwrap();
         
         Ok(result)
     }
 
-    pub fn update_login_nonce(conn: &mut PgConnection, uid: i32, nonce: i32) -> Result<(), PorplError>{
+    pub fn update_login_nonce(conn: &mut PgConnection, uid: i32, nonce: i64) -> Result<(), PorplError>{
 
         use crate::schema::users::dsl::*;
-        
+
         diesel::update(users)
         .filter(id.eq(uid))
         .set(login_nonce.eq(nonce))

@@ -81,8 +81,8 @@ fn validate_username(username: &str) -> Result<(), PorplError> {
     }
 }
 
-fn generate_user_jwt(uid: &i32, login_nonce: &i32) -> String {
-    
+fn generate_user_jwt(uid: &i32, login_nonce: &i64) -> String {
+
     let master_secret = std::env::var("MASTER_KEY").unwrap();
     let key:Hmac<Sha384> = Hmac::new_from_slice(master_secret.as_bytes()).unwrap();
     let header = Header {
@@ -90,9 +90,10 @@ fn generate_user_jwt(uid: &i32, login_nonce: &i32) -> String {
         ..Default::default()
     };
 
+
     let mut claims = BTreeMap::new();
-    claims.insert("uid", uid);
-    claims.insert("nonce", login_nonce);
+    claims.insert("uid", uid.to_string());
+    claims.insert("nonce", login_nonce.to_string());
 
     let token = Token::new(header, claims)
         .sign_with_key(&key)
@@ -152,7 +153,10 @@ impl Perform for UserLogin {
 
         let new_login_nonce = porpl_utils::time::utc_timestamp();
 
-
+        blocking(context.pool(), move |conn| {
+            User::update_login_nonce(conn, uid, new_login_nonce)
+        })
+        .await??;
 
         match porpl_utils::passhash::verify_password(&hash, &data.password) {
             true => Ok(UserLoginResponse {
