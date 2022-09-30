@@ -24,6 +24,8 @@ fn most_secure_password() {
 
         let most_secure_hash = hash_password(String::from("hunter2"));
         let most_secure_verification = verify_password(&most_secure_hash, "hunter2");
+        let not_most_secure_verification = verify_password(&most_secure_hash, "hunter3");
         assert_eq!(most_secure_verification, true);
+        assert_eq!(not_most_secure_verification, false);
     })
 }
