@@ -5,6 +5,7 @@ use porpl_api::data::PorplContext;
 use porpl_api::users::CreateUser;
 use porpl_api::users::GetUsers;
 use porpl_api::Perform;
+use porpl_api::users::UserLogin;
 use porpl_utils::PorplError;
 
 use dotenv::dotenv;
@@ -18,8 +19,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
             .app_data(web::Data::new(PorplContext::init()))
-            .route("/api/users", web::get().to(perform_get::<GetUsers>))
-            .route("/api/signup", web::post().to(perform_post::<CreateUser>))
+            .route("/api/v1/users", web::get().to(perform_get::<GetUsers>))
+            .route("/api/v1/signup", web::post().to(perform_post::<CreateUser>))
+            .route("/api/v1/login", web::post().to(perform_post::<UserLogin>))
     })
     .bind(("127.0.0.1", 8080))?
     .run()

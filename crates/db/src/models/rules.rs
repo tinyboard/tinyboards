@@ -7,6 +7,6 @@ pub struct Rules {
     board_id: i32,
     rule_body: String,
     rule_html: String,
-    created_utc: i32,
-    edited_utc: i32,
+    created_utc: i64,
+    edited_utc: i64,
 }

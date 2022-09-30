@@ -8,5 +8,5 @@ pub struct Badges{
     badge_id: i32,
     badge_description: String,
     badge_url: String,
-    created_utc: i32,
+    created_utc: i64,
 }

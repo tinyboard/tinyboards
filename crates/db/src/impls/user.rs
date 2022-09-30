@@ -16,6 +16,37 @@ impl User {
         })
     }
 
+    pub fn get_login_details(conn: &mut PgConnection, name: String) -> Result<(i32, String, i32), PorplError> {
+        use crate::schema::users::dsl::*;
+        
+        let result = users
+            .select((
+                id,
+                passhash,
+                login_nonce,
+            ))
+            .filter(username.ilike(name))
+            .first::<(i32, String, i32)>(conn).unwrap();
+        
+        Ok(result)
+    }
+
+    pub fn update_login_nonce(conn: &mut PgConnection, uid: i32, nonce: i32) -> Result<(), PorplError>{
+
+        use crate::schema::users::dsl::*;
+        
+        diesel::update(users)
+        .filter(id.eq(uid))
+        .set(login_nonce.eq(nonce))
+        .execute(conn)
+        .map_err(|e| {
+            eprintln!("ERROR: {}", e);
+            PorplError::err_500()
+        });
+
+        Ok(())
+    }
+
     /// Checks if an account with specified username/email already exists.
     fn check_reserved(
         conn: &mut PgConnection,

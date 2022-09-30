@@ -9,5 +9,5 @@ pub struct Lodges {
     lodge_description: String,
     user_id: i32,
     board_id: i32,
-    created_utc: i32,
+    created_utc: i64,
 }

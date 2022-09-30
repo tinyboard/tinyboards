@@ -6,7 +6,7 @@ pub struct Mods {
     id: i32,
     user_id: i32,
     board_id: i32,
-    created_utc: i32,
+    created_utc: i64,
     accepted: bool,
     invite_rescinded: bool,
     perm_content: bool,

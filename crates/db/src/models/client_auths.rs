@@ -16,5 +16,5 @@ pub struct ClientAuths {
     scope_moderator: bool,
     access_token: String,
     refresh_token: String,
-    access_token_expire_utc: i32,
+    access_token_expire_utc: i64,
 }

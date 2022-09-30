@@ -15,3 +15,6 @@ serde = { version = "1.0.145", features = ["derive"] }
 derive_more = "0.99.17"
 bigdecimal = "0.3.0"
 regex = "1"
+jwt = "0.16.0"
+hmac = "0.12.1"
+sha2 = "0.10.6"

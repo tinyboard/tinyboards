@@ -3,7 +3,7 @@ CREATE TABLE users(
     username VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     passhash VARCHAR(255) NOT NULL,
-    created_utc INTEGER NOT NULL,
+    created_utc BIGINT NOT NULL,
     admin_level SMALLINT NOT NULL DEFAULT 0,
     is_activated BOOLEAN NOT NULL DEFAULT false,
     over_18 BOOLEAN NOT NULL DEFAULT false,
@@ -12,20 +12,20 @@ CREATE TABLE users(
     bio_html VARCHAR(1000) NOT NULL DEFAULT '',
     referred_by INTEGER DEFAULT NULL,
     is_banned BOOLEAN NOT NULL DEFAULT false,
-    unban_utc INTEGER NOT NULL DEFAULT 0,
+    unban_utc BIGINT NOT NULL DEFAULT 0,
     ban_reason VARCHAR(255) NOT NULL DEFAULT '',
     defaultsorting VARCHAR(10) DEFAULT 'hot',
     defaulttime VARCHAR(10) DEFAULT 'all',
-    feed_nonce INTEGER NOT NULL DEFAULT 0,
-    login_nonce INTEGER NOT NULL DEFAULT 0,
+    feed_nonce BIGINT NOT NULL DEFAULT 0,
+    login_nonce BIGINT NOT NULL DEFAULT 0,
     title_id INTEGER DEFAULT NULL,
     has_profile BOOLEAN NOT NULL DEFAULT false,
     has_banner BOOLEAN NOT NULL DEFAULT false,
     reserved VARCHAR(256) DEFAULT NULL,
     is_nsfw BOOLEAN NOT NULL DEFAULT false,
-    tos_agreed_utc INTEGER NOT NULL DEFAULT 0,
-    profile_nonce INTEGER NOT NULL DEFAULT 0,
-    banner_nonce INTEGER NOT NULL DEFAULT 0,
+    tos_agreed_utc BIGINT NOT NULL DEFAULT 0,
+    profile_nonce BIGINT NOT NULL DEFAULT 0,
+    banner_nonce BIGINT NOT NULL DEFAULT 0,
     mfa_secret VARCHAR(16) DEFAULT NULL,
     hide_offensive BOOLEAN NOT NULL DEFAULT false,
     hide_bot BOOLEAN NOT NULL DEFAULT false,
@@ -50,17 +50,17 @@ CREATE TABLE users(
     secondary_color VARCHAR(6) NOT NULL DEFAULT 'ffff00',
     comment_signature VARCHAR(280) NOT NULL DEFAULT '',
     comment_signature_html VARCHAR(512) NOT NULL DEFAULT '',
-    profile_set_utc INTEGER NOT NULL DEFAULT 0,
-    bannner_set_utc INTEGER NOT NULL DEFAULT 0,
+    profile_set_utc BIGINT NOT NULL DEFAULT 0,
+    bannner_set_utc BIGINT NOT NULL DEFAULT 0,
     original_username VARCHAR(255) NOT NULL DEFAULT '',
-    name_changed_utc INTEGER NOT NULL DEFAULT 0
+    name_changed_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE mods(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     accepted BOOLEAN NOT NULL DEFAULT false,
     invite_rescinded BOOLEAN NOT NULL DEFAULT false,
     perm_content BOOLEAN NOT NULL DEFAULT false,
@@ -74,7 +74,7 @@ CREATE TABLE bans(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     banning_mod_id INTEGER NOT NULL,
     is_active INTEGER NOT NULL,
     mod_note VARCHAR(128) NOT NULL DEFAULT ''
@@ -84,7 +84,7 @@ CREATE TABLE chatbans(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     banning_mod_id INTEGER NOT NULL
 );
 
@@ -92,7 +92,7 @@ CREATE TABLE contributors(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL,
+    created_utc BIGINT NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT true,
     approving_mod_id INTEGER NOT NULL
 );
@@ -107,7 +107,7 @@ CREATE TABLE boardblocks(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE categories(
@@ -131,7 +131,7 @@ CREATE TABLE subcategories(
 CREATE TABLE boards(
     id SERIAL PRIMARY KEY,
     board_name VARCHAR(255) NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     board_description VARCHAR(512) DEFAULT NULL,
     board_description_html VARCHAR(1000) DEFAULT NULL,
     over_18 BOOLEAN NOT NULL DEFAULT false,
@@ -145,10 +145,10 @@ CREATE TABLE boards(
     restricted_posting BOOLEAN NOT NULL DEFAULT false,
     disallowbots BOOLEAN NOT NULL DEFAULT false,
     hide_banner_data BOOLEAN NOT NULL DEFAULT false,
-    profile_nonce INTEGER NOT NULL DEFAULT 0,
-    banner_nonce INTEGER NOT NULL DEFAULT 0,
+    profile_nonce BIGINT NOT NULL DEFAULT 0,
+    banner_nonce BIGINT NOT NULL DEFAULT 0,
     is_private BOOLEAN NOT NULL DEFAULT false,
-    color_nonce INTEGER NOT NULL DEFAULT 0,
+    color_nonce BIGINT NOT NULL DEFAULT 0,
     rank_trending NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
     stored_subscriber_count INTEGER NOT NULL DEFAULT 1,
     all_opt_out BOOLEAN NOT NULL DEFAULT false,
@@ -157,7 +157,7 @@ CREATE TABLE boards(
     secondary_color VARCHAR(6) NOT NULL DEFAULT 'ffffff',
     public_chat BOOLEAN NOT NULL DEFAULT false,
     motd VARCHAR(1000) NOT NULL DEFAULT '',
-    css_nonce INTEGER NOT NULL DEFAULT 0,
+    css_nonce BIGINT NOT NULL DEFAULT 0,
     css VARCHAR(65536) NOT NULL DEFAULT ''     
 );
 
@@ -204,28 +204,28 @@ CREATE TABLE client_auths(
     scope_moderator BOOLEAN NOT NULL DEFAULT false,
     access_token VARCHAR(128) NOT NULL DEFAULT '',
     refresh_token VARCHAR(128) NOT NULL DEFAULT '',
-    access_token_expire_utc INTEGER NOT NULL DEFAULT 0
+    access_token_expire_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE flags(
     id SERIAL PRIMARY KEY,
     post_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE commentflags(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     comment_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE reports(
     id SERIAL PRIMARY KEY,
     post_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE submissions(
@@ -240,24 +240,24 @@ CREATE TABLE submissions(
     meta_description VARCHAR(1024) NOT NULL DEFAULT '',
     author_id INTEGER NOT NULL,
     repost_id INTEGER NOT NULL DEFAULT 0,
-    edited_utc INTEGER NOT NULL DEFAULT 0,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    edited_utc BIGINT NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     is_banned BOOLEAN NOT NULL DEFAULT false,
-    deleted_utc INTEGER NOT NULL DEFAULT 0,
-    -- purged_utc INTEGER NOT NULL DEFAULT 0,
+    deleted_utc BIGINT NOT NULL DEFAULT 0,
+    -- purged_utc BIGINT NOT NULL DEFAULT 0,
     distinguish_level SMALLINT NOT NULL DEFAULT 0,
     gm_distinguish SMALLINT NOT NULL DEFAULT 0,
     -- created_str VARCHAR(255) DEFAULT NULL,
     stickied BOOLEAN NOT NULL DEFAULT false,
     -- domain_ref INTEGER NOT NULL DEFAULT 0,
     is_approved INTEGER NOT NULL,
-    approved_utc INTEGER NOT NULL DEFAULT 0,
+    approved_utc BIGINT NOT NULL DEFAULT 0,
     board_id INTEGER NOT NULL,
     original_board_id INTEGER NOT NULL,
     over_18 BOOLEAN NOT NULL DEFAULT false,
     creation_ip VARCHAR(64) NOT NULL DEFAULT '',
     mod_approved INTEGER DEFAULT NULL,
-    accepted_utc INTEGER NOT NULL DEFAULT 0,
+    accepted_utc BIGINT NOT NULL DEFAULT 0,
     has_thumb BOOLEAN NOT NULL DEFAULT false,
     post_public BOOLEAN NOT NULL DEFAULT true,
     score_hot NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
@@ -291,7 +291,7 @@ CREATE TABLE badges(
     badge_id INTEGER NOT NULL,
     badge_description VARCHAR(64) NOT NULL DEFAULT '',
     badge_url VARCHAR(256) NOT NULL DEFAULT '',
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE alts(
@@ -314,15 +314,15 @@ CREATE TABLE comments(
     ban_reason VARCHAR(256) NOT NULL DEFAULT '',
     author_id INTEGER NOT NULL,
     parent_submission INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
-    edited_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
+    edited_utc BIGINT NOT NULL DEFAULT 0,
     is_banned BOOLEAN NOT NULL DEFAULT false,
     gm_distinguish INTEGER NOT NULL DEFAULT 0,
     distinguished_board INTEGER DEFAULT NULL,
-    deleted_utc INTEGER NOT NULL DEFAULT 0,
-    purged_utc INTEGER NOT NULL DEFAULT 0,
+    deleted_utc BIGINT NOT NULL DEFAULT 0,
+    purged_utc BIGINT NOT NULL DEFAULT 0,
     is_approved INTEGER NOT NULL DEFAULT 0,
-    approved_utc INTEGER NOT NULL DEFAULT 0,
+    approved_utc BIGINT NOT NULL DEFAULT 0,
     creation_ip VARCHAR(64) NOT NULL DEFAULT '',
     score_disputed NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
     score_hot NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
@@ -387,7 +387,7 @@ CREATE TABLE lodges(
     lodge_description VARCHAR(250) NOT NULL DEFAULT '',
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE modactions(
@@ -399,7 +399,7 @@ CREATE TABLE modactions(
     target_submission_id INTEGER NOT NULL DEFAULT 0,
     target_comment_id INTEGER NOT NULL DEFAULT 0,
     note VARCHAR(256) DEFAULT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE rules(
@@ -407,15 +407,15 @@ CREATE TABLE rules(
     board_id INTEGER NOT NULL,
     rule_body VARCHAR(256) NOT NULL DEFAULT '',
     rule_html VARCHAR(512) NOT NULL DEFAULT '',
-    created_utc INTEGER NOT NULL DEFAULT 0,
-    edited_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0,
+    edited_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE subscriptions(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     board_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     is_active BOOLEAN NOT NULL DEFAULT true,
     get_notifs BOOLEAN NOT NULL DEFAULT false
 );
@@ -424,7 +424,7 @@ CREATE TABLE follows(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     target_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     get_notifs BOOLEAN NOT NULL DEFAULT false
 );
 
@@ -446,7 +446,7 @@ CREATE TABLE userblocks(
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL,
     target_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0
+    created_utc BIGINT NOT NULL DEFAULT 0
 );
 
 CREATE TABLE votes(
@@ -454,7 +454,7 @@ CREATE TABLE votes(
     user_id INTEGER NOT NULL,
     vote_type INTEGER NOT NULL,
     submission_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     creation_ip VARCHAR(64) NOT NULL DEFAULT '',
     app_id INTEGER DEFAULT NULL
 );
@@ -464,7 +464,7 @@ CREATE TABLE commentvotes(
     user_id INTEGER NOT NULL,
     vote_type INTEGER NOT NULL,
     comment_id INTEGER NOT NULL,
-    created_utc INTEGER NOT NULL DEFAULT 0,
+    created_utc BIGINT NOT NULL DEFAULT 0,
     creation_ip VARCHAR(64) NOT NULL DEFAULT '',
     app_id INTEGER DEFAULT NULL
 );

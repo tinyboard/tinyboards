@@ -7,7 +7,7 @@ pub struct Votes {
     user_id: i32,
     vote_type: i32,
     submission_id: i32,
-    created_utc: i32,
+    created_utc: i64,
     creation_ip: String,
     app_id: Option<i32>,
 }

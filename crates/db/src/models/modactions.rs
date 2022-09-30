@@ -11,5 +11,5 @@ pub struct ModActions {
     target_submission_id: i32,
     target_comment_id: i32,
     note: Option<String>,
-    created_utc: i32,
+    created_utc: i64,
 }
