@@ -1,4 +1,3 @@
-use bigdecimal::ToPrimitive;
 // external crates
 use serde::{Deserialize, Serialize};
 use regex::Regex;
@@ -158,7 +157,7 @@ impl Perform for UserLogin {
         })
         .await??;
 
-        match porpl_utils::passhash::verify_password(&hash, &data.password) {
+        match passhash::verify_password(&hash, &data.password) {
             true => Ok(UserLoginResponse {
                         message: String::from("Login Successful!"),
                         token: generate_user_jwt(&uid, &login_nonce),

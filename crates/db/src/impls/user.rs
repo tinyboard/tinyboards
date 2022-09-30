@@ -31,20 +31,20 @@ impl User {
         Ok(result)
     }
 
-    pub fn update_login_nonce(conn: &mut PgConnection, uid: i32, nonce: i64) -> Result<(), PorplError>{
+    pub fn update_login_nonce(conn: &mut PgConnection, uid: i32, nonce: i64) -> Result<usize, PorplError>{
 
         use crate::schema::users::dsl::*;
 
-        diesel::update(users)
+        let result = diesel::update(users)
         .filter(id.eq(uid))
         .set(login_nonce.eq(nonce))
         .execute(conn)
         .map_err(|e| {
             eprintln!("ERROR: {}", e);
             PorplError::err_500()
-        });
+        }).unwrap();
 
-        Ok(())
+        Ok(result)
     }
 
     /// Checks if an account with specified username/email already exists.
