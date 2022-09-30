@@ -1,4 +1,4 @@
-use crate::Perform;
+use crate::perform::Perform;
 use serde::{Deserialize, Serialize};
 
 use crate::data::PorplContext;
@@ -85,4 +85,11 @@ impl Perform for CreateUser {
             message: String::from("User created!"),
         })
     }
+}
+
+#[test]
+fn test_validate_username() {
+    assert!(validate_username("   a silly little username ").is_err());
+    assert!(validate_username("!2~`23132`Acs*9").is_err());
+    assert!(validate_username("perfectlyValidUser").is_ok());
 }
