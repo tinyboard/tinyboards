@@ -4,16 +4,14 @@ use diesel::PgConnection;
 use porpl_utils::PorplError;
 
 impl Submissions {
-
     pub fn insert(
         conn: &mut PgConnection,
         title: String,
         post_url: Option<String>,
-        body: String,
+        body: Option<String>,
         created_utc: i64,
         author_id: i32,
     ) -> Result<Self, PorplError> {
-
         use crate::schema::submissions;
 
         let new_submission = InsertSubmission {
@@ -21,7 +19,7 @@ impl Submissions {
             post_url,
             body,
             created_utc,
-            author_id
+            author_id,
         };
 
         diesel::insert_into(submissions::table)
@@ -32,5 +30,4 @@ impl Submissions {
                 PorplError::err_500()
             })
     }
-
 }

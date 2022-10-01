@@ -1,6 +1,6 @@
+use crate::schema::submissions;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::schema::submissions;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Submissions {
@@ -8,7 +8,7 @@ pub struct Submissions {
     title: String,
     post_url: Option<String>,
     body: String,
-    body_html: String,
+    //body_html: String,
     ban_reason: String,
     embed_url: String,
     meta_title: String,
@@ -19,12 +19,9 @@ pub struct Submissions {
     created_utc: i64,
     is_banned: bool,
     deleted_utc: i64,
-    purged_utc: i64,
     distinguish_level: i16,
     gm_distinguish: i16,
-    created_str: Option<String>,
     stickied: bool,
-    domain_ref: i32,
     is_approved: i32,
     approved_utc: i64,
     board_id: i32,
@@ -50,7 +47,7 @@ pub struct Submissions {
 pub struct InsertSubmission {
     pub title: String,
     pub post_url: Option<String>,
-    pub body: String,
+    pub body: Option<String>,
     pub created_utc: i64,
-    pub author_id: i32
+    pub author_id: i32,
 }

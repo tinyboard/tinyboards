@@ -10,17 +10,16 @@ use crate::Perform;
 use porpl_db::models::submissions::Submissions;
 use porpl_utils::PorplError;
 
-
 #[derive(Deserialize)]
 pub struct CreateSubmission {
     pub title: String,
     pub url: Option<String>,
-    pub body: Option<String>
+    pub body: Option<String>,
 }
 
 #[derive(Serialize)]
 pub struct CreateSubmissionResponse {
-    pub message: String
+    pub message: String,
 }
 
 fn validate_post_url(url: &String) -> Result<(), PorplError> {
@@ -36,16 +35,19 @@ fn validate_post_url(url: &String) -> Result<(), PorplError> {
 impl Perform for CreateSubmission {
     type Response = CreateSubmissionResponse;
 
-    async fn perform(self, context: &PorplContext, auth: Option<&str>) -> Result<Self::Response, PorplError> {
-        
+    async fn perform(
+        self,
+        context: &PorplContext,
+        auth: Option<&str>,
+    ) -> Result<Self::Response, PorplError> {
         let data = self;
 
         let u = require_user(context.pool(), context.master_key(), auth).await?;
 
         let uid = u.id;
 
-        if Some(data.url) {
-            validate_post_url(&data.url)?;
+        if let Some(ref url) = data.url {
+            validate_post_url(url)?;
         }
 
         let tstamp = porpl_utils::time::utc_timestamp();
@@ -55,8 +57,8 @@ impl Perform for CreateSubmission {
         })
         .await??;
 
-        Ok(CreateSubmissionResponse { message: String::from("Post submitted successfully!") })
+        Ok(CreateSubmissionResponse {
+            message: String::from("Post submitted successfully!"),
+        })
     }
 }
-
-
