@@ -250,7 +250,7 @@ CREATE TABLE submissions(
     -- created_str VARCHAR(255) DEFAULT NULL,
     stickied BOOLEAN NOT NULL DEFAULT false,
     -- domain_ref INTEGER NOT NULL DEFAULT 0,
-    is_approved INTEGER NOT NULL,
+    is_approved INTEGER NOT NULL DEFAULT 0,
     approved_utc BIGINT NOT NULL DEFAULT 0,
     board_id INTEGER NOT NULL,
     original_board_id INTEGER NOT NULL,
