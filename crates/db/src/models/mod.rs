@@ -32,7 +32,7 @@ pub mod subcategories;
 pub mod submissions;
 pub mod subscriptions;
 pub mod titles;
-pub mod user;
+pub mod users;
 pub mod useragents;
 pub mod userblocks;
 pub mod votes;

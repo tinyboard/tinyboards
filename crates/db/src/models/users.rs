@@ -2,6 +2,64 @@ use crate::schema::users;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
+
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = users)]
+pub struct UserForm {
+    username: String,
+    email: Option<String>,
+    admin_level: Option<i16>,
+    is_activated: Option<bool>,
+    over_18: Option<bool>,
+    bio: Option<String>,
+    bio_html: Option<String>,
+    is_banned: Option<bool>,
+    unban_utc: Option<i64>,
+    ban_reason: Option<String>,
+    defaultsorting: Option<String>,
+    defaulttime: Option<String>,
+    feed_nonce: Option<i64>,
+    login_nonce: Option<i64>,
+    title_id: Option<Option<i32>>,
+    has_profile: Option<bool>,
+    has_banner: Option<bool>,
+    reserved: Option<String>,
+    is_nsfw: Option<bool>,
+    tos_agreed_utc: Option<i64>,
+    profile_nonce: Option<i64>,
+    banner_nonce: Option<i64>,
+    mfa_secret: Option<String>,
+    hide_offensive: Option<bool>,
+    hide_bot: Option<bool>,
+    show_nsfl: Option<bool>,
+    is_private: Option<bool>,
+    is_deleted: Option<bool>,
+    delete_reason: Option<String>,
+    filter_nsfw: Option<bool>,
+    stored_karma: Option<i32>,
+    stored_subscriber_count: Option<i32>,
+    auto_join_chat: Option<bool>,
+    is_nofollow: Option<bool>,
+    custom_filter_list: Option<String>,
+    discord_id: Option<String>,
+    creation_region: Option<String>,
+    ban_evade: Option<i32>,
+    profile_upload_ip: Option<String>,
+    banner_upload_ip: Option<String>,
+    profile_upload_region: Option<String>,
+    banner_upload_region: Option<String>,
+    color: Option<String>,
+    secondary_color: Option<String>,
+    comment_signature: Option<String>,
+    comment_signature_html: Option<String>,
+    profile_set_utc: Option<i64>,
+    bannner_set_utc: Option<i64>,
+    original_username: Option<String>,
+    name_changed_utc: Option<i64>,
+}
+
+
+
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct User {
     id: i32,

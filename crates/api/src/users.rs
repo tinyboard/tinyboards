@@ -8,7 +8,7 @@ use std::collections::BTreeMap;
 
 // internal crates
 use crate::data::PorplContext;
-use porpl_db::models::user::User;
+use porpl_db::models::users::User;
 use porpl_utils::{PorplError, passhash};
 use crate::Perform;
 use crate::utils::blocking;

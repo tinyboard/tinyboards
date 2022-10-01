@@ -45,7 +45,7 @@ pub use models::subcategories::*;
 pub use models::submissions::*;
 pub use models::subscriptions::*;
 pub use models::titles::*;
-pub use models::user::*;
+pub use models::users::*;
 pub use models::useragents::*;
 pub use models::userblocks::*;
 pub use models::votes::*;

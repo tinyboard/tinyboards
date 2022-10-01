@@ -1,8 +1,8 @@
-use crate::models::user::{InsertUser, User};
+use porpl_utils::PorplError;
+use crate::models::users::{InsertUser, User, UserForm};
+use crate::traits::Crud;
 use diesel::prelude::*;
 use diesel::PgConnection;
-
-use porpl_utils::PorplError;
 
 impl User {
     /**
@@ -112,6 +112,48 @@ impl User {
         diesel::insert_into(users::table)
             .values(&new_user)
             .get_result(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+}
+
+impl Crud for User {
+    type Form = UserForm;
+    type IdType = i32;
+    fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, PorplError> {
+        use crate::schema::users::dsl::*;
+        users
+            .filter(is_deleted.eq(false))
+            .find(user_id)
+            .first::<Self>(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+    fn delete(conn: &mut PgConnection, user_id: i32) -> Result<usize, PorplError> {
+        use crate::schema::users::dsl::*;
+        diesel::delete(users.find(user_id)).execute(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+    fn create(conn: &mut PgConnection, form: &UserForm) -> Result<Self, PorplError> {
+        use crate::schema::users::dsl::*;
+        diesel::insert_into(users).values(form).get_result::<Self>(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+    fn update(conn: &mut PgConnection, user_id: i32, form: &UserForm) -> Result<Self, PorplError> {
+        use crate::schema::users::dsl::*;
+        diesel::update(users.find(user_id))
+            .set(form)
+            .get_result::<Self>(conn)
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
                 PorplError::err_500()
