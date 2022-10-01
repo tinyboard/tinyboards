@@ -1025,13 +1025,10 @@ dependencies = [
  "bigdecimal",
  "derive_more",
  "diesel",
- "hmac",
- "jwt",
  "porpl-db",
  "porpl-utils",
  "regex",
  "serde",
- "sha2",
 ]
 
 [[package]]
@@ -1044,9 +1041,12 @@ dependencies = [
  "diesel_ltree",
  "diesel_migrations",
  "dotenvy",
+ "hmac",
+ "jwt",
  "porpl-utils",
  "r2d2",
  "serde",
+ "sha2",
  "url",
 ]
 

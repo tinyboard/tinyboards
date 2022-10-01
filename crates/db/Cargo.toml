@@ -21,4 +21,6 @@ serde = { version = "1.0.145", features = ["derive"] }
 bigdecimal = "0.3.0"
 url = { version = "2.3.1", features = ["serde"] }
 porpl-utils = { path = "../utils" }
-
+jwt = "0.16.0"
+hmac = "0.12.1"
+sha2 = "0.10.6"

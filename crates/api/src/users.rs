@@ -1,17 +1,13 @@
 // external crates
-use serde::{Deserialize, Serialize};
 use regex::Regex;
-use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use hmac::{Hmac, Mac};
-use sha2::Sha384;
-use std::collections::BTreeMap;
+use serde::{Deserialize, Serialize};
 
 // internal crates
 use crate::data::PorplContext;
-use porpl_db::models::users::User;
-use porpl_utils::{PorplError, passhash};
+use crate::utils::{blocking, require_user};
 use crate::Perform;
-use crate::utils::blocking;
+use porpl_db::models::users::User;
+use porpl_utils::{passhash, PorplError};
 
 #[derive(Deserialize)]
 pub struct GetUsers {
@@ -27,6 +23,33 @@ pub struct GetUsersResponse {
 pub struct GetInsertUserToDbResponse {
     rows_returned: Option<usize>,
 }
+
+#[derive(Deserialize, Debug)]
+pub struct CreateUser {
+    pub username: String,
+    pub password: String,
+    pub email: Option<String>,
+}
+
+#[derive(Serialize)]
+pub struct CreateUserResponse {
+    pub token: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct UserLogin {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Serialize)]
+pub struct UserLoginResponse {
+    pub message: String,
+    pub token: String,
+}
+
+#[derive(Deserialize)]
+pub struct GetLoggedInUser {}
 
 #[async_trait::async_trait]
 impl Perform for GetUsers {
@@ -47,30 +70,6 @@ impl Perform for GetUsers {
     }
 }
 
-#[derive(Deserialize, Debug)]
-pub struct CreateUser {
-    pub username: String,
-    pub password: String,
-    pub email: Option<String>,
-}
-
-#[derive(Serialize)]
-pub struct CreateUserResponse {
-    pub message: String
-}
-
-#[derive(Deserialize, Debug)]
-pub struct UserLogin {
-    pub username: String,
-    pub password: String
-}
-
-#[derive(Serialize)]
-pub struct UserLoginResponse {
-    pub message: String,
-    pub token: String
-}
-
 fn validate_username(username: &str) -> Result<(), PorplError> {
     let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
     if re.is_match(username) {
@@ -80,30 +79,7 @@ fn validate_username(username: &str) -> Result<(), PorplError> {
     }
 }
 
-fn generate_user_jwt(uid: &i32, login_nonce: &i64) -> String {
-
-    let master_secret = std::env::var("MASTER_KEY").unwrap();
-    let key:Hmac<Sha384> = Hmac::new_from_slice(master_secret.as_bytes()).unwrap();
-    let header = Header {
-        algorithm: AlgorithmType::Hs384,
-        ..Default::default()
-    };
-
-
-    let mut claims = BTreeMap::new();
-    claims.insert("uid", uid.to_string());
-    claims.insert("nonce", login_nonce.to_string());
-
-    let token = Token::new(header, claims)
-        .sign_with_key(&key)
-        .unwrap()
-        .as_str()
-        .to_string();
-
-    token
-}
-
-#[async_trait::async_trait] 
+#[async_trait::async_trait]
 impl Perform for CreateUser {
     type Response = CreateUserResponse;
 
@@ -116,21 +92,19 @@ impl Perform for CreateUser {
 
         validate_username(&data.username)?;
 
-        let _new_user = blocking(context.pool(), move |conn| {
+        let new_user = blocking(context.pool(), move |conn| {
             User::insert(conn, data.username, data.password, data.email)
         })
         .await??;
 
         Ok(CreateUserResponse {
-            message: String::from("User created!"),
+            token: User::get_jwt(new_user.id, new_user.login_nonce, context.master_key()),
         })
     }
 }
 
-
 #[async_trait::async_trait]
 impl Perform for UserLogin {
-    
     type Response = UserLoginResponse;
 
     async fn perform(
@@ -138,7 +112,6 @@ impl Perform for UserLogin {
         context: &PorplContext,
         _: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
-        
         let data: UserLogin = self;
 
         let login_details = blocking(context.pool(), move |conn| {
@@ -150,24 +123,33 @@ impl Perform for UserLogin {
         let hash = login_details.1;
         let login_nonce = login_details.2;
 
-        let new_login_nonce = porpl_utils::time::utc_timestamp();
-
-        blocking(context.pool(), move |conn| {
-            User::update_login_nonce(conn, uid, new_login_nonce)
-        })
-        .await??;
-
         match passhash::verify_password(&hash, &data.password) {
             true => Ok(UserLoginResponse {
-                        message: String::from("Login Successful!"),
-                        token: generate_user_jwt(&uid, &login_nonce),
-                     }),
-            _ => Err(PorplError::new(400, String::from("Invalid password, Login Failed!")))
+                message: String::from("Login Successful!"),
+                token: User::get_jwt(uid, login_nonce, context.master_key()),
+            }),
+            _ => Err(PorplError::new(
+                400,
+                String::from("Invalid password, Login Failed!"),
+            )),
         }
     }
-
 }
 
+#[async_trait::async_trait]
+impl Perform for GetLoggedInUser {
+    type Response = User;
+
+    async fn perform(
+        self,
+        context: &PorplContext,
+        auth: Option<&str>,
+    ) -> Result<Self::Response, PorplError> {
+        let u = require_user(context.pool(), context.master_key(), auth).await?;
+
+        Ok(u)
+    }
+}
 
 #[test]
 fn test_validate_username() {
