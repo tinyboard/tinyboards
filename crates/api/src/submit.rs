@@ -1,4 +1,3 @@
-use diesel::PgConnection;
 // external crates
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -50,7 +49,7 @@ impl Perform for CreateSubmission {
 
         let tstamp = porpl_utils::time::utc_timestamp();
 
-        let new_submission = blocking(context.pool(), move |conn| {
+        let _new_submission = blocking(context.pool(), move |conn| {
             Submissions::insert(conn, data.title, data.url, data.body, tstamp, uid)
         })
         .await??;
