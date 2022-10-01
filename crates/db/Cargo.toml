@@ -5,10 +5,20 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+
+[features]
+full = ["diesel-derive-newtype", "diesel_migrations"]
+
+
 [dependencies]
 diesel = { version = "2.0.0", features = ["postgres", "r2d2", "64-column-tables"] }
+diesel_migrations = { version = "2.0.0", optional = true }
+diesel-derive-newtype = { version = "1.0.0", optional = true }
+diesel_ltree = "0.3.0"
 r2d2 = "0.8.10"
 dotenvy = "0.15"
 serde = { version = "1.0.145", features = ["derive"] }
 bigdecimal = "0.3.0"
+url = { version = "2.3.1", features = ["serde"] }
 porpl-utils = { path = "../utils" }
+
