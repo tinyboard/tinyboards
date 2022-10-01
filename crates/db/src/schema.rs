@@ -396,7 +396,7 @@ diesel::table! {
         meta_title -> Varchar,
         meta_description -> Varchar,
         author_id -> Int4,
-        repost_id -> Int4,
+        repost_id -> Nullable<Int4>,
         edited_utc -> Int8,
         created_utc -> Int8,
         is_banned -> Bool,

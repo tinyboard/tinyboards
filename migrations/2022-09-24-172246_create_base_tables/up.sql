@@ -239,7 +239,7 @@ CREATE TABLE submissions(
     meta_title VARCHAR(512) NOT NULL DEFAULT '',
     meta_description VARCHAR(1024) NOT NULL DEFAULT '',
     author_id INTEGER NOT NULL,
-    repost_id INTEGER NOT NULL DEFAULT 0,
+    repost_id INTEGER DEFAULT 0,
     edited_utc BIGINT NOT NULL DEFAULT 0,
     created_utc BIGINT NOT NULL DEFAULT 0,
     is_banned BOOLEAN NOT NULL DEFAULT false,
