@@ -1,9 +1,9 @@
-use diesel_ltree::Ltree;
+//use diesel_ltree::Ltree;
 use serde::{Deserialize, Serialize};
 use std::{
-  fmt,
-  fmt::{Display, Formatter},
-  ops::Deref,
+    fmt,
+    fmt::{Display, Formatter},
+    ops::Deref,
 };
 use url::Url;
 
@@ -12,9 +12,9 @@ use url::Url;
 pub struct PostId(pub i32);
 
 impl fmt::Display for PostId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -26,9 +26,9 @@ pub struct UserId(pub i32);
 pub struct CommentId(pub i32);
 
 impl fmt::Display for CommentId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
@@ -40,9 +40,9 @@ pub struct BoardId(pub i32);
 pub struct PrivateMessageId(i32);
 
 impl fmt::Display for PrivateMessageId {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    write!(f, "{}", self.0)
-  }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Serialize, Deserialize, Default)]
@@ -85,28 +85,28 @@ pub struct DbUrl(pub(crate) Url);
 pub struct LtreeDef(pub String);*/
 
 impl Display for DbUrl {
-  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-    self.to_owned().0.fmt(f)
-  }
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.to_owned().0.fmt(f)
+    }
 }
 
 #[allow(clippy::from_over_into)]
 impl Into<DbUrl> for Url {
-  fn into(self) -> DbUrl {
-    DbUrl(self)
-  }
+    fn into(self) -> DbUrl {
+        DbUrl(self)
+    }
 }
 #[allow(clippy::from_over_into)]
 impl Into<Url> for DbUrl {
-  fn into(self) -> Url {
-    self.0
-  }
+    fn into(self) -> Url {
+        self.0
+    }
 }
 
 impl Deref for DbUrl {
-  type Target = Url;
+    type Target = Url;
 
-  fn deref(&self) -> &Self::Target {
-    &self.0
-  }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
