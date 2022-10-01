@@ -1,6 +1,6 @@
 use diesel::PgConnection;
 use porpl_utils::PorplError;
-use crate::porpl_types::{UserId, DbUrl, BoardId};
+use crate::porpl_types::UserId;
 
 pub trait Crud {
     type Form;
@@ -98,7 +98,7 @@ pub trait Readable {
     fn mark_as_unread(conn: &mut PgConnection, form: &Self) -> Result<usize, PorplError>
     where
         Self: Sized;
-}
+}// the project doesnt compile with From
 
 pub trait Reportable {
     type Form;
