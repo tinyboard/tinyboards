@@ -2,9 +2,11 @@
 
 pub mod database;
 pub mod models;
+mod porpl_types;
+mod traits;
 
-mod impls;
-mod schema;
+pub mod impls;
+pub mod schema;
 
 pub use bigdecimal::BigDecimal;
 pub use database::Database;
