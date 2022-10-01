@@ -79,10 +79,10 @@ pub struct CommentReplyId(i32);
 #[cfg_attr(feature = "full", diesel(sql_type = diesel::sql_types::Text))]
 pub struct DbUrl(pub(crate) Url);
 
-#[derive(Serialize, Deserialize)]
+/*#[derive(Serialize, Deserialize)]
 #[serde(remote = "Ltree")]
 /// Do remote derivation for the Ltree struct
-pub struct LtreeDef(pub String);
+pub struct LtreeDef(pub String);*/
 
 impl Display for DbUrl {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
