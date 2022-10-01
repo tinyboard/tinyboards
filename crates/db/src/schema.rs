@@ -348,14 +348,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    posts (id) {
-        id -> Int4,
-        title -> Varchar,
-        body -> Text,
-    }
-}
-
-diesel::table! {
     reports (id) {
         id -> Int4,
         post_id -> Int4,
@@ -598,7 +590,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     notifications,
     oauth_apps,
     postrels,
-    posts,
     reports,
     rules,
     save_relationship,
