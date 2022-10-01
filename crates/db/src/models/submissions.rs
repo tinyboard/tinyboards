@@ -14,7 +14,7 @@ pub struct Submissions {
     meta_title: String,
     meta_description: String,
     author_id: i32,
-    repost_id: i32,
+    repost_id: Option<i32>,
     edited_utc: i64,
     created_utc: i64,
     is_banned: bool,
