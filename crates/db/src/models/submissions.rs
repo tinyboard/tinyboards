@@ -4,7 +4,7 @@ use crate::schema::submissions;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Submissions {
-    id: i64,
+    id: i32,
     title: String,
     post_url: Option<String>,
     body: String,

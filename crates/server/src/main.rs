@@ -4,6 +4,7 @@ use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use porpl_api::data::PorplContext;
 use porpl_api::users::UserLogin;
 use porpl_api::users::{CreateUser, GetLoggedInUser, GetUsers};
+use porpl_api::submit::CreateSubmission;
 use porpl_api::Perform;
 use porpl_utils::PorplError;
 
@@ -24,8 +25,8 @@ async fn main() -> std::io::Result<()> {
                     .route("/signup", web::post().to(perform_post::<CreateUser>))
                     .route("/login", web::post().to(perform_post::<UserLogin>))
                     .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
-                    //.route("/submit", web::post().to(perform_post<CreateSubmission>))
-            )
+                    .route("/submit", web::post().to(perform_post::<CreateSubmission>))
+                )
     })
     .bind(("127.0.0.1", 8080))?
     .run()

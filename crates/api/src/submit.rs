@@ -55,13 +55,7 @@ impl Perform for CreateSubmission {
         })
         .await??;
 
-
-
-
-
-
-
-
+        Ok(CreateSubmissionResponse { message: String::from("Post submitted successfully!") })
     }
 }
 
