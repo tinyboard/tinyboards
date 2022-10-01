@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::data::PorplContext;
 use crate::utils::{blocking, require_user};
 use crate::Perform;
-use porpl_db::models::submissions::Submissions;
+use porpl_db::models::{submissions::Submissions, users::User};
 use porpl_utils::PorplError;
 
 #[derive(Deserialize)]
@@ -42,9 +42,7 @@ impl Perform for CreateSubmission {
     ) -> Result<Self::Response, PorplError> {
         let data = self;
 
-        let u = require_user(context.pool(), context.master_key(), auth).await?;
-
-        let uid = u.id;
+        let User { id: uid, .. } = require_user(context.pool(), context.master_key(), auth).await?;
 
         if let Some(ref url) = data.url {
             validate_post_url(url)?;
