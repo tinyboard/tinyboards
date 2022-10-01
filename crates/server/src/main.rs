@@ -23,7 +23,8 @@ async fn main() -> std::io::Result<()> {
                     .route("/users", web::get().to(perform_get::<GetUsers>))
                     .route("/signup", web::post().to(perform_post::<CreateUser>))
                     .route("/login", web::post().to(perform_post::<UserLogin>))
-                    .route("/me", web::get().to(perform_get::<GetLoggedInUser>)),
+                    .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
+                    //.route("/submit", web::post().to(perform_post<CreateSubmission>))
             )
     })
     .bind(("127.0.0.1", 8080))?

@@ -1,10 +1,11 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::schema::submissions;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Submissions {
     id: i64,
-    title: Option<String>,
+    title: String,
     post_url: Option<String>,
     body: String,
     body_html: String,
@@ -34,11 +35,6 @@ pub struct Submissions {
     accepted_utc: i64,
     has_thumb: bool,
     post_public: bool,
-    score_hot: f64,
-    score_disputed: f64,
-    score_top: f64,
-    score_best: f64,
-    score_activity: f64,
     is_offensive: bool,
     is_nsfl: bool,
     is_pinned: bool,
@@ -47,4 +43,14 @@ pub struct Submissions {
     downvotes: i32,
     creation_region: Option<String>,
     app_id: Option<i32>,
+}
+
+#[derive(Insertable, Serialize, Deserialize, PartialEq)]
+#[diesel(table_name = submissions)]
+pub struct InsertSubmission {
+    pub title: String,
+    pub post_url: Option<String>,
+    pub body: String,
+    pub created_utc: i64,
+    pub author_id: i32
 }
