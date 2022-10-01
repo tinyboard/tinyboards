@@ -124,7 +124,14 @@ impl User {
             .select((id, passhash, login_nonce))
             .filter(username.ilike(name))
             .first::<(i32, String, i64)>(conn)
-            .unwrap();
+            .map_err(|_| {
+                PorplError::new(
+                    404,
+                    String::from(
+                        "There's no account with that username. Consider signing up instead?",
+                    ),
+                )
+            })?;
         Ok(result)
     }
 
