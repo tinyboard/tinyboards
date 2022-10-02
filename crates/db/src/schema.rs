@@ -402,7 +402,7 @@ diesel::table! {
         is_banned -> Bool,
         deleted_utc -> Int8,
         distinguish_level -> Int2,
-        gm_distinguish -> Int2,
+        gm_distinguish -> Int4,
         stickied -> Bool,
         is_approved -> Int4,
         approved_utc -> Int8,
@@ -554,7 +554,6 @@ diesel::joinable!(modactions -> comments (target_comment_id));
 diesel::joinable!(modactions -> submissions (target_submission_id));
 diesel::joinable!(modactions -> users (target_user_id));
 diesel::joinable!(subcategories -> categories (cat_id));
-diesel::joinable!(submissions -> users (is_approved));
 diesel::joinable!(users -> titles (title_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

@@ -18,7 +18,7 @@ ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_board_id
     FOREIGN KEY(board_id)
         REFERENCES boards(id);
 ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_original_board_id
-    FOREIGN KEY(board_id)
+    FOREIGN KEY(original_board_id)
         REFERENCES boards(id);
 ALTER TABLE IF EXISTS submissions ADD CONSTRAINT fk_app_id
     FOREIGN KEY(app_id)

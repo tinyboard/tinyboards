@@ -23,7 +23,7 @@ impl PorplError {
     }
 
     pub fn err_500() -> Self {
-        Self::new(500, String::from("Internal Server Error :\\"))
+        Self::new(500, String::from("Internal Server Error"))
     }
 
     pub fn err_401() -> Self {
