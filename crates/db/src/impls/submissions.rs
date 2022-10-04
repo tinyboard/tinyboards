@@ -31,17 +31,6 @@ impl Submissions {
                 PorplError::err_500()
             })
     }
-
-    pub fn get_post(
-        conn: &mut PgConnection,
-        post_id: i32,
-    ) -> Result<Self, PorplError> {
-        match Self::read(conn, post_id) {
-            Ok(p) => Ok(p),
-            Err(e) => Err(e)
-        }
-    }
-
 }
 
 

@@ -1,10 +1,11 @@
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::schema::comments;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Comments {
     id: i32,
-    body: Option<String>,
+    body: String,
     body_html: Option<String>,
     ban_reason: String,
     author_id: i32,
@@ -13,15 +14,12 @@ pub struct Comments {
     edited_utc: i64,
     is_banned: bool,
     gm_distinguish: i32,
-    distinguished_board: i32,
+    distinguished_board: Option<i32>,
     deleted_utc: i64,
     purged_utc: i64,
     is_approved: i32,
     approved_utc: i64,
     creation_ip: String,
-    score_disputed: f64,
-    score_hot: f64,
-    score_top: f64,
     comment_level: i32,
     parent_comment_id: i32,
     original_board_id: i32,
@@ -34,4 +32,13 @@ pub struct Comments {
     app_id: Option<i32>,
     upvotes: i32,
     downvotes: i32,
+}
+
+#[derive(Insertable, Serialize, Deserialize, PartialEq)]
+#[diesel(table_name = comments)]
+pub struct InsertComment {
+    author_id: i32,
+    parent_submission: i32,
+    body: String,
+    created_utc: i64,
 }

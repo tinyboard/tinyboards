@@ -2,6 +2,7 @@ pub mod data;
 pub mod users;
 pub mod utils;
 pub mod submissions;
+pub mod comments;
 use porpl_utils::PorplError;
 
 use data::PorplContext;

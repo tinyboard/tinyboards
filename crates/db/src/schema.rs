@@ -168,7 +168,7 @@ diesel::table! {
 diesel::table! {
     comments (id) {
         id -> Int4,
-        body -> Nullable<Varchar>,
+        body -> Varchar,
         body_html -> Nullable<Varchar>,
         ban_reason -> Varchar,
         author_id -> Int4,
@@ -183,9 +183,6 @@ diesel::table! {
         is_approved -> Int4,
         approved_utc -> Int8,
         creation_ip -> Varchar,
-        score_disputed -> Numeric,
-        score_hot -> Numeric,
-        score_top -> Numeric,
         comment_level -> Int4,
         parent_comment_id -> Int4,
         original_board_id -> Int4,
@@ -554,6 +551,7 @@ diesel::joinable!(modactions -> comments (target_comment_id));
 diesel::joinable!(modactions -> submissions (target_submission_id));
 diesel::joinable!(modactions -> users (target_user_id));
 diesel::joinable!(subcategories -> categories (cat_id));
+diesel::joinable!(submissions -> users (is_approved));
 diesel::joinable!(users -> titles (title_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

@@ -309,7 +309,7 @@ CREATE TABLE badwords(
 
 CREATE TABLE comments(
     id SERIAL PRIMARY KEY,
-    body VARCHAR(10000) DEFAULT NULL,
+    body VARCHAR(10000) NOT NULL,
     body_html VARCHAR(20000) DEFAULT NULL,
     ban_reason VARCHAR(256) NOT NULL DEFAULT '',
     author_id INTEGER NOT NULL,
@@ -324,9 +324,9 @@ CREATE TABLE comments(
     is_approved INTEGER NOT NULL DEFAULT 1,
     approved_utc BIGINT NOT NULL DEFAULT 0,
     creation_ip VARCHAR(64) NOT NULL DEFAULT '',
-    score_disputed NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
-    score_hot NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
-    score_top NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
+    -- score_disputed NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
+    -- score_hot NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
+    -- score_top NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
     comment_level INTEGER NOT NULL DEFAULT 0,
     parent_comment_id INTEGER NOT NULL DEFAULT 0,
     original_board_id INTEGER NOT NULL DEFAULT 1,
