@@ -328,7 +328,7 @@ CREATE TABLE comments(
     -- score_hot NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
     -- score_top NUMERIC(18, 2) NOT NULL DEFAULT 0.0,
     comment_level INTEGER NOT NULL DEFAULT 0,
-    parent_comment_id INTEGER NOT NULL DEFAULT 0,
+    parent_comment_id INTEGER NOT NULL DEFAULT 1,
     original_board_id INTEGER NOT NULL DEFAULT 1,
     over_18 BOOLEAN NOT NULL DEFAULT false,
     is_offensive BOOLEAN NOT NULL DEFAULT false,
