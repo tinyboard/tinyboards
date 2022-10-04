@@ -168,7 +168,7 @@ diesel::table! {
 diesel::table! {
     comments (id) {
         id -> Int4,
-        body -> Nullable<Varchar>,
+        body -> Varchar,
         body_html -> Nullable<Varchar>,
         ban_reason -> Varchar,
         author_id -> Int4,

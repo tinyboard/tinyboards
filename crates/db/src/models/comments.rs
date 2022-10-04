@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Comments {
     id: i32,
-    body: Option<String>,
+    body: String,
     body_html: Option<String>,
     ban_reason: String,
     author_id: i32,
