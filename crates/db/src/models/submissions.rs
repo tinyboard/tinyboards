@@ -59,7 +59,7 @@ pub struct Submissions {
     is_banned: bool,
     deleted_utc: i64,
     distinguish_level: i16,
-    gm_distinguish: i32,
+    gm_distinguish: Option<i32>,
     stickied: bool,
     is_approved: i32,
     approved_utc: i64,

@@ -1,11 +1,11 @@
+use crate::schema::comments;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::schema::comments;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Comments {
     id: i32,
-    body: String,
+    body: Option<String>,
     body_html: Option<String>,
     ban_reason: String,
     author_id: i32,

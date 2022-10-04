@@ -246,7 +246,7 @@ CREATE TABLE submissions(
     deleted_utc BIGINT NOT NULL DEFAULT 0,
     -- purged_utc BIGINT NOT NULL DEFAULT 0,
     distinguish_level SMALLINT NOT NULL DEFAULT 0,
-    gm_distinguish INTEGER NOT NULL DEFAULT 1,
+    gm_distinguish INTEGER,
     -- created_str VARCHAR(255) DEFAULT NULL,
     stickied BOOLEAN NOT NULL DEFAULT false,
     -- domain_ref INTEGER NOT NULL DEFAULT 0,
