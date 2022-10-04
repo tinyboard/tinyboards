@@ -2,6 +2,45 @@ use crate::schema::submissions;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = submissions)]
+pub struct SubmissionForm {
+    title: String,
+    post_url: Option<String>,
+    body: Option<String>,
+    ban_reason: Option<String>,
+    embed_url: Option<String>,
+    meta_title: Option<String>,
+    meta_description: Option<String>,
+    author_id: Option<i32>,
+    repost_id: Option<i32>,
+    edited_utc: Option<i64>,
+    created_utc: Option<i64>,
+    is_banned: Option<bool>,
+    deleted_utc: Option<i64>,
+    distinguish_level: Option<i16>,
+    gm_distinguish: Option<i32>,
+    stickied: Option<bool>,
+    is_approved: Option<i32>,
+    approved_utc: Option<i64>,
+    board_id: Option<i32>,
+    original_board_id: Option<i32>,
+    over_18: Option<bool>,
+    creation_ip: Option<String>,
+    mod_approved: Option<i32>,
+    accepted_utc: Option<i64>,
+    has_thumb: Option<bool>,
+    post_public: Option<bool>,
+    is_offensive: Option<bool>,
+    is_nsfl: Option<bool>,
+    is_pinned: Option<bool>,
+    is_bot: Option<bool>,
+    upvotes: Option<i32>,
+    downvotes: Option<i32>,
+    creation_region: Option<String>,
+    app_id: Option<i32>,
+}
+
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Submissions {
     id: i32,

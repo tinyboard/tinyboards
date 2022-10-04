@@ -1,7 +1,7 @@
 pub mod data;
 pub mod users;
 pub mod utils;
-pub mod submit;
+pub mod submissions;
 use porpl_utils::PorplError;
 
 use data::PorplContext;
@@ -21,5 +21,63 @@ pub trait Perform {
         self,
         context: &PorplContext,
         authorization: Option<&str>,
+    ) -> Result<Self::Response, PorplError>;
+}
+
+
+#[async_trait::async_trait]
+pub trait PerformCrudRead {
+    type Response: Serialize;
+    type IdType;
+    type Form;
+
+    async fn perform_read(
+        self,
+        context: &PorplContext,
+        authorization: Option<&str>,
+        id: Self::IdType,
+    ) -> Result<Self::Response, PorplError>;
+
+}
+
+#[async_trait::async_trait]
+pub trait PerformCrudDelete {
+    type IdType;
+
+    async fn perform_delete(
+        self,
+        context: &PorplContext,
+        authorization: Option<&str>,
+        id: Self::IdType,
+    ) -> Result<usize, PorplError>;
+}
+
+#[async_trait::async_trait]
+pub trait PerformCrudUpdate {
+    type Response: Serialize;
+    type IdType;
+    type Form;
+
+    async fn perform_update(
+        self,
+        context: &PorplContext,
+        authorization: Option<&str>,
+        id: Self::IdType,
+        form: &Self::Form,
+    ) -> Result<Self::Response, PorplError>;
+}
+
+#[async_trait::async_trait]
+pub trait PerformCrudCreate {
+    type Response: Serialize;
+    type IdType;
+    type Form;
+
+    async fn perform_create(
+        self,
+        context: &PorplContext,
+        authorization: Option<&str>,
+        id: Self::IdType,
+        form: &Self::Form,
     ) -> Result<Self::Response, PorplError>;
 }

@@ -2,6 +2,7 @@ use crate::models::submissions::*;
 use diesel::prelude::*;
 use diesel::PgConnection;
 use porpl_utils::PorplError;
+use crate::traits::Crud;
 
 impl Submissions {
     pub fn insert(
@@ -24,6 +25,62 @@ impl Submissions {
 
         diesel::insert_into(submissions::table)
             .values(&new_submission)
+            .get_result::<Self>(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+
+    pub fn get_post(
+        conn: &mut PgConnection,
+        post_id: i32,
+    ) -> Result<Self, PorplError> {
+        match Self::read(conn, post_id) {
+            Ok(p) => Ok(p),
+            Err(e) => Err(e)
+        }
+    }
+
+}
+
+
+impl Crud for Submissions {
+    type Form = SubmissionForm;
+    type IdType = i32;
+    fn read(conn: &mut PgConnection, submission_id: i32) -> Result<Self, PorplError> {
+        use crate::schema::submissions::dsl::*;
+        submissions
+            .find(submission_id)
+            .first::<Self>(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+    fn delete(conn: &mut PgConnection, submission_id: i32) -> Result<usize, PorplError> {
+        use crate::schema::submissions::dsl::*;
+        diesel::delete(submissions.find(submission_id))
+            .execute(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+    fn create(conn: &mut PgConnection, form: &SubmissionForm) -> Result<Self, PorplError> {
+        use crate::schema::submissions::dsl::*;
+        diesel::insert_into(submissions)
+            .values(form)
+            .get_result::<Self>(conn)
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+    fn update(conn: &mut PgConnection, submission_id: i32, form: &SubmissionForm) -> Result<Self, PorplError> {
+        use crate::schema::submissions::dsl::*;
+        diesel::update(submissions.find(submission_id))
+            .set(form)
             .get_result::<Self>(conn)
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
