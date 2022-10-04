@@ -4,16 +4,10 @@ use serde::{Deserialize, Serialize};
 
 // internal crates
 use crate::data::PorplContext;
-use crate::utils::{blocking, require_user, load_user_opt};
+use crate::utils::{blocking, require_user};
 use crate::{Perform};
 use porpl_db::models::{submissions::Submissions, users::User};
 use porpl_utils::PorplError;
-
-
-#[derive(Deserialize)]
-pub struct GetPost {
-    pub post_id: i32,
-}
 
 #[derive(Deserialize)]
 pub struct CreateSubmission {
@@ -63,29 +57,5 @@ impl Perform for CreateSubmission {
         Ok(CreateSubmissionResponse {
             message: String::from("Post submitted successfully!"),
         })
-    }
-}
-
-#[async_trait::async_trait]
-impl Perform for GetPost {
-    type Response = Submissions;
-
-    async fn perform(
-        self,
-        context: &PorplContext,
-        auth: Option<&str>
-    ) -> Result<Self::Response, PorplError> {
-
-        let data = self;
-
-        if auth.is_some() {
-            load_user_opt(context.pool(), context.master_key(), auth).await?;
-        }
-
-        let post = blocking(context.pool(), move |conn| {
-            Submissions::get_post(conn, data.post_id)
-        }).await??;
-
-        Ok(post)
     }
 }

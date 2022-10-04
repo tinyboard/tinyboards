@@ -37,8 +37,8 @@ pub struct Comments {
 #[derive(Insertable, Serialize, Deserialize, PartialEq)]
 #[diesel(table_name = comments)]
 pub struct InsertComment {
-    author_id: i32,
-    parent_submission: i32,
-    body: String,
-    created_utc: i64,
+    pub author_id: i32,
+    pub parent_submission: i32,
+    pub body: String,
+    pub created_utc: i64,
 }
