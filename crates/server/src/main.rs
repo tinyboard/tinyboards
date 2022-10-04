@@ -1,11 +1,14 @@
 //mod data;
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Result};
 
-use porpl_api::data::PorplContext;
-use porpl_api::users::UserLogin;
-use porpl_api::users::{CreateUser, GetLoggedInUser, GetUsers};
-use porpl_api::submissions::CreateSubmission;
-use porpl_api::{Perform};
+use porpl_api::{
+    users::{UserLogin, CreateUser, GetLoggedInUser, GetUsers},
+    submissions::{CreateSubmission},
+    comments::{CreateComment},
+    data::{PorplContext},
+    Perform,
+};
+
 use porpl_utils::PorplError;
 
 use dotenv::dotenv;
@@ -26,6 +29,7 @@ async fn main() -> std::io::Result<()> {
                     .route("/login", web::post().to(perform_post::<UserLogin>))
                     .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
                     .route("/posts/submit", web::post().to(perform_post::<CreateSubmission>))
+                    .route("/comments/submit", web::post().to(perform_post::<CreateComment>))
                 )
     })
     .bind(("127.0.0.1", 8080))?
