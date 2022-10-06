@@ -175,6 +175,16 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    user_mention (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        comment_id -> Int4,
+        read -> Bool,
+        published -> Timestamp,
+    }
+}
+
 diesel::joinable!(board -> tag (tag_id));
 diesel::joinable!(board -> user_ (creator_id));
 diesel::joinable!(board_moderator -> board (board_id));
@@ -202,6 +212,8 @@ diesel::joinable!(post_saved -> post (post_id));
 diesel::joinable!(post_saved -> user_ (user_id));
 diesel::joinable!(site -> user_ (creator_id));
 diesel::joinable!(user_ban -> user_ (user_id));
+diesel::joinable!(user_mention -> comment (comment_id));
+diesel::joinable!(user_mention -> user_ (recipient_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     board,
@@ -220,4 +232,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     tag,
     user_,
     user_ban,
+    user_mention,
 );
