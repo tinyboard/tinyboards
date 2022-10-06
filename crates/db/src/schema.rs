@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    guild (id) {
+    board (id) {
         id -> Int4,
         name -> Varchar,
         title -> Varchar,
@@ -15,27 +15,27 @@ diesel::table! {
 }
 
 diesel::table! {
-    guild_moderator (id) {
+    board_moderator (id) {
         id -> Int4,
-        guild_id -> Int4,
+        board_id -> Int4,
         user_id -> Int4,
         published -> Timestamp,
     }
 }
 
 diesel::table! {
-    guild_subscriber (id) {
+    board_subscriber (id) {
         id -> Int4,
-        guild_id -> Int4,
+        board_id -> Int4,
         user_id -> Int4,
         published -> Timestamp,
     }
 }
 
 diesel::table! {
-    guild_user_ban (id) {
+    board_user_ban (id) {
         id -> Int4,
-        guild_id -> Int4,
+        board_id -> Int4,
         user_id -> Int4,
         published -> Timestamp,
     }
@@ -82,22 +82,22 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(guild -> tag (tag_id));
-diesel::joinable!(guild -> user_ (creator_id));
-diesel::joinable!(guild_moderator -> guild (guild_id));
-diesel::joinable!(guild_moderator -> user_ (user_id));
-diesel::joinable!(guild_subscriber -> guild (guild_id));
-diesel::joinable!(guild_subscriber -> user_ (user_id));
-diesel::joinable!(guild_user_ban -> guild (guild_id));
-diesel::joinable!(guild_user_ban -> user_ (user_id));
+diesel::joinable!(board -> tag (tag_id));
+diesel::joinable!(board -> user_ (creator_id));
+diesel::joinable!(board_moderator -> board (board_id));
+diesel::joinable!(board_moderator -> user_ (user_id));
+diesel::joinable!(board_subscriber -> board (board_id));
+diesel::joinable!(board_subscriber -> user_ (user_id));
+diesel::joinable!(board_user_ban -> board (board_id));
+diesel::joinable!(board_user_ban -> user_ (user_id));
 diesel::joinable!(site -> user_ (creator_id));
 diesel::joinable!(user_ban -> user_ (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
-    guild,
-    guild_moderator,
-    guild_subscriber,
-    guild_user_ban,
+    board,
+    board_moderator,
+    board_subscriber,
+    board_user_ban,
     site,
     tag,
     user_,

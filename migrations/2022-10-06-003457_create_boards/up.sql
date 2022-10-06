@@ -31,7 +31,7 @@ insert into tag (name) values
 ('Meta'),
 ('Other');
 
-create table guild (
+create table board (
     id serial primary key,
     name varchar(50) not null unique,
     title varchar(150) not null,
@@ -43,31 +43,31 @@ create table guild (
     updated timestamp
 );
 
-create table guild_moderator (
+create table board_moderator (
     id serial primary key,
-    guild_id int references guild on update cascade on delete cascade not null,
+    board_id int references board on update cascade on delete cascade not null,
     user_id int references user_ on update cascade on delete cascade not null,
     published timestamp not null default now(),
-    unique (guild_id, user_id)
+    unique (board_id, user_id)
 );
 
-create table guild_subscriber (
+create table board_subscriber (
     id serial primary key,
-    guild_id int references guild on update cascade on delete cascade not null,
+    board_id int references board on update cascade on delete cascade not null,
     user_id int references user_ on update cascade on delete cascade not null,
     published timestamp not null default now(),
-    unique(guild_id, user_id)
+    unique(board_id, user_id)
 );
 
-create table guild_user_ban (
+create table board_user_ban (
     id serial primary key,
-    guild_id int references guild on update cascade on delete cascade not null,
+    board_id int references board on update cascade on delete cascade not null,
     user_id int references user_ on update cascade on delete cascade not null,
     published timestamp not null default now(),
-    unique (guild_id, user_id)
+    unique (board_id, user_id)
 );
 
-insert into guild (name, title, tag_id, creator_id) values ('main', 'The Default Guild', 1, 1);
+insert into board (name, title, tag_id, creator_id) values ('main', 'The Default Board', 1, 1);
 
 create table site (
     id serial primary key,
