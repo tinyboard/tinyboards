@@ -42,6 +42,48 @@ diesel::table! {
 }
 
 diesel::table! {
+    post (id) {
+        id -> Int4,
+        name -> Varchar,
+        url -> Nullable<Text>,
+        body -> Text,
+        creator_id -> Int4,
+        board_id -> Int4,
+        removed -> Bool,
+        locked -> Bool,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    post_like (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        score -> Int2,
+    }
+}
+
+diesel::table! {
+    post_read (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    post_saved (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     site (id) {
         id -> Int4,
         name -> Varchar,
@@ -90,6 +132,14 @@ diesel::joinable!(board_subscriber -> board (board_id));
 diesel::joinable!(board_subscriber -> user_ (user_id));
 diesel::joinable!(board_user_ban -> board (board_id));
 diesel::joinable!(board_user_ban -> user_ (user_id));
+diesel::joinable!(post -> board (board_id));
+diesel::joinable!(post -> user_ (creator_id));
+diesel::joinable!(post_like -> post (post_id));
+diesel::joinable!(post_like -> user_ (user_id));
+diesel::joinable!(post_read -> post (post_id));
+diesel::joinable!(post_read -> user_ (user_id));
+diesel::joinable!(post_saved -> post (post_id));
+diesel::joinable!(post_saved -> user_ (user_id));
 diesel::joinable!(site -> user_ (creator_id));
 diesel::joinable!(user_ban -> user_ (user_id));
 
@@ -98,6 +148,10 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_moderator,
     board_subscriber,
     board_user_ban,
+    post,
+    post_like,
+    post_read,
+    post_saved,
     site,
     tag,
     user_,
