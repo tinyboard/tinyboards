@@ -24,4 +24,4 @@ porpl-utils = { path = "../utils" }
 jwt = "0.16.0"
 hmac = "0.12.1"
 sha2 = "0.10.6"
-chrono = { version = "0.4.22", features = ["chrono"] }
+chrono = { version = "0.4.22", features = ["serde"] }
