@@ -2,9 +2,6 @@
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Result};
 
 use porpl_api::{
-    users::{UserLogin, CreateUser, GetLoggedInUser, GetUsers},
-    submissions::{CreateSubmission},
-    comments::{CreateComment},
     data::{PorplContext},
     Perform,
 };
@@ -16,7 +13,7 @@ use serde::Deserialize;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // get them environment variables at runtime yo!
+    
     dotenv().ok();
 
     HttpServer::new(|| {
@@ -24,12 +21,12 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(PorplContext::init()))
             .service(
                 web::scope("/api/v1")
-                    .route("/users", web::get().to(perform_get::<GetUsers>))
-                    .route("/signup", web::post().to(perform_post::<CreateUser>))
-                    .route("/login", web::post().to(perform_post::<UserLogin>))
-                    .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
-                    .route("/posts/submit", web::post().to(perform_post::<CreateSubmission>))
-                    .route("/comments/submit", web::post().to(perform_post::<CreateComment>))
+                    // .route("/users", web::get().to(perform_get::<GetUsers>))
+                    // .route("/signup", web::post().to(perform_post::<CreateUser>))
+                    // .route("/login", web::post().to(perform_post::<UserLogin>))
+                    // .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
+                    // .route("/posts/submit", web::post().to(perform_post::<CreateSubmission>))
+                    // .route("/comments/submit", web::post().to(perform_post::<CreateComment>))
                 )
     })
     .bind(("127.0.0.1", 8080))?
