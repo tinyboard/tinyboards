@@ -12,6 +12,8 @@ create table user_ (
   theme varchar(20) default 'dark' not null,
   default_sort_type smallint default 0 not null,
   default_listing_type smallint default 1 not null,
+  avatar text,
+  email_notifications_enabled boolean default false not null,
   unique(name, fedi_name)
 );
 

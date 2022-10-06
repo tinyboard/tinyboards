@@ -17,5 +17,7 @@ pub struct User {
     default_sort_type: i16,
     default_listing_type: i16,
     show_nsfw: bool,
+    avatar: Option<String>,
+    email_notifications_enabled: bool,
 }
 

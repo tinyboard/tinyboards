@@ -169,6 +169,8 @@ diesel::table! {
         theme -> Varchar,
         default_sort_type -> Int2,
         default_listing_type -> Int2,
+        avatar -> Nullable<Text>,
+        email_notifications_enabled -> Bool,
         show_nsfw -> Bool,
     }
 }
