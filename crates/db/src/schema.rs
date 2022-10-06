@@ -164,6 +164,8 @@ diesel::table! {
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
         theme -> Varchar,
+        default_sort_type -> Int2,
+        default_listing_type -> Int2,
         show_nsfw -> Bool,
     }
 }

@@ -14,6 +14,8 @@ pub struct User {
     published: chrono::NaiveDateTime,
     updated: chrono::NaiveDateTime,
     theme: String,
+    default_sort_type: i16,
+    default_listing_type: i16,
     show_nsfw: bool,
 }
 
