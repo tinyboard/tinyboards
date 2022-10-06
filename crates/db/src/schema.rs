@@ -79,6 +79,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    mod_sticky_post (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        post_id -> Int4,
+        stickied -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
     post (id) {
         id -> Int4,
         name -> Varchar,
@@ -92,6 +102,7 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         deleted -> Bool,
         nsfw -> Bool,
+        stickied -> Bool,
     }
 }
 
@@ -179,6 +190,8 @@ diesel::joinable!(comment_like -> post (post_id));
 diesel::joinable!(comment_like -> user_ (user_id));
 diesel::joinable!(comment_saved -> comment (comment_id));
 diesel::joinable!(comment_saved -> user_ (user_id));
+diesel::joinable!(mod_sticky_post -> post (post_id));
+diesel::joinable!(mod_sticky_post -> user_ (mod_user_id));
 diesel::joinable!(post -> board (board_id));
 diesel::joinable!(post -> user_ (creator_id));
 diesel::joinable!(post_like -> post (post_id));
@@ -198,6 +211,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment,
     comment_like,
     comment_saved,
+    mod_sticky_post,
     post,
     post_like,
     post_read,

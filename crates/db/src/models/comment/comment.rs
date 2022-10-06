@@ -12,4 +12,5 @@ pub struct Comment {
     read: bool,
     published: chrono::NaiveDateTime,
     updated: chrono::NaiveDateTime,
+    deleted: bool,
 }

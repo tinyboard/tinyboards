@@ -13,5 +13,6 @@ pub struct User {
     banned: bool,
     published: chrono::NaiveDateTime,
     updated: chrono::NaiveDateTime,
+    show_nsfw: bool,
 }
 

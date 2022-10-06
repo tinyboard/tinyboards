@@ -13,4 +13,6 @@ pub struct Post {
     locked: bool,
     published: chrono::NaiveDateTime,
     updated: chrono::NaiveDateTime,
+    nsfw: bool,
+    stickied: bool,
 }

@@ -12,4 +12,6 @@ pub struct Board {
     removed: bool,
     published: chrono::NaiveDateTime,
     updated: chrono::NaiveDateTime,
+    deleted: bool,
+    nsfw: bool,
 }
