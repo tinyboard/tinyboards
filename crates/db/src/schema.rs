@@ -163,6 +163,7 @@ diesel::table! {
         banned -> Bool,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
+        theme -> Varchar,
         show_nsfw -> Bool,
     }
 }

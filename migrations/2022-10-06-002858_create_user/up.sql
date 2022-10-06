@@ -9,6 +9,7 @@ create table user_ (
   banned boolean default false not null,
   published timestamp not null default now(),
   updated timestamp,
+  theme varchar(20) default 'dark' not null,
   unique(name, fedi_name)
 );
 
