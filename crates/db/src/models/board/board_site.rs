@@ -9,4 +9,7 @@ pub struct BoardSite {
     creator_id: i32,
     published: chrono::NaiveDateTime,
     updated: chrono::NaiveDateTime,
+    enable_downvotes: bool,
+    open_registration: bool,
+    enable_nsfw: bool,
 }

@@ -75,5 +75,8 @@ create table site (
     description text,
     creator_id int references user_ on update cascade on delete cascade not null,
     published timestamp not null default now(),
-    updated timestamp
+    updated timestamp,
+    enable_downvotes boolean default true not null,
+    open_registration boolean default true not null,
+    enable_nsfw boolean default true not null
 );
