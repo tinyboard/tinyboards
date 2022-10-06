@@ -89,6 +89,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    password_reset_request (id) {
+        id -> Int4,
+        user_id -> Int4,
+        token_encrypted -> Text,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     post (id) {
         id -> Int4,
         name -> Varchar,
@@ -130,6 +139,19 @@ diesel::table! {
         post_id -> Int4,
         user_id -> Int4,
         published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    private_message (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        recipient_id -> Int4,
+        body -> Text,
+        deleted -> Bool,
+        read -> Bool,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
     }
 }
 
@@ -210,6 +232,7 @@ diesel::joinable!(comment_saved -> comment (comment_id));
 diesel::joinable!(comment_saved -> user_ (user_id));
 diesel::joinable!(mod_sticky_post -> post (post_id));
 diesel::joinable!(mod_sticky_post -> user_ (mod_user_id));
+diesel::joinable!(password_reset_request -> user_ (user_id));
 diesel::joinable!(post -> board (board_id));
 diesel::joinable!(post -> user_ (creator_id));
 diesel::joinable!(post_like -> post (post_id));
@@ -232,10 +255,12 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment_like,
     comment_saved,
     mod_sticky_post,
+    password_reset_request,
     post,
     post_like,
     post_read,
     post_saved,
+    private_message,
     site,
     tag,
     user_,
