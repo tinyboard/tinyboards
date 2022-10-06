@@ -11,6 +11,8 @@ diesel::table! {
         removed -> Bool,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
+        deleted -> Bool,
+        nsfw -> Bool,
     }
 }
 
@@ -52,6 +54,7 @@ diesel::table! {
         read -> Bool,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
+        deleted -> Bool,
     }
 }
 
@@ -87,6 +90,8 @@ diesel::table! {
         locked -> Bool,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
+        deleted -> Bool,
+        nsfw -> Bool,
     }
 }
 
@@ -147,6 +152,7 @@ diesel::table! {
         banned -> Bool,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
+        show_nsfw -> Bool,
     }
 }
 
