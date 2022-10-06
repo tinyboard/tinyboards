@@ -42,6 +42,40 @@ diesel::table! {
 }
 
 diesel::table! {
+    comment (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        post_id -> Int4,
+        parent_id -> Nullable<Int4>,
+        body -> Text,
+        removed -> Bool,
+        read -> Bool,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    comment_like (id) {
+        id -> Int4,
+        user_id -> Int4,
+        comment_id -> Int4,
+        post_id -> Int4,
+        score -> Int2,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    comment_saved (id) {
+        id -> Int4,
+        comment_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     post (id) {
         id -> Int4,
         name -> Varchar,
@@ -132,6 +166,13 @@ diesel::joinable!(board_subscriber -> board (board_id));
 diesel::joinable!(board_subscriber -> user_ (user_id));
 diesel::joinable!(board_user_ban -> board (board_id));
 diesel::joinable!(board_user_ban -> user_ (user_id));
+diesel::joinable!(comment -> post (post_id));
+diesel::joinable!(comment -> user_ (creator_id));
+diesel::joinable!(comment_like -> comment (comment_id));
+diesel::joinable!(comment_like -> post (post_id));
+diesel::joinable!(comment_like -> user_ (user_id));
+diesel::joinable!(comment_saved -> comment (comment_id));
+diesel::joinable!(comment_saved -> user_ (user_id));
 diesel::joinable!(post -> board (board_id));
 diesel::joinable!(post -> user_ (creator_id));
 diesel::joinable!(post_like -> post (post_id));
@@ -148,6 +189,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_moderator,
     board_subscriber,
     board_user_ban,
+    comment,
+    comment_like,
+    comment_saved,
     post,
     post_like,
     post_read,
