@@ -1036,6 +1036,7 @@ name = "porpl-db"
 version = "0.1.0"
 dependencies = [
  "bigdecimal",
+ "chrono",
  "diesel",
  "diesel-derive-newtype",
  "diesel_ltree",
