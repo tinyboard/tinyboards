@@ -1,6 +1,6 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_db::models::user::user::UserForm;
+use porpl_db::models::user::user::{UserForm, User};
 use porpl_api_common::{
     person::{LoginResponse, Register},
     utils::{
@@ -9,6 +9,7 @@ use porpl_api_common::{
         get_jwt
     },
 };
+use porpl_api::data::PorplContext;
 use porpl_utils::PorplError;
 
 
@@ -42,7 +43,7 @@ impl PerformCrud for Register {
         // generate apub actor_keypair here whenever we get to implementing federation
 
         let user_form = UserForm {
-            email: Some(data.email.as_deref().map(|s| s.to_lowercase())),
+            email: Some(data.email.unwrap()),
             passhash: Some(data.password.to_string()),
             show_nsfw: Some(data.show_nsfw),
             ..UserForm::default()

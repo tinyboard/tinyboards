@@ -30,10 +30,10 @@ impl<T> AsRef<T> for Sensitive<T> {
     }
 }
 
-impl<T> AsRef<str> for Sensitive<String> {
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
+impl AsRef<str> for Sensitive<String> {
+  fn as_ref(&self) -> &str {
+    &self.0
+  }
 }
 
 impl AsRef<[u8]> for Sensitive<String> {

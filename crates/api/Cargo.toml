@@ -19,3 +19,4 @@ serde = { version = "1.0.145", features = ["derive"] }
 derive_more = "0.99.17"
 bigdecimal = "0.3.0"
 regex = "1"
+bcrypt = "0.13.0"

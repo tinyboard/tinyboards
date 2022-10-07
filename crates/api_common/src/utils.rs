@@ -4,7 +4,7 @@ use sha2::Sha384;
 use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
 use actix_web::web;
-use porpl_db::database::PgPool;
+use porpl_db::{database::PgPool, schema::user_};
 use diesel::PgConnection;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &str) -> String {
@@ -27,35 +27,38 @@ pub fn get_jwt(uid: i32, uname: &str, master_key: &str) -> String {
     token
 }
 
-pub fn from_jwt(
-    conn: &mut PgConnection,
-    token: String,
-    master_key: String
-) -> Result<Option<Self>, PorplError> {
-    use crate::schema::user_::dsl::*;
-    
-    let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
-    let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
-        eprintln!("ERROR: {:#?}", e);
-        PorplError::err_500()
-    })?;
 
-    let uid = claims["uid"]
-        .parse::<i32>()
-        .map_err(|_| PorplError::err_500())?;
-    
-    let uname = claims["uname"];
+// this needs a debuggin
 
-    user_
-        .filter(id.eq(uid))
-        .filter(name.eq(uname))
-        .first::<Self>(conn)
-        .optional()
-        .map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            PorplError::err_500()
-        })
-}
+// pub fn from_jwt(
+//     conn: &mut PgConnection,
+//     token: String,
+//     master_key: String
+// ) -> Result<Option<Self>, PorplError> {
+
+    
+//     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
+//     let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
+//         eprintln!("ERROR: {:#?}", e);
+//         PorplError::err_500()
+//     })?;
+
+//     let uid = claims["uid"]
+//         .parse::<i32>()
+//         .map_err(|_| PorplError::err_500())?;
+    
+//     let uname = claims["uname"];
+
+//     let user = user_
+//         .filter(id.eq(uid))
+//         .filter(name.eq(uname))
+//         .first::<Self>(conn)
+//         .optional()
+//         .map_err(|e| {
+//             eprintln!("ERROR: {}", e);
+//             PorplError::err_500()
+//         })?;
+// }
 
 /**
  * Use this function to do db operations.

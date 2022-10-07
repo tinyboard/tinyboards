@@ -26,7 +26,7 @@ pub struct Register {
     pub password_verify: Sensitive<String>,
     pub show_nsfw: bool,
     // email = mandatory if email verification enabled on server
-    pub email: Option<Sensitive<String>>,
+    pub email: Option<String>,
     pub captcha_uuid: Option<String>,
     pub captcha_answer: Option<String>,
     // An answer = required if require application is enabled on server
