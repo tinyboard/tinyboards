@@ -1,7 +1,7 @@
 create table post (
     id serial primary key,
     name varchar(200) not null,
-    type_ varchar(10), -- text | image | link
+    type_ varchar(10) default 'text' not null, -- text | image | link
     url text,
     thumbnail_url text,
     permalink text,

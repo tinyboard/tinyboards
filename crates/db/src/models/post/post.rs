@@ -5,7 +5,7 @@ use serde::{Serialize, Deserialize};
 pub struct Post {
     id: i32,
     name: String,
-    type_: Option<String>,
+    type_: String,
     url: Option<String>,
     thumbnail_url: Option<String>,
     permalink: Option<String>,
