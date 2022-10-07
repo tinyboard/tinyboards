@@ -1,7 +1,10 @@
 create table post (
     id serial primary key,
-    name varchar(100) not null,
+    name varchar(200) not null,
+    type_ varchar(10), -- text | image | link
     url text,
+    thumbnail_url text,
+    permalink text,
     body text not null,
     creator_id int references user_ on update cascade on delete cascade not null,
     board_id int references board on update cascade on delete cascade not null,

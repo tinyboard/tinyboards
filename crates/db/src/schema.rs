@@ -191,7 +191,10 @@ diesel::table! {
     post (id) {
         id -> Int4,
         name -> Varchar,
+        type_ -> Nullable<Varchar>,
         url -> Nullable<Text>,
+        thumbnail_url -> Nullable<Text>,
+        permalink -> Nullable<Text>,
         body -> Text,
         creator_id -> Int4,
         board_id -> Int4,
