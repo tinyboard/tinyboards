@@ -18,6 +18,7 @@ with all_post as
     (select u.banned from user_ u where p.creator_id = u.id) as banned,
     (select bub.id::boolean from board_user_ban bub where p.creator_id = bub.user_id and p.board_id = bub.board_id) as banned_from_board,
     (select name from user_ where p.creator_id = user_.id) as creator_name,
+    (select avatar from user_ where p.creator_id = user_.id) as creator_avatar,
     (select name from board where p.board_id = board.id) as board_name,
     (select removed from board b where p.board_id = b.id) as board_removed,
     (select deleted from board b where p.board_id = b.id) as board_deleted,
@@ -62,6 +63,7 @@ with all_board as
 (
     select *,
     (select name from user_ u where b.creator_id = u.id) as creator_name,
+    (select avatar from user_ u where b.creator_id = u.id) as creator_avatar,
     (select name from tag t where b.tag_id = t.id) as board_tag,
     (select count(*) from board_subscriber bs where bs.board_id = b.id) as number_of_subscribers,
     (select count(*) from post p where p.board_id = b.id) as number_of_posts,
@@ -90,6 +92,7 @@ from all_board ab
 create view board_moderator_view as
 select *,
 (select name from user_ u where bm.user_id = u.id) as user_name,
+(select avatar from user_ u where bm.user_id = u.id),
 (select name from board b where bm.board_id = b.id) as board_name
 from board_moderator bm;
 
@@ -97,6 +100,7 @@ from board_moderator bm;
 create view board_subscriber_view as 
 select *,
 (select name from user_ u where bs.user_id = u.id) as user_name,
+(select avatar from user_ u where bs.user_id = u.id),
 (select name from board b where bs.board_id = b.id) as board_name
 from board_subscriber bs;
 
@@ -104,6 +108,7 @@ from board_subscriber bs;
 create view board_user_ban_view as 
 select *,
 (select name from user_ u where bub.user_id = u.id) as user_name,
+(select avatar from user_ u where bub.user_id = u.id),
 (select name from board b where bub.board_id = b.id) as board_name
 from board_user_ban bub;
 
@@ -111,6 +116,7 @@ from board_user_ban bub;
 create view site_view as 
 select *,
 (select name from user_ u where s.creator_id = u.id) as creator_name,
+(select avatar from user_ u where s.creator_id = u.id) as creator_avatar,
 (select count(*) from user_) as number_of_users,
 (select count(*) from post) as number_of_posts,
 (select count(*) from comment) as number_of_comments,
@@ -128,6 +134,7 @@ with all_comment as
     (select u.banned from user_ u where c.creator_id = u.id) as banned,
     (select bub.id::boolean from board_user_ban bub, post p where c.creator_id = bub.user_id and p.id = c.post_id and p.board_id = bub.board_id) as banned_from_board,
     (select name from user_ where c.creator_id = user_.id) as creator_name,
+    (select avatar from user_ where c.creator_id = user_.id) as creator_avatar,
     coalesce(sum(cl.score), 0) as score,
     count (case when cl.score = 1 then 1 else null end) as upvotes,
     count (case when cl.score = -1 then 1 else null end) as downvotes

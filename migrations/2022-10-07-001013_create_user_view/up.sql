@@ -1,6 +1,7 @@
 create view user_view as 
 select id,
 name,
+avatar,
 fedi_name,
 admin,
 banned,

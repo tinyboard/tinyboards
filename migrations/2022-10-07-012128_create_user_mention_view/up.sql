@@ -15,6 +15,7 @@ select
     c.banned,
     c.banned_from_board,
     c.creator_name,
+    c.creator_avatar,
     c.score,
     c.upvotes,
     c.downvotes,
