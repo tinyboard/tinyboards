@@ -25,3 +25,6 @@ create table user_ban (
 );
 
 insert into user_ (name, fedi_name, passhash) values ('admin', 'porpl', 'porpl');
+
+create unique index idx_user_name_lower on user_ (lower(name));
+create unique index idx_user_email_lower on user_ (lower(email));
