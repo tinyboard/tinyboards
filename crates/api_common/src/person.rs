@@ -1,9 +1,9 @@
 use crate::sensitive::Sensitive;
-use porpl_db::{
-    porpl_types::{CommentReplyId, BoardId, PersonId, PersonMentionId},
-    CommentSortType,
-    SortType,
-};
+// use porpl_db::{
+//     porpl_types::{CommentReplyId, BoardId, PersonId, PersonMentionId},
+//     CommentSortType,
+//     SortType,
+// };
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

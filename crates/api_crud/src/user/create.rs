@@ -9,6 +9,7 @@ use porpl_api_common::{
         get_jwt
     },
 };
+use porpl_utils::PorplError;
 
 
 #[async_trait::async_trait(?Send)]
@@ -30,7 +31,10 @@ impl PerformCrud for Register {
         // error messages here if email verification is on and no email provided, same for applicaction not being filled out
 
         if data.password != data.password_verify {
-            return Err(PorplError { 400, String::from("passwords do not match") })
+            return Err(PorplError::new(
+                400,
+                String::from("passwords do not match!")
+            ))
         }
 
         // captcha logic here (when we implement captcha)
@@ -47,12 +51,12 @@ impl PerformCrud for Register {
         let inserted_user = match blocking(context.pool(), move |conn| {
             User::register(conn, &user_form)
         })
-        .await?;
+        .await?
         {
             Ok(lu) => lu,
             Err(e) => {
                 eprintln!("ERROR: {e}");
-                return Err(PorplError { 500, "failed to register user" });
+                return Err(PorplError::new(500, String::from("Internal Error: failed to register user, please try again")))
             }
         };
 
@@ -62,11 +66,12 @@ impl PerformCrud for Register {
             jwt: None,
             registration_created: false,
             verify_email_sent: false,
-        }
+        };
 
         // logic block about handling email verification/application messaging (hey you applied wait until admin approves)
 
         login_response.jwt = get_jwt(inserted_user.id, inserted_user.name, context.master_key());
 
         Ok(login_response)
+    }
 }

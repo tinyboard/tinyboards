@@ -1,4 +1,5 @@
-use crate::models::user::user::{User, InsertUser, UserForm};
+use crate::models::user::user::{User, UserForm};
+use diesel::result::Error;
 use crate::traits::Crud;
 use diesel::prelude::*;
 use crate::schema::user_::dsl::*;
@@ -79,12 +80,12 @@ impl User {
     //         })
     // }
 
-    pub fn register(conn: &mut PgConnection, form: &UserForm) -> Result<Self, PorplError> {
+    pub fn register(conn: &mut PgConnection, form: &UserForm) -> Result<Self, Error> {
         let mut edited_user = form.clone();
         let phash = form
         .passhash
         .as_ref()
-        .map(|p| hash_password(p));
+        .map(|p| hash_password(String::from(p)));
         edited_user.passhash = phash;
 
         Self::create(conn, &edited_user)

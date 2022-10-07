@@ -1,5 +1,5 @@
 [package]
-name = "api_common"
+name = "porpl_api_common"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,10 +9,8 @@ path = "src/lib.rs"
 doctest = false
 
 [dependencies]
-porpl_api = { version = "0.1.0", path = "../api" }
 porpl_db = { version = "0.1.0", path = "../db" }
 porpl_utils = { version = "0.1.0", path = "../utils" }
-porpl_server = { version = "0.1.0", path = "../server" }
 jwt = "0.16.0"
 hmac = "0.12.1"
 sha2 = "0.10.6" 

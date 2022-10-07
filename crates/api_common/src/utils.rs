@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
 use actix_web::web;
 use porpl_db::database::PgPool;
+use diesel::PgConnection;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &str) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
@@ -82,7 +83,7 @@ where
 /// Checks the password length
 pub fn password_length_check(pass: &str) -> Result<(), PorplError> {
     if !(10..=60).contains(&pass.len()) {
-      Err(PorplError { 400, String::from("invalid password") })
+        Err(PorplError { message: String::from("invalid password"), error_code: 400 })
     } else {
       Ok(())
     }
