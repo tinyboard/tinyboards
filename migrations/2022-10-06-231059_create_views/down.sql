@@ -1,0 +1,9 @@
+drop view reply_view;
+drop view comment_view;
+drop view site_view;
+drop view board_user_ban_view;
+drop view board_subscriber_view;
+drop view board_moderator_view;
+drop view board_view;
+drop view post_view;
+drop function hot_rank;
