@@ -57,3 +57,11 @@ select ma.*,
 (select name from user_ u where ma.mod_user_id = u.id) as mod_user_name,
 (select name from user_ u where ma.other_user_id = u.id) as other_user_name
 from mod_add ma;
+
+create view mod_sticky_post_view as 
+select msp.*,
+(select name from user_ u where msp.mod_user_id = u.id) as mod_user_name,
+(select name from post p where msp.post_id = p.id) as post_name,
+(select b.id from post p, board b where msp.post_id = p.id and p.board_id = b.id) as board_id,
+(select b.name from post p, board b where msp.post_id = p.id and p.board_id = b.id) as board_name
+from mod_sticky_post msp;

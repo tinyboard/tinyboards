@@ -6,3 +6,4 @@ drop view mod_ban_from_board_view;
 drop view mod_ban_view;
 drop view mod_add_board_view;
 drop view mod_add_view;
+drop view mod_sticky_post_view;
