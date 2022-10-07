@@ -1,1 +1,0 @@
-insert into user_ (name, fedi_name, passhash) values ('admin', 'porpl', 'porpl');

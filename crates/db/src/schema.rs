@@ -79,6 +79,96 @@ diesel::table! {
 }
 
 diesel::table! {
+    mod_add (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        other_user_id -> Int4,
+        removed -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_add_board (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        other_user_id -> Int4,
+        board_id -> Int4,
+        removed -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_ban (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        other_user_id -> Int4,
+        reason -> Nullable<Text>,
+        banned -> Nullable<Bool>,
+        expires -> Nullable<Timestamp>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_ban_from_board (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        other_user_id -> Int4,
+        board_id -> Int4,
+        reason -> Nullable<Text>,
+        banned -> Nullable<Bool>,
+        expires -> Nullable<Timestamp>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_lock_post (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        post_id -> Int4,
+        locked -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_remove_board (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        board_id -> Int4,
+        reason -> Nullable<Text>,
+        removed -> Nullable<Bool>,
+        expires -> Nullable<Timestamp>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_remove_comment (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        comment_id -> Int4,
+        reason -> Nullable<Text>,
+        removed -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_remove_post (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        post_id -> Int4,
+        reason -> Nullable<Text>,
+        removed -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
     mod_sticky_post (id) {
         id -> Int4,
         mod_user_id -> Int4,
@@ -230,6 +320,16 @@ diesel::joinable!(comment_like -> post (post_id));
 diesel::joinable!(comment_like -> user_ (user_id));
 diesel::joinable!(comment_saved -> comment (comment_id));
 diesel::joinable!(comment_saved -> user_ (user_id));
+diesel::joinable!(mod_add_board -> board (board_id));
+diesel::joinable!(mod_ban_from_board -> board (board_id));
+diesel::joinable!(mod_lock_post -> post (post_id));
+diesel::joinable!(mod_lock_post -> user_ (mod_user_id));
+diesel::joinable!(mod_remove_board -> board (board_id));
+diesel::joinable!(mod_remove_board -> user_ (mod_user_id));
+diesel::joinable!(mod_remove_comment -> comment (comment_id));
+diesel::joinable!(mod_remove_comment -> user_ (mod_user_id));
+diesel::joinable!(mod_remove_post -> post (post_id));
+diesel::joinable!(mod_remove_post -> user_ (mod_user_id));
 diesel::joinable!(mod_sticky_post -> post (post_id));
 diesel::joinable!(mod_sticky_post -> user_ (mod_user_id));
 diesel::joinable!(password_reset_request -> user_ (user_id));
@@ -254,6 +354,14 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment,
     comment_like,
     comment_saved,
+    mod_add,
+    mod_add_board,
+    mod_ban,
+    mod_ban_from_board,
+    mod_lock_post,
+    mod_remove_board,
+    mod_remove_comment,
+    mod_remove_post,
     mod_sticky_post,
     password_reset_request,
     post,
