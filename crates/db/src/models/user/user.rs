@@ -1,6 +1,7 @@
 use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
 use crate::schema::user_;
+use chrono::NaiveDateTime;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct User {
@@ -12,8 +13,8 @@ pub struct User {
     email: Option<String>,
     admin: bool,
     banned: bool,
-    published: chrono::NaiveDateTime,
-    updated: Option<chrono::NaiveDateTime>,
+    published: NaiveDateTime,
+    updated: Option<NaiveDateTime>,
     theme: String,
     default_sort_type: i16,
     default_listing_type: i16,
@@ -22,7 +23,7 @@ pub struct User {
     show_nsfw: bool,
 }
 
-#[derive(Insertable, Serialize, Deserialize, PartialEq, Clone, Default)]
+#[derive(Insertable, AsChangeset)]
 #[diesel(table_name = user_)]
 pub struct InsertUser {
     pub name: String,

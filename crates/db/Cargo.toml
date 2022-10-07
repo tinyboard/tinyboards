@@ -3,17 +3,12 @@ name = "porpl-db"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-
-[features]
-full = ["diesel-derive-newtype", "diesel_migrations"]
-
-
 [dependencies]
-diesel = { version = "2.0.0", features = ["postgres", "r2d2", "64-column-tables"] }
-diesel_migrations = { version = "2.0.0", optional = true }
-diesel-derive-newtype = { version = "1.0.0", optional = true }
+porpl_api_common = { version = "0.1.0", path = "../api_common" }
+chrono = { version = "0.4.22", features = ["serde"], default-features = false }
+diesel = { version = "2.0.0", features = ["postgres", "r2d2", "serde_json", "chrono"] }
+diesel_migrations = { version = "2.0.0" }
+diesel-derive-newtype = { version = "1.0.0" }
 diesel_ltree = "0.3.0"
 r2d2 = "0.8.10"
 dotenvy = "0.15"
@@ -23,5 +18,5 @@ url = { version = "2.3.1", features = ["serde"] }
 porpl-utils = { path = "../utils" }
 jwt = "0.16.0"
 hmac = "0.12.1"
-sha2 = "0.10.6"
-chrono = { version = "0.4.22", features = ["serde"] }
+sha2 = { version = "0.10.6" }
+regex = { version = "1.6.0" }

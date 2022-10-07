@@ -1,5 +1,6 @@
 pub mod data;
 pub mod utils;
+pub mod local_user;
 use porpl_utils::PorplError;
 
 use data::PorplContext;

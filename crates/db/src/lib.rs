@@ -8,5 +8,4 @@ mod traits;
 pub mod impls;
 pub mod schema;
 
-pub use bigdecimal::BigDecimal;
 pub use database::Database;

@@ -1,13 +1,10 @@
-use crate::impls::user;
 use crate::models::user::user::{User, InsertUser};
-use crate::schema::user_::passhash;
 use diesel::prelude::*;
 use diesel::PgConnection;
-use porpl_utils::PorplError;
-use hmac::{Hmac, Mac};
-use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
-use sha2::Sha384;
-use std::collections::BTreeMap;
+use porpl_utils::{ 
+    PorplError, 
+    hash_password
+};
 
 impl User {
     fn check_reserved(
@@ -45,59 +42,6 @@ impl User {
         Ok(())
     }
 
-    pub fn get_jwt(uid: i32, uname: &str, master_key: &str) -> String {
-        let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
-        let header = Header {
-            algorithm: AlgorithmType::Hs384,
-            ..Default::default()
-        };
-
-        let mut claims = BTreeMap::new();
-        claims.insert("uid", uid.to_string());
-        claims.insert("uname", uname.to_string());
-
-        let token = Token::new(header, claims)
-            .sign_with_key(&key)
-            .unwrap()
-            .as_str()
-            .to_string();
-
-        token
-    }
-
-    // commenting this for now until we can fix the error with it
-
-    // pub fn from_jwt(
-    //     conn: &mut PgConnection,
-    //     token: String,
-    //     master_key: String
-    // ) -> Result<Option<Self>, PorplError> {
-    //     use crate::schema::user_::dsl::*;
-        
-    //     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
-    //     let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
-    //         eprintln!("ERROR: {:#?}", e);
-    //         PorplError::err_500()
-    //     })?;
-
-    //     let uid = claims["uid"]
-    //         .parse::<i32>()
-    //         .map_err(|_| PorplError::err_500())?;
-        
-    //     let uname = claims["uname"];
-
-    //     user_
-    //         .filter(id.eq(uid))
-    //         .filter(name.eq(uname))
-    //         .first::<Self>(conn)
-    //         .optional()
-    //         .map_err(|e| {
-    //             eprintln!("ERROR: {}", e);
-    //             PorplError::err_500()
-    //         })
-
-    // }
-
     pub fn insert(
         conn: &mut PgConnection,
         username: String,
@@ -113,10 +57,9 @@ impl User {
             email.map(|email| email.replace('%', "\\%").replace('_', "\\_"));
         
         
-        let hash = porpl_utils::hash_password(password);
-        // TODO - fix below
-        
-        // Self::check_reserved(conn, &username, &&email)?;
+        let hash = hash_password(password);
+
+        Self::check_reserved(conn, &username, &&email)?;
 
         let new_user = InsertUser {
             name: username,

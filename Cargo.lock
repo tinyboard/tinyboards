@@ -232,6 +232,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "api_common"
+version = "0.1.0"
+dependencies = [
+ "hmac",
+ "jwt",
+ "sha2",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -470,10 +479,12 @@ checksum = "01e2adfd0a7a81070ed7beec0c62636458926326c16fedb77796d41e447b282d"
 dependencies = [
  "bitflags",
  "byteorder",
+ "chrono",
  "diesel_derives",
  "itoa",
  "pq-sys",
  "r2d2",
+ "serde_json",
 ]
 
 [[package]]
@@ -1047,6 +1058,7 @@ dependencies = [
  "jwt",
  "porpl-utils",
  "r2d2",
+ "regex",
  "serde",
  "sha2",
  "url",

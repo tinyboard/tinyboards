@@ -1,0 +1,33 @@
+[package]
+name = "api_common"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "porpl_api_common"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+porpl_api = { version = "0.1.0", path = "../api" }
+porpl_db = { version = "0.1.0", path = "../db" }
+porpl_utils = { version = "0.1.0", path = "../utils" }
+porpl_server = { version = "0.1.0", path = "../server" }
+jwt = "0.16.0"
+hmac = "0.12.1"
+sha2 = "0.10.6" 
+serde = { version = "1.0.145", features = ["derive"] }
+url = "2.3.1"
+actix-web = { version = "4.2.1", default-features = false, features = ["cookies"] }
+chrono = { version = "0.4.22", features = ["serde"] }
+diesel = { version = "2.0.1" }
+tracing = { version = "0.1.37" }
+rosetta-i18n = { version = "0.1.2" }
+percent-encoding = { version = "2.2.0" }
+encoding = { version = "0.2.33" }
+reqwest-middleware = { version = "0.1.6" }
+webpage = { version = "1.4.0", default-features = false, features = ["serde"] }
+
+[dev-dependencies]
+actix-rt = { version = "2.7.0", default-features = false }
+reqwest = { version = "0.11.12", features = ["json"] }
