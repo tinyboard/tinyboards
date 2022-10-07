@@ -1,4 +1,7 @@
-use diesel::PgConnection;
+use diesel::{
+    result::Error,
+    PgConnection
+};
 use porpl_utils::PorplError;
 use crate::porpl_types::UserId;
 
@@ -6,18 +9,18 @@ pub trait Crud {
     type Form;
     type IdType;
     
-    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
     
-    fn read(conn: &mut PgConnection, id: Self::IdType) -> Result<Self, PorplError>
+    fn read(conn: &mut PgConnection, id: Self::IdType) -> Result<Self, Error>
     where
         Self: Sized;
     
-    fn update(conn: &mut PgConnection, id: Self::IdType, form: &Self::Form) -> Result<Self, PorplError>
+    fn update(conn: &mut PgConnection, id: Self::IdType, form: &Self::Form) -> Result<Self, Error>
     where 
         Self: Sized;
-    fn delete(_conn: &mut PgConnection, _id: Self::IdType) -> Result<usize, PorplError>
+    fn delete(_conn: &mut PgConnection, _id: Self::IdType) -> Result<usize, Error>
     where
         Self: Sized;
 }

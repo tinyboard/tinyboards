@@ -23,11 +23,21 @@ pub struct User {
     show_nsfw: bool,
 }
 
-#[derive(Insertable, AsChangeset)]
+#[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = user_)]
-pub struct InsertUser {
-    pub name: String,
-    pub fedi_name: String,
-    pub passhash: String,
+pub struct UserForm {
+    pub name: Option<String>,
+    pub fedi_name: Option<String>,
+    pub preferred_name: Option<Option<String>>,
+    pub passhash: Option<String>,
     pub email: Option<String>,
+    pub admin: Option<bool>,
+    pub banned: Option<bool>,
+    pub updated: Option<Option<NaiveDateTime>>,
+    pub theme: Option<String>,
+    pub default_sort_type: Option<i16>,
+    pub default_listing_type: Option<i16>,
+    pub avatar: Option<Option<String>>,
+    pub email_notifications_enabled: Option<bool>,
+    pub show_nsfw: Option<bool>,
 }
