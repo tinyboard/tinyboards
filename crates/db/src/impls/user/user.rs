@@ -1,6 +1,5 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
-use regex::Regex;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
@@ -19,11 +18,6 @@ impl User {
         emailaddr: &Option<String>,
     ) -> Result<(), PorplError> {
         use crate::schema::user_::dsl::*;
-
-        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
-        if !re.is_match(username) {
-            return Err(PorplError::new(400, String::from("Invalid username!")));
-        }
 
         let user = if let Some(emailaddr) = emailaddr {
             user_

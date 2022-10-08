@@ -18,4 +18,3 @@ url = { version = "2.3.1", features = ["serde"] }
 jwt = "0.16.0"
 hmac = "0.12.1"
 sha2 = { version = "0.10.6" }
-regex = { version = "1.6.0" }

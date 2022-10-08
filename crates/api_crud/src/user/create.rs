@@ -8,6 +8,7 @@ use porpl_api_common::{
 };
 use porpl_db::models::user::user::{User, UserForm};
 use porpl_utils::PorplError;
+use regex::Regex;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
@@ -24,6 +25,12 @@ impl<'des> PerformCrud<'des> for Register {
         // some email verification logic here?
 
         // make sure site has open registration first here
+
+        // USERNAME CHECK
+        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
+        if !re.is_match(&data.username) {
+            return Err(PorplError::new(400, String::from("Invalid username!")));
+        }
 
         // PASSWORD CHECK
         // password_length_check(&data.password)?;
