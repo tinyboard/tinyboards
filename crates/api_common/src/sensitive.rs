@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use std::{
     borrow::Borrow,
     ops::{Deref, DerefMut},
@@ -16,6 +16,17 @@ impl<T> Sensitive<T> {
     pub fn into_inner(self) -> T {
         self.0
     }
+
+    /// yikes sweaty
+    pub fn unpack(self) -> T {
+        self.0
+    }
+}
+
+impl Sensitive<&str> {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 impl<T> std::fmt::Debug for Sensitive<T> {
@@ -31,69 +42,69 @@ impl<T> AsRef<T> for Sensitive<T> {
 }
 
 impl AsRef<str> for Sensitive<String> {
-  fn as_ref(&self) -> &str {
-    &self.0
-  }
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
 }
 
 impl AsRef<[u8]> for Sensitive<String> {
     fn as_ref(&self) -> &[u8] {
-      self.0.as_ref()
+        self.0.as_ref()
     }
-  }
-  
-  impl AsRef<[u8]> for Sensitive<Vec<u8>> {
+}
+
+impl AsRef<[u8]> for Sensitive<Vec<u8>> {
     fn as_ref(&self) -> &[u8] {
-      self.0.as_ref()
+        self.0.as_ref()
     }
-  }
-  
-  impl<T> AsMut<T> for Sensitive<T> {
+}
+
+impl<T> AsMut<T> for Sensitive<T> {
     fn as_mut(&mut self) -> &mut T {
-      &mut self.0
+        &mut self.0
     }
-  }
-  
-  impl AsMut<str> for Sensitive<String> {
+}
+
+impl AsMut<str> for Sensitive<String> {
     fn as_mut(&mut self) -> &mut str {
-      &mut self.0
+        &mut self.0
     }
-  }
-  
-  impl Deref for Sensitive<String> {
+}
+
+impl Deref for Sensitive<String> {
     type Target = str;
-  
+
     fn deref(&self) -> &Self::Target {
-      &self.0
+        &self.0
     }
-  }
-  
-  impl DerefMut for Sensitive<String> {
+}
+
+impl DerefMut for Sensitive<String> {
     fn deref_mut(&mut self) -> &mut Self::Target {
-      &mut self.0
+        &mut self.0
     }
-  }
-  
-  impl<T> From<T> for Sensitive<T> {
+}
+
+impl<T> From<T> for Sensitive<T> {
     fn from(t: T) -> Self {
-      Sensitive(t)
+        Sensitive(t)
     }
-  }
-  
-  impl From<&str> for Sensitive<String> {
+}
+
+impl From<&str> for Sensitive<String> {
     fn from(s: &str) -> Self {
-      Sensitive(s.into())
+        Sensitive(s.into())
     }
-  }
-  
-  impl<T> Borrow<T> for Sensitive<T> {
+}
+
+impl<T> Borrow<T> for Sensitive<T> {
     fn borrow(&self) -> &T {
-      &self.0
+        &self.0
     }
-  }
-  
-  impl Borrow<str> for Sensitive<String> {
+}
+
+impl Borrow<str> for Sensitive<String> {
     fn borrow(&self) -> &str {
-      &self.0
+        &self.0
     }
-  }
+}

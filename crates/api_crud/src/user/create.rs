@@ -1,41 +1,46 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_db::models::user::user::{UserForm, User};
+use porpl_api_common::data::PorplContext;
 use porpl_api_common::{
     person::{LoginResponse, Register},
-    utils::{
-        blocking,
-        password_length_check,
-        get_jwt
-    },
+    sensitive::Sensitive,
+    utils::blocking,
 };
-use porpl_api::data::PorplContext;
+use porpl_db::models::user::user::{User, UserForm};
 use porpl_utils::PorplError;
 
-
 #[async_trait::async_trait(?Send)]
-impl PerformCrud for Register {
+impl<'des> PerformCrud<'des> for Register {
     type Response = LoginResponse;
+    type Route = ();
 
     async fn perform(
-        &self,
+        self,
         context: &Data<PorplContext>,
+        _: Option<&str>,
     ) -> Result<LoginResponse, PorplError> {
-        let data: &Register = self;
+        let data: Register = self;
 
         // some email verification logic here?
 
         // make sure site has open registration first here
-        
-        password_length_check(&data.password)?;
+
+        // PASSWORD CHECK
+        // password_length_check(&data.password)?;
+        if !(8..60).contains(&data.password.len()) {
+            return Err(PorplError::new(
+                400,
+                String::from("Your password must be between 8 and 60 characters long."),
+            ));
+        }
 
         // error messages here if email verification is on and no email provided, same for applicaction not being filled out
 
         if data.password != data.password_verify {
             return Err(PorplError::new(
                 400,
-                String::from("passwords do not match!")
-            ))
+                String::from("passwords do not match!"),
+            ));
         }
 
         // captcha logic here (when we implement captcha)
@@ -43,35 +48,27 @@ impl PerformCrud for Register {
         // generate apub actor_keypair here whenever we get to implementing federation
 
         let user_form = UserForm {
-            email: Some(data.email.unwrap()),
-            passhash: Some(data.password.to_string()),
+            name: data.username,
+            email: data.email,
+            passhash: data.password.unpack(),
             show_nsfw: Some(data.show_nsfw),
             ..UserForm::default()
         };
 
-        let inserted_user = match blocking(context.pool(), move |conn| {
-            User::register(conn, &user_form)
-        })
-        .await?
-        {
-            Ok(lu) => lu,
-            Err(e) => {
-                eprintln!("ERROR: {e}");
-                return Err(PorplError::new(500, String::from("Internal Error: failed to register user, please try again")))
-            }
-        };
+        let inserted_user =
+            blocking(context.pool(), move |conn| User::register(conn, user_form)).await??;
 
         // logic about emailing the admins of the site if application submitted and email notification for user etc
 
-        let mut login_response = LoginResponse {
-            jwt: None,
+        let login_response = LoginResponse {
+            jwt: Some(Sensitive::new(inserted_user.get_jwt(context.master_key()))),
             registration_created: false,
             verify_email_sent: false,
         };
 
         // logic block about handling email verification/application messaging (hey you applied wait until admin approves)
 
-        login_response.jwt = get_jwt(inserted_user.id, inserted_user.name, context.master_key());
+        //login_response.jwt = inserted_user.get_jwt(context.master_key());
 
         Ok(login_response)
     }

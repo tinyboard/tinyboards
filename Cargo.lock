@@ -1834,6 +1834,8 @@ dependencies = [
  "bigdecimal",
  "dotenv",
  "porpl_api",
+ "porpl_api_common",
+ "porpl_api_crud",
  "porpl_db",
  "porpl_utils",
  "serde",
@@ -1862,6 +1864,7 @@ version = "0.1.0"
 dependencies = [
  "actix-rt",
  "actix-web",
+ "async-trait",
  "chrono",
  "diesel",
  "encoding",

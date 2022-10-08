@@ -8,6 +8,8 @@ edition = "2021"
 [dependencies]
 porpl_db = { version = "0.1.0", path = "../db" }
 porpl_api = { version = "0.1.0", path = "../api" }
+porpl_api_common = { version = "0.1.0", path = "../api_common" }
+porpl_api_crud = { version = "0.1.0", path = "../api_crud" }
 porpl_utils = { version = "0.1.0", path = "../utils" }
 actix-web = "4"
 serde = "1.0.145"

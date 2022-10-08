@@ -4,7 +4,7 @@ use crate::sensitive::Sensitive;
 //     CommentSortType,
 //     SortType,
 // };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -30,5 +30,5 @@ pub struct Register {
     pub captcha_uuid: Option<String>,
     pub captcha_answer: Option<String>,
     // An answer = required if require application is enabled on server
-    pub answer: Option<String>
+    pub answer: Option<String>,
 }

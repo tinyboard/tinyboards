@@ -11,6 +11,7 @@ doctest = false
 [dependencies]
 porpl_db = { version = "0.1.0", path = "../db" }
 porpl_utils = { version = "0.1.0", path = "../utils" }
+async-trait = "0.1.57"
 jwt = "0.16.0"
 hmac = "0.12.1"
 sha2 = "0.10.6" 

@@ -1,32 +1,40 @@
+use hmac::{Hmac, Mac};
+use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
+use regex::Regex;
+use sha2::Sha384;
+use std::collections::BTreeMap;
+
 use crate::models::user::user::{User, UserForm};
-use diesel::result::Error;
+use crate::schema::user_::dsl::*;
 use crate::traits::Crud;
 use diesel::prelude::*;
-use crate::schema::user_::dsl::*;
+use diesel::result::Error;
 use diesel::PgConnection;
-use porpl_utils::{ 
-    PorplError, 
-    hash_password
-};
+use porpl_utils::{hash_password, PorplError};
 
 impl User {
-    fn check_reserved(
+    pub fn check_name_and_email(
         conn: &mut PgConnection,
-        uname: &str,
-        emailaddr: &Option<&str>,
+        username: &str,
+        emailaddr: &Option<String>,
     ) -> Result<(), PorplError> {
         use crate::schema::user_::dsl::*;
+
+        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
+        if !re.is_match(username) {
+            return Err(PorplError::new(400, String::from("Invalid username!")));
+        }
 
         let user = if let Some(emailaddr) = emailaddr {
             user_
                 .select(id)
-                .filter(name.ilike(uname))
+                .filter(name.ilike(username))
                 .or_filter(email.ilike(emailaddr))
                 .first::<i32>(conn)
         } else {
             user_
                 .select(id)
-                .filter(name.ilike(uname))
+                .filter(name.ilike(username))
                 .first::<i32>(conn)
         }
         .optional()
@@ -45,6 +53,53 @@ impl User {
         Ok(())
     }
 
+    pub fn get_jwt(&self, master_key: &str) -> String {
+        let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
+        let header = Header {
+            algorithm: AlgorithmType::Hs384,
+            ..Default::default()
+        };
+
+        let mut claims = BTreeMap::new();
+        claims.insert("uid", self.id.to_string());
+        //claims.insert("login_nonce", self.login_nonce.to_string());
+
+        let token = Token::new(header, claims)
+            .sign_with_key(&key)
+            .unwrap()
+            .as_str()
+            .to_string();
+
+        token
+    }
+
+    pub fn from_jwt(
+        conn: &mut PgConnection,
+        token: String,
+        master_key: String,
+    ) -> Result<Option<Self>, PorplError> {
+        use crate::schema::user_::dsl::*;
+
+        let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
+        let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
+            eprintln!("ERROR: {:#?}", e);
+            PorplError::err_500()
+        })?;
+
+        let uid = claims["uid"]
+            .parse::<i32>()
+            .map_err(|_| PorplError::err_500())?;
+
+        user_
+            .filter(id.eq(uid))
+            .first::<Self>(conn)
+            .optional()
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+
     // pub fn insert(
     //     conn: &mut PgConnection,
     //     username: String,
@@ -58,8 +113,7 @@ impl User {
 
     //     let email: Option<String> =
     //         email.map(|email| email.replace('%', "\\%").replace('_', "\\_"));
-        
-        
+
     //     let hash = hash_password(password);
 
     //     Self::check_reserved(conn, &username, &&email)?;
@@ -80,18 +134,21 @@ impl User {
     //         })
     // }
 
-    pub fn register(conn: &mut PgConnection, form: &UserForm) -> Result<Self, Error> {
-        let mut edited_user = form.clone();
-        let phash = form
-        .passhash
-        .as_ref()
-        .map(|p| hash_password(String::from(p)));
-        edited_user.passhash = phash;
+    pub fn register(conn: &mut PgConnection, form: UserForm) -> Result<Self, PorplError> {
+        Self::check_name_and_email(conn, &form.name, &form.email)?;
 
-        Self::create(conn, &edited_user)
+        // hash the password here
+        let form = UserForm {
+            passhash: hash_password(form.passhash),
+            ..form
+        };
+
+        Self::create(conn, &form).map_err(|e| {
+            eprintln!("ERROR: {}", e);
+            PorplError::new(500, String::from("Internal error, please try again later"))
+        })
     }
 }
-
 
 impl Crud for User {
     type Form = UserForm;
@@ -107,7 +164,7 @@ impl Crud for User {
         let local_user = diesel::insert_into(user_)
             .values(form)
             .get_result::<Self>(conn)?;
-        
+
         Ok(local_user)
     }
     fn update(conn: &mut PgConnection, user_id: i32, form: &UserForm) -> Result<Self, Error> {
@@ -115,5 +172,4 @@ impl Crud for User {
             .set(form)
             .get_result::<Self>(conn)
     }
-
 }
