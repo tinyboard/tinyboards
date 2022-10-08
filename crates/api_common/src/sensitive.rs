@@ -13,10 +13,6 @@ impl<T> Sensitive<T> {
         Sensitive(item)
     }
 
-    pub fn into_inner(self) -> T {
-        self.0
-    }
-
     /// yikes sweaty
     pub fn unpack(self) -> T {
         self.0
