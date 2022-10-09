@@ -8,7 +8,7 @@ Local Installation for Development:
 
 3. Clone this repository to your system using Git
 
-4. Open up this folder on your system and install diesel-cli by doing `cargo add diesel-cli`
+4. Open up this folder on your system and install diesel-cli by doing `cargo install diesel_cli`
 
 5. Create a `.env` file on the root level of the folder, you will need to manually add a couple of environment variables to get this to work (Example below).
 
