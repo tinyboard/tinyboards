@@ -32,3 +32,11 @@ pub struct Register {
     // An answer = required if require application is enabled on server
     pub answer: Option<String>,
 }
+
+#[derive(Deserialize)]
+pub struct GetUser {}
+
+#[derive(Deserialize)]
+pub struct GetUserPath {
+    pub username: String,
+}

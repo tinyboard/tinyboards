@@ -3,8 +3,8 @@ use porpl_api_common::data::PorplContext;
 use porpl_utils::error::PorplError;
 use serde::Deserialize;
 
-pub mod user;
 pub mod post;
+pub mod user;
 
 #[async_trait::async_trait(?Send)]
 pub trait PerformCrud<'des> {
@@ -14,6 +14,7 @@ pub trait PerformCrud<'des> {
     async fn perform(
         self,
         context: &Data<PorplContext>,
+        path: Self::Route,
         authorization: Option<&str>,
     ) -> Result<Self::Response, PorplError>;
 }

@@ -18,6 +18,7 @@ impl<'des> PerformCrud<'des> for Register {
     async fn perform(
         self,
         context: &Data<PorplContext>,
+        _: Self::Route,
         _: Option<&str>,
     ) -> Result<LoginResponse, PorplError> {
         let data: Register = self;

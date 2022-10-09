@@ -2,7 +2,10 @@
 use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Result};
 
 use porpl_api::Perform;
-use porpl_api_common::data::PorplContext;
+use porpl_api_common::{
+    data::PorplContext,
+    person::{GetUser, Register},
+};
 use porpl_api_crud::PerformCrud;
 
 use porpl_utils::PorplError;
@@ -18,12 +21,17 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(PorplContext::init()))
             .service(
-                web::scope("/api/v1"), // .route("/users", web::get().to(perform_get::<GetUsers>))
-                                       // .route("/signup", web::post().to(perform_post::<CreateUser>))
-                                       // .route("/login", web::post().to(perform_post::<UserLogin>))
-                                       // .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
-                                       // .route("/posts/submit", web::post().to(perform_post::<CreateSubmission>))
-                                       // .route("/comments/submit", web::post().to(perform_post::<CreateComment>))
+                web::scope("/api/v1")
+                    .route("/signup", web::post().to(perform_post_crud::<Register>))
+                    .route(
+                        "/users/{username}",
+                        web::get().to(perform_get_crud::<GetUser>),
+                    ), // .route("/users", web::get().to(perform_get::<GetUsers>))
+                       // .route("/signup", web::post().to(perform_post::<CreateUser>))
+                       // .route("/login", web::post().to(perform_post::<UserLogin>))
+                       // .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
+                       // .route("/posts/submit", web::post().to(perform_post::<CreateSubmission>))
+                       // .route("/comments/submit", web::post().to(perform_post::<CreateComment>))
             )
     })
     .bind(("127.0.0.1", 8080))?
@@ -105,9 +113,33 @@ where
     };
 
     let res = data
-        .perform(&context, auth_header)
+        .perform(&context, path.into_inner(), auth_header)
         .await
         .map(|json| HttpResponse::Ok().json(json))?;
 
     Ok(res)
+}
+
+async fn perform_get_crud<'des, Request>(
+    data: web::Data<PorplContext>,
+    query: web::Query<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
+where
+    Request: Deserialize<'des> + Send + 'static + PerformCrud<'des>,
+{
+    perform_crud::<Request>(query.0, data, path, req).await
+}
+
+async fn perform_post_crud<'des, Request>(
+    data: web::Data<PorplContext>,
+    body: web::Json<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
+where
+    Request: Deserialize<'des> + PerformCrud<'des> + Send + 'static,
+{
+    perform_crud::<Request>(body.into_inner(), data, path, req).await
 }

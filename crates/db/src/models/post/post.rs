@@ -1,7 +1,7 @@
-use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
-use chrono::NaiveDateTime;
 use crate::schema::post;
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Post {
@@ -26,14 +26,14 @@ pub struct Post {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = post)]
 pub struct PostForm {
-    pub title: Option<String>,
+    pub title: String,
     pub type_: Option<String>,
-    pub url: Option<Option<String>>,
-    pub thumbnail_url: Option<Option<String>>,
+    pub url: Option<String>,
+    pub thumbnail_url: Option<String>,
     pub permalink: Option<Option<String>>,
     pub body: Option<String>,
-    pub creator_id: Option<i32>,
-    pub board_id: Option<i32>,
+    pub creator_id: i32,
+    pub board_id: i32,
     pub removed: Option<bool>,
     pub locked: Option<bool>,
     pub published: Option<NaiveDateTime>,

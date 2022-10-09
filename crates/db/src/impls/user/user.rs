@@ -94,6 +94,21 @@ impl User {
             })
     }
 
+    pub fn get_by_name(conn: &mut PgConnection, username: &str) -> Result<Self, Error> {
+        use crate::schema::user_::dsl::*;
+        // sanitization could be better
+        user_
+            .filter(
+                name.ilike(
+                    username
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<Self>(conn)
+    }
+
     // pub fn insert(
     //     conn: &mut PgConnection,
     //     username: String,

@@ -3,13 +3,11 @@ use actix_web::web::Data;
 use porpl_api_common::{
     data::PorplContext,
     post::{SubmitPost, SubmitPostResponse},
-    utils::blocking,
+    utils::{blocking, require_user},
 };
-use porpl_db::{
-    models::{
-        post::post::{Post, PostForm},
-        user::user::User,
-    }
+use porpl_db::models::{
+    post::post::{Post, PostForm},
+    user::user::User,
 };
 use porpl_utils::PorplError;
 
@@ -21,29 +19,29 @@ impl<'des> PerformCrud<'des> for SubmitPost {
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Option<&str>,
+        _: Self::Route,
+        auth: Option<&str>,
     ) -> Result<SubmitPostResponse, PorplError> {
         let data: SubmitPost = self;
+
+        let u = require_user(context.pool(), context.master_key(), auth).await?;
 
         // some sanitization logic here
         //let logged_in: User = User::from_jwt(conn, token, context.master_key());
 
         let post_form = PostForm {
-            title: Some(data.title),
+            title: data.title,
             type_: data.type_,
-            url: Some(data.url),
-            body: Some(data.body),
-            creator_id: Some(data.creator_id),
-            board_id: Some(data.board_id),
+            url: data.url,
+            body: data.body,
+            creator_id: u.id,
+            board_id: data.board_id,
             nsfw: Some(data.nsfw),
             ..PostForm::default()
         };
 
         let published_post =
-            blocking(context.pool(), move |conn| {
-                Post::submit(conn, post_form)
-            })
-            .await??;
+            blocking(context.pool(), move |conn| Post::submit(conn, post_form)).await??;
 
         let submit_post_response = SubmitPostResponse {
             message: String::from("Post submitted successfully!"),
