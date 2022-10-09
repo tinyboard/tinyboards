@@ -1,7 +1,7 @@
 create view mod_remove_post_view as 
 select mrp.*,
 (select name from user_ u where mrp.mod_user_id = u.id) as mod_user_name,
-(select name from post p where mrp.post_id = p.id) as post_name,
+(select title from post p where mrp.post_id = p.id) as post_name,
 (select b.id from post p, board b where mrp.post_id = p.id and p.board_id = b.id) as board_id,
 (select b.name from post p, board b where mrp.post_id = p.id and p.board_id = b.id) as board_name
 from mod_remove_post mrp;
@@ -9,7 +9,7 @@ from mod_remove_post mrp;
 create view mod_lock_post_view as 
 select mlp.*,
 (select name from user_ u where mlp.mod_user_id = u.id) as mod_user_name,
-(select name from post p where mlp.post_id = p.id) as post_name,
+(select title from post p where mlp.post_id = p.id) as post_name,
 (select b.id from post p, board b where mlp.post_id = p.id and p.board_id = b.id) as board_id,
 (select b.name from post p, board b where mlp.post_id = p.id and p.board_id = b.id) as board_name
 from mod_lock_post mlp;
@@ -21,7 +21,7 @@ select mrc.*,
 (select name from user_ u, comment c where mrc.comment_id = c.id and u.id = c.creator_id) as comment_user_name,
 (select body from comment c where mrc.comment_id = c.id) as comment_body,
 (select p.id from post p, comment c where mrc.comment_id = c.id and c.post_id = p.id) as post_id,
-(select p.name from post p, comment c where mrc.comment_id = c.id and c.post_id = p.id) as post_name,
+(select p.title from post p, comment c where mrc.comment_id = c.id and c.post_id = p.id) as post_name,
 (select b.id from comment c, post p, board b where mrc.comment_id = c.id and c.post_id = p.id and p.board_id = b.id) as board_id, 
 (select b.name from comment c, post p, board b where mrc.comment_id = c.id and c.post_id = p.id and p.board_id = b.id) as board_name
 from mod_remove_comment mrc;
@@ -61,7 +61,7 @@ from mod_add ma;
 create view mod_sticky_post_view as 
 select msp.*,
 (select name from user_ u where msp.mod_user_id = u.id) as mod_user_name,
-(select name from post p where msp.post_id = p.id) as post_name,
+(select title from post p where msp.post_id = p.id) as post_title,
 (select b.id from post p, board b where msp.post_id = p.id and p.board_id = b.id) as board_id,
 (select b.name from post p, board b where msp.post_id = p.id and p.board_id = b.id) as board_name
 from mod_sticky_post msp;
