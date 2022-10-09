@@ -55,7 +55,8 @@ impl<'des> PerformCrud<'des> for Register {
         // generate apub actor_keypair here whenever we get to implementing federation
 
         let user_form = UserForm {
-            name: data.username,
+            name: data.username.clone(),
+            fedi_name: Some(data.username),
             email: data.email,
             passhash: data.password.unpack(),
             show_nsfw: Some(data.show_nsfw),
