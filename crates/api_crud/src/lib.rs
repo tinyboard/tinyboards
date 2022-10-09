@@ -3,7 +3,8 @@ use porpl_api_common::data::PorplContext;
 use porpl_utils::error::PorplError;
 use serde::Deserialize;
 
-mod user;
+pub mod user;
+pub mod post;
 
 #[async_trait::async_trait(?Send)]
 pub trait PerformCrud<'des> {
