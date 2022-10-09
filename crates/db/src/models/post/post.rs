@@ -1,5 +1,6 @@
 use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
+use chrono::NaiveDateTime;
 use crate::schema::post;
 
 #[derive(Queryable, Serialize, Deserialize)]
@@ -15,8 +16,9 @@ pub struct Post {
     board_id: i32,
     removed: bool,
     locked: bool,
-    published: chrono::NaiveDateTime,
-    updated: Option<chrono::NaiveDateTime>,
+    published: NaiveDateTime,
+    updated: Option<NaiveDateTime>,
+    deleted: bool,
     nsfw: bool,
     stickied: bool,
 }
@@ -34,8 +36,9 @@ pub struct PostForm {
     pub board_id: Option<i32>,
     pub removed: Option<bool>,
     pub locked: Option<bool>,
-    pub published: Option<chrono::NaiveDateTime>,
-    pub updated: Option<chrono::NaiveDateTime>,
+    pub published: Option<NaiveDateTime>,
+    pub updated: Option<NaiveDateTime>,
+    pub deleted: Option<bool>,
     pub nsfw: Option<bool>,
     pub stickied: Option<bool>,
 }
