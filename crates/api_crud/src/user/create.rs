@@ -60,7 +60,6 @@ impl<'des> PerformCrud<'des> for Register {
             fedi_name: Some(data.username),
             email: data.email,
             passhash: data.password.unpack(),
-            show_nsfw: Some(data.show_nsfw),
             ..UserForm::default()
         };
 
