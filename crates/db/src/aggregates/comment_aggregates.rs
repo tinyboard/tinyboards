@@ -1,11 +1,12 @@
-use crate::aggregates::structs::CommentAggregates;
-use diesel::{result::Error, *};
+/*use crate::aggregates::structs::CommentAggregates;
+use crate::schema::comment_aggregates;
+use diesel::{result::Error, PgConnection, QueryDsl};
 
 impl CommentAggregates {
-    pub fn read(conn: &mut PgConnection, comment_id: i32) -> Result<Self, Error> {
-        use crate::schema::comment_aggregates::dsl::*;
-        comment_aggregates
-            .filter(comment_id.eq(comment_id))
-            .first::<Self>(conn)
+    pub fn read(conn: &mut PgConnection, cid: i32) -> Result<Self, Error> {
+        comment_aggregates::table
+            .filter(comment_aggregates::comment_id.eq(cid))
+            .first()
+            .load::<Self>(conn)
     }
-}
+}*/

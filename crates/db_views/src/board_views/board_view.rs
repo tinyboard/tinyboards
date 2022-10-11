@@ -1,4 +1,4 @@
-use crate::actor_structs::{BoardModeratorView, BoardView, UserViewSafe};
+/*use crate::actor_structs::{BoardModeratorView, BoardView, UserViewSafe};
 use diesel::{result::Error, *};
 use porpl_db::{
     aggregates::structs::BoardAggregates,
@@ -53,4 +53,4 @@ impl BoardView {
             counts,
         })
     }
-}
+}*/

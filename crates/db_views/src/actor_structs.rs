@@ -32,13 +32,13 @@ pub struct BoardUserBanView {
     pub user: UserSafe,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+/*#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardView {
     pub board: BoardSafe,
     pub subscribed: bool,
     pub blocked: bool,
     pub counts: BoardAggregates,
-}
+}*/
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserBlockView {
@@ -46,7 +46,7 @@ pub struct UserBlockView {
     pub target: UserSafe,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+/*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct UserMentionView {
     pub user_mention: UserMention,
     pub comment: Comment,
@@ -60,9 +60,9 @@ pub struct UserMentionView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to UserBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
-}
+}*/
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+/*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CommentReplyView {
     pub comment_reply: CommentReply,
     pub comment: Comment,
@@ -76,10 +76,10 @@ pub struct CommentReplyView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to PersonBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
-}
+}*/
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+/*#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserViewSafe {
     pub user: UserSafe,
     pub counts: UserAggregates,
-}
+}*/

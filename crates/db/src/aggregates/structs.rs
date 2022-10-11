@@ -1,46 +1,33 @@
 use serde::{Deserialize, Serialize};
 
 use crate::porpl_types::{BoardId, CommentId, PostId};
+use diesel::Queryable;
 
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = comment_aggregates))]
-#[cfg_attr(
-    feature = "full",
-    diesel(belongs_to(crate::models::comment::comment::Comment))
-)]
+#[derive(Queryable)]
 pub struct CommentAggregates {
     pub id: i32,
-    pub comment_id: CommentId,
+    pub comment_id: i32,
     pub score: i64,
     pub upvotes: i64,
     pub downvotes: i64,
     pub published: chrono::NaiveDateTime,
+    pub child_count: i32,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = board_aggregates))]
-#[cfg_attr(
-    feature = "full",
-    diesel(belongs_to(crate::models::board::board::Board))
-)]
+#[derive(Queryable)]
 pub struct BoardAggregates {
     pub id: i32,
-    pub board_id: BoardId,
+    pub board_id: i32,
     pub subscribers: i64,
     pub posts: i64,
     pub comments: i64,
     pub published: chrono::NaiveDateTime,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = post_aggregates))]
-#[cfg_attr(feature = "full", diesel(belongs_to(crate::models::post::post::Post)))]
+#[derive(Queryable)]
 pub struct PostAggregates {
     pub id: i32,
-    pub post_id: PostId,
+    pub post_id: i32,
     pub comments: i64,
     pub score: i64,
     pub upvotes: i64,
@@ -50,10 +37,7 @@ pub struct PostAggregates {
     pub newest_comment_time: chrono::NaiveDateTime,
 }
 
-#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
-#[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
-#[cfg_attr(feature = "full", diesel(table_name = user_aggregates))]
-#[cfg_attr(feature = "full", diesel(belongs_to(crate::models::user::user::User)))]
+#[derive(Queryable)]
 pub struct UserAggregates {
     pub id: i32,
     pub user_id: i32,

@@ -13,5 +13,5 @@ pub struct Comment {
     pub updated: chrono::NaiveDateTime,
     pub deleted: bool,
     // #[serde(with = "LtreeDef")]
-    pub path: Ltree,
+    // pub path: Ltree,
 }

@@ -42,7 +42,7 @@ async fn main() -> std::io::Result<()> {
 async fn perform<'des, Request>(
     data: Request,
     context: web::Data<PorplContext>,
-    path: web::Data<Request::Route>,
+    path: web::Path<Request::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, PorplError>
 where
@@ -76,9 +76,9 @@ async fn perform_get<'des, Request>(
     req: HttpRequest,
 ) -> Result<HttpResponse, PorplError>
 where
-    Request: Deserialize<'des> + Send + 'static + Perform,
+    Request: Deserialize<'des> + Send + 'static + Perform<'des>,
 {
-    perform::<Request>(query.0, data, path.into_inner(), req).await
+    perform::<Request>(query.0, data, path, req).await
 }
 
 async fn perform_post<'des, Request>(
@@ -88,9 +88,9 @@ async fn perform_post<'des, Request>(
     req: HttpRequest,
 ) -> Result<HttpResponse, PorplError>
 where
-    Request: Deserialize<'des> + Perform + Send + 'static,
+    Request: Deserialize<'des> + Perform<'des> + Send + 'static,
 {
-    perform::<Request>(body.into_inner(), data, path.into_inner(), req).await
+    perform::<Request>(body.into_inner(), data, path, req).await
 }
 
 async fn perform_crud<'des, Request>(
