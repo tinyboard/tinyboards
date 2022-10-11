@@ -4,8 +4,8 @@ use porpl_db::{
     aggregates::structs::PostAggregates,
     schema::{
         board,
-       // board_block,
-       // board_subscriber,
+        board_block,
+        board_subscriber,
         board_user_ban,
         user_,
         user_block,
@@ -82,6 +82,13 @@ impl PostView {
             )
             .inner_join(post_aggregates::table)
             .left_join(
+                board_subscriber::table.on(
+                    post::board_id
+                        .eq(board_subscriber::board_id)
+                        .and(board_subscriber::user_id.eq(user_id_join))
+                )
+            )
+            .left_join(
                 post_saved::table.on(
                     post::id
                         .eq(post_saved::post_id)
@@ -114,10 +121,12 @@ impl PostView {
                 User::safe_columns_tuple(),
                 Board::safe_columns_tuple(),
                 board_user_ban::all_columns.nullable(),
+                post_aggregates::all_columns,
+                board_subscriber::all_columns.nullable(),
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 user_block::all_columns.nullable(),
-                post_like::all_columns.nullable(),
+                post_like::score.nullable(),
             ))
             .first::<PostViewTuple>(conn)?;
 
