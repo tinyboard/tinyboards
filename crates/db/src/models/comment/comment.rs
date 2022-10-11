@@ -1,6 +1,6 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
 use diesel_ltree::Ltree;
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Comment {
@@ -12,6 +12,6 @@ pub struct Comment {
     pub published: chrono::NaiveDateTime,
     pub updated: chrono::NaiveDateTime,
     pub deleted: bool,
-    #[serde(with = "LtreeDef")]
+    // #[serde(with = "LtreeDef")]
     pub path: Ltree,
 }

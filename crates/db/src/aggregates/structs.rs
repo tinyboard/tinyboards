@@ -1,37 +1,37 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-use crate::schema::{
-    comment_aggregates,
-    board_aggregates,
-    user_aggregates,
-    post_aggregates,
-};
+use crate::porpl_types::{BoardId, CommentId, PostId};
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
 #[cfg_attr(feature = "full", diesel(table_name = comment_aggregates))]
-#[cfg_attr(feature = "full", diesel(belongs_to(crate::models::comment::comment::Comment)))]
+#[cfg_attr(
+    feature = "full",
+    diesel(belongs_to(crate::models::comment::comment::Comment))
+)]
 pub struct CommentAggregates {
-  pub id: i32,
-  pub comment_id: CommentId,
-  pub score: i64,
-  pub upvotes: i64,
-  pub downvotes: i64,
-  pub published: chrono::NaiveDateTime,
+    pub id: i32,
+    pub comment_id: CommentId,
+    pub score: i64,
+    pub upvotes: i64,
+    pub downvotes: i64,
+    pub published: chrono::NaiveDateTime,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
 #[cfg_attr(feature = "full", diesel(table_name = board_aggregates))]
 #[cfg_attr(
-  feature = "full", diesel(belongs_to(crate::models::board::board::Board)))]
+    feature = "full",
+    diesel(belongs_to(crate::models::board::board::Board))
+)]
 pub struct BoardAggregates {
-  pub id: i32,
-  pub board_id: CommunityId,
-  pub subscribers: i64,
-  pub posts: i64,
-  pub comments: i64,
-  pub published: chrono::NaiveDateTime,
+    pub id: i32,
+    pub board_id: BoardId,
+    pub subscribers: i64,
+    pub posts: i64,
+    pub comments: i64,
+    pub published: chrono::NaiveDateTime,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -39,15 +39,15 @@ pub struct BoardAggregates {
 #[cfg_attr(feature = "full", diesel(table_name = post_aggregates))]
 #[cfg_attr(feature = "full", diesel(belongs_to(crate::models::post::post::Post)))]
 pub struct PostAggregates {
-  pub id: i32,
-  pub post_id: PostId,
-  pub comments: i64,
-  pub score: i64,
-  pub upvotes: i64,
-  pub downvotes: i64,
-  pub stickied: bool,
-  pub published: chrono::NaiveDateTime,
-  pub newest_comment_time: chrono::NaiveDateTime,
+    pub id: i32,
+    pub post_id: PostId,
+    pub comments: i64,
+    pub score: i64,
+    pub upvotes: i64,
+    pub downvotes: i64,
+    pub stickied: bool,
+    pub published: chrono::NaiveDateTime,
+    pub newest_comment_time: chrono::NaiveDateTime,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
