@@ -7,4 +7,5 @@ pub struct BoardUserBan {
     board_id: i32,
     user_id: i32,
     published: chrono::NaiveDateTime,
+    expires: Option<chrono::NaiveDateTime>,
 }
