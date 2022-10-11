@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, Debug, Clone)]
 pub struct User {
     pub id: i32,
     pub name: String,
@@ -25,8 +25,8 @@ pub struct User {
 
 /// A safe representation of user, without the sensitive info
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(Queryable, Identifiable))]
-#[cfg_attr(feature = "full", table_name = "user_")]
+#[derive(Queryable, Identifiable)]
+#[diesel(table_name = user_)]
 pub struct UserSafe {
     pub id: i32,
     pub name: String,

@@ -1,9 +1,7 @@
 use serde::{Deserialize, Serialize};
-
-use crate::porpl_types::{BoardId, CommentId, PostId};
 use diesel::Queryable;
 
-#[derive(Queryable)]
+#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
 pub struct CommentAggregates {
     pub id: i32,
     pub comment_id: i32,
@@ -14,7 +12,7 @@ pub struct CommentAggregates {
     pub child_count: i32,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
 pub struct BoardAggregates {
     pub id: i32,
     pub board_id: i32,
@@ -24,7 +22,7 @@ pub struct BoardAggregates {
     pub published: chrono::NaiveDateTime,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
 pub struct PostAggregates {
     pub id: i32,
     pub post_id: i32,
@@ -37,7 +35,7 @@ pub struct PostAggregates {
     pub newest_comment_time: chrono::NaiveDateTime,
 }
 
-#[derive(Queryable)]
+#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
 pub struct UserAggregates {
     pub id: i32,
     pub user_id: i32,
