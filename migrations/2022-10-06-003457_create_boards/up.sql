@@ -63,7 +63,7 @@ create table board_user_ban (
     id serial primary key,
     board_id int references board on update cascade on delete cascade not null,
     user_id int references user_ on update cascade on delete cascade not null,
-    published timestamp not null default now(),
+    published timestamp not null default now()
     unique (board_id, user_id)
 );
 

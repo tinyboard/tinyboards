@@ -66,6 +66,7 @@ diesel::table! {
         board_id -> Int4,
         user_id -> Int4,
         published -> Timestamp,
+        expires -> Nullable<Timestamp>,
     }
 }
 

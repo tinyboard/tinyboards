@@ -1,5 +1,5 @@
 use crate::local_structs::PostView;
-use diesel::{dsl::*, pg::Pg, result::Error, *};
+use diesel::{dsl::*, pg::{Pg, sql_types}, result::Error, *};
 use porpl_db::{
     aggregates::structs::PostAggregates,
     schema::{
@@ -43,3 +43,5 @@ type PostViewTuple = (
     Option<i16>,
     i64,
 );
+
+sql_function!(fn coalesce(x: sql_types::Nullable<sql_types::BigInt>, y: sql_types::BigInt) -> sql_types::BigInt);
