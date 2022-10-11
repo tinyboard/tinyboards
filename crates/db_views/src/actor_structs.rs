@@ -1,16 +1,12 @@
 use porpl_db::{
-    aggregates::structs::{CommentAggregates, BoardAggregates, UserAggregates},
+    aggregates::structs::{BoardAggregates, CommentAggregates, UserAggregates},
     models::{
-        comment::comment::Comment,
-        comment::comment_reply::CommentReply,
-        post::post::Post,
-        user::user_mention::UserMention,
-        user::user::UserSafe,
-        board::board::BoardSafe,
+        board::board::BoardSafe, comment::comment::Comment, comment::comment_reply::CommentReply,
+        post::post::Post, user::user::UserSafe, user::user_mention::UserMention,
     },
     SubscribedType,
 };
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardBlockView {
@@ -60,30 +56,30 @@ pub struct UserMentionView {
     pub recipient: UserSafe,
     pub counts: CommentAggregates,
     pub creator_banned_from_board: bool, // Left join BoardUserBan
-    pub subscribed: SubscribedType, // Left join to BoardSubscriber
-    pub saved: bool, // Left join to CommentSaved
-    pub creator_blocked: bool, // Left join to UserBlock
-    pub my_vote: Option<i16>, // Left join to CommentLike
+    pub subscribed: SubscribedType,      // Left join to BoardSubscriber
+    pub saved: bool,                     // Left join to CommentSaved
+    pub creator_blocked: bool,           // Left join to UserBlock
+    pub my_vote: Option<i16>,            // Left join to CommentLike
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CommentReplyView {
-  pub comment_reply: CommentReply,
-  pub comment: Comment,
-  pub creator: UserSafe,
-  pub post: Post,
-  pub board: BoardSafe,
-  pub recipient: UserSafe,
-  pub counts: CommentAggregates,
-  pub creator_banned_from_board: bool, // Left Join to BoardUserBan
-  pub subscribed: SubscribedType,          // Left join to BoardSubscribers
-  pub saved: bool,                         // Left join to CommentSaved
-  pub creator_blocked: bool,               // Left join to PersonBlock
-  pub my_vote: Option<i16>,                // Left join to CommentLike
+    pub comment_reply: CommentReply,
+    pub comment: Comment,
+    pub creator: UserSafe,
+    pub post: Post,
+    pub board: BoardSafe,
+    pub recipient: UserSafe,
+    pub counts: CommentAggregates,
+    pub creator_banned_from_board: bool, // Left Join to BoardUserBan
+    pub subscribed: SubscribedType,      // Left join to BoardSubscribers
+    pub saved: bool,                     // Left join to CommentSaved
+    pub creator_blocked: bool,           // Left join to PersonBlock
+    pub my_vote: Option<i16>,            // Left join to CommentLike
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserViewSafe {
-  pub user: UserSafe,
-  pub counts: UserAggregates,
+    pub user: UserSafe,
+    pub counts: UserAggregates,
 }

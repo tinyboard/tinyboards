@@ -1,5 +1,5 @@
 [package]
-name = "lemmy_db_views"
+name = "porpl_db_views"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 doctest = false
 
 [dependencies]
-lemmy_db_schema = { version = "=0.16.5", path = "../db_schema" }
+porpl_db = { path = "../db" }
 diesel = { version = "2.0.0", features = ["postgres","chrono","r2d2","serde_json"] }
 serde = { version = "1.0.145", features = ["derive"] }
 tracing = "0.1.36"

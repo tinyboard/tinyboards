@@ -2,18 +2,12 @@ use crate::actor_structs::{BoardModeratorView, BoardView, UserViewSafe};
 use diesel::{result::Error, *};
 use porpl_db::{
     aggregates::structs::BoardAggregates,
-    schema::{
-        board,
-        board_aggregates,
-        board_block,
-        board_subscriber,
-        user_,
-    },
     models::board::{
         board::{Board, BoardSafe},
-        board_subscriber::BoardSubscriber,
         board_block::BoardBlock,
+        board_subscriber::BoardSubscriber,
     },
+    schema::{board, board_aggregates, board_block, board_subscriber, user_},
     traits::{ToSafe, ViewToVec},
 };
 
@@ -36,18 +30,14 @@ impl BoardView {
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
-                board_subscriber::table.on(
-                    board::id
-                        .eq(board_subscriber::board_id)
-                        .and(board_subscriber::user_id.eq(user_id_join)),
-                ),
+                board_subscriber::table.on(board::id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(
-                    board::id
-                        .eq(board_block::board_id)
-                        .and(board_block::user_id.eq(user_id_join)),
-                ),
+                board_block::table.on(board::id
+                    .eq(board_block::board_id)
+                    .and(board_block::user_id.eq(user_id_join))),
             )
             .select((
                 Board::safe_columns_tuple(),
@@ -58,7 +48,7 @@ impl BoardView {
             .first::<BoardViewTuple>(conn)?;
         Ok(BoardView {
             board,
-            subscribed: BoardSubscriber::to_subscribed_type(&subscriber), 
+            subscribed: BoardSubscriber::to_subscribed_type(&subscriber),
             blocked: blocked.is_some(),
             counts,
         })
