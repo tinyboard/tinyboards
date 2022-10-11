@@ -21,6 +21,7 @@ pub struct User {
     pub avatar: Option<String>,
     pub email_notifications_enabled: bool,
     pub show_nsfw: bool,
+    pub accepted_application: bool,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -62,4 +63,5 @@ pub struct UserForm {
     pub avatar: Option<Option<String>>,
     pub email_notifications_enabled: Option<bool>,
     pub show_nsfw: Option<bool>,
+    pub accepted_application: Option<bool>,
 }

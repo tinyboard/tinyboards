@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 
 use crate::models::user::user::{User, UserForm};
 use crate::schema::user_::dsl::*;
-use crate::traits::Crud;
+use crate::traits::{Crud, ToSafe};
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::PgConnection;
@@ -123,40 +123,6 @@ impl User {
             .first::<Self>(conn)
     }
 
-    // pub fn insert(
-    //     conn: &mut PgConnection,
-    //     username: String,
-    //     fedi_name: String,
-    //     password: String,
-    //     email: Option<String>,
-    // ) -> Result<Self, PorplError> {
-    //     use crate::schema::user_;
-
-    //     let username = username.replace('%', "\\%").replace('_', "\\_");
-
-    //     let email: Option<String> =
-    //         email.map(|email| email.replace('%', "\\%").replace('_', "\\_"));
-
-    //     let hash = hash_password(password);
-
-    //     Self::check_reserved(conn, &username, &&email)?;
-
-    //     let new_user = InsertUser {
-    //         name: username,
-    //         fedi_name,
-    //         email,
-    //         passhash: hash,
-    //     };
-
-    //     diesel::insert_into(user_::table)
-    //         .values(&new_user)
-    //         .get_result::<Self>(conn)
-    //         .map_err(|e| {
-    //             eprintln!("ERROR: {e}");
-    //             PorplError::err_500()
-    //         })
-    // }
-
     pub fn register(conn: &mut PgConnection, form: UserForm) -> Result<Self, PorplError> {
         Self::check_name_and_email(conn, &form.name, &form.email)?;
 
@@ -196,3 +162,49 @@ impl Crud for User {
             .get_result::<Self>(conn)
     }
 }
+
+pub mod safe_type {
+    use crate::{schema::user_::*, models::user::user::User, traits::ToSafe};
+
+    type Columns = (
+        id,
+        name,
+        fedi_name,
+        preferred_name,
+        admin,
+        banned,
+        published,
+        updated,
+        theme,
+        default_sort_type,
+        default_listing_type,
+        avatar,
+        email_notifications_enabled,
+        show_nsfw,
+    );
+
+
+    impl ToSafe for User {
+        type SafeColumns = Columns;
+
+        fn safe_columns_tuple() -> Self::SafeColumns {
+            (
+                id,
+                name,
+                fedi_name,
+                preferred_name,
+                admin,
+                banned,
+                published,
+                updated,
+                theme,
+                default_sort_type,
+                default_listing_type,
+                avatar,
+                email_notifications_enabled,
+                show_nsfw,
+            )
+        }
+    }
+}
+
