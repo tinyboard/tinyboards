@@ -2218,6 +2218,7 @@ dependencies = [
  "jwt",
  "percent-encoding",
  "porpl_db",
+ "porpl_db_views",
  "porpl_utils",
  "reqwest",
  "reqwest-middleware",
