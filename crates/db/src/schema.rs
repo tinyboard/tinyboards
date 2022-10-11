@@ -17,6 +17,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    board_aggregates (id) {
+        id -> Int4,
+        board_id -> Int4,
+        subscribers -> Int8,
+        posts -> Int8,
+        comments -> Int8,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     board_moderator (id) {
         id -> Int4,
         board_id -> Int4,
@@ -209,6 +220,20 @@ diesel::table! {
 }
 
 diesel::table! {
+    post_aggregates (id) {
+        id -> Int4,
+        post_id -> Int4,
+        comments -> Int8,
+        score -> Int8,
+        upvotes -> Int8,
+        downvotes -> Int8,
+        stickied -> Bool,
+        published -> Timestamp,
+        newest_comment_time -> Timestamp,
+    }
+}
+
+diesel::table! {
     post_like (id) {
         id -> Int4,
         post_id -> Int4,
@@ -291,6 +316,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    user_aggregates (id) {
+        id -> Int4,
+        user_id -> Int4,
+        post_count -> Int8,
+        post_score -> Int8,
+        comment_count -> Int8,
+        comment_score -> Int8,
+    }
+}
+
+diesel::table! {
     user_ban (id) {
         id -> Int4,
         user_id -> Int4,
@@ -310,6 +346,7 @@ diesel::table! {
 
 diesel::joinable!(board -> tag (tag_id));
 diesel::joinable!(board -> user_ (creator_id));
+diesel::joinable!(board_aggregates -> board (board_id));
 diesel::joinable!(board_moderator -> board (board_id));
 diesel::joinable!(board_moderator -> user_ (user_id));
 diesel::joinable!(board_subscriber -> board (board_id));
@@ -338,6 +375,7 @@ diesel::joinable!(mod_sticky_post -> user_ (mod_user_id));
 diesel::joinable!(password_reset_request -> user_ (user_id));
 diesel::joinable!(post -> board (board_id));
 diesel::joinable!(post -> user_ (creator_id));
+diesel::joinable!(post_aggregates -> post (post_id));
 diesel::joinable!(post_like -> post (post_id));
 diesel::joinable!(post_like -> user_ (user_id));
 diesel::joinable!(post_read -> post (post_id));
@@ -345,12 +383,14 @@ diesel::joinable!(post_read -> user_ (user_id));
 diesel::joinable!(post_saved -> post (post_id));
 diesel::joinable!(post_saved -> user_ (user_id));
 diesel::joinable!(site -> user_ (creator_id));
+diesel::joinable!(user_aggregates -> user_ (user_id));
 diesel::joinable!(user_ban -> user_ (user_id));
 diesel::joinable!(user_mention -> comment (comment_id));
 diesel::joinable!(user_mention -> user_ (recipient_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     board,
+    board_aggregates,
     board_moderator,
     board_subscriber,
     board_user_ban,
@@ -368,6 +408,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_sticky_post,
     password_reset_request,
     post,
+    post_aggregates,
     post_like,
     post_read,
     post_saved,
@@ -375,6 +416,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     site,
     tag,
     user_,
+    user_aggregates,
     user_ban,
     user_mention,
 );

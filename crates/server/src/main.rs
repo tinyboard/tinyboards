@@ -5,6 +5,7 @@ use porpl_api::Perform;
 use porpl_api_common::{
     data::PorplContext,
     person::{GetUser, Register},
+    post::{SubmitPost},
 };
 use porpl_api_crud::PerformCrud;
 
@@ -23,15 +24,8 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api/v1")
                     .route("/signup", web::post().to(perform_post_crud::<Register>))
-                    .route(
-                        "/users/{username}",
-                        web::get().to(perform_get_crud::<GetUser>),
-                    ), // .route("/users", web::get().to(perform_get::<GetUsers>))
-                       // .route("/signup", web::post().to(perform_post::<CreateUser>))
-                       // .route("/login", web::post().to(perform_post::<UserLogin>))
-                       // .route("/me", web::get().to(perform_get::<GetLoggedInUser>))
-                       // .route("/posts/submit", web::post().to(perform_post::<CreateSubmission>))
-                       // .route("/comments/submit", web::post().to(perform_post::<CreateComment>))
+                    .route("/user/{username}", web::get().to(perform_get_crud::<GetUser>)) // example api endpoint for testing extractor (I think)
+                    .route("/post/submit", web::post().to(perform_post_crud::<SubmitPost>))
             )
     })
     .bind(("127.0.0.1", 8080))?

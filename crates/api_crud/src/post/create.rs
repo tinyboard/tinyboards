@@ -7,7 +7,6 @@ use porpl_api_common::{
 };
 use porpl_db::models::{
     post::post::{Post, PostForm},
-    user::user::User,
 };
 use porpl_utils::PorplError;
 
@@ -25,9 +24,6 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         let data: SubmitPost = self;
 
         let u = require_user(context.pool(), context.master_key(), auth).await?;
-
-        // some sanitization logic here
-        //let logged_in: User = User::from_jwt(conn, token, context.master_key());
 
         let post_form = PostForm {
             title: data.title,

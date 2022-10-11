@@ -740,6 +740,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "db_views"
+version = "0.1.0"
+
+[[package]]
 name = "derive_builder"
 version = "0.11.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2253,6 +2257,8 @@ dependencies = [
  "r2d2",
  "serde",
  "sha2",
+ "strum",
+ "strum_macros",
  "url",
 ]
 
