@@ -109,6 +109,20 @@ impl User {
             .first::<Self>(conn)
     }
 
+    pub fn get_by_email(conn: &mut PgConnection, email_addr: &str) -> Result<Self, Error> {
+        use crate::schema::user_::dsl::*;
+        user_
+            .filter(
+                email.ilike(
+                    email_addr
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<Self>(conn)
+    }
+
     // pub fn insert(
     //     conn: &mut PgConnection,
     //     username: String,

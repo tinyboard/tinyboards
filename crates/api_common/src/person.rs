@@ -13,10 +13,15 @@ pub struct Login {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct LoginResponse {
+pub struct SignupResponse {
     pub jwt: Option<Sensitive<String>>,
     pub registration_created: bool,
     pub verify_email_sent: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LoginResponse {
+    pub jwt: Sensitive<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
