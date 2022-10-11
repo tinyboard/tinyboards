@@ -125,3 +125,15 @@ pub trait Reportable {
         Self: Sized;   
 }
 
+pub trait ToSafe {
+    type SafeColumns;
+    fn safe_columns_tuple() -> Self::SafeColumns;
+}
+
+pub trait ViewToVec {
+    type DbTuple;
+    fn from_tuple_to_vec(tuple: Vec<Self::DbTuple>) -> Vec<Self>
+    where
+      Self: Sized;
+}
+
