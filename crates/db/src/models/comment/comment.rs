@@ -2,7 +2,7 @@ use diesel::prelude::*;
 use diesel_ltree::Ltree;
 use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Queryable, Serialize, Deserialize, Debug, Clone)]
 pub struct Comment {
     pub id: i32,
     pub creator_id: i32,
