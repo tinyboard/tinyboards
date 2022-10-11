@@ -3,7 +3,7 @@ use porpl_db::{
     ListingType,
     SortType,
 };
-//use porpl_db_views::
+use porpl_db_views::local_structs::PostView;
 use crate::sensitive::Sensitive;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
