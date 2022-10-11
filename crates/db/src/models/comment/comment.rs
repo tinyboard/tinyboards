@@ -1,16 +1,17 @@
 use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
+use diesel_ltree::Ltree;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Comment {
-    id: i32,
-    creator_id: i32,
-    post_id: i32,
-    parent_id: Option<i32>,
-    body: String,
-    removed: bool,
-    read: bool,
-    published: chrono::NaiveDateTime,
-    updated: chrono::NaiveDateTime,
-    deleted: bool,
+    pub id: i32,
+    pub creator_id: i32,
+    pub post_id: i32,
+    pub body: String,
+    pub removed: bool,
+    pub published: chrono::NaiveDateTime,
+    pub updated: chrono::NaiveDateTime,
+    pub deleted: bool,
+    #[serde(with = "LtreeDef")]
+    pub path: Ltree,
 }

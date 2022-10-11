@@ -1,1 +1,1 @@
-drop view user_mention_view;
+drop view if exists user_mention_view;

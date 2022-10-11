@@ -1,5 +1,5 @@
-drop view reply_view;
-drop view comment_view;
+drop view if exists reply_view;
+drop view if exists comment_view;
 drop view site_view;
 drop view board_user_ban_view;
 drop view board_subscriber_view;
