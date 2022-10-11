@@ -4,7 +4,7 @@ use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Result};
 use porpl_api::Perform;
 use porpl_api_common::{
     data::PorplContext,
-    person::{GetUser, Register},
+    person::{GetUser, Login, Register},
     post::SubmitPost,
 };
 use porpl_api_crud::PerformCrud;
@@ -24,6 +24,7 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api/v1")
                     .route("/signup", web::post().to(perform_post_crud::<Register>))
+                    .route("/login", web::get().to(perform_post::<Login>))
                     .route(
                         "/user/{username}",
                         web::get().to(perform_get_crud::<GetUser>),

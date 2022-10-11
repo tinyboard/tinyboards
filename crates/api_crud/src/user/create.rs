@@ -2,7 +2,7 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::data::PorplContext;
 use porpl_api_common::{
-    person::{LoginResponse, Register},
+    person::{Register, SignupResponse},
     sensitive::Sensitive,
     utils::blocking,
 };
@@ -12,7 +12,7 @@ use regex::Regex;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
-    type Response = LoginResponse;
+    type Response = SignupResponse;
     type Route = ();
 
     async fn perform(
@@ -20,7 +20,7 @@ impl<'des> PerformCrud<'des> for Register {
         context: &Data<PorplContext>,
         _: Self::Route,
         _: Option<&str>,
-    ) -> Result<LoginResponse, PorplError> {
+    ) -> Result<Self::Response, PorplError> {
         let data: Register = self;
 
         // some email verification logic here?
@@ -68,7 +68,7 @@ impl<'des> PerformCrud<'des> for Register {
 
         // logic about emailing the admins of the site if application submitted and email notification for user etc
 
-        let login_response = LoginResponse {
+        let response = SignupResponse {
             jwt: Some(Sensitive::new(inserted_user.get_jwt(context.master_key()))),
             registration_created: false,
             verify_email_sent: false,
@@ -78,6 +78,6 @@ impl<'des> PerformCrud<'des> for Register {
 
         //login_response.jwt = inserted_user.get_jwt(context.master_key());
 
-        Ok(login_response)
+        Ok(response)
     }
 }

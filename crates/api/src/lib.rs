@@ -1,10 +1,11 @@
 pub mod local_user;
+use actix_web::web::Data;
 use porpl_utils::PorplError;
 
 use porpl_api_common::data::PorplContext;
 use serde::{Deserialize, Serialize};
 
-#[async_trait::async_trait]
+#[async_trait::async_trait(?Send)]
 pub trait Perform<'des> {
     type Response: Serialize;
     type Route: Deserialize<'des>;
@@ -17,7 +18,7 @@ pub trait Perform<'des> {
      */
     async fn perform(
         self,
-        context: &PorplContext,
+        context: &Data<PorplContext>,
         path: Self::Route,
         authorization: Option<&str>,
     ) -> Result<Self::Response, PorplError>;
