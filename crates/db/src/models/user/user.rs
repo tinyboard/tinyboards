@@ -23,6 +23,28 @@ pub struct User {
     pub show_nsfw: bool,
 }
 
+/// A safe representation of user, without the sensitive info
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "full", derive(Queryable, Identifiable))]
+#[cfg_attr(feature = "full", table_name = "user_")]
+pub struct UserSafe {
+    pub id: i32,
+    pub name: String,
+    pub fedi_name: String,
+    pub preferred_name: Option<String>,
+    pub admin: bool,
+    pub banned: bool,
+    pub published: NaiveDateTime,
+    pub updated: Option<NaiveDateTime>,
+    pub theme: String,
+    pub default_sort_type: i16,
+    pub default_listing_type: i16,
+    pub avatar: Option<String>,
+    pub email_notifications_enabled: bool,
+    pub show_nsfw: bool,
+}
+
+
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = user_)]
 pub struct UserForm {
