@@ -5,7 +5,7 @@ use porpl_api::Perform;
 use porpl_api_common::{
     data::PorplContext,
     person::{GetUser, Register},
-    post::{SubmitPost},
+    post::SubmitPost,
 };
 use porpl_api_crud::PerformCrud;
 
@@ -24,8 +24,14 @@ async fn main() -> std::io::Result<()> {
             .service(
                 web::scope("/api/v1")
                     .route("/signup", web::post().to(perform_post_crud::<Register>))
-                    .route("/user/{username}", web::get().to(perform_get_crud::<GetUser>)) // example api endpoint for testing extractor (I think)
-                    .route("/post/submit", web::post().to(perform_post_crud::<SubmitPost>))
+                    .route(
+                        "/user/{username}",
+                        web::get().to(perform_get_crud::<GetUser>),
+                    ) // example api endpoint for testing extractor (I think)
+                    .route(
+                        "/post/submit",
+                        web::post().to(perform_post_crud::<SubmitPost>),
+                    ),
             )
     })
     .bind(("127.0.0.1", 8080))?
@@ -33,13 +39,14 @@ async fn main() -> std::io::Result<()> {
     .await
 }
 
-async fn perform<Request>(
+async fn perform<'des, Request>(
     data: Request,
     context: web::Data<PorplContext>,
+    path: web::Data<Request::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, PorplError>
 where
-    Request: Perform,
+    Request: Perform<'des>,
     Request: Send + 'static,
 {
     let auth_header = req
@@ -55,33 +62,35 @@ where
     };
 
     let res = data
-        .perform(&context, auth_header)
+        .perform(&context, path.into_inner(), auth_header)
         .await
         .map(|json| HttpResponse::Ok().json(json))?;
 
     Ok(res)
 }
 
-async fn perform_get<'a, T>(
+async fn perform_get<'des, Request>(
     data: web::Data<PorplContext>,
-    query: web::Query<T>,
+    query: web::Query<Request>,
+    path: web::Path<Request::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, PorplError>
 where
-    T: Deserialize<'a> + Send + 'static + Perform,
+    Request: Deserialize<'des> + Send + 'static + Perform,
 {
-    perform::<T>(query.0, data, req).await
+    perform::<Request>(query.0, data, path.into_inner(), req).await
 }
 
-async fn perform_post<'a, T>(
+async fn perform_post<'des, Request>(
     data: web::Data<PorplContext>,
-    body: web::Json<T>,
+    body: web::Json<Request>,
+    path: web::Path<Request::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, PorplError>
 where
-    T: Deserialize<'a> + Perform + Send + 'static,
+    Request: Deserialize<'des> + Perform + Send + 'static,
 {
-    perform::<T>(body.into_inner(), data, req).await
+    perform::<Request>(body.into_inner(), data, path.into_inner(), req).await
 }
 
 async fn perform_crud<'des, Request>(
