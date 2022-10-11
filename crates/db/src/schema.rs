@@ -70,6 +70,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    comment_aggregates (id) {
+        id -> Int4,
+        comment_id -> Int4,
+        score -> Int8,
+        upvotes -> Int8,
+        downvotes -> Int8,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     comment_like (id) {
         id -> Int4,
         user_id -> Int4,
@@ -355,6 +366,7 @@ diesel::joinable!(board_user_ban -> board (board_id));
 diesel::joinable!(board_user_ban -> user_ (user_id));
 diesel::joinable!(comment -> post (post_id));
 diesel::joinable!(comment -> user_ (creator_id));
+diesel::joinable!(comment_aggregates -> comment (comment_id));
 diesel::joinable!(comment_like -> comment (comment_id));
 diesel::joinable!(comment_like -> post (post_id));
 diesel::joinable!(comment_like -> user_ (user_id));
@@ -395,6 +407,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_subscriber,
     board_user_ban,
     comment,
+    comment_aggregates,
     comment_like,
     comment_saved,
     mod_add,
