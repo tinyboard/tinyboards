@@ -4,3 +4,4 @@ pub mod board_subscriber;
 pub mod board_user_ban;
 pub mod board_tag;
 pub mod board_site;
+pub mod board_block;

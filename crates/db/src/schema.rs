@@ -1,5 +1,11 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "ltree"))]
+    pub struct Ltree;
+}
+
 diesel::table! {
     board (id) {
         id -> Int4,
@@ -23,6 +29,15 @@ diesel::table! {
         subscribers -> Int8,
         posts -> Int8,
         comments -> Int8,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    board_block (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
         published -> Timestamp,
     }
 }
@@ -55,17 +70,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::Ltree;
+
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
         post_id -> Int4,
-        parent_id -> Nullable<Int4>,
         body -> Text,
         removed -> Bool,
-        read -> Bool,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
         deleted -> Bool,
+        path -> Ltree,
     }
 }
 
@@ -77,6 +94,7 @@ diesel::table! {
         upvotes -> Int8,
         downvotes -> Int8,
         published -> Timestamp,
+        child_count -> Int4,
     }
 }
 
@@ -87,6 +105,16 @@ diesel::table! {
         comment_id -> Int4,
         post_id -> Int4,
         score -> Int2,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    comment_reply (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        comment_id -> Int4,
+        read -> Bool,
         published -> Timestamp,
     }
 }
@@ -346,6 +374,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    user_block (id) {
+        id -> Int4,
+        user_id -> Int4,
+        target_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     user_mention (id) {
         id -> Int4,
         recipient_id -> Int4,
@@ -358,6 +395,8 @@ diesel::table! {
 diesel::joinable!(board -> tag (tag_id));
 diesel::joinable!(board -> user_ (creator_id));
 diesel::joinable!(board_aggregates -> board (board_id));
+diesel::joinable!(board_block -> board (board_id));
+diesel::joinable!(board_block -> user_ (user_id));
 diesel::joinable!(board_moderator -> board (board_id));
 diesel::joinable!(board_moderator -> user_ (user_id));
 diesel::joinable!(board_subscriber -> board (board_id));
@@ -370,6 +409,8 @@ diesel::joinable!(comment_aggregates -> comment (comment_id));
 diesel::joinable!(comment_like -> comment (comment_id));
 diesel::joinable!(comment_like -> post (post_id));
 diesel::joinable!(comment_like -> user_ (user_id));
+diesel::joinable!(comment_reply -> comment (comment_id));
+diesel::joinable!(comment_reply -> user_ (recipient_id));
 diesel::joinable!(comment_saved -> comment (comment_id));
 diesel::joinable!(comment_saved -> user_ (user_id));
 diesel::joinable!(mod_add_board -> board (board_id));
@@ -403,12 +444,14 @@ diesel::joinable!(user_mention -> user_ (recipient_id));
 diesel::allow_tables_to_appear_in_same_query!(
     board,
     board_aggregates,
+    board_block,
     board_moderator,
     board_subscriber,
     board_user_ban,
     comment,
     comment_aggregates,
     comment_like,
+    comment_reply,
     comment_saved,
     mod_add,
     mod_add_board,
@@ -431,5 +474,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     user_,
     user_aggregates,
     user_ban,
+    user_block,
     user_mention,
 );
