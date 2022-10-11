@@ -1,2 +1,2 @@
-mod board;
-mod board_subscriber;
+pub mod board;
+pub mod board_subscriber;

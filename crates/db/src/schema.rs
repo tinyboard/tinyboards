@@ -57,6 +57,7 @@ diesel::table! {
         board_id -> Int4,
         user_id -> Int4,
         published -> Timestamp,
+        pending -> Nullable<Bool>,
     }
 }
 
@@ -314,6 +315,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    registration_application (id) {
+        id -> Int4,
+        user_id -> Int4,
+        answer -> Text,
+        admin_id -> Nullable<Int4>,
+        deny_reason -> Nullable<Text>,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     site (id) {
         id -> Int4,
         name -> Varchar,
@@ -324,6 +336,9 @@ diesel::table! {
         enable_downvotes -> Bool,
         open_registration -> Bool,
         enable_nsfw -> Bool,
+        require_application -> Bool,
+        application_question -> Nullable<Text>,
+        private_instance -> Bool,
     }
 }
 
@@ -352,6 +367,7 @@ diesel::table! {
         avatar -> Nullable<Text>,
         email_notifications_enabled -> Bool,
         show_nsfw -> Bool,
+        accepted_application -> Bool,
     }
 }
 
@@ -470,6 +486,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_read,
     post_saved,
     private_message,
+    registration_application,
     site,
     tag,
     user_,

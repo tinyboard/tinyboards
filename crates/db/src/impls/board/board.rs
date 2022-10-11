@@ -15,7 +15,7 @@ use diesel::{
     TextExpressionMethods,
 };
 
-mod safe_type {
+pub mod safe_type {
     use crate::{schema::board::*, models::board::board::Board, traits::ToSafe};
 
     type Columns = (

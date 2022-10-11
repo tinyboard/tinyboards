@@ -24,6 +24,7 @@ use porpl_db::{
         post::post_read::PostRead,
         post::post_saved::PostSaved,
     },
+    traits::{ToSafe, ViewToVec},
     // ListingType,
     // SortType,
 };
@@ -43,7 +44,7 @@ type PostViewTuple = (
     Option<i16>,
 );
 
-sql_function!(fn coalesce(x: sql_types::Nullable<sql_types::BigInt>, y: sql_types::BigInt) -> sql_types::BigInt);
+// sql_function!(fn coalesce(x: sql_types::Nullable<sql_types::BigInt>, y: sql_types::BigInt) -> sql_types::BigInt);
 
 impl PostView {
     pub fn read(
