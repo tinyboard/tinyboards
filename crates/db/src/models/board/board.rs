@@ -1,5 +1,6 @@
 use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
+use crate::schema::board;
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct Board {
@@ -17,9 +18,8 @@ pub struct Board {
 }
 
 /// A safe representation of board, without the sensitive info
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(Queryable, Identifiable))]
-#[cfg_attr(feature = "full", table_name = "board")]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[diesel(table_name = board)]
 pub struct BoardSafe {
   pub id: i32,
   pub name: String,

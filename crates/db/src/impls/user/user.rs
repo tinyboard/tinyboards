@@ -164,7 +164,7 @@ impl Crud for User {
 }
 
 pub mod safe_type {
-    use crate::{schema::user_::*, models::user::user::User, traits::ToSafe};
+    use crate::{schema::user_::*, models::user::user::UserSafe, traits::ToSafe};
 
     type Columns = (
         id,
@@ -184,7 +184,7 @@ pub mod safe_type {
     );
 
 
-    impl ToSafe for User {
+    impl ToSafe for UserSafe {
         type SafeColumns = Columns;
 
         fn safe_columns_tuple() -> Self::SafeColumns {

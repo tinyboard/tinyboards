@@ -8,6 +8,7 @@ pub mod traits;
 
 pub mod impls;
 pub mod schema;
+pub mod utils;
 
 pub use database::Database;
 
@@ -24,6 +25,7 @@ pub enum SortType {
     TopDay,
     TopWeek,
     TopMonth,
+    TopYear,
     TopAll,
     MostComments,
     NewComments,
@@ -40,7 +42,6 @@ pub enum CommentSortType {
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum ListingType {
   All,
-  Local,
   Subscribed,
 }
 

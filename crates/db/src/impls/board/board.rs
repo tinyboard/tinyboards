@@ -16,7 +16,7 @@ use diesel::{
 };
 
 pub mod safe_type {
-    use crate::{schema::board::*, models::board::board::Board, traits::ToSafe};
+    use crate::{schema::board::*, models::board::board::BoardSafe, traits::ToSafe};
 
     type Columns = (
         id,
@@ -30,7 +30,7 @@ pub mod safe_type {
         nsfw,
     );
 
-    impl ToSafe for Board {
+    impl ToSafe for BoardSafe {
         type SafeColumns = Columns;
         fn safe_columns_tuple() -> Self::SafeColumns {
             (
