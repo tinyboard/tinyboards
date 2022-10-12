@@ -4,7 +4,7 @@ use porpl_api_common::{
     data::PorplContext,
     person::{Login, LoginResponse},
     sensitive::Sensitive,
-    utils::blocking,
+    utils::{blocking, passhash::verify_password},
 };
 use porpl_db::models::user::user::User;
 use porpl_utils::error::PorplError;
@@ -28,14 +28,11 @@ impl<'des> Perform<'des> for Login {
             }
         })
         .await?
-        .map_err(|_| {
-            PorplError::new(
-                404,
-                String::from(
-                    "There is no account with that username/email. Consider signing up instead?",
-                ),
-            )
-        })?;
+        .map_err(|_| PorplError::new(403, String::from("Login failed")))?;
+
+        if !verify_password(&u.passhash, &self.password) {
+            return Err(PorplError::new(403, String::from("Login failed")));
+        }
 
         Ok(LoginResponse {
             jwt: Sensitive::new(u.get_jwt(context.master_key())),
