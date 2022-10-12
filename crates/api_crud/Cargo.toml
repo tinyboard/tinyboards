@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 porpl_utils = { version = "0.1.0", path = "../utils" }
 porpl_db = { version = "0.1.0", path = "../db" }
+porpl_db_views = { version = "0.1.0", path = "../db_views" }
 porpl_api = { version = "0.1.0", path = "../api" }
 porpl_api_common = { version = "0.1.0", path = "../api_common" }
 activitypub_federation = { version = "0.2.2" }

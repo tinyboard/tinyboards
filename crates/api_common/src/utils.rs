@@ -1,5 +1,6 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
+use porpl_db_views::local_structs::UserView;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
@@ -104,3 +105,16 @@ pub async fn require_user(
         None => Err(PorplError::err_401()),
     }
 }
+
+// pub async fn listing_type_with_site_default(
+//     listing_type: Option<ListingType>,
+//     pool: &DbPool,
+//   ) -> Result<ListingType, PorplError> {
+//     Ok(match listing_type {
+//       Some(l) => l,
+//       None => {
+//         let site = blocking(pool, Site::read_local).await??;
+//         ListingType::from_str(&site.default_post_listing_type)?
+//       }
+//     })
+// }
