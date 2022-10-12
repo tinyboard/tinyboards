@@ -1,4 +1,4 @@
-use crate::{aggregates::structs::PostAggregates, porpl_types::PostId, schema::post_aggregates};
+use crate::{aggregates::structs::PostAggregates};
 use diesel::{result::Error, *};
 
 impl PostAggregates {

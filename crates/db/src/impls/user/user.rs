@@ -5,7 +5,7 @@ use std::collections::BTreeMap;
 
 use crate::models::user::user::{User, UserForm};
 use crate::schema::user_::dsl::*;
-use crate::traits::{Crud, ToSafe};
+use crate::traits::Crud;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::PgConnection;

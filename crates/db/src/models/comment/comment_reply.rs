@@ -1,5 +1,4 @@
 use crate::porpl_types::{CommentId, UserId};
-use crate::schema::comment_reply;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

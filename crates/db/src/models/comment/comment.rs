@@ -1,5 +1,4 @@
 use diesel::prelude::*;
-use diesel_ltree::Ltree;
 use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize, Debug, Clone)]

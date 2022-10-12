@@ -9,7 +9,6 @@ use porpl_db::{
     SubscribedType,
 };
 use serde::{Serialize, Deserialize};
-use diesel::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserView {
