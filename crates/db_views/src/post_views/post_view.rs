@@ -315,7 +315,9 @@ impl<'a> PostQuery<'a> {
                 .then_order_by(post_aggregates::score.desc())
                 .then_order_by(post_aggregates::published.desc()),
             SortType::TopDay => query
-                .filter(post_aggregates::published.gt(now - 1.days())),
+                .filter(post_aggregates::published.gt(now - 1.days()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::published.desc()),
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
