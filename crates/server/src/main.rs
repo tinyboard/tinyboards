@@ -35,7 +35,7 @@ async fn main() -> std::io::Result<()> {
                     )
                     .route(
                         "/post/list", 
-                        web::post().to(perform_post_crud::<ListPosts>),
+                        web::get().to(perform_get_crud::<ListPosts>),
                     ),
             )
     })
