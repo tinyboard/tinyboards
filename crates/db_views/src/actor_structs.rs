@@ -2,7 +2,7 @@ use porpl_db::{
     //aggregates::structs::{BoardAggregates, CommentAggregates, UserAggregates},
     models::{
         board::board::BoardSafe, /*comment::comment::Comment, comment::comment_reply::CommentReply,
-        post::post::Post,*/ user::user::UserSafe, /*user::user_mention::UserMention*/,
+        post::post::Post,*/ user::user::UserSafe, /*user::user_mention::UserMention*/
     },
     //SubscribedType,
 };
