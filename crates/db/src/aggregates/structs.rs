@@ -1,7 +1,16 @@
 use serde::{Deserialize, Serialize};
-use diesel::Queryable;
+use diesel::{Queryable, Identifiable, Associations};
+use crate::schema::{
+    post_aggregates,
+    user_aggregates,
+    comment_aggregates,
+    board_aggregates,
+};
 
-#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+#[derive(Queryable, Associations, Identifiable)]
+#[diesel(table_name = comment_aggregates)]
+#[diesel(belongs_to(crate::models::comment::comment::Comment))]
 pub struct CommentAggregates {
     pub id: i32,
     pub comment_id: i32,
@@ -12,7 +21,10 @@ pub struct CommentAggregates {
     pub child_count: i32,
 }
 
-#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+#[derive(Queryable, Associations, Identifiable)]
+#[diesel(table_name = board_aggregates)]
+#[diesel(belongs_to(crate::models::board::board::Board))]
 pub struct BoardAggregates {
     pub id: i32,
     pub board_id: i32,
@@ -22,7 +34,10 @@ pub struct BoardAggregates {
     pub published: chrono::NaiveDateTime,
 }
 
-#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+#[derive(Queryable, Associations, Identifiable)]
+#[diesel(table_name = post_aggregates)]
+#[diesel(belongs_to(crate::models::post::post::Post))]
 pub struct PostAggregates {
     pub id: i32,
     pub post_id: i32,
@@ -35,7 +50,11 @@ pub struct PostAggregates {
     pub newest_comment_time: chrono::NaiveDateTime,
 }
 
-#[derive(Queryable, Clone, Default, Debug, Serialize, Deserialize)]
+
+#[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
+#[derive(Queryable, Associations, Identifiable)]
+#[diesel(table_name = user_aggregates)]
+#[diesel(belongs_to(crate::models::user::user::User))]
 pub struct UserAggregates {
     pub id: i32,
     pub user_id: i32,

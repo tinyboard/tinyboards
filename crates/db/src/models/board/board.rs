@@ -2,7 +2,9 @@ use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
 use crate::schema::board;
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
+#[diesel(table_name = board)]
 pub struct Board {
     id: i32,
     name: String,
@@ -18,7 +20,8 @@ pub struct Board {
 }
 
 /// A safe representation of board, without the sensitive info
-#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
 #[diesel(table_name = board)]
 pub struct BoardSafe {
   pub id: i32,

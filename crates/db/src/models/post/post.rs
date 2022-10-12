@@ -3,7 +3,9 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Serialize, Deserialize, Debug, Clone)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
+#[diesel(table_name = post)]
 pub struct Post {
     pub id: i32,
     pub title: String,

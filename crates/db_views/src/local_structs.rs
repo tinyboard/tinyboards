@@ -9,6 +9,7 @@ use porpl_db::{
     SubscribedType,
 };
 use serde::{Serialize, Deserialize};
+use diesel::*;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserView {
@@ -16,7 +17,7 @@ pub struct UserView {
     pub counts: UserAggregates,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct PostView {
     pub post: Post,
     pub creator: UserSafe,
