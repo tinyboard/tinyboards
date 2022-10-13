@@ -28,16 +28,14 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let data: ListPosts = self;
 
         // check to see if user is logged in or not
-        require_user(context.pool(), context.master_key(), auth).await?;
+        let u = require_user(context.pool(), context.master_key(), auth).await?;
         
         let sort = data.sort.unwrap_or(SortType::Hot);
         let listing_type = data.type_.unwrap_or(ListingType::All);
-
         let page = data.page;
         let limit = data.limit;
         let board_id = data.board_id;
         let saved_only = data.saved_only;
-
 
         let mut posts = blocking(context.pool(), move |conn| {
             PostQuery::builder()
@@ -45,6 +43,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
+                .user(Some(&u))
                 .saved_only(saved_only)
                 .page(page)
                 .limit(limit)

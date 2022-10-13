@@ -3,7 +3,7 @@ use diesel::{dsl::*, pg::Pg, result::Error, *};
 use porpl_db::{
     aggregates::structs::PostAggregates,
     schema::{
-        board::{self, creator_id},
+        board::{self},
         board_block,
         board_subscriber,
         board_user_ban,
@@ -23,11 +23,12 @@ use porpl_db::{
         post::post::Post,
         post::post_read::PostRead,
         post::post_saved::PostSaved,
+        user::user::User,
     },
     traits::{ToSafe, ViewToVec},
     ListingType,
     SortType,
-    utils::{limit_and_offset, fuzzy_search, functions::hot_rank},
+    utils::{limit_and_offset, fuzzy_search, functions::hot_rank}, porpl_types::UserId,
 };
 use tracing::debug;
 use typed_builder::TypedBuilder;
@@ -160,9 +161,9 @@ pub struct PostQuery<'a> {
     conn: &'a mut PgConnection,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
-    author_id: Option<i32>,
+    creator_id: Option<i32>,
     board_id: Option<i32>,
-    user: Option<&'a UserSafe>,
+    user: Option<&'a User>,
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,
@@ -175,6 +176,8 @@ impl<'a> PostQuery<'a> {
         use diesel::dsl::*;
 
         let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
+
+        println!("inside le function, user_id_join = {}", &user_id_join);
 
         let mut query = post::table
             .inner_join(user_::table)
@@ -279,8 +282,8 @@ impl<'a> PostQuery<'a> {
 
         
         // If query is for specific person show the removed/deleted
-        if let Some(author_id) = self.author_id {
-            query = query.filter(post::creator_id.eq(author_id));
+        if let Some(creator_id) = self.creator_id {
+            query = query.filter(post::creator_id.eq(creator_id));
         }
 
         if self.saved_only.unwrap_or(false) {
