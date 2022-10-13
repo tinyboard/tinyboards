@@ -3,9 +3,10 @@ use actix_web::web::Data;
 use porpl_api_common::{
     post::{ListPosts, ListPostsResponse},
     utils::{blocking, require_user},
+    data::PorplContext,
 };
 use porpl_db::{
-    models::board::board::Board,
+    models::user::user::User,
     ListingType,
     SortType
 };
@@ -27,7 +28,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
 
         let data: ListPosts = self;
 
-        let u: User = require_user(context.pool(), context.master_key(), auth)?;
+        let u: User = require_user(context.pool(), context.master_key(), auth).await?;
         
         let sort = data.sort.unwrap_or(SortType::Hot);
         let listing_type = data.type_.unwrap_or(ListingType::All);

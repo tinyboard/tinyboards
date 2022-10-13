@@ -156,7 +156,7 @@ impl PostView {
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
 pub struct PostQuery<'a> {
-    #[builder(default)]
+    #[builder(!default)]
     conn: &'a mut PgConnection,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
@@ -189,6 +189,13 @@ impl<'a> PostQuery<'a> {
                 ),
             )
             .inner_join(post_aggregates::table)
+            .left_join(
+                board_subscriber::table.on(
+                    post::board_id
+                        .eq(board_subscriber::board_id)
+                        .and(board_subscriber::user_id.eq(user_id_join))
+                )
+            )
             .left_join(
                 post_saved::table.on(
                     post::id
