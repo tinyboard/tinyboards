@@ -1,4 +1,3 @@
-insert into user_ (name, fedi_name, passhash) values ('admin', 'porpl', 'porpl');
 drop table mod_remove_post;
 drop table mod_lock_post;
 drop table mod_remove_comment;

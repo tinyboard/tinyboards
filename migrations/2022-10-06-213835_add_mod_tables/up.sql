@@ -1,5 +1,3 @@
-delete from user_ where name like 'admin';
-
 create table mod_remove_post (
   id serial primary key,
   mod_user_id int references user_ on update cascade on delete cascade not null,

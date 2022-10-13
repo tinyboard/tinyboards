@@ -1,4 +1,3 @@
-drop view comment_view;
 drop view site_view;
 drop view board_user_ban_view;
 drop view board_subscriber_view;
