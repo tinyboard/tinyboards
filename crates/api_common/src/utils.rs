@@ -1,13 +1,12 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use porpl_db_views::local_structs::UserView;
+//use porpl_db_views::local_structs::UserView;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
 use actix_web::web;
 use porpl_db::{
     database::PgPool, 
-    schema::user_,
     models::{
         user::user::User,
     }};

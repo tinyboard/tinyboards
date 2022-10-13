@@ -6,7 +6,6 @@ use porpl_api_common::{
     data::PorplContext,
 };
 use porpl_db::{
-    models::user::user::User,
     ListingType,
     SortType
 };
@@ -28,7 +27,8 @@ impl<'des> PerformCrud<'des> for ListPosts {
 
         let data: ListPosts = self;
 
-        let u: User = require_user(context.pool(), context.master_key(), auth).await?;
+        // check to see if user is logged in or not
+        require_user(context.pool(), context.master_key(), auth).await?;
         
         let sort = data.sort.unwrap_or(SortType::Hot);
         let listing_type = data.type_.unwrap_or(ListingType::All);

@@ -3,7 +3,7 @@ use diesel::{dsl::*, pg::Pg, result::Error, *};
 use porpl_db::{
     aggregates::structs::PostAggregates,
     schema::{
-        board,
+        board::{self, creator_id},
         board_block,
         board_subscriber,
         board_user_ban,
@@ -160,7 +160,7 @@ pub struct PostQuery<'a> {
     conn: &'a mut PgConnection,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
-    creator_id: Option<i32>,
+    author_id: Option<i32>,
     board_id: Option<i32>,
     user: Option<&'a UserSafe>,
     search_term: Option<String>,
@@ -276,6 +276,12 @@ impl<'a> PostQuery<'a> {
                 .or(post::body.ilike(searcher)),
             );
           }
+
+        
+        // If query is for specific person show the removed/deleted
+        if let Some(author_id) = self.author_id {
+            query = query.filter(post::creator_id.eq(author_id));
+        }
 
         if self.saved_only.unwrap_or(false) {
             query = query.filter(post_saved::id.is_not_null());
