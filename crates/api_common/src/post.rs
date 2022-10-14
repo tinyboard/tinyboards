@@ -54,3 +54,8 @@ pub struct ListPosts {
 pub struct ListPostsResponse {
     pub posts: Vec<PostView>,
 }
+
+#[derive(Deserialize)]
+pub struct GetPostPath {
+    pub post_id: i32,
+}

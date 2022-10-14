@@ -5,7 +5,7 @@ use porpl_api::Perform;
 use porpl_api_common::{
     data::PorplContext,
     person::{GetUser, Login, Register},
-    post::{SubmitPost, ListPosts},
+    post::{SubmitPost, ListPosts, GetPost},
 };
 use porpl_api_crud::PerformCrud;
 
@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         "/user/{username}",
                         web::get().to(perform_get_crud::<GetUser>),
-                    ) // example api endpoint for testing extractor (I think)
+                    ) 
                     .route(
                         "/post/submit",
                         web::post().to(perform_post_crud::<SubmitPost>),
@@ -36,6 +36,10 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         "/post/list", 
                         web::get().to(perform_get_crud::<ListPosts>),
+                    )
+                    .route(
+                        "/post/{post_id}",
+                        web::get().to(perform_get_crud::<GetPost>)
                     ),
             )
     })

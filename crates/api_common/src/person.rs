@@ -45,3 +45,8 @@ pub struct GetUser {}
 pub struct GetUserPath {
     pub username: String,
 }
+
+#[derive(Deserialize)]
+pub struct GetPostPath {
+    pub post_id: i32,
+}
