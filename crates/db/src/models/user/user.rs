@@ -47,6 +47,20 @@ pub struct UserSafe {
     pub show_nsfw: bool,
 }
 
+/// Struct for retrieving setting columns from user table
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
+#[diesel(table_name = user_)]
+pub struct UserSettings {
+    pub id: i32,
+    pub email: Option<String>,
+    pub show_nsfw: bool,
+    pub theme: String,
+    pub default_sort_type: i16,
+    pub default_listing_type: i16,
+    pub email_notifications_enabled: bool,
+}
+
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = user_)]

@@ -3,7 +3,7 @@ use porpl_db::{
     models::{
         comment::comment::Comment,
         board::board::BoardSafe,
-        user::user::{User, UserSafe},
+        user::user::{User, UserSafe, UserSettings},
         post::post::Post,
     },
     SubscribedType,
@@ -15,6 +15,13 @@ pub struct UserView {
     pub user: User,
     pub counts: UserAggregates,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UserSettingsView {
+    pub settings: UserSettings,
+    pub counts: UserAggregates,
+}
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct PostView {

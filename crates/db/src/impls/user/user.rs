@@ -164,7 +164,7 @@ impl Crud for User {
 }
 
 pub mod safe_type {
-    use crate::{schema::user_::*, models::user::user::UserSafe, traits::ToSafe};
+    use crate::{schema::user_::*, models::user::user::{UserSafe, UserSettings}, traits::ToSafe};
 
     type Columns = (
         id,
@@ -181,6 +181,17 @@ pub mod safe_type {
         avatar,
         email_notifications_enabled,
         show_nsfw,
+    );
+
+
+    type SettingColumns = (
+        id,
+        email,
+        show_nsfw,
+        theme,
+        default_sort_type,
+        default_listing_type,
+        email_notifications_enabled,
     );
 
 
@@ -203,6 +214,22 @@ pub mod safe_type {
                 avatar,
                 email_notifications_enabled,
                 show_nsfw,
+            )
+        }
+    }
+
+    impl ToSafe for UserSettings {
+        type SafeColumns = SettingColumns;
+
+        fn safe_columns_tuple() -> Self::SafeColumns {
+            (
+                id,
+                email,
+                show_nsfw,
+                theme,
+                default_sort_type,
+                default_listing_type,
+                email_notifications_enabled,
             )
         }
     }
