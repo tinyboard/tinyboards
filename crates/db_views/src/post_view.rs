@@ -177,8 +177,6 @@ impl<'a> PostQuery<'a> {
 
         let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
-        println!("inside le function, user_id_join = {}", &user_id_join);
-
         let mut query = post::table
             .inner_join(user_::table)
             .inner_join(board::table)

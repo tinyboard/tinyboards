@@ -9,7 +9,7 @@ use porpl_db::{
     ListingType,
     SortType
 };
-use porpl_db_views::post_views::post_view::PostQuery;
+use porpl_db_views::post_view::PostQuery;
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
