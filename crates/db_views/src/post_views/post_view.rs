@@ -248,18 +248,21 @@ impl<'a> PostQuery<'a> {
             ))
             .into_boxed();
         
-        if let Some(listing_type) = self.listing_type {
-            match listing_type {
-                ListingType::Subscribed => {
-                    query = query.filter(board_subscriber::user_id.is_not_null())
-                }
-                ListingType::All => {
-                    query = query.filter(
-                        board_subscriber::user_id.eq(user_id_join),
-                    )
-                }
-            }
-        }
+        
+        // THIS FILTER FLIPPING SUCKS (if there are zero records on board_subscriber)
+
+        // if let Some(listing_type) = self.listing_type {
+        //     match listing_type {
+        //         ListingType::Subscribed => {
+        //             query = query.filter(board_subscriber::user_id.is_not_null())
+        //         }
+        //         ListingType::All => {
+        //             query = query.filter(
+        //                 board_subscriber::user_id.eq(user_id_join),
+        //             )
+        //         }
+        //     }
+        // }
 
         if let Some(board_id) = self.board_id {
             query = query
