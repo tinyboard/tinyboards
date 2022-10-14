@@ -3,7 +3,7 @@ use porpl_db::{
     ListingType,
     SortType,
 };
-use porpl_db_views::local_structs::PostView;
+use porpl_db_views::{local_structs::PostView, actor_structs::{BoardBlockView, BoardModeratorView, BoardView}};
 use crate::sensitive::Sensitive;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -21,6 +21,21 @@ pub struct SubmitPost {
 pub struct SubmitPostResponse {
     pub message: String,
     pub status_code: i32,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetPost {
+    pub id: Option<i32>,
+    pub comment_id: Option<i32>,
+    pub auth: Option<Sensitive<String>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GetPostResponse {
+    pub post_view: PostView,
+    pub board_view: BoardView,
+    pub moderators: Vec<BoardModeratorView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
