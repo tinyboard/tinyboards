@@ -24,6 +24,8 @@ pub struct User {
     pub email_notifications_enabled: bool,
     pub show_nsfw: bool,
     pub accepted_application: bool,
+    pub deleted: bool,
+    pub expires: Option<NaiveDateTime>,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -45,6 +47,8 @@ pub struct UserSafe {
     pub avatar: Option<String>,
     pub email_notifications_enabled: bool,
     pub show_nsfw: bool,
+    pub deleted: bool,
+    pub expires: Option<NaiveDateTime>,
 }
 
 /// Struct for retrieving setting columns from user table
@@ -80,4 +84,6 @@ pub struct UserForm {
     pub email_notifications_enabled: Option<bool>,
     pub show_nsfw: Option<bool>,
     pub accepted_application: Option<bool>,
+    pub deleted: Option<bool>,
+    pub expires: Option<Option<NaiveDateTime>>,
 }

@@ -349,6 +349,8 @@ diesel::table! {
         email_notifications_enabled -> Bool,
         show_nsfw -> Bool,
         accepted_application -> Bool,
+        deleted -> Bool,
+        expires -> Nullable<Timestamp>,
     }
 }
 

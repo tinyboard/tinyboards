@@ -181,6 +181,8 @@ pub mod safe_type {
         avatar,
         email_notifications_enabled,
         show_nsfw,
+        deleted,
+        expires,
     );
 
 
@@ -214,6 +216,8 @@ pub mod safe_type {
                 avatar,
                 email_notifications_enabled,
                 show_nsfw,
+                deleted,
+                expires,
             )
         }
     }

@@ -1,12 +1,14 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
+use porpl_db_views::local_structs::UserView;
 //use porpl_db_views::local_structs::UserView;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
 use actix_web::web;
 use porpl_db::{
-    database::PgPool, 
+    database::PgPool,
+    impls::user::is_banned, 
     models::{
         user::user::User,
     }};
@@ -105,15 +107,46 @@ pub async fn require_user(
     }
 }
 
-// pub async fn listing_type_with_site_default(
-//     listing_type: Option<ListingType>,
-//     pool: &DbPool,
-//   ) -> Result<ListingType, PorplError> {
-//     Ok(match listing_type {
-//       Some(l) => l,
-//       None => {
-//         let site = blocking(pool, Site::read_local).await??;
-//         ListingType::from_str(&site.default_post_listing_type)?
-//       }
-//     })
-// }
+pub fn check_user_valid(
+    banned: bool,
+    ban_expires: Option<chrono::NaiveDateTime>,
+    deleted: bool,  
+) -> Result<(), PorplError> {
+    if is_banned(banned, ban_expires) {
+        return Err(PorplError { message: String::from("site ban"), error_code: 401 });
+    }
+
+    if deleted {
+        return Err(PorplError { message: String::from("deleted"), error_code: 401 });
+    }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn get_user_view_from_jwt(
+  jwt: &str,
+  pool: &PgPool,
+  master_key: &str,
+) -> Result<UserView, PorplError> {
+
+    let u = require_user(pool, master_key, Some(jwt)).await?;
+    let user_id = u.id;
+
+    let user_view = 
+        blocking(pool, move |conn| {
+            UserView::read(conn, user_id)
+                .map_err(|e| {
+                    eprintln!("ERROR: {}", e);
+                    PorplError::err_500()
+                })
+        }).await??;
+    
+    check_user_valid(
+        u.banned,
+        u.expires,
+        u.deleted,
+    )?;
+
+  Ok(user_view)
+}

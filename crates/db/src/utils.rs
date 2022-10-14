@@ -54,3 +54,8 @@ pub fn limit_and_offset(
     let offset = limit * (page - 1);
     Ok((limit, offset))
 }
+
+
+pub fn naive_now() -> chrono::NaiveDateTime {
+  chrono::prelude::Utc::now().naive_utc()
+}
