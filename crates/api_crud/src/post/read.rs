@@ -1,7 +1,7 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{GetPost, GetPostResponse, GetPostPath},
+    post::{GetPost, GetPostResponse, PostIdPath},
     utils::{blocking, get_user_view_from_jwt}, data::PorplContext,
 };
 // use porpl_db::{
@@ -19,7 +19,7 @@ use porpl_db_views::{
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for GetPost {
     type Response = GetPostResponse;
-    type Route = GetPostPath;
+    type Route = PostIdPath;
 
     async fn perform(
         self,

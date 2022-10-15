@@ -62,7 +62,7 @@ pub struct ListPostsResponse {
 }
 
 #[derive(Deserialize)]
-pub struct GetPostPath {
+pub struct PostIdPath {
     pub post_id: i32,
 }
 
