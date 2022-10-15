@@ -11,9 +11,10 @@ use porpl_api_common::{
 // };
 use porpl_utils::PorplError;
 
-use porpl_db_views::{
-    actor_structs::{BoardView, BoardModeratorView},
-    local_structs::PostView,
+use porpl_db_views::structs::{
+    PostView,
+    BoardView,
+    BoardModeratorView,
 };
 
 #[async_trait::async_trait(?Send)]

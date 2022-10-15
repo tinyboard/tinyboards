@@ -3,7 +3,12 @@ use porpl_db::{
     ListingType,
     SortType,
 };
-use porpl_db_views::{local_structs::PostView, actor_structs::{BoardBlockView, BoardModeratorView, BoardView}};
+use porpl_db_views::structs::{
+        PostView,
+        BoardBlockView, 
+        BoardModeratorView, 
+        BoardView
+};
 use crate::sensitive::Sensitive;
 
 
@@ -74,7 +79,13 @@ pub struct CreatePostLike {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct CreatePostLikeResponse {
+pub struct PostMessageResponse {
     pub status_code: i32,
     pub message: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DeletePost {
+    pub post_id: i32,
+    pub deleted: bool,
 }

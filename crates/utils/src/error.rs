@@ -22,6 +22,10 @@ impl PorplError {
         }
     }
 
+    pub fn from_string(message: &str, error_code: u16) -> Self {
+        Self::new(error_code, String::from(message))
+    }
+
     pub fn err_500() -> Self {
         Self::new(500, String::from("Internal Server Error"))
     }

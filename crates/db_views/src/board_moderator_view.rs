@@ -1,4 +1,4 @@
-use crate::actor_structs::BoardModeratorView;
+use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use porpl_db::{
     schema::{

@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{CreatePostLike, CreatePostLikeResponse},
+    post::{CreatePostLike, PostMessageResponse},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -17,7 +17,7 @@ use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for CreatePostLike {
-    type Response = CreatePostLikeResponse;
+    type Response = PostMessageResponse;
     type Route = ();
 
     async fn perform(
@@ -81,7 +81,7 @@ impl<'des> Perform<'des> for CreatePostLike {
 
         // mark the post as read here
 
-        Ok(CreatePostLikeResponse {
+        Ok(PostMessageResponse {
             status_code: 200,
             message: String::from("post liked successfully"),
         })

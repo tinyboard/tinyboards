@@ -1,12 +1,63 @@
 use porpl_db::{
-    aggregates::structs::{BoardAggregates, CommentAggregates, UserAggregates},
+    aggregates::structs::{
+        CommentAggregates, 
+        UserAggregates, 
+        PostAggregates, 
+        BoardAggregates
+    },
     models::{
-        board::board::BoardSafe, /*comment::comment::Comment, comment::comment_reply::CommentReply,
-        post::post::Post,*/ user::user::UserSafe, /*user::user_mention::UserMention*/
+        comment::comment::Comment,
+        board::board::BoardSafe,
+        user::user::{UserSafe, UserSettings},
+        post::post::Post,
+
     },
     SubscribedType,
 };
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UserView {
+    pub user: UserSafe,
+    pub counts: UserAggregates,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UserSettingsView {
+    pub settings: UserSettings,
+    pub counts: UserAggregates,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct PostView {
+    pub post: Post,
+    pub creator: UserSafe,
+    pub board: BoardSafe,
+    pub creator_banned_from_board: bool, // Left Join BoardUserBan
+    pub counts: PostAggregates,
+    pub subscribed: SubscribedType, // Left Join BoardSubscriber
+    pub saved: bool, // Left join PostSaved
+    pub read: bool, // Left join PostRead
+    pub creator_blocked: bool, // Left join UserBlock
+    pub my_vote: Option<i16>, // Left join PostLike
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CommentView {
+    pub comment: Comment,
+    pub creator: UserSafe,
+    pub post: Post,
+    pub board: BoardSafe,
+    pub counts: CommentAggregates,
+    pub creator_banned_from_board: bool, 
+    pub subscribed: SubscribedType,
+    pub saved: bool,
+    pub creator_blocked: bool,
+    pub my_vote: Option<i16>,
+}
+
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardBlockView {

@@ -5,7 +5,7 @@ use porpl_api::Perform;
 use porpl_api_common::{
     data::PorplContext,
     person::{GetUser, Login, Register},
-    post::{SubmitPost, ListPosts, GetPost, CreatePostLike},
+    post::{SubmitPost, ListPosts, GetPost, CreatePostLike, DeletePost},
 };
 use porpl_api_crud::PerformCrud;
 
@@ -44,6 +44,10 @@ async fn main() -> std::io::Result<()> {
                     .route(
                         "/post/vote",
                         web::post().to(perform_post::<CreatePostLike>)
+                    )
+                    .route(
+                        "/post/delete",
+                        web::post().to(perform_post_crud::<DeletePost>)
                     ),
             )
     })

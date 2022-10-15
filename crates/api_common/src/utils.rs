@@ -1,6 +1,6 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use porpl_db_views::local_structs::UserView;
+use porpl_db_views::structs::{UserView, BoardView, BoardUserBanView};
 //use porpl_db_views::local_structs::UserView;
 use sha2::Sha384;
 use std::collections::BTreeMap;
@@ -11,7 +11,10 @@ use porpl_db::{
     impls::user::is_banned, 
     models::{
         user::user::User,
-    }};
+        board::board::Board,
+    },
+    traits::Crud,
+};
 //use diesel::PgConnection;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &str) -> String {
@@ -149,4 +152,54 @@ pub async fn get_user_view_from_jwt(
     )?;
 
   Ok(user_view)
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn is_mod_or_admin(
+    pool: &PgPool,
+    user_id: i32,
+    board_id: i32,
+) -> Result<(), PorplError> {
+    let is_mod_or_admin = blocking(pool, move |conn| {
+        BoardView::is_mod_or_admin(conn, user_id, board_id)
+    })
+    .await?;
+
+    if !is_mod_or_admin {
+        return Err(PorplError::from_string("not a mod or admin", 405));
+    }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_board_ban(
+    user_id: i32,
+    board_id: i32,
+    pool: &PgPool
+) -> Result<(), PorplError> {
+    let is_banned =
+        move |conn: &mut _| BoardUserBanView::get(conn, user_id, board_id).is_ok();
+    
+    if blocking(pool, is_banned).await? {
+        Err(PorplError::from_string("board banned", 405))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_board_deleted_or_removed(
+    board_id: i32,
+    pool: &PgPool,
+) -> Result<(), PorplError> {
+    let board = blocking(pool, move |conn| Board::read(conn, board_id))
+        .await?
+        .map_err(|_e| PorplError::from_string("couldn't find board", 404))?;
+    
+    if board.deleted || board.removed {
+        Err(PorplError::from_string("deleted", 404))
+    } else {
+        Ok(())
+    }
 }

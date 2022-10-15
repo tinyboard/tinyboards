@@ -1,4 +1,4 @@
-use crate::local_structs::{UserView, UserSettingsView};
+use crate::structs::{UserView, UserSettingsView};
 use diesel::{result::Error, *};
 use porpl_db::{
     aggregates::structs::UserAggregates,
@@ -13,7 +13,7 @@ use porpl_db::{
     utils::functions::lower,
 };
 
-type UserViewTuple = (User, UserAggregates);
+type UserViewTuple = (UserSafe, UserAggregates);
 
 impl UserView {
     pub fn read(
@@ -24,7 +24,7 @@ impl UserView {
             .find(user_id)
             .inner_join(user_aggregates::table)
             .select((
-                user_::all_columns,
+                UserSafe::safe_columns_tuple(),
                 user_aggregates::all_columns,
             ))
             .first::<UserViewTuple>(conn)?;
@@ -43,7 +43,7 @@ impl UserView {
         .filter(user_::name.eq(name))
         .inner_join(user_aggregates::table)
         .select((
-            user_::all_columns,
+            UserSafe::safe_columns_tuple(),
             user_aggregates::all_columns,
         ))
         .first::<UserViewTuple>(conn)?;
@@ -66,7 +66,7 @@ impl UserView {
                     .or(user_::email.eq(name_or_email)),
             )
             .select((
-                user_::all_columns,
+                UserSafe::safe_columns_tuple(),
                 user_aggregates::all_columns,
             ))
             .first::<UserViewTuple>(conn)?;
@@ -85,7 +85,7 @@ impl UserView {
             .inner_join(user_aggregates::table)
             .filter(user_::email.eq(from_email))
             .select((
-                user_::all_columns,
+                UserSafe::safe_columns_tuple(),
                 user_aggregates::all_columns,
             ))
             .first::<UserViewTuple>(conn)?;
@@ -95,6 +95,20 @@ impl UserView {
                 counts,
             })    
     }
+
+    pub fn admins(conn: &mut PgConnection) -> Result<Vec<Self>, Error> {
+        let admins = user_::table
+            .inner_join(user_aggregates::table)
+            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
+            .filter(user_::admin.eq(true))
+            .filter(user_::deleted.eq(false))
+            .order_by(user_::published)
+            .load::<UserViewTuple>(conn)?;
+        
+        Ok(Self::from_tuple_to_vec(admins))
+
+    }
+
 }
 
 type UserSettingsViewTuple = (UserSettings, UserAggregates);
@@ -124,6 +138,19 @@ impl ViewToVec for UserSettingsView {
             .into_iter()
             .map(|a| Self {
                 settings: a.0,
+                counts: a.1,
+            })
+            .collect::<Vec<Self>>()
+    }
+}
+
+impl ViewToVec for UserView {
+    type DbTuple = UserViewTuple;
+    fn from_tuple_to_vec(items: Vec<Self::DbTuple>) -> Vec<Self> {
+        items
+            .into_iter()
+            .map(|a| Self {
+                user: a.0,
                 counts: a.1,
             })
             .collect::<Vec<Self>>()

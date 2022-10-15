@@ -11,7 +11,8 @@ use crate::{
         Crud,
         Likeable,
         Saveable,
-    },
+    }, 
+    utils::naive_now,
 };
 use diesel::{
     prelude::*,
@@ -28,6 +29,21 @@ impl Post {
             eprintln!("ERROR: {}", e);
             PorplError::new(500, String::from("Internal error, please try again later"))
         })
+    }
+
+    pub fn is_post_creator(user_id: i32, post_creator_id: i32) -> bool {
+        user_id == post_creator_id
+    }
+
+    pub fn update_deleted(
+        conn: &mut PgConnection,
+        post_id: i32,
+        new_deleted: bool
+    ) -> Result<Self, Error> {
+        use crate::schema::post::dsl::*;
+        diesel::update(post.find(post_id))
+            .set((deleted.eq(new_deleted), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
     }
     
 }

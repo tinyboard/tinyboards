@@ -1,4 +1,4 @@
-use crate::actor_structs::BoardView;
+use crate::{structs::{BoardView, BoardModeratorView, UserView}};
 use diesel::{result::Error, *};
 use porpl_db::{
     aggregates::structs::BoardAggregates,
@@ -68,6 +68,39 @@ impl BoardView {
             counts,
         })
     }
+
+    pub fn is_mod_or_admin(
+        conn: &mut PgConnection,
+        user_id: i32,
+        board_id: i32,
+    ) -> bool {
+
+        // check board moderators for user_id
+        
+        let is_mod = BoardModeratorView::for_board(conn, board_id)
+            .map(|v| {
+                v.into_iter()
+                    .map(|m| m.moderator.id)
+                    .collect::<Vec<i32>>()
+            })
+            .unwrap_or_default()
+            .contains(&user_id);
+        
+        if is_mod {
+            return true;
+        }
+        
+        // check list of admins for user_id
+        UserView::admins(conn)
+            .map(|v| {
+                v.into_iter()
+                    .map(|a| a.user.id)
+                    .collect::<Vec<i32>>()
+            })
+            .unwrap_or_default()
+            .contains(&user_id)
+    }
+
 }
 
 #[derive(TypedBuilder)]

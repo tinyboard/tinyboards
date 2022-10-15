@@ -1,4 +1,4 @@
-use crate::local_structs::PostView;
+use crate::structs::PostView;
 use diesel::{dsl::*, pg::Pg, result::Error, *};
 use porpl_db::{
     aggregates::structs::PostAggregates,

@@ -11,17 +11,27 @@ use serde::Deserialize;
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     cfg.service(
         web::scope("/api/v1")
-        // Users
+        // User
         .service(
-            web::resource("/user/register")
+            web::resource("/signup")
                 .guard(guard::Post())
                 .wrap(rate_limit.register())
-                .route(web::post().to(route_post_crud::<Register>)),
+                .route(web::post().to(route_post_crud::<Register>))
         )
         .service(
             web::scope("/user")
                 .wrap(rate_limit.message())
                 .route("/login", web::post().to(route_post::<Login>))
+                .route("/{username}", web::get().to(route_get_crud::<GetUser>))
+        )
+        // Post
+        .service(
+            web::scope("/post")
+              .wrap(rate_limit.message())
+              .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
+              .route("/list", web::get().to(route_get_crud::<ListPosts>))
+              .route("/vote", web::post().to(route_post::<CreatePostLike>))
+              .route("/delete", web::post().to(route_post_crud::<DeletePost>))
         )
     )
 }
