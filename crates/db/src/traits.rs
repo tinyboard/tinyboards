@@ -25,12 +25,12 @@ pub trait Crud {
         Self: Sized;
 }
 
-pub trait Followable {
+pub trait Subscribeable {
     type Form;
-    fn follow(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn subscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
     where
         Self: Sized;
-    fn unfollow(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
     where 
         Self: Sized;
 }
@@ -45,18 +45,15 @@ pub trait Joinable {
         Self: Sized;
 }
 
-pub trait Voteable {
+pub trait Likeable {
     type Form;
     type IdType;
-    fn up_vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
     where
         Self: Sized;
-    fn down_vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
-    where
-        Self: Sized;
-    fn remove_vote(
+    fn remove(
         conn: &mut PgConnection,
-        user_id: UserId,
+        user_id: i32,
         item_id: Self::IdType,
     ) -> Result<usize, PorplError>
     where
@@ -101,7 +98,7 @@ pub trait Readable {
     fn mark_as_unread(conn: &mut PgConnection, form: &Self) -> Result<usize, PorplError>
     where
         Self: Sized;
-}// the project doesnt compile with From
+}
 
 pub trait Reportable {
     type Form;

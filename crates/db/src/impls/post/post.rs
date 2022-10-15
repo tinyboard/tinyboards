@@ -1,6 +1,18 @@
-use crate::models::post::post::{Post, PostForm};
-use crate::schema::post::dsl::*;
-use crate::traits::Crud;
+use crate::{
+    models::{
+        post::post::{Post, PostForm},
+        post::post_like::{PostLike, PostLikeForm},
+    },
+    schema::{
+        post,
+        post_like,
+    },
+    traits::{
+        Crud,
+        Likeable,
+        Saveable,
+    },
+};
 use diesel::{
     prelude::*,
     result::Error,
@@ -25,20 +37,20 @@ impl Crud for Post {
     type IdType = i32;
 
     fn read(conn: &mut PgConnection, post_id: i32) -> Result<Self, Error> {
-        post.find(post_id).first::<Self>(conn)
+        post::table.find(post_id).first::<Self>(conn)
     }
     fn delete(conn: &mut PgConnection, post_id: i32) -> Result<usize, Error> {
-        diesel::delete(post.find(post_id)).execute(conn)
+        diesel::delete(post::table.find(post_id)).execute(conn)
     }
     fn create(conn: &mut PgConnection, form: &PostForm) -> Result<Self, Error> {
-        let new_post = diesel::insert_into(post)
+        let new_post = diesel::insert_into(post::table)
             .values(form)
             .get_result::<Self>(conn)?;
 
             Ok(new_post)
     }
     fn update(conn: &mut PgConnection, post_id: i32, form: &PostForm) -> Result<Self, Error> {
-        diesel::update(post.find(post_id))
+        diesel::update(post::table.find(post_id))
             .set(form)
             .get_result::<Self>(conn)
     }
