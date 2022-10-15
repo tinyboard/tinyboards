@@ -6,6 +6,12 @@ use porpl_db::{
 use porpl_db_views::{local_structs::PostView, actor_structs::{BoardBlockView, BoardModeratorView, BoardView}};
 use crate::sensitive::Sensitive;
 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PostResponse {
+    pub post_view: PostView,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SubmitPost {
     pub title: String,
@@ -58,4 +64,17 @@ pub struct ListPostsResponse {
 #[derive(Deserialize)]
 pub struct GetPostPath {
     pub post_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CreatePostLike {
+    pub post_id: i32,
+    pub score: i16,
+    pub auth: Sensitive<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct CreatePostLikeResponse {
+    pub status_code: i32,
+    pub message: String,
 }

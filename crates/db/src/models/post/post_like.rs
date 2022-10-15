@@ -17,5 +17,5 @@ pub struct PostLike {
 pub struct PostLikeForm {
     pub post_id: i32,
     pub user_id: i32,
-    score: i16,
+    pub score: i16,
 }

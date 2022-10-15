@@ -1,4 +1,5 @@
-pub mod local_user;
+pub mod user;
+pub mod post;
 use actix_web::web::Data;
 use porpl_utils::PorplError;
 
