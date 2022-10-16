@@ -37,7 +37,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let board_id = data.board_id;
         let saved_only = data.saved_only;
 
-        let mut posts = blocking(context.pool(), move |conn| {
+        let posts = blocking(context.pool(), move |conn| {
             PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))

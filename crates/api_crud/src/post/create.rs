@@ -36,7 +36,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             ..PostForm::default()
         };
 
-        let published_post =
+        let _published_post =
             blocking(context.pool(), move |conn| Post::submit(conn, post_form)).await??;
 
         let submit_post_response = SubmitPostResponse {
