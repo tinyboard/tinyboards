@@ -1,3 +1,19 @@
+[package]
+name = "porpl-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+porpl_db = { version = "0.1.0", path = "crates/db" }
+porpl_api = { version = "0.1.0", path = "crates/api" }
+porpl_api_common = { version = "0.1.0", path = "crates/api_common" }
+porpl_api_crud = { version = "0.1.0", path = "crates/api_crud" }
+porpl_utils = { version = "0.1.0", path = "crates/utils" }
+actix-web = "4"
+serde = "1.0.145"
+bigdecimal = "0.3.0"
+dotenv = "0.15.0"
+
 [workspace]
 members = [
     "crates/api",
@@ -5,11 +21,7 @@ members = [
     "crates/api_crud",
     "crates/db",
     "crates/db_views",
-    "crates/server",
     "crates/utils"
 ]
 
-#[dependencies]
-#porpl-api = { path = "./crates/api" }
-#porpl-db = { path = "./crates/db" }
-#porpl-server = { path = "./crates/server" }
+

@@ -36,7 +36,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
               .route("", web::delete().to(route_get_crud::<DeletePost>))
               .route("/list", web::get().to(route_get_crud::<ListPosts>))
               .route("/sticky", web::put().to(route_get_crud::<StickyPost>))
-              .route("/report", web::put().to(route_get_crud::<ReportPost>))
+              .route("/report", web::post().to(route_get_crud::<ReportPost>))
         )
         // Vote
         .service(
