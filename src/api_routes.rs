@@ -1,8 +1,9 @@
 use actix_web::*;
-use porpl_api::{Perform, data::PorplContext};
+use porpl_api::Perform;
 use porpl_api_common::{
-    person::*,
+    user::*,
     post::*,
+    data::PorplContext,
 };
 use porpl_api_crud::PerformCrud;
 use porpl_utils::rate_limit::RateLimit;
@@ -33,7 +34,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
               .route("/vote", web::post().to(route_post::<CreatePostLike>))
               .route("/delete", web::post().to(route_post_crud::<DeletePost>))
         )
-    )
+    );
 }
 
 

@@ -22,3 +22,16 @@ impl fmt::Display for IpAddr {
 }
 
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+
+
+#[macro_export]
+macro_rules! location_info {
+  () => {
+    format!(
+      "None value at {}:{}, column {}",
+      file!(),
+      line!(),
+      column!()
+    )
+  };
+}

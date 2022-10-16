@@ -9,6 +9,11 @@ use diesel::{
     //PgConnection,
 };
 
+
+pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
+  std::env::var("PORPL_DATABASE_URL")
+}
+
 const FETCH_LIMIT_DEFAULT: i64 = 10;
 pub const FETCH_LIMIT_MAX: i64 = 50;
 
