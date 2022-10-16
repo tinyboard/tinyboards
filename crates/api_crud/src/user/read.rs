@@ -2,7 +2,7 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
     data::PorplContext,
-    person::{GetUser, GetUserPath},
+    user::{GetUser, GetUserNamePath},
     utils::blocking,
 };
 use porpl_db::models::user::user::User;
@@ -11,7 +11,7 @@ use porpl_utils::PorplError;
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for GetUser {
     type Response = User;
-    type Route = GetUserPath;
+    type Route = GetUserNamePath;
 
     async fn perform(
         self,

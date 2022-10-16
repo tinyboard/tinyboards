@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
     data::PorplContext,
-    person::{Login, LoginResponse},
+    user::{Login, LoginResponse},
     sensitive::Sensitive,
     utils::{blocking},
 };

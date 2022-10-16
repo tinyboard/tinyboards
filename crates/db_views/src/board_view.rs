@@ -69,6 +69,22 @@ impl BoardView {
         })
     }
 
+    pub fn is_admin(
+        conn: &mut PgConnection,
+        user_id: i32,
+    ) -> Result<bool, Error> {
+        let res = UserView::admins(conn)
+            .map(|v| {
+                v.into_iter()
+                    .map(|a| a.user.id)
+                    .collect::<Vec<i32>>()
+            })
+            .unwrap_or_default()
+            .contains(&user_id);
+        
+        Ok(res)
+    }
+
     pub fn is_mod_or_admin(
         conn: &mut PgConnection,
         user_id: i32,

@@ -1,4 +1,5 @@
 use crate::sensitive::Sensitive;
+use chrono::NaiveDateTime;
 // use porpl_db::{
 //     porpl_types::{CommentReplyId, BoardId, PersonId, PersonMentionId},
 //     CommentSortType,
@@ -38,15 +39,44 @@ pub struct Register {
     pub answer: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ProfileResponse {
+    pub username: String,
+    pub id: i32,
+    pub avatar_url: String,
+    pub url: String,
+    pub html_url: String,
+    pub saved_url: String,
+    pub posts_url: String,
+    pub comments_url: String,
+    pub user_type: String,
+    pub is_admin: bool,
+    pub display_name: String,
+    pub posts_count: i64,
+    pub posts_score: i64,
+    pub comments_count: i64,
+    pub comments_score: i64,
+    pub created_at: NaiveDateTime,
+    pub updated_at: Option<NaiveDateTime>,
+    pub is_banned: bool,
+    pub is_deleted: bool,
+}
+
 #[derive(Deserialize)]
 pub struct GetUser {}
 
-#[derive(Deserialize)]
-pub struct GetUserPath {
-    pub username: String,
-}
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct Profile {}
 
 #[derive(Deserialize)]
 pub struct GetPostPath {
     pub post_id: i32,
 }
+
+#[derive(Deserialize, Clone)]
+pub struct GetUserNamePath {
+    pub username: String,
+}
+
+
+

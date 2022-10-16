@@ -57,8 +57,6 @@ pub struct CommentView {
     pub my_vote: Option<i16>,
 }
 
-
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardBlockView {
     pub user: UserSafe,

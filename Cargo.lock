@@ -2199,6 +2199,7 @@ dependencies = [
  "diesel",
  "porpl_api_common",
  "porpl_db",
+ "porpl_db_views",
  "porpl_utils",
  "regex",
  "serde",
