@@ -37,9 +37,18 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
               .route("/list", web::get().to(route_get_crud::<ListPosts>))
               .route("/sticky", web::put().to(route_get_crud::<StickyPost>))
               .route("/report", web::put().to(route_get_crud::<ReportPost>))
-              .route("/vote", web::post().to(route_post::<CreatePostLike>))
-              .route("/vote", web::put().to(route_post::<UpdatePostLike>))
-              .route("/vote", web::delete().to(route_post::<DeletePostLike>))
+        )
+        // Vote
+        .service(
+            web::scope("/vote")
+                .wrap(rate_limit.message())
+                .route("/post", web::post().to(route_post::<CreatePostLike>))
+                .route("/post", web::put().to(route_post::<UpdatePostLike>))
+                .route("/post", web::delete().to(route_post::<DeletePostLike>))
+                .route("/comment", web::post().to(route_post::<CreateCommentLike>))
+                .route("/comment", web::put().to(route_post::<UpdateCommentLike>))
+                .route("/comment", web::delete().to(route_post::<DeleteCommentLike>))
+
         )
     )
 }
