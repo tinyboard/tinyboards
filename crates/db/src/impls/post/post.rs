@@ -1,17 +1,11 @@
 use crate::{
     models::{
         post::post::{Post, PostForm},
-        post::post_like::{PostLike, PostLikeForm},
     },
     schema::{
         post,
-        post_like,
     },
-    traits::{
-        Crud,
-        Likeable,
-        Saveable,
-    }, 
+    traits::Crud, 
     utils::naive_now,
 };
 use diesel::{

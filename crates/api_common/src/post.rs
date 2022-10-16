@@ -5,7 +5,6 @@ use porpl_db::{
 };
 use porpl_db_views::structs::{
         PostView,
-        BoardBlockView, 
         BoardModeratorView, 
         BoardView
 };

@@ -18,6 +18,7 @@ pub struct Board {
     pub updated: Option<NaiveDateTime>,
     pub deleted: bool,
     pub nsfw: bool,
+    pub hidden: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -33,6 +34,7 @@ pub struct BoardForm {
   pub updated: Option<Option<NaiveDateTime>>,
   pub deleted: Option<bool>,
   pub nsfw: Option<bool>,
+  pub hidden: Option<bool>,
 }
 
 
@@ -49,4 +51,5 @@ pub struct BoardSafe {
   pub updated: Option<NaiveDateTime>,
   pub deleted: bool,
   pub nsfw: bool,
+  pub hidden: bool,
 }

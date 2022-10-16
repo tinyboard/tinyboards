@@ -43,11 +43,11 @@ impl<'des> Perform<'des> for Profile {
         let saved_url = format!("https://{domain}/api/v1/users/{name}/saved", domain=&domain, name=&user.name);
         let posts_url = format!("https://{domain}/api/v1/users/{name}/posts", domain=&domain, name=&user.name);
         let comments_url = format!("https://{domain}/api/v1/users/{name}/comments", domain=&domain, name=&user.name);
-        let mut user_type = String::new();
+        let mut _user_type = String::new();
         if user.admin {
-            user_type = String::from("Admin");
+            _user_type = String::from("Admin");
         } else {
-            user_type = String::from("User");
+            _user_type = String::from("User");
         }
         let is_admin = user.admin;
         let display_name = user.preferred_name.unwrap_or(user.name);
@@ -79,7 +79,7 @@ impl<'des> Perform<'des> for Profile {
             saved_url,
             posts_url,
             comments_url,
-            user_type,
+            user_type: _user_type,
             is_admin,
             display_name,
             posts_count,

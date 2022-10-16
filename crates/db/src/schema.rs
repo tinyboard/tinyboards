@@ -13,6 +13,7 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         deleted -> Bool,
         nsfw -> Bool,
+        hidden -> Bool,
     }
 }
 

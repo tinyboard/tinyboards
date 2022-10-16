@@ -7,7 +7,7 @@ use porpl_db::{
         user_aggregates,
     },
     models::{
-        user::user::{User, UserSettings, UserSafe},
+        user::user::{UserSettings, UserSafe},
     },
     traits::{ToSafe, ViewToVec},
     utils::functions::lower,

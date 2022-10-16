@@ -2,18 +2,14 @@ use crate::{
     models::board::{
         board::{Board, BoardForm},
     },
-    traits::{Crud, Subscribeable, Joinable, Bannable},
-    SubscribedType,
+    traits::Crud,
 };
 use crate::schema::board::dsl::*;
 use diesel::{
-    dsl::*,
     result::Error,
-    ExpressionMethods,
     PgConnection,
     QueryDsl,
     RunQueryDsl,
-    TextExpressionMethods,
 };
 
 pub mod safe_type {
@@ -28,6 +24,7 @@ pub mod safe_type {
         updated,
         deleted,
         nsfw,
+        hidden,
     );
 
     impl ToSafe for BoardSafe {
@@ -42,6 +39,7 @@ pub mod safe_type {
                 updated,
                 deleted,
                 nsfw,
+                hidden,
             )
         }
     }

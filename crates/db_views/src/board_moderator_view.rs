@@ -7,9 +7,8 @@ use porpl_db::{
         user_,
     },
     models::{
-        board::board::{Board, BoardSafe},
-        board::board_moderator::BoardModerator,
-        user::user::{User, UserSafe},
+        board::board::BoardSafe,
+        user::user::UserSafe,
     },
     traits::{ToSafe, ViewToVec},
 };
