@@ -15,7 +15,7 @@ porpl_db = { version = "0.1.0", path = "../db" }
 porpl_db_views = { version = "0.1.0", path = "../db_views" }
 actix-web = "4"
 async-trait = "0.1.57"
-diesel = { version = "2.0.0", features = ["postgres"] }
+diesel = { version = "2.0.0", features = ["postgres","64-column-tables"] }
 serde = { version = "1.0.145", features = ["derive"] }
 derive_more = "0.99.17"
 bigdecimal = "0.3.0"
