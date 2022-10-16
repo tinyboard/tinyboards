@@ -9,18 +9,20 @@ use diesel::{
     PgConnection,
 };
 use diesel_migrations::EmbeddedMigrations;
-use doku::json::{AutoComments, Formatting};
-use porpl_api_common::{utils::blocking, data::PorplContext};
+use porpl_api_common::{utils::blocking, data::PorplContext, request::build_user_agent};
 use porpl_server::{
     api_routes,
-    init_logging,
+    init_logging, 
+    scheduled_tasks,
+    root_span_builder::QuieterRootSpanBuilder,
 };
 use porpl_utils::{
     error::PorplError,
     rate_limit::{rate_limiter::RateLimiter, RateLimit},
     settings::{structs::Settings, SETTINGS},
 };
-use porpl_db::utils::get_database_url_from_env;
+use porpl_db::utils::{get_database_url_from_env, DbPool};
+use porpl_db::models::secret::Secret;
 use reqwest::Client;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -71,20 +73,19 @@ async fn main() -> Result<(), PorplError> {
     })
     .await?;
 
-    // let pool2 = pool.clone();
-    // thread::spawn(move || {
-
-    // })
+    let task_pool = pool.clone();
+    thread::spawn(move || {
+        scheduled_tasks::setup(task_pool).expect("Couldn't setup scheduled tasks");
+    });
 
     let rate_limiter = RateLimit {
         rate_limiter: Arc::new(Mutex::new(RateLimiter::default())),
         rate_limit_config: settings.rate_limit.to_owned().unwrap_or_default(),
     };
 
-    // // init the secrets
-    // let conn = &mut pool.get().unwrap();
-
-    // let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
+    // init the secret
+    let conn = &mut pool.get()?;
+    let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
 
     println!(
         "Starting http server at {}:{}",

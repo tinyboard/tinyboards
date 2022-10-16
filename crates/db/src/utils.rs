@@ -1,14 +1,9 @@
 use diesel::{
-    //backend::Backend,
-    //deserialize::FromSql,
-    //pg::Pg,
     result::Error::QueryBuilderError,
-    //serialize::{Output, ToSql},
-    //sql_types::Text,
-    //Connection,
-    //PgConnection,
 };
 
+
+pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
 pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
   std::env::var("PORPL_DATABASE_URL")

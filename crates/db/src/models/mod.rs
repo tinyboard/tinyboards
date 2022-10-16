@@ -4,3 +4,4 @@ pub mod post;
 pub mod comment;
 pub mod moderator;
 pub mod site;
+pub mod secret;

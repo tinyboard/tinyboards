@@ -4,6 +4,7 @@ pub mod time;
 pub mod rate_limit;
 pub mod settings;
 pub mod utils;
+pub mod version;
 
 pub use error::PorplError;
 pub use passhash::hash_password;

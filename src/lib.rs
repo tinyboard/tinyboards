@@ -1,5 +1,7 @@
 #![recursion_limit = "512"]
 pub mod api_routes;
+pub mod root_span_builder;
+pub mod scheduled_tasks;
 #[cfg(feature = "console")]
 pub mod telemetry;
 

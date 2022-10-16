@@ -308,6 +308,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    secret (id) {
+        id -> Int4,
+        jwt_secret -> Varchar,
+    }
+}
+
+diesel::table! {
     site (id) {
         id -> Int4,
         name -> Varchar,
@@ -468,6 +475,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_saved,
     private_message,
     registration_application,
+    secret,
     site,
     tag,
     user_,
