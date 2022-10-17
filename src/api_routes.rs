@@ -6,7 +6,7 @@ use porpl_api_common::{
     data::PorplContext,
 };
 use porpl_api_crud::PerformCrud;
-use porpl_utils::rate_limit::RateLimit;
+use porpl_utils::{rate_limit::RateLimit, PorplError};
 use serde::Deserialize;
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
@@ -38,72 +38,110 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
 }
 
 
-async fn perform<Request>(
+async fn perform<'des, Request>(
     data: Request,
     context: web::Data<PorplContext>,
-) -> Result<HttpResponse, Error> 
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
 where
-    Request: Perform,
+    Request: Perform<'des>,
     Request: Send + 'static,
 {
+    let auth_header = req
+        .headers()
+        .get("Authorization")
+        .map(|header| header.to_str());
+    let auth_header = match auth_header {
+        Some(h) => match h {
+            Ok(h) => Some(h),
+            Err(_) => None,
+        },
+        None => None,
+    };
+
     let res = data
-        .perform(&context, None)
+        .perform(&context, path.into_inner(), auth_header)
         .await
         .map(|json| HttpResponse::Ok().json(json))?;
+
     Ok(res)
 }
 
-async fn route_get<'a, Data>(
-    data: web::Query<Data>,
-    context: web::Data<PorplContext>,
-) -> Result<HttpResponse, Error>
+async fn route_get<'des, Request>(
+    data: web::Data<PorplContext>,
+    query: web::Query<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
 where
-    Data: Deserialize<'a> + Send + 'static + Perform,
+    Request: Deserialize<'des> + Send + 'static + Perform<'des>,
 {
-    perform::<Data>(data.0, context).await
+    perform::<Request>(query.0, data, path, req).await
 }
 
-async fn route_post<'a, Data>(
-    data: web::Json<Data>,
-    context: web::Data<PorplContext>,
-  ) -> Result<HttpResponse, Error>
-  where
-    Data: Deserialize<'a> + Send + 'static + Perform,
-  {
-    perform::<Data>(data.0, context).await
-  }
-  
-  async fn perform_crud<Request>(
+async fn route_post<'des, Request>(
+    data: web::Data<PorplContext>,
+    body: web::Json<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
+where
+    Request: Deserialize<'des> + Perform<'des> + Send + 'static,
+{
+    perform::<Request>(body.into_inner(), data, path, req).await
+}
+
+async fn perform_crud<'des, Request>(
     data: Request,
     context: web::Data<PorplContext>,
-  ) -> Result<HttpResponse, Error>
-  where
-    Request: PerformCrud,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
+where
+    Request: PerformCrud<'des>,
     Request: Send + 'static,
-  {
+{
+    let auth_header = req
+        .headers()
+        .get("Authorization")
+        .map(|header| header.to_str());
+    let auth_header = match auth_header {
+        Some(h) => match h {
+            Ok(h) => Some(h),
+            Err(_) => None,
+        },
+        None => None,
+    };
+
     let res = data
-      .perform(&context, None)
-      .await
-      .map(|json| HttpResponse::Ok().json(json))?;
+        .perform(&context, path.into_inner(), auth_header)
+        .await
+        .map(|json| HttpResponse::Ok().json(json))?;
+
     Ok(res)
-  }
-  
-  async fn route_get_crud<'a, Data>(
-    data: web::Query<Data>,
-    context: web::Data<PorplContext>,
-  ) -> Result<HttpResponse, Error>
-  where
-    Data: Deserialize<'a> + Send + 'static + PerformCrud,
-  {
-    perform_crud::<Data>(data.0, context).await
-  }
-  
-  async fn route_post_crud<'a, Data>(
-    data: web::Json<Data>,
-    context: web::Data<PorplContext>,
-  ) -> Result<HttpResponse, Error>
-  where
-    Data: Deserialize<'a> + Send + 'static + PerformCrud,
-  {
-    perform_crud::<Data>(data.0, context).await
-  }
+}
+
+async fn route_get_crud<'des, Request>(
+    data: web::Data<PorplContext>,
+    query: web::Query<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
+where
+    Request: Deserialize<'des> + Send + 'static + PerformCrud<'des>,
+{
+    perform_crud::<Request>(query.0, data, path, req).await
+}
+
+async fn route_post_crud<'des, Request>(
+    data: web::Data<PorplContext>,
+    body: web::Json<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, PorplError>
+where
+    Request: Deserialize<'des> + PerformCrud<'des> + Send + 'static,
+{
+    perform_crud::<Request>(body.into_inner(), data, path, req).await
+}

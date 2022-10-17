@@ -1,7 +1,6 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use porpl_db_views::structs::{UserView, BoardView, BoardUserBanView};
-//use porpl_db_views::local_structs::UserView;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
@@ -11,7 +10,7 @@ use porpl_db::{
     impls::user::is_banned, 
     models::{
         user::user::User,
-        board::board::Board,
+        board::board::Board, secret::Secret,
     },
     traits::Crud,
 };
@@ -128,12 +127,12 @@ pub fn check_user_valid(
 
 #[tracing::instrument(skip_all)]
 pub async fn get_user_view_from_jwt(
-  jwt: &str,
+  secret: &Secret,
   pool: &PgPool,
   master_key: &str,
 ) -> Result<UserView, PorplError> {
 
-    let u = require_user(pool, master_key, Some(jwt)).await?;
+    let u = require_user(pool, master_key, Some(&secret.jwt)).await?;
     let user_id = u.id;
 
     let user_view = 
