@@ -2,6 +2,7 @@
 extern crate diesel_migrations;
 
 use crate::diesel_migrations::MigrationHarness;
+#[allow(unused_imports)]
 use actix::prelude::*;
 use actix_web::{web::Data, *};
 use diesel::{
@@ -19,16 +20,15 @@ use porpl_server::{
 use porpl_utils::{
     error::PorplError,
     rate_limit::{rate_limiter::RateLimiter, RateLimit},
-    settings::{structs::Settings, SETTINGS},
+    settings::{SETTINGS},
 };
-use porpl_db::utils::{get_database_url_from_env, DbPool};
+use porpl_db::utils::{get_database_url_from_env};
 use porpl_db::models::secret::Secret;
 use reqwest::Client;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
 use std::{
-    env,
     sync::{Arc, Mutex},
     thread,
     time::Duration,
@@ -49,7 +49,7 @@ async fn main() -> Result<(), PorplError> {
     let settings = SETTINGS.to_owned();
 
     init_logging(&settings.opentelemetry_url)
-        .map_err(|_| PorplError::from_string("failed to initialize logger", 500));
+        .map_err(|_| PorplError::from_string("failed to initialize logger", 500))?;
     
     let db_url = match get_database_url_from_env() {
         Ok(url) => url,
@@ -63,7 +63,7 @@ async fn main() -> Result<(), PorplError> {
         .build(manager)
         .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
     
-    let protocol_and_hostname = settings.get_protocol_and_hostname();
+    let _protocol_and_hostname = settings.get_protocol_and_hostname();
 
     blocking(&pool, move |conn| {
         let _ = conn
@@ -71,7 +71,7 @@ async fn main() -> Result<(), PorplError> {
             .map_err(|_| PorplError::from_string("Couldn't run migrations", 500))?;
         Ok(()) as Result<(), PorplError>
     })
-    .await?;
+    .await??;
 
     let task_pool = pool.clone();
     thread::spawn(move || {
@@ -99,13 +99,25 @@ async fn main() -> Result<(), PorplError> {
         .build()
         .map_err(|_| PorplError::from_string("could not build reqwest client", 500))?;
 
+    let retry_policy = ExponentialBackoff {
+        max_n_retries: 3,
+        max_retry_interval: REQWEST_TIMEOUT,
+        min_retry_interval: Duration::from_millis(100),
+        backoff_exponent: 2,
+    };
+
+    let client = ClientBuilder::new(reqwest_client.clone())
+        .with(TracingMiddleware::default())
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build();
+
     let settings_bind = settings.clone();
     HttpServer::new(move || {
         let context = PorplContext::create(
-            pool,
-            client,
-            settings,
-            secret,
+            pool.clone(),
+            client.clone(),
+            settings.clone(),
+            secret.clone(),
         );
         let rate_limiter = rate_limiter.clone();
         App::new()

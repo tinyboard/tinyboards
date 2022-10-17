@@ -68,6 +68,7 @@ where
     Ok(res)
 }
 
+#[allow(dead_code)]
 async fn route_get<'des, Request>(
     data: web::Data<PorplContext>,
     query: web::Query<Request>,

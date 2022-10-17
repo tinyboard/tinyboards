@@ -69,7 +69,7 @@ impl<'des> PerformCrud<'des> for Register {
         // logic about emailing the admins of the site if application submitted and email notification for user etc
 
         let response = SignupResponse {
-            jwt: Some(Sensitive::new(inserted_user.get_jwt(context.master_key()))),
+            jwt: Some(Sensitive::new(inserted_user.get_jwt(context.master_key().jwt.as_ref()))),
             registration_created: false,
             verify_email_sent: false,
         };

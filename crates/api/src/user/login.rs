@@ -38,7 +38,7 @@ impl<'des> Perform<'des> for Login {
         }
 
         Ok(LoginResponse {
-            jwt: Sensitive::new(u.get_jwt(context.master_key())),
+            jwt: Sensitive::new(u.get_jwt(context.master_key().jwt.as_ref())),
         })
     }
 }

@@ -1,6 +1,7 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use porpl_db_views::structs::{UserView, BoardView, BoardUserBanView};
+//use porpl_db_views::local_structs::UserView;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use porpl_utils::error::PorplError;
@@ -16,8 +17,8 @@ use porpl_db::{
 };
 //use diesel::PgConnection;
 
-pub fn get_jwt(uid: i32, uname: &str, master_key: &str) -> String {
-    let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
+pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
+    let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
     let header = Header {
         algorithm: AlgorithmType::Hs384,
         ..Default::default()
@@ -71,7 +72,7 @@ pub fn password_length_check(pass: &str) -> Result<(), PorplError> {
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
 pub async fn load_user_opt(
     pool: &PgPool,
-    master_key: &str,
+    master_key: &Secret,
     auth: Option<&str>,
 ) -> Result<Option<User>, PorplError> {
     if auth.is_none() {
@@ -87,7 +88,7 @@ pub async fn load_user_opt(
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
     // maybe there's a better solution to this but I feel like this is too memory-consuming.
     let token = String::from(&auth[7..]);
-    let master_key = String::from(master_key);
+    let master_key = String::from(master_key.jwt.clone());
 
     blocking(pool, |conn| User::from_jwt(conn, token, master_key)).await?
 }
@@ -95,7 +96,7 @@ pub async fn load_user_opt(
 /// Enforces a logged in user. Returns `Ok<User>` if everything is OK, otherwise errors. If being logged in is optional, `load_user_opt` should be used.
 pub async fn require_user(
     pool: &PgPool,
-    master_key: &str,
+    master_key: &Secret,
     auth: Option<&str>,
 ) -> Result<User, PorplError> {
     if auth.is_none() {
@@ -127,12 +128,12 @@ pub fn check_user_valid(
 
 #[tracing::instrument(skip_all)]
 pub async fn get_user_view_from_jwt(
-  secret: &Secret,
+  jwt: &str,
   pool: &PgPool,
-  master_key: &str,
+  master_key: &Secret,
 ) -> Result<UserView, PorplError> {
 
-    let u = require_user(pool, master_key, Some(&secret.jwt)).await?;
+    let u = require_user(pool, master_key, Some(jwt)).await?;
     let user_id = u.id;
 
     let user_view = 
