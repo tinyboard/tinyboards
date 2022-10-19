@@ -34,6 +34,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             web::scope("/post")
               .wrap(rate_limit.message())
               .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
+              .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
               .route("/list", web::get().to(route_get_crud::<ListPosts>))
               .route("/vote", web::post().to(route_post::<CreatePostLike>))
               .route("/delete", web::post().to(route_post_crud::<DeletePost>))
