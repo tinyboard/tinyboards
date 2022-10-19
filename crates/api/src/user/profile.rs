@@ -38,6 +38,8 @@ impl<'des> Perform<'des> for Profile {
         let domain = std::env::var("MASTER_DOMAIN").unwrap();
         let id = user.id;
         let avatar_url = user.avatar.unwrap_or("".to_string());
+        let bio = user.bio.unwrap_or("".to_string());
+        let banner_url = user.banner.unwrap_or("".to_string());
         let url = format!("https://{domain}/api/v1/users/{name}", domain=&domain, name=&user.name);
         let html_url = format!("https://{domain}/@{name}", domain=&domain, name=&user.name);
         let saved_url = format!("https://{domain}/api/v1/users/{name}/saved", domain=&domain, name=&user.name);
@@ -72,8 +74,10 @@ impl<'des> Perform<'des> for Profile {
 
         Ok( ProfileResponse {
             username,
+            bio,
             id,
             avatar_url,
+            banner_url,
             url,
             html_url,
             saved_url,

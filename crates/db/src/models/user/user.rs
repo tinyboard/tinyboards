@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 pub struct User {
     pub id: i32,
     pub name: String,
-    pub fedi_name: String,
     pub preferred_name: Option<String>,
     pub passhash: String,
     pub email: Option<String>,
@@ -26,6 +25,8 @@ pub struct User {
     pub accepted_application: bool,
     pub deleted: bool,
     pub expires: Option<NaiveDateTime>,
+    pub banner: Option<String>,
+    pub bio: Option<String>,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -35,7 +36,6 @@ pub struct User {
 pub struct UserSafe {
     pub id: i32,
     pub name: String,
-    pub fedi_name: String,
     pub preferred_name: Option<String>,
     pub admin: bool,
     pub banned: bool,
@@ -49,6 +49,8 @@ pub struct UserSafe {
     pub show_nsfw: bool,
     pub deleted: bool,
     pub expires: Option<NaiveDateTime>,
+    pub banner: Option<String>,
+    pub bio: Option<String>,
 }
 
 /// Struct for retrieving setting columns from user table
@@ -70,7 +72,6 @@ pub struct UserSettings {
 #[diesel(table_name = user_)]
 pub struct UserForm {
     pub name: String,
-    pub fedi_name: Option<String>,
     pub preferred_name: Option<Option<String>>,
     pub passhash: String,
     pub email: Option<String>,
@@ -86,4 +87,6 @@ pub struct UserForm {
     pub accepted_application: Option<bool>,
     pub deleted: Option<bool>,
     pub expires: Option<Option<NaiveDateTime>>,
+    pub banner: Option<Option<String>>,
+    pub bio: Option<Option<String>>,
 }

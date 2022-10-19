@@ -42,8 +42,10 @@ pub struct Register {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ProfileResponse {
     pub username: String,
+    pub bio: String,
     pub id: i32,
     pub avatar_url: String,
+    pub banner_url: String,
     pub url: String,
     pub html_url: String,
     pub saved_url: String,

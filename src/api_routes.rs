@@ -25,6 +25,12 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                 .route(web::post().to(route_post::<Login>))
         )
         .service(
+            web::resource("/profile/{username}")
+            .guard(guard::Get())
+            .wrap(rate_limit.message())
+            .route(web::get().to(route_get::<Profile>))
+        )
+        .service(
             web::scope("/user")
                 .wrap(rate_limit.message())
                 .route("/{username}", web::get().to(route_get_crud::<GetUser>))
@@ -39,15 +45,6 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
               .route("/vote", web::post().to(route_post::<CreatePostLike>))
               .route("/delete", web::post().to(route_post_crud::<DeletePost>))
         )   
-    )
-    .service(
-        web::scope("")
-            .service(
-                web::resource("/@{username}")
-                    .guard(guard::Get())
-                    .wrap(rate_limit.message())
-                    .route(web::get().to(route_get::<Profile>)),
-            ),
     );
 }
 

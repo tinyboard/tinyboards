@@ -169,7 +169,6 @@ pub mod safe_type {
     type Columns = (
         id,
         name,
-        fedi_name,
         preferred_name,
         admin,
         banned,
@@ -183,6 +182,8 @@ pub mod safe_type {
         show_nsfw,
         deleted,
         expires,
+        banner,
+        bio,
     );
 
 
@@ -204,7 +205,6 @@ pub mod safe_type {
             (
                 id,
                 name,
-                fedi_name,
                 preferred_name,
                 admin,
                 banned,
@@ -218,6 +218,8 @@ pub mod safe_type {
                 show_nsfw,
                 deleted,
                 expires,
+                banner,
+                bio,
             )
         }
     }

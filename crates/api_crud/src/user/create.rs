@@ -57,7 +57,6 @@ impl<'des> PerformCrud<'des> for Register {
 
         let user_form = UserForm {
             name: data.username.clone(),
-            fedi_name: Some(data.username),
             email: data.email,
             passhash: data.password.unpack(),
             ..UserForm::default()

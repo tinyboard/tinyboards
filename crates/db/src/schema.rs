@@ -342,7 +342,6 @@ diesel::table! {
     user_ (id) {
         id -> Int4,
         name -> Varchar,
-        fedi_name -> Varchar,
         preferred_name -> Nullable<Varchar>,
         passhash -> Text,
         email -> Nullable<Text>,
@@ -359,6 +358,8 @@ diesel::table! {
         accepted_application -> Bool,
         deleted -> Bool,
         expires -> Nullable<Timestamp>,
+        banner -> Nullable<Text>,
+        bio -> Nullable<Text>,
     }
 }
 

@@ -1,7 +1,7 @@
 create table user_ (
   id serial primary key,
   name varchar(30) not null,
-  fedi_name varchar(40) not null,
+  fedi_name varchar(40),
   preferred_name varchar(30),
   passhash text not null,
   email text unique,
@@ -14,7 +14,7 @@ create table user_ (
   default_listing_type smallint default 1 not null,
   avatar text,
   email_notifications_enabled boolean default false not null,
-  unique(name, fedi_name)
+  unique(name)
 );
 
 create table user_ban (
@@ -24,7 +24,7 @@ create table user_ban (
   unique (user_id)
 );
 
-insert into user_ (name, fedi_name, passhash) values ('admin', 'porpl', 'porpl');
+insert into user_ (name, passhash) values ('admin', 'porpl');
 
 create unique index idx_user_name_lower on user_ (lower(name));
 create unique index idx_user_email_lower on user_ (lower(email));
