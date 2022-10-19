@@ -13,6 +13,7 @@ pub struct Comment {
     pub parent_id: Option<i32>,
     pub body: String,
     pub removed: bool,
+    pub read: bool,
     pub published: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub deleted: bool,
@@ -26,6 +27,7 @@ pub struct CommentForm {
     pub parent_id: Option<Option<i32>>,
     pub body: Option<String>,
     pub removed: Option<bool>,
+    pub read: Option<bool>,
     pub updated: Option<NaiveDateTime>,
     pub deleted: Option<bool>,
 }
