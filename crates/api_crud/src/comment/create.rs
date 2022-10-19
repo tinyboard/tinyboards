@@ -5,9 +5,15 @@ use porpl_api_common::{
     data::PorplContext,
     utils::{blocking, require_user},
 };
-use porpl_db::models::{
-    comment::comment::{Comment, CommentForm},
-    post::post::Post,
+use porpl_db::{
+    models::{
+        comment::{
+            comment::{Comment, CommentForm},
+            comment_like::{CommentLike, CommentLikeForm},
+        },
+        post::post::Post,
+    },
+    traits::Likeable,
 };
 use porpl_utils::PorplError;
 
@@ -63,6 +69,18 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         let new_comment = blocking(context.pool(), move |conn| {
             Comment::submit(conn, new_comment)
+        })
+        .await??;
+
+        // auto upvote own comment
+        let comment_like = CommentLikeForm {
+            user_id: user.id,
+            comment_id: new_comment.id,
+            score: 1,
+        };
+
+        blocking(context.pool(), move |conn| {
+            CommentLike::vote(conn, &comment_like)
         })
         .await??;
 

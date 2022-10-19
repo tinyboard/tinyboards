@@ -25,6 +25,7 @@ pub struct User {
     pub accepted_application: bool,
     pub deleted: bool,
     pub expires: Option<NaiveDateTime>,
+    pub login_nonce: i32,
     pub banner: Option<String>,
     pub bio: Option<String>,
 }

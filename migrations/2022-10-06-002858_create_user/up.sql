@@ -5,6 +5,7 @@ create table user_ (
   preferred_name varchar(30),
   passhash text not null,
   email text unique,
+  login_nonce integer default 0,
   admin boolean default false not null,
   banned boolean default false not null,
   published timestamp not null default now(),

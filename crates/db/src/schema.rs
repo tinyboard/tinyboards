@@ -97,7 +97,6 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         comment_id -> Int4,
-        post_id -> Int4,
         score -> Int2,
         published -> Timestamp,
     }
@@ -358,6 +357,7 @@ diesel::table! {
         accepted_application -> Bool,
         deleted -> Bool,
         expires -> Nullable<Timestamp>,
+        login_nonce -> Int4,
         banner -> Nullable<Text>,
         bio -> Nullable<Text>,
     }
@@ -416,7 +416,6 @@ diesel::joinable!(comment -> post (post_id));
 diesel::joinable!(comment -> user_ (creator_id));
 diesel::joinable!(comment_aggregates -> comment (comment_id));
 diesel::joinable!(comment_like -> comment (comment_id));
-diesel::joinable!(comment_like -> post (post_id));
 diesel::joinable!(comment_like -> user_ (user_id));
 diesel::joinable!(comment_saved -> comment (comment_id));
 diesel::joinable!(comment_saved -> user_ (user_id));
