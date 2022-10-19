@@ -25,15 +25,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                 .route(web::post().to(route_post::<Login>))
         )
         .service(
-            web::resource("/profile/{username}")
+            web::resource("/user/{username}")
             .guard(guard::Get())
             .wrap(rate_limit.message())
             .route(web::get().to(route_get::<Profile>))
-        )
-        .service(
-            web::scope("/user")
-                .wrap(rate_limit.message())
-                .route("/{username}", web::get().to(route_get_crud::<GetUser>))
         )
         // Post
         .service(

@@ -64,9 +64,6 @@ pub struct ProfileResponse {
     pub is_deleted: bool,
 }
 
-#[derive(Deserialize)]
-pub struct GetUser {}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Profile {}
 
