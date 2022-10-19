@@ -38,11 +38,16 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
               .route("/list", web::get().to(route_get_crud::<ListPosts>))
               .route("/vote", web::post().to(route_post::<CreatePostLike>))
               .route("/delete", web::post().to(route_post_crud::<DeletePost>))
-        )
-        .service(
-            web::scope("")
-                .route("/@{username}", web::get().to(route_get::<Profile>))
-        )
+        )   
+    )
+    .service(
+        web::scope("")
+            .service(
+                web::resource("/@{username}")
+                    .guard(guard::Get())
+                    .wrap(rate_limit.message())
+                    .route(web::get().to(route_get::<Profile>)),
+            ),
     );
 }
 
@@ -77,7 +82,6 @@ where
     Ok(res)
 }
 
-#[allow(dead_code)]
 async fn route_get<'des, Request>(
     data: web::Data<PorplContext>,
     query: web::Query<Request>,

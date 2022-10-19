@@ -28,7 +28,7 @@ impl<'des> Perform<'des> for Profile {
     ) -> Result<Self::Response, PorplError> {
 
         let rcopy = route.clone();
-
+        
         let user = blocking(context.pool(), move |conn| {
             User::get_by_name(conn, &rcopy.username)
         })
