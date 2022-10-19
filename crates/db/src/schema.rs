@@ -344,6 +344,7 @@ diesel::table! {
         preferred_name -> Nullable<Varchar>,
         passhash -> Text,
         email -> Nullable<Text>,
+        login_nonce -> Int4,
         admin -> Bool,
         banned -> Bool,
         published -> Timestamp,
@@ -357,7 +358,6 @@ diesel::table! {
         accepted_application -> Bool,
         deleted -> Bool,
         expires -> Nullable<Timestamp>,
-        login_nonce -> Int4,
         banner -> Nullable<Text>,
         bio -> Nullable<Text>,
     }

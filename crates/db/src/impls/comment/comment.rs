@@ -27,6 +27,18 @@ impl Comment {
             })
     }
 
+    pub fn get_by_id(conn: &mut PgConnection, cid: i32) -> Result<Option<Self>, PorplError> {
+        use crate::schema::comment::dsl::*;
+        comment
+            .filter(id.eq(cid))
+            .first::<Self>(conn)
+            .optional()
+            .map_err(|e| {
+                eprintln!("ERROR: {}", e);
+                PorplError::err_500()
+            })
+    }
+
     /// Loads list of comments replying to the specified post.
     pub fn replies_to_post(conn: &mut PgConnection, pid: i32) -> Result<Vec<Self>, PorplError> {
         use crate::schema::comment::dsl::*;

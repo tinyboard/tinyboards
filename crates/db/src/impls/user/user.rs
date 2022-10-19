@@ -3,7 +3,7 @@ use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
-use crate::models::user::user::{User, UserSafe, UserForm};
+use crate::models::user::user::{User, UserForm, UserSafe};
 use crate::schema::user_::dsl::*;
 use crate::traits::Crud;
 use diesel::prelude::*;
@@ -76,7 +76,7 @@ impl User {
 
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
         let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
-            eprintln!("ERROR: {:#?}", e);
+            eprintln!("ERROR: {}", e);
             PorplError::err_500()
         })?;
 
@@ -264,4 +264,3 @@ pub mod safe_type {
         }
     }
 }
-

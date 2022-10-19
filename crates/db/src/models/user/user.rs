@@ -3,8 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[derive(Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = user_)]
 pub struct User {
     pub id: i32,
@@ -12,6 +11,7 @@ pub struct User {
     pub preferred_name: Option<String>,
     pub passhash: String,
     pub email: Option<String>,
+    pub login_nonce: i32,
     pub admin: bool,
     pub banned: bool,
     pub published: NaiveDateTime,
@@ -25,14 +25,12 @@ pub struct User {
     pub accepted_application: bool,
     pub deleted: bool,
     pub expires: Option<NaiveDateTime>,
-    pub login_nonce: i32,
     pub banner: Option<String>,
     pub bio: Option<String>,
 }
 
 /// A safe representation of user, without the sensitive info
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[derive(Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = user_)]
 pub struct UserSafe {
     pub id: i32,
@@ -55,8 +53,7 @@ pub struct UserSafe {
 }
 
 /// Struct for retrieving setting columns from user table
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[derive(Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = user_)]
 pub struct UserSettings {
     pub id: i32,
@@ -67,7 +64,6 @@ pub struct UserSettings {
     pub default_listing_type: i16,
     pub email_notifications_enabled: bool,
 }
-
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = user_)]

@@ -11,7 +11,7 @@ create index idx_comment_post on comment (post_id);
 
 create index idx_comment_like_comment on comment_like (comment_id);
 create index idx_comment_like_user on comment_like (user_id);
-create index idx_comment_like_post on comment_like (post_id);
+--create index idx_comment_like_post on comment_like (post_id);
 
 create index idx_board_creator on board (creator_id);
 create index idx_board_tag on board (tag_id);

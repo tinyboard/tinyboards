@@ -48,13 +48,19 @@ impl<'des> PerformCrud<'des> for CreateComment {
         // check if parent comment exists, if provided
         // TODO: check if comment's author is blocking the user (?)
         if let Some(cid) = data.parent_id {
-            if blocking(context.pool(), move |conn| {
-                Comment::check_if_exists(conn, cid)
-            })
-            .await??
-            .is_none()
-            {
+            let parent_comment =
+                blocking(context.pool(), move |conn| Comment::get_by_id(conn, cid)).await??;
+            if parent_comment.is_none() {
                 return Err(PorplError::from_string("Invalid parent comment ID", 404));
+            }
+
+            // we can unwrap safely, because the above check made sure to abort if the comment is None
+            // abort if the comment the user is replying to doesn't belong to the specified post - may be useful later
+            if parent_comment.unwrap().post_id != data.post_id {
+                return Err(PorplError::from_string(
+                    "What a bad request! Now you have a good reason to be ashamed of yourself.",
+                    400,
+                ));
             }
         }
 
