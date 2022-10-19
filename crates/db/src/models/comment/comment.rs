@@ -1,10 +1,9 @@
+use crate::schema::comment;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use chrono::NaiveDateTime;
-use crate::schema::comment;
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[derive(Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = comment)]
 pub struct Comment {
     pub id: i32,
@@ -24,7 +23,7 @@ pub struct Comment {
 pub struct CommentForm {
     pub creator_id: i32,
     pub post_id: i32,
-    pub parent_id: Option<Option<i32>>,
+    pub parent_id: Option<i32>,
     pub body: Option<String>,
     pub removed: Option<bool>,
     pub read: Option<bool>,

@@ -68,6 +68,9 @@ pub struct ProfileResponse {
 pub struct Profile {}
 
 #[derive(Deserialize)]
+pub struct GetLoggedInUser {}
+
+#[derive(Deserialize)]
 pub struct GetPostPath {
     pub post_id: i32,
 }
@@ -76,6 +79,3 @@ pub struct GetPostPath {
 pub struct GetUserNamePath {
     pub username: String,
 }
-
-
-

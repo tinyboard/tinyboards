@@ -3,7 +3,7 @@ use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
-use crate::models::user::user::{User, UserForm};
+use crate::models::user::user::{User, UserSafe, UserForm};
 use crate::schema::user_::dsl::*;
 use crate::traits::Crud;
 use diesel::prelude::*;
@@ -137,6 +137,28 @@ impl User {
             PorplError::new(500, String::from("Internal error, please try again later"))
         })
     }
+
+    pub fn into_safe(self) -> UserSafe {
+        UserSafe {
+            id: self.id,
+            name: self.name,
+            preferred_name: self.preferred_name,
+            admin: self.admin,
+            banned: self.banned,
+            published: self.published,
+            updated: self.updated,
+            theme: self.theme,
+            default_sort_type: self.default_sort_type,
+            default_listing_type: self.default_listing_type,
+            avatar: self.avatar,
+            email_notifications_enabled: self.email_notifications_enabled,
+            show_nsfw: self.show_nsfw,
+            deleted: self.deleted,
+            expires: self.expires,
+            banner: self.banner,
+            bio: self.bio,
+        }
+    }
 }
 
 impl Crud for User {
@@ -164,7 +186,11 @@ impl Crud for User {
 }
 
 pub mod safe_type {
-    use crate::{schema::user_::*, models::user::user::{UserSafe, UserSettings}, traits::ToSafe};
+    use crate::{
+        models::user::user::{UserSafe, UserSettings},
+        schema::user_::*,
+        traits::ToSafe,
+    };
 
     type Columns = (
         id,
@@ -186,7 +212,6 @@ pub mod safe_type {
         bio,
     );
 
-
     type SettingColumns = (
         id,
         email,
@@ -196,7 +221,6 @@ pub mod safe_type {
         default_listing_type,
         email_notifications_enabled,
     );
-
 
     impl ToSafe for UserSafe {
         type SafeColumns = Columns;

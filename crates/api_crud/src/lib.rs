@@ -3,6 +3,7 @@ use porpl_api_common::data::PorplContext;
 use porpl_utils::error::PorplError;
 use serde::Deserialize;
 
+pub mod comment;
 pub mod post;
 pub mod user;
 

@@ -1,9 +1,10 @@
 use actix_web::*;
 use porpl_api::Perform;
 use porpl_api_common::{
-    user::*,
-    post::*,
+    comment::{CreateComment, GetPostComments},
     data::PorplContext,
+    post::*,
+    user::*,
 };
 use porpl_api_crud::PerformCrud;
 use porpl_utils::{rate_limit::RateLimit, PorplError};
@@ -12,37 +13,44 @@ use serde::Deserialize;
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     cfg.service(
         web::scope("/api/v1")
-        .service(
-            web::resource("/signup")
-                .guard(guard::Post())
-                .wrap(rate_limit.register())
-                .route(web::post().to(route_post_crud::<Register>))
-        )
-        .service(
-            web::resource("/login")
-                .guard(guard::Post())
-                .wrap(rate_limit.message())
-                .route(web::post().to(route_post::<Login>))
-        )
-        .service(
-            web::resource("/user/{username}")
-            .guard(guard::Get())
-            .wrap(rate_limit.message())
-            .route(web::get().to(route_get::<Profile>))
-        )
-        // Post
-        .service(
-            web::scope("/post")
-              .wrap(rate_limit.message())
-              .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
-              .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
-              .route("/list", web::get().to(route_get_crud::<ListPosts>))
-              .route("/vote", web::post().to(route_post::<CreatePostLike>))
-              .route("/delete", web::post().to(route_post_crud::<DeletePost>))
-        )   
+            .service(
+                web::resource("/signup")
+                    .guard(guard::Post())
+                    .wrap(rate_limit.register())
+                    .route(web::post().to(route_post_crud::<Register>)),
+            )
+            .service(
+                web::resource("/login")
+                    .guard(guard::Post())
+                    .wrap(rate_limit.message())
+                    .route(web::post().to(route_post::<Login>)),
+            )
+            .service(
+                web::scope("/user")
+                    .route("/@{username}", web::get().to(route_get::<Profile>))
+                    .route("/me", web::get().to(route_get::<GetLoggedInUser>)),
+            )
+            // Post
+            .service(
+                web::scope("/posts")
+                    .wrap(rate_limit.message())
+                    .route("", web::get().to(route_get_crud::<ListPosts>))
+                    .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
+                    .route(
+                        "/{post_id}/comments",
+                        web::get().to(route_get_crud::<GetPostComments>),
+                    )
+                    .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
+                    .route("/vote", web::post().to(route_post::<CreatePostLike>))
+                    .route("/delete", web::post().to(route_post_crud::<DeletePost>)),
+            )
+            // Comments
+            .service(
+                web::scope("/comments")
+                    .route("/submit", web::post().to(route_post_crud::<CreateComment>)),
+            ),
     );
 }
-
 
 async fn perform<'des, Request>(
     data: Request,

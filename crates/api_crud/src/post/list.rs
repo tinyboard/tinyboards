@@ -1,14 +1,11 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{ListPosts, ListPostsResponse},
-    utils::{blocking, require_user},
     data::PorplContext,
+    post::{ListPosts, ListPostsResponse},
+    utils::{blocking, load_user_opt},
 };
-use porpl_db::{
-    ListingType,
-    SortType
-};
+use porpl_db::{ListingType, SortType};
 use porpl_db_views::post_view::PostQuery;
 use porpl_utils::error::PorplError;
 
@@ -24,12 +21,11 @@ impl<'des> PerformCrud<'des> for ListPosts {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<ListPostsResponse, PorplError> {
-
         let data: ListPosts = self;
 
         // check to see if user is logged in or not
-        let u = require_user(context.pool(), context.master_key(), auth).await?;
-        
+        let u = load_user_opt(context.pool(), context.master_key(), auth).await?;
+
         let sort = data.sort.unwrap_or(SortType::Hot);
         let listing_type = data.type_.unwrap_or(ListingType::All);
         let page = data.page;
@@ -43,7 +39,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
-                .user(Some(&u))
+                .user(u.as_ref())
                 .saved_only(saved_only)
                 .page(page)
                 .limit(limit)
