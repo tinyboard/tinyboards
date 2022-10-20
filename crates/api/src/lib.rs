@@ -1,5 +1,6 @@
 pub mod user;
 pub mod post;
+pub mod comment;
 use actix_web::web::Data;
 use porpl_utils::PorplError;
 
