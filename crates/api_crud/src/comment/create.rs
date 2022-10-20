@@ -3,7 +3,13 @@ use actix_web::web;
 use porpl_api_common::{
     comment::CreateComment,
     data::PorplContext,
-    utils::{blocking, require_user},
+    utils::{
+        blocking, 
+        get_user_view_from_jwt,
+        check_board_ban,
+        check_board_deleted_or_removed,
+        check_user_valid,
+    },
 };
 use porpl_db::{
     models::{
@@ -13,7 +19,7 @@ use porpl_db::{
         },
         post::post::Post,
     },
-    traits::Likeable,
+    traits::{Likeable, Crud},
 };
 use porpl_utils::PorplError;
 
@@ -30,9 +36,33 @@ impl<'des> PerformCrud<'des> for CreateComment {
     ) -> Result<Self::Response, PorplError> {
         let data = self;
 
-        let user = require_user(context.pool(), context.master_key(), auth).await?;
+        let user_view = get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
 
-        // TODO: check for board ban
+        let post
+            = blocking(context.pool(), move|conn| {
+                    Post::read(conn, data.post_id)
+                        .map_err(|_| PorplError::err_500())
+            }).await??;
+        
+        // checks the board to see if user is banned
+        check_board_ban(
+            user_view.user.id, 
+            post.board_id, 
+            context.pool()
+        ).await?;
+
+        // checks to see if the board even exists in the first place
+        check_board_deleted_or_removed(
+            post.board_id, 
+            context.pool()
+        ).await?;
+
+        // checks the user to see if the user is site banned (is valid or not)
+        check_user_valid(
+            user_view.user.banned, 
+            user_view.user.expires, 
+            user_view.user.deleted,
+        )?;
 
         // check if parent comment exists
         // TODO: check if post's op is blocking the user (?)
@@ -66,7 +96,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // TODO: scrape comment text for @mentions and send notifs
         let new_comment = CommentForm {
-            creator_id: user.id,
+            creator_id: user_view.user.id,
             body: Some(data.body),
             post_id: data.post_id,
             parent_id: data.parent_id,
@@ -80,7 +110,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // auto upvote own comment
         let comment_like = CommentLikeForm {
-            user_id: user.id,
+            user_id: user_view.user.id,
             comment_id: new_comment.id,
             score: 1,
         };
