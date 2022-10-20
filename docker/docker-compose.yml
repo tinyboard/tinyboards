@@ -1,0 +1,38 @@
+version: '3.3'
+
+services:
+  nginx:
+    image: nginx:1-alpine
+    ports:
+      - "1236:1236"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    restart: always
+
+  porpl:
+    image: porpl-dev:latest
+    ports:
+      - "8536:8536"
+      - "6669:6669"
+    restart: always
+    environment:
+      - RUST_LOG="warn,porpl_server=debug,porpl_api=debug,porpl_api_common=debug,porpl_api_crud=debug,porpl_apub=debug,porpl_db_schema=debug,porpl_db_views=debug,porpl_db_views_actor=debug,porpl_db_views_moderator=debug,porpl_routes=debug,utils=.debug"
+    volumes:
+      - ./porpl.hjson:/config/defaults.hjson
+    depends_on:
+      - postgres
+
+
+  postgres:
+    image: postgres:14-alpine
+    ports:
+      # use a different port so it doesnt conflict with postgres running on the host
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=porpl
+      - POSTGRES_PASSWORD=porpl
+      - POSTGRES_DB=porpl
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data
+    restart: always
+    command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
