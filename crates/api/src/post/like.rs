@@ -5,13 +5,17 @@ use porpl_api_common::{
     utils::{
         blocking,
         get_user_view_from_jwt,
+        check_board_ban,
+        check_board_deleted_or_removed,
+        check_post_deleted_removed_or_locked,
+        check_user_valid,
     }, 
     data::PorplContext,
 };
 use porpl_db::{
-    //models::post::post::Post,
+    models::post::post::Post,
     models::post::post_like::{PostLike, PostLikeForm},
-    traits::{/*Crud,*/ Likeable},
+    traits::{Crud, Likeable},
 };
 use porpl_utils::error::PorplError;
 
@@ -34,21 +38,43 @@ impl<'des> Perform<'des> for CreatePostLike {
         // check if downvotes are disabled (when/if we implement this feature)
 
         let post_id = data.post_id;
-        
-        // below will be used when checking if user is banned from board, or if board was removed or deleted.
-        
-        // let post: Post = blocking(context.pool(), move |conn| { 
-        //     Post::read(conn, post_id)
-        //     .map_err(|e| {
-        //         eprintln!("ERROR: {}", e);
-        //         PorplError::err_500()
-        //     })
-        // })
-        // .await??
-        // .into();
 
-        // check to see is user is banned from board here (can't vote if so)
-        // check to see if board has been removed or deleted here (can't vote if so)
+        let post 
+            = blocking(context.pool(), move |conn| {
+                Post::read(conn, post_id)
+                .map_err(|_| PorplError::err_500())
+            })
+            .await??;
+        
+        // check if post can be liked (not deleted, removed, or locked)
+        check_post_deleted_removed_or_locked(
+            post_id, 
+            context.pool()
+        )
+        .await?;
+
+        // check if the user is banned from the board
+        check_board_ban(
+            user_view.user.id, 
+            post.board_id, 
+            context.pool()
+        )
+        .await?;
+
+        // check if the board is there or not
+        check_board_deleted_or_removed(
+            post.board_id, 
+            context.pool(),
+        )
+        .await?;
+
+        // check if the user is valid
+        check_user_valid(
+            user_view.user.banned, 
+            user_view.user.expires, 
+            user_view.user.deleted
+        )
+        ?;
 
         let like_form = PostLikeForm {
             post_id: data.post_id,

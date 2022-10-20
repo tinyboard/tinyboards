@@ -9,7 +9,7 @@ pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
   std::env::var("PORPL_DATABASE_URL")
 }
 
-const FETCH_LIMIT_DEFAULT: i64 = 10;
+const DEFAULT_FETCH_LIMIT: i64 = 20;
 pub const FETCH_LIMIT_MAX: i64 = 50;
 
 pub mod functions {
@@ -49,12 +49,20 @@ pub fn limit_and_offset(
           limit
         }
       }
-      None => FETCH_LIMIT_DEFAULT,
+      None => DEFAULT_FETCH_LIMIT,
     };
     let offset = limit * (page - 1);
     Ok((limit, offset))
 }
 
+pub fn limit_and_offset_unlimited(
+  page: Option<i64>,
+  limit: Option<i64>,
+) -> (i64, i64) {
+  let limit = limit.unwrap_or(DEFAULT_FETCH_LIMIT);
+  let offset = limit * (page.unwrap_or(1) - 1);
+  (limit, offset)
+} 
 
 pub fn naive_now() -> chrono::NaiveDateTime {
   chrono::prelude::Utc::now().naive_utc()

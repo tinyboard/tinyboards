@@ -9,6 +9,7 @@ use porpl_api_common::{
         check_board_ban,
         check_board_deleted_or_removed,
         check_user_valid,
+        check_post_deleted_removed_or_locked,
     },
 };
 use porpl_db::{
@@ -48,13 +49,19 @@ impl<'des> PerformCrud<'des> for CreateComment {
         check_board_ban(
             user_view.user.id, 
             post.board_id, 
-            context.pool()
+            context.pool(),
+        ).await?;
+
+        // checks to see if the post was deleted, removed, or locked
+        check_post_deleted_removed_or_locked(
+            post.id, 
+            context.pool(),
         ).await?;
 
         // checks to see if the board even exists in the first place
         check_board_deleted_or_removed(
             post.board_id, 
-            context.pool()
+            context.pool(),
         ).await?;
 
         // checks the user to see if the user is site banned (is valid or not)

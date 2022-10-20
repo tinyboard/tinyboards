@@ -11,7 +11,7 @@ use porpl_db::{
     impls::user::is_banned, 
     models::{
         user::user::User,
-        board::board::Board, secret::Secret,
+        board::board::Board, secret::Secret, post::post::Post,
     },
     traits::Crud,
 };
@@ -198,7 +198,25 @@ pub async fn check_board_deleted_or_removed(
         .map_err(|_e| PorplError::from_string("couldn't find board", 404))?;
     
     if board.deleted || board.removed {
-        Err(PorplError::from_string("deleted", 404))
+        Err(PorplError::from_string("board deleted or removed", 404))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_post_deleted_removed_or_locked(
+    post_id: i32,
+    pool: &PgPool,
+) -> Result<(), PorplError> {
+    let post = blocking(pool, move |conn| Post::read(conn, post_id))
+        .await?
+        .map_err(|_e| PorplError::from_string("couldn't find post", 404))?;
+    
+    if post.locked {
+        Err(PorplError::from_string("post locked", 405))
+    } else if post.deleted || post.removed {
+        Err(PorplError::from_string("post deleted or removed", 404))
     } else {
         Ok(())
     }
