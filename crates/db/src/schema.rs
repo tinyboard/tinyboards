@@ -78,6 +78,7 @@ diesel::table! {
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
         deleted -> Bool,
+        level -> Int4,
     }
 }
 

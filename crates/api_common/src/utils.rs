@@ -1,20 +1,17 @@
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use porpl_db_views::structs::{UserView, BoardView, BoardUserBanView};
+use porpl_db_views::structs::{BoardUserBanView, BoardView, UserView};
 //use porpl_db_views::local_structs::UserView;
-use sha2::Sha384;
-use std::collections::BTreeMap;
-use porpl_utils::error::PorplError;
 use actix_web::web;
 use porpl_db::{
     database::PgPool,
-    impls::user::is_banned, 
-    models::{
-        user::user::User,
-        board::board::Board, secret::Secret, post::post::Post,
-    },
+    impls::user::is_banned,
+    models::{board::board::Board, post::post::Post, secret::Secret, user::user::User},
     traits::Crud,
 };
+use porpl_utils::error::PorplError;
+use sha2::Sha384;
+use std::collections::BTreeMap;
 //use diesel::PgConnection;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
@@ -63,11 +60,14 @@ where
 /// Checks the password length
 pub fn password_length_check(pass: &str) -> Result<(), PorplError> {
     if !(10..=60).contains(&pass.len()) {
-        Err(PorplError { message: String::from("invalid password"), error_code: 400 })
+        Err(PorplError {
+            message: String::from("invalid password"),
+            error_code: 400,
+        })
     } else {
-      Ok(())
+        Ok(())
     }
-  }
+}
 
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
 pub async fn load_user_opt(
@@ -113,14 +113,20 @@ pub async fn require_user(
 pub fn check_user_valid(
     banned: bool,
     ban_expires: Option<chrono::NaiveDateTime>,
-    deleted: bool,  
+    deleted: bool,
 ) -> Result<(), PorplError> {
     if is_banned(banned, ban_expires) {
-        return Err(PorplError { message: String::from("site ban"), error_code: 401 });
+        return Err(PorplError {
+            message: String::from("site ban"),
+            error_code: 401,
+        });
     }
 
     if deleted {
-        return Err(PorplError { message: String::from("deleted"), error_code: 401 });
+        return Err(PorplError {
+            message: String::from("deleted"),
+            error_code: 401,
+        });
     }
 
     Ok(())
@@ -128,38 +134,28 @@ pub fn check_user_valid(
 
 #[tracing::instrument(skip_all)]
 pub async fn get_user_view_from_jwt(
-  jwt: &str,
-  pool: &PgPool,
-  master_key: &Secret,
+    jwt: &str,
+    pool: &PgPool,
+    master_key: &Secret,
 ) -> Result<UserView, PorplError> {
-
     let u = require_user(pool, master_key, Some(jwt)).await?;
     let user_id = u.id;
 
-    let user_view = 
-        blocking(pool, move |conn| {
-            UserView::read(conn, user_id)
-                .map_err(|e| {
-                    eprintln!("ERROR: {}", e);
-                    PorplError::err_500()
-                })
-        }).await??;
-    
-    check_user_valid(
-        u.banned,
-        u.expires,
-        u.deleted,
-    )?;
+    let user_view = blocking(pool, move |conn| {
+        UserView::read(conn, user_id).map_err(|e| {
+            eprintln!("ERROR: {}", e);
+            PorplError::err_500()
+        })
+    })
+    .await??;
 
-  Ok(user_view)
+    check_user_valid(u.banned, u.expires, u.deleted)?;
+
+    Ok(user_view)
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn is_mod_or_admin(
-    pool: &PgPool,
-    user_id: i32,
-    board_id: i32,
-) -> Result<(), PorplError> {
+pub async fn is_mod_or_admin(pool: &PgPool, user_id: i32, board_id: i32) -> Result<(), PorplError> {
     let is_mod_or_admin = blocking(pool, move |conn| {
         BoardView::is_mod_or_admin(conn, user_id, board_id)
     })
@@ -173,14 +169,9 @@ pub async fn is_mod_or_admin(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_board_ban(
-    user_id: i32,
-    board_id: i32,
-    pool: &PgPool
-) -> Result<(), PorplError> {
-    let is_banned =
-        move |conn: &mut _| BoardUserBanView::get(conn, user_id, board_id).is_ok();
-    
+pub async fn check_board_ban(user_id: i32, board_id: i32, pool: &PgPool) -> Result<(), PorplError> {
+    let is_banned = move |conn: &mut _| BoardUserBanView::get(conn, user_id, board_id).is_ok();
+
     if blocking(pool, is_banned).await? {
         Err(PorplError::from_string("board banned", 405))
     } else {
@@ -196,7 +187,7 @@ pub async fn check_board_deleted_or_removed(
     let board = blocking(pool, move |conn| Board::read(conn, board_id))
         .await?
         .map_err(|_e| PorplError::from_string("couldn't find board", 404))?;
-    
+
     if board.deleted || board.removed {
         Err(PorplError::from_string("board deleted or removed", 404))
     } else {
@@ -212,7 +203,7 @@ pub async fn check_post_deleted_removed_or_locked(
     let post = blocking(pool, move |conn| Post::read(conn, post_id))
         .await?
         .map_err(|_e| PorplError::from_string("couldn't find post", 404))?;
-    
+
     if post.locked {
         Err(PorplError::from_string("post locked", 405))
     } else if post.deleted || post.removed {

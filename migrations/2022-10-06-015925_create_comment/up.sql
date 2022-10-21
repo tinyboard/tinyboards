@@ -7,6 +7,7 @@ create table comment (
     removed boolean default false not null,
     read boolean default false not null,
     published timestamp not null default now(),
+    level integer not null default 1,
     updated timestamp
 );
 

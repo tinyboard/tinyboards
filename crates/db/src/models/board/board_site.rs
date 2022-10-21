@@ -3,13 +3,13 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct BoardSite {
-    id: i32,
-    name: String,
-    description: Option<String>,
-    creator_id: i32,
-    published: chrono::NaiveDateTime,
-    updated: chrono::NaiveDateTime,
-    enable_downvotes: bool,
-    open_registration: bool,
-    enable_nsfw: bool,
+    pub id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub creator_id: i32,
+    pub published: chrono::NaiveDateTime,
+    pub updated: chrono::NaiveDateTime,
+    pub enable_downvotes: bool,
+    pub open_registration: bool,
+    pub enable_nsfw: bool,
 }

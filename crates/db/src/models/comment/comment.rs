@@ -3,7 +3,8 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
 #[diesel(table_name = comment)]
 pub struct Comment {
     pub id: i32,
@@ -16,6 +17,7 @@ pub struct Comment {
     pub published: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub deleted: bool,
+    pub level: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -29,4 +31,5 @@ pub struct CommentForm {
     pub read: Option<bool>,
     pub updated: Option<NaiveDateTime>,
     pub deleted: Option<bool>,
+    pub level: i32
 }

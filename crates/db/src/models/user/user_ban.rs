@@ -1,9 +1,13 @@
 use diesel::prelude::*;
 use serde::{Serialize, Deserialize};
+use crate::schema::user_ban;
+use chrono::NaiveDateTime;
 
-#[derive(Queryable, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
+#[diesel(table_name = user_ban)]
 pub struct UserBan {
-    id: i32,
-    user_id: i32,
-    published: chrono::NaiveDateTime,
+    pub id: i32,
+    pub user_id: i32,
+    pub published: NaiveDateTime,
 }
