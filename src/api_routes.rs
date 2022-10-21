@@ -1,7 +1,7 @@
 use actix_web::*;
 use porpl_api::Perform;
 use porpl_api_common::{
-    comment::{CreateComment, GetPostComments},
+    comment::{CreateComment, GetPostComments, ListComments},
     data::PorplContext,
     post::*,
     user::*,
@@ -47,7 +47,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             // Comments
             .service(
                 web::scope("/comments")
-                    .route("/submit", web::post().to(route_post_crud::<CreateComment>)),
+                    .route("/submit", web::post().to(route_post_crud::<CreateComment>))
+                    .route("/list", web::get().to(route_get_crud::<ListComments>)),
             ),
     );
 }
