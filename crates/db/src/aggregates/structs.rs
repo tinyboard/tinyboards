@@ -6,6 +6,7 @@ use crate::schema::{
     comment_aggregates,
     board_aggregates,
 };
+use chrono::NaiveDateTime;
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
 #[derive(Queryable, Associations, Identifiable)]
@@ -17,8 +18,7 @@ pub struct CommentAggregates {
     pub score: i64,
     pub upvotes: i64,
     pub downvotes: i64,
-    pub published: chrono::NaiveDateTime,
-    pub child_count: i32,
+    pub published: NaiveDateTime,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -31,7 +31,7 @@ pub struct BoardAggregates {
     pub subscribers: i64,
     pub posts: i64,
     pub comments: i64,
-    pub published: chrono::NaiveDateTime,
+    pub published: NaiveDateTime,
 }
 
 #[derive(PartialEq, Eq, Debug, Serialize, Deserialize, Clone)]
@@ -46,8 +46,8 @@ pub struct PostAggregates {
     pub upvotes: i64,
     pub downvotes: i64,
     pub stickied: bool,
-    pub published: chrono::NaiveDateTime,
-    pub newest_comment_time: chrono::NaiveDateTime,
+    pub published: NaiveDateTime,
+    pub newest_comment_time: NaiveDateTime,
 }
 
 

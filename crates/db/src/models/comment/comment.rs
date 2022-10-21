@@ -17,7 +17,7 @@ pub struct Comment {
     pub published: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub deleted: bool,
-    pub level: i32
+    pub level: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]

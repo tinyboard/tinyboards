@@ -124,7 +124,7 @@ impl CommentView {
                 board_subscriber::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
-                comment_like::all_columns.nullable(),
+                comment_like::score.nullable(),
             ))
             .first::<CommentViewTuple>(conn)?;
 
