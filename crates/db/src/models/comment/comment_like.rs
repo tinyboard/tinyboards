@@ -3,7 +3,8 @@ use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
 #[diesel(table_name = comment_like)]
 pub struct CommentLike {
     pub id: i32,

@@ -3,7 +3,8 @@ use serde::{Serialize, Deserialize};
 use chrono::NaiveDateTime;
 use crate::schema::comment_saved;
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Queryable, Identifiable)]
 #[diesel(table_name = comment_saved)]
 pub struct CommentSaved {
     pub id: i32,
