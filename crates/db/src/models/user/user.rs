@@ -67,7 +67,7 @@ pub struct UserSettings {
     pub email_notifications_enabled: bool,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = user_)]
 pub struct UserForm {
