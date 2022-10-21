@@ -18,8 +18,8 @@ services:
     environment:
       - RUST_LOG="warn,porpl_server=debug,porpl_api=debug,porpl_api_common=debug,porpl_api_crud=debug,porpl_apub=debug,porpl_db_schema=debug,porpl_db_views=debug,porpl_db_views_actor=debug,porpl_db_views_moderator=debug,porpl_routes=debug,utils=.debug"
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../
+      dockerfile: ./docker/Dockerfile
     volumes:
       - ../crates/utils/src/settings/config/defaults.hjson:/config/defaults.hjson
     depends_on:
