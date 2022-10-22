@@ -1,7 +1,5 @@
-# Build the project
-FROM clux/muslrust:1.59.0 as builder
+FROM rust:1.64 as builder
 
-ARG CARGO_BUILD_TARGET=x86_64-unknown-linux-musl
 ARG RUSTRELEASEDIR="release"
 
 WORKDIR /app
@@ -10,19 +8,16 @@ COPY ./ ./
 
 RUN cargo build --release
 
-# reduce binary size
-RUN strip ./target/$CARGO_BUILD_TARGET/$RUSTRELEASEDIR/porpl_server
+RUN strip ./target/$RUSTRELEASEDIR/porpl_server
 
-RUN cp ./target/$CARGO_BUILD_TARGET/$RUSTRELEASEDIR/porpl_server /app/porpl_server
+RUN cp ./target/$RUSTRELEASEDIR/porpl_server /app/porpl_server
 
-# The alpine runner
-FROM alpine:3 as porpl
+FROM debian:buster-slim as porpl
 
-# Install libpq for postgres
-RUN apk add libpq
+RUN apt-get update && apt-get install libpq-dev -y
 
-# Copy resources
 COPY --from=builder /app/porpl_server /app/porpl
 
 EXPOSE 8536
+
 CMD ["/app/porpl"]
