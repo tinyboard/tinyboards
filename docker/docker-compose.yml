@@ -16,14 +16,13 @@ services:
       - "6669:6669"
     restart: always
     environment:
-      - RUST_LOG="warn,porpl_server=debug,porpl_api=debug,porpl_api_common=debug,porpl_api_crud=debug,porpl_apub=debug,porpl_db_schema=debug,porpl_db_views=debug,porpl_db_views_actor=debug,porpl_db_views_moderator=debug,porpl_routes=debug,utils=.debug"
+      - RUST_LOG="info"
     build:
       context: ../
       dockerfile: ./docker/Dockerfile
-    volumes:
-      - ../crates/utils/src/settings/config/defaults.hjson:/config/defaults.hjson
-    depends_on:
+    links:
       - postgres
+    # might need to add a volume bridge here for a custom config file, otherwise the dockerfile sets up the default config
 
   porpl-fe:
     image: porpl-fe-dev
@@ -44,7 +43,7 @@ services:
     image: postgres:14-alpine
     ports:
       # use a different port so it doesnt conflict with postgres running on the host
-      - "5433:5432"
+      - "5433:5433"
     environment:
       - POSTGRES_USER=porpl
       - POSTGRES_PASSWORD=porpl

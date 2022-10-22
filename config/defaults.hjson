@@ -4,11 +4,11 @@
     # Username to connect to postgres
     user: "porpl"
     # Password to connect to postgres
-    password: "password"
+    password: "porpl"
     # Host where postgres is running
     host: "localhost"
     # Port where postgres can be accessed
-    port: 5432
+    port: 5433
     # Name of the postgres database for porpl
     database: "porpl"
     # Maximum number of active sql connections
