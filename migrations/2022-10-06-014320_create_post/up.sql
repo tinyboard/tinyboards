@@ -6,6 +6,7 @@ create table post (
     thumbnail_url text,
     permalink text,
     body text not null,
+    body_html text not null,
     creator_id int references user_ on update cascade on delete cascade not null,
     board_id int references board on update cascade on delete cascade not null,
     removed boolean default false not null,

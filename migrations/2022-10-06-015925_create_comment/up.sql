@@ -4,6 +4,7 @@ create table comment (
     post_id int references post on update cascade on delete cascade not null,
     parent_id int references comment on update cascade on delete cascade,
     body text not null,
+    body_html text not null,
     removed boolean default false not null,
     read boolean default false not null,
     published timestamp not null default now(),

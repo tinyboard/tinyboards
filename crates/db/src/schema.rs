@@ -79,6 +79,7 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         deleted -> Bool,
         level -> Int4,
+        body_html -> Text,
     }
 }
 
@@ -239,6 +240,7 @@ diesel::table! {
         deleted -> Bool,
         nsfw -> Bool,
         stickied -> Bool,
+        body_html -> Text,
     }
 }
 

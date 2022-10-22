@@ -3,8 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[derive(Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = post)]
 pub struct Post {
     pub id: i32,
@@ -23,6 +22,7 @@ pub struct Post {
     pub deleted: bool,
     pub nsfw: bool,
     pub stickied: bool,
+    pub body_html: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -43,4 +43,5 @@ pub struct PostForm {
     pub deleted: Option<bool>,
     pub nsfw: Option<bool>,
     pub stickied: Option<bool>,
+    pub body_html: Option<String>,
 }

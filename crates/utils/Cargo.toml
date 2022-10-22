@@ -9,6 +9,7 @@ path = "src/lib.rs"
 doctest = false
 
 [dependencies]
+markdown = "0.3.0"
 actix-web = { version = "4.2.1", features = ["rustls"], default-features = false }
 serde = { version = "1.0.145", features = ["derive"] }
 serde_json = { version = "1.0.85", features = ["preserve_order"] }

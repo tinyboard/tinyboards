@@ -18,11 +18,12 @@ use porpl_db::{
     },
     traits::{Crud, Likeable},
 };
-use porpl_utils::PorplError;
+use porpl_db_views::structs::CommentView;
+use porpl_utils::{parser::parse_markdown, PorplError};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateComment {
-    type Response = Comment;
+    type Response = CommentView;
     type Route = ();
 
     async fn perform(
@@ -90,10 +91,13 @@ impl<'des> PerformCrud<'des> for CreateComment {
             level = parent_comment.level + 1;
         }
 
+        let body_html = parse_markdown(&data.body);
+
         // TODO: scrape comment text for @mentions and send notifs
         let new_comment = CommentForm {
             creator_id: user_view.user.id,
             body: Some(data.body),
+            body_html,
             post_id: data.post_id,
             parent_id: data.parent_id,
             level: level,
@@ -116,6 +120,12 @@ impl<'des> PerformCrud<'des> for CreateComment {
             CommentLike::vote(conn, &comment_like)
         })
         .await??;
+
+        let new_comment = blocking(context.pool(), move |conn| {
+            CommentView::read(conn, new_comment.id, Some(user_view.user.id))
+        })
+        .await?
+        .map_err(|_| PorplError::err_500())?;
 
         Ok(new_comment)
     }

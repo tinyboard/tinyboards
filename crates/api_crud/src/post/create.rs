@@ -9,7 +9,7 @@ use porpl_api_common::{
     },
 };
 use porpl_db::models::post::post::{Post, PostForm};
-use porpl_utils::PorplError;
+use porpl_utils::{parser::parse_markdown, PorplError};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for SubmitPost {
@@ -45,11 +45,17 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             user_view.user.deleted,
         )?;
 
+        let body_html = match data.body {
+            Some(ref body) => Some(parse_markdown(body)),
+            None => None,
+        };
+
         let post_form = PostForm {
             title: data.title,
             type_: data.type_,
             url: data.url,
             body: data.body,
+            body_html: body_html,
             creator_id: user_view.user.id,
             board_id: data.board_id.unwrap_or(1),
             nsfw: Some(data.nsfw),
