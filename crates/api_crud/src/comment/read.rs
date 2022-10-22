@@ -5,12 +5,13 @@ use porpl_api_common::{
     data::PorplContext,
     utils::blocking,
 };
-use porpl_db::models::{comment::comment::Comment, post::post::Post};
+use porpl_db::models::post::post::Post;
+use porpl_db_views::{comment_view::CommentQuery, structs::CommentView};
 use porpl_utils::PorplError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for GetPostComments {
-    type Response = Vec<Comment>;
+    type Response = Vec<CommentView>;
     type Route = GetPostCommentsRoute;
 
     async fn perform(
@@ -29,9 +30,22 @@ impl<'des> PerformCrud<'des> for GetPostComments {
             return Err(PorplError::from_string("Invalid post ID", 404));
         }
 
-        blocking(context.pool(), move |conn| {
-            Comment::replies_to_post(conn, path.post_id)
+        let comments = blocking(context.pool(), move |conn| {
+            CommentQuery::builder()
+                .conn(conn)
+                //.sort(None)
+                .post_id(Some(path.post_id))
+                .show_deleted_and_removed(Some(true))
+                //.page(None)
+                //.limit(None)
+                .build()
+                .list()
         })
         .await?
+        .map_err(|_| PorplError::err_500())?;
+
+        let comments = CommentView::into_tree(comments);
+
+        Ok(comments)
     }
 }
