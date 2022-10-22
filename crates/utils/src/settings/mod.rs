@@ -10,7 +10,7 @@ use std::{env, fs, io::Error};
 
 pub mod structs;
 
-static DEFAULT_CONFIG_FILE: &str = "config/defaults.hjson";
+static DEFAULT_CONFIG_FILE: &str = "./config/defaults.hjson";
 
 pub static SETTINGS: Lazy<Settings> = 
   Lazy::new(|| Settings::init().expect("Failed to load the settings file"));

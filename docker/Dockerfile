@@ -18,6 +18,10 @@ RUN apt-get update && apt-get install libpq-dev -y
 
 COPY --from=builder /app/porpl_server /app/porpl
 
+COPY --from=builder /app/config/defaults.hjson /config/defaults.hjson
+
+RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
+
 EXPOSE 8536
 
 CMD ["/app/porpl"]
