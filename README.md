@@ -1,6 +1,6 @@
 # Porpl Backend
 
-Local Installation for Development:
+## Local Installation for Development:
 
 1. Install Postgres 14 on your OS - https://www.postgresql.org/download/
 
@@ -20,3 +20,16 @@ SALT_SUFFIX=somesalt
 PORPL_CONFIG_LOCATION=/path/to/porpl/config/file.hjson
 ```
 7. To build & run the code for local testing simply go into terminal in this folder and type `cargo run`, this command both compiles the source code and starts running the webserver on `http://127.0.0.1:8536` so you can begin testing the API. The code will also automatically run all of the database migrations as well.
+
+
+## Run Porpl with Docker
+
+1. Have docker and docker-compose installed on your OS
+
+2. clone this repository, and [porpl-fe](https://git.porpl.net/Porpl/porpl-fe), into a folder on your local machine
+
+3. open up this repository in terminal, and change directory to `docker` with `cd docker`
+
+4. run the start script with `./docker-start.sh`, this command should reference the `docker-compose.yml` file within the `docker` directory and then build, compile, and launch everything that Porpl needs.
+
+5. you should be able to turn off Porpl by using `CTRL + C` and docker-compose will spin everything down.

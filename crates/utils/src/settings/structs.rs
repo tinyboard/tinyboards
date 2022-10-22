@@ -41,6 +41,9 @@ pub struct Settings {
   /// Maximum length of board and user names
   #[default(20)]
   pub name_max_length: usize,
+  /// Salt suffix used when creating passhashes
+  #[default("somesalt")]
+  pub salt_suffix: String,
   /// Set the URL for opentelemetry exports. If you do not have an opentelemetry collector, do not set this option
   #[default(None)]
   #[doku(skip)]

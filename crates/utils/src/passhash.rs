@@ -1,10 +1,11 @@
 use argon2::{self, Config};
 use uuid::Uuid;
+use crate::settings::SETTINGS;
 
 pub fn hash_password(pwd: String) -> String {
+    let settings = SETTINGS.to_owned();
     let salt_uuid = Uuid::new_v4();
-    let salt_suffix = std::env::var("SALT_SUFFIX")
-        .expect("ERROR: You need to set SALT_SUFFIX in your .env file!");
+    let salt_suffix = settings.salt_suffix;
     let salt = &[salt_uuid.as_bytes(), salt_suffix.as_bytes()].concat();
     let config = Config::default();
     let hashed_pwd = argon2::hash_encoded(pwd.as_bytes(), salt, &config).unwrap();

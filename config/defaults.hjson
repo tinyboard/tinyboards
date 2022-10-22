@@ -6,9 +6,9 @@
     # Password to connect to postgres
     password: "porpl"
     # Host where postgres is running
-    host: "localhost"
+    host: "postgres"
     # Port where postgres can be accessed
-    port: 5433
+    port: 5432
     # Name of the postgres database for porpl
     database: "porpl"
     # Maximum number of active sql connections
@@ -80,4 +80,6 @@
   tls_enabled: true
   # Maximum length of local community and user names
   name_max_length: 20
+  # The salt suffix used for making password hashes (it still uses a UUID along with this suffix)
+  salt_suffix: "somesalt"
 }
