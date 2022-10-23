@@ -15,10 +15,11 @@ pub struct CreateComment {
     pub parent_id: Option<i32>, // parent comment id
 }
 
-/*#[derive(Serialize)]
-pub struct CreateCommentResponse {
-
-}*/
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SaveComment {
+    pub comment_id: i32,
+    pub save: bool,
+}
 
 #[derive(Deserialize)]
 pub struct GetPostComments {}

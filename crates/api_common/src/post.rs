@@ -72,3 +72,9 @@ pub struct DeletePost {
     pub post_id: i32,
     pub deleted: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SavePost {
+    pub post_id: i32,
+    pub save: bool,
+}

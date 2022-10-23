@@ -1,7 +1,7 @@
 use actix_web::*;
 use porpl_api::Perform;
 use porpl_api_common::{
-    comment::{CreateComment, GetPostComments, ListComments, CreateCommentLike},
+    comment::{CreateComment, GetPostComments, ListComments, CreateCommentLike, SaveComment},
     data::PorplContext,
     post::*,
     user::*,
@@ -39,6 +39,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                     .route("/{post_id}/comments",web::get().to(route_get_crud::<GetPostComments>))
                     .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
                     .route("/vote", web::post().to(route_post::<CreatePostLike>))
+                    .route("/save", web::post().to(route_post::<SavePost>))
                     .route("/delete", web::post().to(route_post_crud::<DeletePost>)),
             )
             // Comments
@@ -47,7 +48,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                     .wrap(rate_limit.message())
                     .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("/submit", web::post().to(route_post_crud::<CreateComment>))
-                    .route("/vote", web::post().to(route_post::<CreateCommentLike>)),
+                    .route("/vote", web::post().to(route_post::<CreateCommentLike>))
+                    .route("/save", web::post().to(route_post::<SaveComment>)),
             ),
     );
 }

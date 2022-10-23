@@ -2548,6 +2548,7 @@ dependencies = [
  "porpl_utils",
  "regex",
  "serde",
+ "tracing",
 ]
 
 [[package]]
