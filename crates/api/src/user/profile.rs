@@ -7,7 +7,10 @@ use porpl_api_common::{
 };
 use porpl_db::models::user::user::{User, UserSafe};
 use porpl_db_views::structs::UserView;
-use porpl_utils::error::PorplError;
+use porpl_utils::{
+    error::PorplError,
+    settings::SETTINGS,
+};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for GetLoggedInUser {
@@ -45,7 +48,8 @@ impl<'des> Perform<'des> for Profile {
         .await?
         .map_err(|_| PorplError::from_string("user not found", 404))?;
 
-        let domain = std::env::var("MASTER_DOMAIN").unwrap();
+        let settings = SETTINGS.to_owned();
+        let domain = settings.hostname;
         let id = user.id;
         let avatar_url = user.avatar.unwrap_or("".to_string());
         let bio = user.bio.unwrap_or("".to_string());
