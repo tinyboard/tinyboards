@@ -6,7 +6,13 @@ use actix_web::web;
 use porpl_db::{
     database::PgPool,
     impls::user::is_banned,
-    models::{board::board::Board, post::post::Post, secret::Secret, user::user::User},
+    models::{
+        board::board::Board, 
+        post::post::Post, 
+        secret::Secret, 
+        user::user::User,
+        comment::comment::Comment,
+    },
     traits::Crud,
 };
 use porpl_utils::error::PorplError;
@@ -208,6 +214,22 @@ pub async fn check_post_deleted_removed_or_locked(
         Err(PorplError::from_string("post locked", 405))
     } else if post.deleted || post.removed {
         Err(PorplError::from_string("post deleted or removed", 404))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_comment_deleted_or_removed(
+    comment_id: i32,
+    pool: &PgPool,
+) -> Result<(), PorplError> {
+    let comment = blocking(pool, move |conn| Comment::read(conn, comment_id))
+        .await?
+        .map_err(|_e| PorplError::from_string("couldn't find comment", 404))?;
+    
+    if comment.deleted || comment.removed {
+        Err(PorplError::from_string("comment deleted or removed", 404))
     } else {
         Ok(())
     }

@@ -1,7 +1,7 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{DeletePost, PostMessageResponse},
+    post::{DeletePost, PostResponse},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -14,11 +14,12 @@ use porpl_db::{
     models::post::post::{Post},
     traits::Crud,
 };
+use porpl_db_views::structs::PostView;
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeletePost {
-    type Response = PostMessageResponse;
+    type Response = PostResponse;
     type Route = ();
 
     async fn perform(
@@ -26,7 +27,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         context: &Data<PorplContext>,
         _: Self::Route,
         auth: Option<&str>
-    ) -> Result<PostMessageResponse, PorplError> {
+    ) -> Result<PostResponse, PorplError> {
         let data: &DeletePost = &self;
         let user_view
              = get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
@@ -63,15 +64,22 @@ impl<'des> PerformCrud<'des> for DeletePost {
 
         let post_id = data.post_id;
         let deleted = data.deleted;
-        let _updated_post = blocking(context.pool(), move |conn| {
+        
+        blocking(context.pool(), move |conn| {
             Post::update_deleted(conn, post_id, deleted)
                 .map_err(|_e| PorplError::err_500())
         })
         .await??;
 
-        Ok(PostMessageResponse{
-            message: String::from("post deleted successfully"),
-            status_code: 200,
-        })
+        // grab the post view here for the response
+        let post_view =
+            blocking(context.pool(), move |conn| {
+                PostView::read(conn, post_id, Some(user_view.user.id))
+                    .map_err(|_e| PorplError::from_string("could not find post", 404))
+            })
+            .await??;
+
+
+        Ok(PostResponse{ post_view })
     }
 }

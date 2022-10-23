@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{CreatePostLike, PostMessageResponse},
+    post::{CreatePostLike, PostResponse},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -17,11 +17,12 @@ use porpl_db::{
     models::post::post_like::{PostLike, PostLikeForm},
     traits::{Crud, Likeable},
 };
+use porpl_db_views::structs::PostView;
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for CreatePostLike {
-    type Response = PostMessageResponse;
+    type Response = PostResponse;
     type Route = ();
 
     async fn perform(
@@ -96,20 +97,25 @@ impl<'des> Perform<'des> for CreatePostLike {
             let like = move |conn: &mut _| PostLike::vote(conn, &cloned_form);
             blocking(context.pool(), like)
                 .await?
-                .map_err(|_e| PorplError { message: String::from("could_not_vote_on_post"), error_code: 500})?;       
+                .map_err(|_e| PorplError::from_string("could not vote on post", 500))?;       
         } else {
             let cloned_form = like_form.clone();
             let like = move |conn: &mut _| PostLike::remove(conn, cloned_form.user_id, cloned_form.post_id);
             blocking(context.pool(), like)
                 .await?
-                .map_err(|_e| PorplError { message: String::from("could_not_remove_vote_on_post"), error_code: 500 })?;
+                .map_err(|_e| PorplError::from_string("could not remove vote on post", 500))?;
         }
 
         // mark the post as read here
 
-        Ok(PostMessageResponse {
-            status_code: 200,
-            message: String::from("post liked successfully"),
-        })
+        // grab the post view here for the response
+        let post_view =
+            blocking(context.pool(), move |conn| {
+                PostView::read(conn, like_form.post_id, Some(like_form.user_id))
+                    .map_err(|_e| PorplError::from_string("could not find post", 404))
+            })
+            .await??;
+
+        Ok(PostResponse { post_view })
     }
 }

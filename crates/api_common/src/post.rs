@@ -68,12 +68,6 @@ pub struct CreatePostLike {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct PostMessageResponse {
-    pub status_code: i32,
-    pub message: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DeletePost {
     pub post_id: i32,
     pub deleted: bool,

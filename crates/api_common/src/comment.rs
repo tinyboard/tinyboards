@@ -55,8 +55,7 @@ pub struct ListCommentsResponse {
     pub comments: Vec<CommentView>,
 }
 
-// #[derive(Debug, Serialize, Deserialize, Clone)]
-// pub struct CommentResponse {
-//     pub comment_view: CommentView,
-//     pub recipient_ids: Vec<i32>,
-// }
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CommentResponse {
+    pub comment_view: CommentView
+}
