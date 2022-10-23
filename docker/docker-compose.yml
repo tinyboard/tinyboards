@@ -7,6 +7,10 @@ services:
       - "1236:1236"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      porpl:
+        aliases:
+          - nginx
     restart: always
 
   porpl:
@@ -22,6 +26,11 @@ services:
       dockerfile: ./docker/Dockerfile
     links:
       - postgres
+    networks:
+      porpl:
+        aliases:
+          - porpl-be
+
     # might need to add a volume bridge here for a custom config file, otherwise the dockerfile sets up the default config
 
   porpl-fe:
@@ -35,6 +44,10 @@ services:
     volumes:
       - ../../porpl-fe/package.json:/usr/src/app/package.json
       - ../../porpl-fe/package.json:/usr/src/app/package-lock.json
+    networks:
+      porpl:
+        aliases:
+          - porpl-fe
     depends_on:
       - porpl
 
@@ -50,5 +63,11 @@ services:
       - POSTGRES_DB=porpl
     volumes:
       - ./volumes/postgres:/var/lib/postgresql/data
+    networks:
+      porpl:
+        aliases:
+          - postgres
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
+networks:
+  porpl: {}
