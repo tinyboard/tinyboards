@@ -73,13 +73,13 @@ diesel::table! {
         post_id -> Int4,
         parent_id -> Nullable<Int4>,
         body -> Text,
+        body_html -> Text,
         removed -> Bool,
         read -> Bool,
         published -> Timestamp,
+        level -> Int4,
         updated -> Nullable<Timestamp>,
         deleted -> Bool,
-        level -> Int4,
-        body_html -> Text,
     }
 }
 
@@ -231,6 +231,7 @@ diesel::table! {
         thumbnail_url -> Nullable<Text>,
         permalink -> Nullable<Text>,
         body -> Text,
+        body_html -> Text,
         creator_id -> Int4,
         board_id -> Int4,
         removed -> Bool,
@@ -240,7 +241,6 @@ diesel::table! {
         deleted -> Bool,
         nsfw -> Bool,
         stickied -> Bool,
-        body_html -> Text,
     }
 }
 
@@ -347,7 +347,7 @@ diesel::table! {
         preferred_name -> Nullable<Varchar>,
         passhash -> Text,
         email -> Nullable<Text>,
-        login_nonce -> Int4,
+        login_nonce -> Nullable<Int4>,
         admin -> Bool,
         banned -> Bool,
         published -> Timestamp,

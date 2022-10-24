@@ -32,9 +32,15 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             )
             // Post
             .service(
-                web::scope("/posts")
+                web::scope("/post")
                     .wrap(rate_limit.message())
-                    .route("", web::get().to(route_get_crud::<ListPosts>))
+                    .service(
+                        web::resource("")
+                            .route(web::get().to(route_get_crud::<ListPosts>))    
+                            .guard(guard::Get())
+                            .wrap(rate_limit.post())
+                    )
+                    //.route("", web::get().to(route_get_crud::<ListPosts>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route("/{post_id}/comments",web::get().to(route_get_crud::<GetPostComments>))
                     .route("/submit", web::post().to(route_post_crud::<SubmitPost>))

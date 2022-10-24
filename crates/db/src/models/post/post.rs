@@ -13,6 +13,7 @@ pub struct Post {
     pub thumbnail_url: Option<String>,
     pub permalink: Option<String>,
     pub body: String,
+    pub body_html: String,
     pub creator_id: i32,
     pub board_id: i32,
     pub removed: bool,
@@ -22,7 +23,6 @@ pub struct Post {
     pub deleted: bool,
     pub nsfw: bool,
     pub stickied: bool,
-    pub body_html: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -34,6 +34,7 @@ pub struct PostForm {
     pub thumbnail_url: Option<String>,
     pub permalink: Option<Option<String>>,
     pub body: Option<String>,
+    pub body_html: Option<String>,
     pub creator_id: i32,
     pub board_id: i32,
     pub removed: Option<bool>,
@@ -43,5 +44,4 @@ pub struct PostForm {
     pub deleted: Option<bool>,
     pub nsfw: Option<bool>,
     pub stickied: Option<bool>,
-    pub body_html: Option<String>,
 }

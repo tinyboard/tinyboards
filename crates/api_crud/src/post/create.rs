@@ -46,7 +46,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         )?;
 
         let body_html = match data.body {
-            Some(ref body) => Some(parse_markdown(body)),
+            Some(ref body) => parse_markdown(body),
             None => None,
         };
 

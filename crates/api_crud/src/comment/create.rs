@@ -100,7 +100,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             body_html,
             post_id: data.post_id,
             parent_id: data.parent_id,
-            level: level,
+            level: Some(level),
             ..CommentForm::default()
         };
 

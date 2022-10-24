@@ -11,13 +11,13 @@ pub struct Comment {
     pub post_id: i32,
     pub parent_id: Option<i32>,
     pub body: String,
+    pub body_html: String,
     pub removed: bool,
     pub read: bool,
     pub published: NaiveDateTime,
+    pub level: i32,
     pub updated: Option<NaiveDateTime>,
     pub deleted: bool,
-    pub level: i32,
-    pub body_html: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -27,10 +27,10 @@ pub struct CommentForm {
     pub post_id: i32,
     pub parent_id: Option<i32>,
     pub body: Option<String>,
+    pub body_html: Option<String>,
     pub removed: Option<bool>,
     pub read: Option<bool>,
+    pub level: Option<i32>,
     pub updated: Option<NaiveDateTime>,
     pub deleted: Option<bool>,
-    pub level: i32,
-    pub body_html: String,
 }
