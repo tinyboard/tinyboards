@@ -5,7 +5,10 @@ use porpl_api_common::{
     post::{ListPosts, ListPostsResponse},
     utils::{blocking, load_user_opt},
 };
-use porpl_db::{ListingType, SortType};
+use porpl_db::{
+    map_to_sort_type,
+    map_to_listing_type,
+};
 use porpl_db_views::post_view::PostQuery;
 use porpl_utils::error::PorplError;
 
@@ -14,7 +17,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
     type Response = ListPostsResponse;
     type Route = ();
 
-    #[tracing::instrument(skip(context))]
+    #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<PorplContext>,
@@ -26,8 +29,8 @@ impl<'des> PerformCrud<'des> for ListPosts {
         // check to see if user is logged in or not
         let u = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
-        let sort = data.sort.unwrap_or(SortType::Hot);
-        let listing_type = data.type_.unwrap_or(ListingType::All);
+        let sort = map_to_sort_type(data.sort.as_deref());
+        let listing_type = map_to_listing_type(data.listing_type.as_deref());
         let page = data.page;
         let limit = data.limit;
         let board_id = data.board_id;

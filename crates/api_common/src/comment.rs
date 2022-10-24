@@ -1,6 +1,4 @@
 use porpl_db::{
-    ListingType, 
-    CommentSortType,
     models::{
         user::user::User,
     }
@@ -43,8 +41,8 @@ pub struct CreateCommentLike {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ListComments {
-    pub listing_type: Option<ListingType>,
-    pub sort: Option<CommentSortType>,
+    pub listing_type: Option<String>,
+    pub sort: Option<String>,
     pub board_id: Option<i32>,
     pub post_id: Option<i32>,
     pub parent_id: Option<i32>,

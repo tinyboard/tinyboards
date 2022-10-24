@@ -81,3 +81,40 @@ pub enum ModlogActionType {
   AdminPurgePost,
   AdminPurgeComment,
 }
+
+pub fn map_to_sort_type(match_string: Option<&str>) -> SortType {
+    match match_string {
+      Some("Active") => SortType::Active,
+      Some("Hot") => SortType::Hot,
+      Some("New") => SortType::New,
+      Some("Old") => SortType::Old,
+      Some("TopDay") => SortType::TopDay,
+      Some("TopWeek") => SortType::TopWeek,
+      Some("TopMonth") => SortType::TopMonth,
+      Some("TopAll") => SortType::TopAll,
+      Some("MostComments") => SortType::MostComments,
+      Some("NewComments") => SortType::NewComments,
+      Some(&_) => SortType::Hot,
+      None => SortType::Hot
+    }
+}
+
+pub fn map_to_comment_sort_type(match_string: Option<&str>) -> CommentSortType {
+    match match_string {
+      Some("Hot") => CommentSortType::Hot,
+      Some("Top") => CommentSortType::Top,
+      Some("New") => CommentSortType::New,
+      Some("Old") => CommentSortType::Old,
+      Some(&_) => CommentSortType::Hot,
+      None => CommentSortType::Hot,
+    }
+}
+
+pub fn map_to_listing_type(match_string: Option<&str>) -> ListingType {
+    match match_string {
+      Some("All") => ListingType::All,
+      Some("Subscribed") => ListingType::Subscribed,
+      Some(&_) => ListingType::All,
+      None => ListingType::All,
+    }
+}

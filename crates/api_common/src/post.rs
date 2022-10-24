@@ -1,5 +1,4 @@
 use crate::sensitive::Sensitive;
-use porpl_db::{ListingType, SortType};
 use porpl_db_views::structs::{BoardModeratorView, BoardView, PostView};
 use serde::{Deserialize, Serialize};
 
@@ -40,8 +39,8 @@ pub struct GetPostResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ListPosts {
-    pub type_: Option<ListingType>,
-    pub sort: Option<SortType>,
+    pub listing_type: Option<String>,
+    pub sort: Option<String>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
     pub board_id: Option<i32>,
