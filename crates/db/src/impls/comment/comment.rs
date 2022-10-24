@@ -1,4 +1,5 @@
 use crate::schema::comment::dsl::*;
+use crate::utils::naive_now;
 use crate::{
     models::comment::comment::{Comment, CommentForm},
     traits::Crud,
@@ -25,6 +26,21 @@ impl Comment {
                 eprintln!("ERROR: {}", e);
                 PorplError::err_500()
             })
+    }
+
+    pub fn is_comment_creator(user_id: i32, comment_creator_id: i32) -> bool {
+        user_id == comment_creator_id
+    }
+
+    pub fn update_deleted(
+        conn: &mut PgConnection,
+        comment_id: i32,
+        new_deleted: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::comment::dsl::*;
+        diesel::update(comment.find(comment_id))
+            .set((deleted.eq(new_deleted), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
     }
 
     pub fn get_by_id(conn: &mut PgConnection, cid: i32) -> Result<Option<Self>, PorplError> {

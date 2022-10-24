@@ -7,6 +7,7 @@ use porpl_api_common::{
         get_user_view_from_jwt,
         check_board_deleted_or_removed,
         check_board_ban,
+        check_user_valid,
     },
     data::PorplContext,
 };
@@ -22,12 +23,13 @@ impl<'des> PerformCrud<'des> for DeletePost {
     type Response = PostResponse;
     type Route = ();
 
+    #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<PorplContext>,
         _: Self::Route,
-        auth: Option<&str>
-    ) -> Result<PostResponse, PorplError> {
+        auth: Option<&str>,
+    ) -> Result<Self::Response, PorplError> {
         let data: &DeletePost = &self;
         let user_view
              = get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
@@ -58,8 +60,15 @@ impl<'des> PerformCrud<'des> for DeletePost {
         )
         .await?;
 
+        check_user_valid(
+            user_view.user.banned, 
+            user_view.user.expires, 
+            user_view.user.deleted
+        )
+        ?;
+
         if !Post::is_post_creator(user_view.user.id, orig_post.creator_id) {
-            return Err(PorplError::from_string("post edit not allowed", 401));
+            return Err(PorplError::from_string("post edit not allowed", 405));
         }
 
         let post_id = data.post_id;

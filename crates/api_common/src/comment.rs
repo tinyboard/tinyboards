@@ -21,6 +21,12 @@ pub struct SaveComment {
     pub save: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DeleteComment {
+    pub comment_id: i32,
+    pub deleted: bool,
+}
+
 #[derive(Deserialize)]
 pub struct GetPostComments {}
 
