@@ -134,3 +134,6 @@ pub trait ViewToVec {
       Self: Sized;
 }
 
+pub trait DeleteableOrRemoveable {
+    fn blank_out_deleted_info(self) -> Self;
+}

@@ -25,14 +25,6 @@ pub struct DeleteComment {
     pub deleted: bool,
 }
 
-#[derive(Deserialize)]
-pub struct GetPostComments {}
-
-#[derive(Deserialize)]
-pub struct GetPostCommentsRoute {
-    pub post_id: i32,
-}
-
 #[derive(Deserialize, Serialize)]
 pub struct CreateCommentLike {
     pub comment_id: i32,
@@ -63,4 +55,12 @@ pub struct ListCommentsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommentResponse {
     pub comment_view: CommentView
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetComment {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetCommentPath {
+    pub comment_id: i32,
 }

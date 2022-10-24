@@ -3,10 +3,14 @@ use actix_web::web::Data;
 use porpl_api_common::{
     data::PorplContext,
     comment::{ListComments, ListCommentsResponse},
-    utils::{blocking, get_user_view_from_jwt},
+    utils::{
+        blocking, 
+        get_user_view_from_jwt_opt, 
+        check_private_instance
+    },
 };
-use porpl_db::{map_to_listing_type, map_to_comment_sort_type};
-use porpl_db_views::comment_view::CommentQuery;
+use porpl_db::{map_to_listing_type, map_to_comment_sort_type, traits::DeleteableOrRemoveable};
+use porpl_db_views::{comment_view::CommentQuery, structs::CommentView};
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
@@ -21,10 +25,19 @@ impl <'des> PerformCrud<'des> for ListComments {
         _: Self::Route,
         auth: Option<&str>
     ) -> Result<ListCommentsResponse, PorplError> {
+        
         let data: ListComments = self;
 
-        let _user_view 
-            = get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
+        let user_view =
+            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        
+        // check if instance is private before listing comments
+        check_private_instance(
+            &user_view, 
+            context.pool()
+        )
+        .await?;
+
         
         let sort = map_to_comment_sort_type(data.sort.as_deref());
         let listing_type = map_to_listing_type(data.listing_type.as_deref());
@@ -38,7 +51,7 @@ impl <'des> PerformCrud<'des> for ListComments {
         let saved_only = data.saved_only;
         let show_deleted_and_removed = data.show_deleted_and_removed;
 
-        let comments = blocking(context.pool(), move |conn| {
+        let mut comments = blocking(context.pool(), move |conn| {
             CommentQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
@@ -56,8 +69,19 @@ impl <'des> PerformCrud<'des> for ListComments {
                 .list()
         })
         .await?
-        .map_err(|_| PorplError::err_500())?;
+        .map_err(|_| PorplError::from_string("could not get comments", 500))?;
 
-        Ok(ListCommentsResponse { comments })
+        // blank out comment info if deleted or removed
+        for cv in comments
+            .iter_mut()
+            .filter(|cv| cv.comment.deleted || cv.comment.removed)
+        {
+            cv.comment = cv.to_owned().comment.blank_out_deleted_info();
+        }
+
+        // order into tree
+        let comment_tree = CommentView::into_tree(comments);
+
+        Ok(ListCommentsResponse { comments: comment_tree })
     }
 }

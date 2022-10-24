@@ -1,18 +1,17 @@
 use crate::PerformCrud;
 use actix_web::web;
 use porpl_api_common::{
-    comment::{GetPostComments, GetPostCommentsRoute},
+    comment::{GetComment, CommentResponse, GetCommentPath},
     data::PorplContext,
-    utils::{blocking, load_user_opt},
+    utils::{blocking, get_user_view_from_jwt_opt, check_private_instance},
 };
-use porpl_db::models::post::post::Post;
-use porpl_db_views::{comment_view::CommentQuery, structs::CommentView};
+use porpl_db_views::structs::CommentView;
 use porpl_utils::PorplError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> PerformCrud<'des> for GetPostComments {
-    type Response = Vec<CommentView>;
-    type Route = GetPostCommentsRoute;
+impl<'des> PerformCrud<'des> for GetComment {
+    type Response = CommentResponse;
+    type Route = GetCommentPath;
 
     async fn perform(
         self,
@@ -20,34 +19,28 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
-        // check if post exists
-        if blocking(context.pool(), move |conn| {
-            Post::check_if_exists(conn, path.post_id)
+        
+        let _data = self;
+
+        let user_view =
+            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        
+        // check if the instance is private before listing comments
+        check_private_instance(
+            &user_view, 
+            context.pool()
+        )
+        .await?;
+
+        let user_id = user_view.map(|u| u.user.id);
+        let comment_id = path.comment_id;
+
+        let comment_view = blocking(context.pool(), move |conn| {
+            CommentView::read(conn, comment_id, user_id)
+                .map_err(|_e| PorplError::from_string("could not find comment", 404))
         })
-        .await??
-        .is_none()
-        {
-            return Err(PorplError::from_string("Invalid post ID", 404));
-        }
-
-        let comments = blocking(context.pool(), move |conn| {
-            CommentQuery::builder()
-                .conn(conn)
-                //.sort(None)
-                .post_id(Some(path.post_id))
-                .show_deleted_and_removed(Some(true))
-                .user(user.as_ref())
-                //.page(None)
-                //.limit(None)
-                .build()
-                .list()
-        })
-        .await?
-        .map_err(|_| PorplError::err_500())?;
-
-        let comments = CommentView::into_tree(comments);
-
-        Ok(comments)
+        .await??;
+        
+        Ok( CommentResponse { comment_view } )
     }
 }

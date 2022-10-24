@@ -13,7 +13,7 @@ use diesel::{
 };
 
 pub mod safe_type {
-    use crate::{schema::board::*, models::board::board::BoardSafe, traits::ToSafe};
+    use crate::{schema::board::*, models::board::board::BoardSafe, traits::{ToSafe, DeleteableOrRemoveable}};
 
     type Columns = (
         id,
@@ -43,6 +43,17 @@ pub mod safe_type {
             )
         }
     }
+
+    impl DeleteableOrRemoveable for BoardSafe {
+        fn blank_out_deleted_info(mut self) -> Self {
+            self.title = "".into();
+            self.name = "".into();
+            self.description = None;
+        
+            self
+        }
+    }
+
 }
 
 impl Crud for Board {
@@ -68,3 +79,4 @@ impl Crud for Board {
             .get_result::<Self>(conn)
     }
 }
+

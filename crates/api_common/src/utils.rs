@@ -148,10 +148,8 @@ pub async fn get_user_view_from_jwt(
     let user_id = u.id;
 
     let user_view = blocking(pool, move |conn| {
-        UserView::read(conn, user_id).map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            PorplError::err_500()
-        })
+        UserView::read(conn, user_id)
+            .map_err(|_e| PorplError::from_string("could not find user", 404))
     })
     .await??;
 

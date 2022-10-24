@@ -163,7 +163,7 @@ pub struct PostQuery<'a> {
     sort: Option<SortType>,
     creator_id: Option<i32>,
     board_id: Option<i32>,
-    user: Option<&'a User>,
+    user: Option<UserSafe>,
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,

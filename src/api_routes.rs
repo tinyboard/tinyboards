@@ -1,10 +1,10 @@
 use actix_web::*;
 use porpl_api::Perform;
 use porpl_api_common::{
-    comment::{CreateComment, GetPostComments, ListComments, CreateCommentLike, SaveComment, DeleteComment},
-    data::PorplContext,
+    comment::*,
     post::*,
     user::*,
+    data::PorplContext,
 };
 use porpl_api_crud::PerformCrud;
 use porpl_utils::{rate_limit::RateLimit, PorplError};
@@ -34,15 +34,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             .service(
                 web::scope("/post")
                     .wrap(rate_limit.message())
-                    .service(
-                        web::resource("")
-                            .route(web::get().to(route_get_crud::<ListPosts>))    
-                            .guard(guard::Get())
-                            .wrap(rate_limit.post())
-                    )
-                    //.route("", web::get().to(route_get_crud::<ListPosts>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
-                    .route("/{post_id}/comments",web::get().to(route_get_crud::<GetPostComments>))
+                    .route("/list", web::get().to(route_get_crud::<ListPosts>))
                     .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
                     .route("/vote", web::post().to(route_post::<CreatePostLike>))
                     .route("/save", web::post().to(route_post::<SavePost>))
@@ -50,9 +43,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             )
             // Comments
             .service(
-                web::scope("/comments")
+                web::scope("/comment")
                     .wrap(rate_limit.message())
-                    .route("", web::get().to(route_get_crud::<ListComments>))
+                    .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
+                    .route("/list", web::get().to(route_get_crud::<ListComments>))
                     .route("/submit", web::post().to(route_post_crud::<CreateComment>))
                     .route("/vote", web::post().to(route_post::<CreateCommentLike>))
                     .route("/save", web::post().to(route_post::<SaveComment>))
