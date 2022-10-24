@@ -12,13 +12,13 @@ use porpl_db::{
         secret::Secret, 
         user::user::User,
         comment::comment::Comment,
+        site::{site::Site, registration_application::RegistrationApplication},
     },
     traits::Crud,
 };
 use porpl_utils::error::PorplError;
 use sha2::Sha384;
-use std::collections::BTreeMap;
-//use diesel::PgConnection;
+use std::{collections::BTreeMap};
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -158,6 +158,79 @@ pub async fn get_user_view_from_jwt(
     check_user_valid(u.banned, u.expires, u.deleted)?;
 
     Ok(user_view)
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn get_user_view_from_jwt_opt(
+    jwt: Option<&str>,
+    pool: &PgPool,
+    master_key: &Secret,
+) -> Result<Option<UserView>, PorplError> {
+    match jwt {
+        Some(jwt) => Ok(Some(get_user_view_from_jwt(jwt, pool, master_key).await?)),
+        None => Ok(None)
+    }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_registration_application(
+    site: &Site,
+    user_view: &UserView,
+    pool: &PgPool,
+) -> Result<(), PorplError> {
+    if site.require_application
+        && !user_view.user.admin
+        && !user_view.user.application_accepted
+    {
+        let user_id = user_view.user.id;
+        let registration = blocking(pool, move |conn| {
+            RegistrationApplication::find_by_user_id(conn, user_id)
+                .map_err(|_e| PorplError::from_string("could not find user registration", 404))
+        })
+        .await??;
+
+        if let Some(deny_reason) = registration.deny_reason {
+            let registration_denied_message = &deny_reason;
+            return Err(PorplError::from_string(registration_denied_message, 405));
+        } else {
+            return Err(PorplError::from_string("registration application pending", 401));
+        }
+    }
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_downvotes_enabled(score: i16, pool: &PgPool) -> Result<(), PorplError> {
+    if score == -1 {
+        let site = blocking(pool, move |conn| {
+            Site::read_local(conn)
+                .map_err(|_e| PorplError::from_string("could not read site", 500))
+        }).await??;
+
+        if !site.enable_downvotes {
+            return Err(PorplError::from_string("downvotes are disabled", 405));
+        }
+    }
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_private_instance(
+    user_view: &Option<UserView>,
+    pool: &PgPool,
+) -> Result<(), PorplError> {
+    if user_view.is_none() {
+        let site = blocking(pool, move |conn| {
+            Site::read_local(conn)
+        }).await?;
+
+        if let Ok(site) = site {
+            if site.private_instance {
+                return Err(PorplError::from_string("instance is private", 405));
+            }
+        }
+    }
+    Ok(())
 }
 
 #[tracing::instrument(skip_all)]

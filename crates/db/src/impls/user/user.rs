@@ -157,6 +157,7 @@ impl User {
             expires: self.expires,
             banner: self.banner,
             bio: self.bio,
+            application_accepted: self.application_accepted,
         }
     }
 }
@@ -210,6 +211,7 @@ pub mod safe_type {
         expires,
         banner,
         bio,
+        application_accepted,
     );
 
     type SettingColumns = (
@@ -244,6 +246,7 @@ pub mod safe_type {
                 expires,
                 banner,
                 bio,
+                application_accepted,
             )
         }
     }

@@ -1,0 +1,1 @@
+alter table user_ add column application_accepted boolean default false not null;

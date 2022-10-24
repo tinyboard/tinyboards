@@ -28,6 +28,7 @@ pub struct User {
     pub expires: Option<NaiveDateTime>,
     pub banner: Option<String>,
     pub bio: Option<String>,
+    pub application_accepted: bool,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -52,6 +53,7 @@ pub struct UserSafe {
     pub expires: Option<NaiveDateTime>,
     pub banner: Option<String>,
     pub bio: Option<String>,
+    pub application_accepted: bool,
 }
 
 /// Struct for retrieving setting columns from user table
@@ -90,4 +92,5 @@ pub struct UserForm {
     pub expires: Option<Option<NaiveDateTime>>,
     pub banner: Option<Option<String>>,
     pub bio: Option<Option<String>>,
+    pub application_accepted: Option<bool>,
 }

@@ -363,6 +363,7 @@ diesel::table! {
         expires -> Nullable<Timestamp>,
         banner -> Nullable<Text>,
         bio -> Nullable<Text>,
+        application_accepted -> Bool,
     }
 }
 

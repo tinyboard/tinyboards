@@ -2,13 +2,9 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{blocking, get_user_view_from_jwt}, data::PorplContext,
+    utils::{blocking, get_user_view_from_jwt_opt, check_private_instance}, data::PorplContext,
 };
-// use porpl_db::{
-//     //aggregates::structs::PostAggregates,
-//     //models::comment::comment::Comment,
-//     traits::{Crud}
-// };
+
 use porpl_utils::PorplError;
 
 use porpl_db_views::structs::{
@@ -30,17 +26,23 @@ impl<'des> PerformCrud<'des> for GetPost {
     ) -> Result<GetPostResponse, PorplError> {
 
         let _data = self;
-        // check private instancce
+        
+        let user_view =
+             get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        
+        // check to see if instance is set to private before listing post
+        check_private_instance(
+            &user_view, 
+            context.pool()
+        )
+        .await?;
 
-        let u_view = 
-            get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
-
-        let uid = u_view.user.id;
+        let user_id = user_view.map(|u| u.user.id);
 
         let post_id = path.post_id;
 
         let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, post_id, Some(uid))
+            PostView::read(conn, post_id, user_id)
         })
         .await?
         .map_err(|e| {
@@ -54,7 +56,7 @@ impl<'des> PerformCrud<'des> for GetPost {
 
         let board_id = post_view.board.id;
         let board_view = blocking(context.pool(), move |conn| {
-            BoardView::read(conn, board_id, Some(uid))
+            BoardView::read(conn, board_id, user_id)
         })
         .await?
         .map_err(|e| {
