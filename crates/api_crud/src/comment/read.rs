@@ -1,7 +1,7 @@
 use crate::PerformCrud;
 use actix_web::web;
 use porpl_api_common::{
-    comment::{GetComment, CommentResponse, GetCommentPath},
+    comment::{GetComment, CommentResponse, CommentIdPath},
     data::PorplContext,
     utils::{blocking, get_user_view_from_jwt_opt, check_private_instance},
 };
@@ -11,7 +11,7 @@ use porpl_utils::PorplError;
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for GetComment {
     type Response = CommentResponse;
-    type Route = GetCommentPath;
+    type Route = CommentIdPath;
 
     async fn perform(
         self,

@@ -13,21 +13,23 @@ pub struct CreateComment {
     pub parent_id: Option<i32>, // parent comment id
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CommentIdPath {
+    pub comment_id: i32,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SaveComment {
-    pub comment_id: i32,
     pub save: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DeleteComment {
-    pub comment_id: i32,
     pub deleted: bool,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct CreateCommentLike {
-    pub comment_id: i32,
+pub struct CreateCommentVote {
     pub score: i16,
 }
 
@@ -60,7 +62,3 @@ pub struct CommentResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetComment {}
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GetCommentPath {
-    pub comment_id: i32,
-}

@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
-    comment::{CreateCommentLike, CommentResponse},
+    comment::{CreateCommentVote, CommentResponse, CommentIdPath},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -21,22 +21,22 @@ use porpl_db_views::structs::CommentView;
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for CreateCommentLike {
+impl<'des> Perform<'des> for CreateCommentVote {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
-        let data: &CreateCommentLike = &self;
+        let data: &CreateCommentVote = &self;
 
         let user_view =
             get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
 
-        let comment_id = data.comment_id;
+        let comment_id = path.comment_id;
 
         let orig_comment =
             blocking(context.pool(), move |conn| {
@@ -79,7 +79,7 @@ impl<'des> Perform<'des> for CreateCommentLike {
         ?;
 
         let vote_form = CommentVoteForm {
-            comment_id: data.comment_id,
+            comment_id: path.comment_id,
             user_id: user_view.user.id,
             score: data.score,
         };

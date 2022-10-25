@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{CreatePostLike, PostResponse},
+    post::{CreatePostVote, PostResponse, PostIdPath},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -21,24 +21,24 @@ use porpl_db_views::structs::PostView;
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for CreatePostLike {
+impl<'des> Perform<'des> for CreatePostVote {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Self::Route,
-        _: Option<&str>,
+        path: Self::Route,
+        auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
 
-        let data: &CreatePostLike = &self;
+        let data: &CreatePostVote = &self;
         let user_view = 
-            get_user_view_from_jwt(&data.auth, context.pool(), context.master_key()).await?;
+            get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
 
         // check if downvotes are disabled (when/if we implement this feature)
 
-        let post_id = data.post_id;
+        let post_id = path.post_id;
 
         let post 
             = blocking(context.pool(), move |conn| {
@@ -78,7 +78,7 @@ impl<'des> Perform<'des> for CreatePostLike {
         ?;
 
         let vote_form = PostVoteForm {
-            post_id: data.post_id,
+            post_id: path.post_id,
             user_id: user_view.user.id,
             score: data.score,
         };

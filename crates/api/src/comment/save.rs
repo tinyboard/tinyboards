@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
-    comment::{SaveComment, CommentResponse},
+    comment::{SaveComment, CommentResponse, CommentIdPath},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -18,13 +18,13 @@ use porpl_utils::error::PorplError;
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     #[tracing::instrument(skip(context))]
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
         let data: &SaveComment = &self;
@@ -33,7 +33,7 @@ impl<'des> Perform<'des> for SaveComment {
             get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
         
         let saved_form = CommentSavedForm {
-            comment_id: data.comment_id,
+            comment_id: path.comment_id,
             user_id: user_view.user.id,
         };
 
@@ -49,7 +49,7 @@ impl<'des> Perform<'des> for SaveComment {
                 .map_err(|_e| PorplError::from_string("could not unsave comment", 500))?;
         }
 
-        let comment_id = data.comment_id;
+        let comment_id = path.comment_id;
         let user_id = user_view.user.id;
         let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, Some(user_id))

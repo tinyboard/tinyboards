@@ -7,6 +7,11 @@ pub struct PostResponse {
     pub post_view: PostView,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PostIdPath {
+    pub post_id: i32,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SubmitPost {
     pub title: String,
@@ -54,26 +59,17 @@ pub struct ListPostsResponse {
     pub posts: Vec<PostView>,
 }
 
-#[derive(Deserialize)]
-pub struct PostIdPath {
-    pub post_id: i32,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct CreatePostLike {
-    pub post_id: i32,
+pub struct CreatePostVote {
     pub score: i16,
-    pub auth: Sensitive<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct DeletePost {
-    pub post_id: i32,
-    pub deleted: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SavePost {
-    pub post_id: i32,
     pub save: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct DeletePost {
+    pub deleted: bool,
 }

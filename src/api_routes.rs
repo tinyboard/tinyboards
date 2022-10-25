@@ -40,23 +40,29 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                         .guard(guard::Get())
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                         .guard(guard::Get())
-                    .route("/{post_id}/vote", web::post().to(route_post::<CreatePostLike>))
+                    .route("/{post_id}/vote", web::post().to(route_post::<CreatePostVote>))
                         .guard(guard::Post())
                     .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
                         .guard(guard::Post())
-                    .route("/{post_id}/delete", web::post().to(route_post_crud::<DeletePost>))
+                    .route("/{post_id}/delete", web::delete().to(route_post_crud::<DeletePost>))
                         .guard(guard::Delete()),
             )
             // Comment
             .service(
                 web::scope("/comment")
                     .wrap(rate_limit.message())
-                    .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
-                    .route("/list", web::get().to(route_get_crud::<ListComments>))
                     .route("/submit", web::post().to(route_post_crud::<CreateComment>))
-                    .route("/vote", web::post().to(route_post::<CreateCommentLike>))
-                    .route("/save", web::post().to(route_post::<SaveComment>))
-                    .route("/delete", web::post().to(route_post_crud::<DeleteComment>)),
+                        .guard(guard::Post())
+                    .route("/list", web::get().to(route_get_crud::<ListComments>))
+                        .guard(guard::Get())
+                    .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
+                        .guard(guard::Get())
+                    .route("/{comment_id}/vote", web::post().to(route_post::<CreateCommentVote>))
+                        .guard(guard::Post())
+                    .route("/{comment_id}/save", web::post().to(route_post::<SaveComment>))
+                        .guard(guard::Post())
+                    .route("/{comment_id}/delete", web::delete().to(route_post_crud::<DeleteComment>))
+                        .guard(guard::Delete()),
             ),
     );
 }

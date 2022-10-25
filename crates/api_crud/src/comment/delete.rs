@@ -1,7 +1,7 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
-    comment::{DeleteComment, CommentResponse},
+    comment::{DeleteComment, CommentResponse, CommentIdPath},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -25,13 +25,13 @@ use porpl_utils::error::PorplError;
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeleteComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
         let data: &DeleteComment = &self;
@@ -39,7 +39,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         let user_view = 
             get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
 
-        let comment_id = data.comment_id;
+        let comment_id = path.comment_id;
         
         let orig_comment = blocking(context.pool(), move |conn| {
             Comment::read(conn, comment_id)

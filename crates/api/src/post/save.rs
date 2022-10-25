@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{SavePost, PostResponse},
+    post::{SavePost, PostResponse, PostIdPath},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -18,13 +18,13 @@ use porpl_utils::error::PorplError;
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SavePost {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     #[tracing::instrument(skip(context))]
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
         let data: &SavePost = &self;
@@ -33,7 +33,7 @@ impl<'des> Perform<'des> for SavePost {
             get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
         
         let saved_form = PostSavedForm {
-            post_id: data.post_id,
+            post_id: path.post_id,
             user_id: user_view.user.id,
         };
 
@@ -49,7 +49,7 @@ impl<'des> Perform<'des> for SavePost {
                 .map_err(|_e| PorplError::from_string("could not unsave post", 500))?;
         }
 
-        let post_id = data.post_id;
+        let post_id = path.post_id;
         let user_id = user_view.user.id;
         let post_view = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, Some(user_id))

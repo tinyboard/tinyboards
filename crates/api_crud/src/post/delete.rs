@@ -1,7 +1,7 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{DeletePost, PostResponse},
+    post::{DeletePost, PostResponse, PostIdPath},
     utils::{
         blocking,
         get_user_view_from_jwt,
@@ -21,20 +21,20 @@ use porpl_utils::error::PorplError;
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeletePost {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<PorplContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, PorplError> {
         let data: &DeletePost = &self;
         let user_view
              = get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
 
-        let post_id = data.post_id;
+        let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
                 Post::read(conn, post_id)
                     .map_err(|e| {
@@ -71,7 +71,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
             return Err(PorplError::from_string("post edit not allowed", 405));
         }
 
-        let post_id = data.post_id;
+        let post_id = path.post_id;
         let deleted = data.deleted;
         
         blocking(context.pool(), move |conn| {
