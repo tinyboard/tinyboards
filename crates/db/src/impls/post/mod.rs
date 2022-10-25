@@ -1,3 +1,3 @@
 mod post;
-mod post_like;
+mod post_vote;
 mod post_saved;

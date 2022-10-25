@@ -11,7 +11,7 @@ use porpl_db::{
         user_block,
         post,
         post_aggregates,
-        post_like,
+        post_vote,
         post_read,
         post_saved,
     },
@@ -65,7 +65,7 @@ impl PostView {
             saved,
             read,
             creator_blocked,
-            post_like,
+            post_vote,
         ) = post::table
             .find(post_id)
             .inner_join(user_::table)
@@ -112,10 +112,10 @@ impl PostView {
                 ),
             )
             .left_join(
-                post_like::table.on(
+                post_vote::table.on(
                     post::id
-                        .eq(post_like::post_id)
-                        .and(post_like::user_id.eq(user_id_join)),
+                        .eq(post_vote::post_id)
+                        .and(post_vote::user_id.eq(user_id_join)),
                 ),
             )
             .select((
@@ -128,14 +128,14 @@ impl PostView {
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 user_block::all_columns.nullable(),
-                post_like::score.nullable(),
+                post_vote::score.nullable(),
             ))
             .first::<PostViewTuple>(conn)?;
 
-            let my_vote = if my_user_id.is_some() && post_like.is_none() {
+            let my_vote = if my_user_id.is_some() && post_vote.is_none() {
                 Some(0)
             } else {
-                post_like
+                post_vote
             };
 
             Ok(PostView {
@@ -226,10 +226,10 @@ impl<'a> PostQuery<'a> {
                 ),
             )
             .left_join(
-                post_like::table.on(
+                post_vote::table.on(
                     post::id
-                        .eq(post_like::post_id)
-                        .and(post_like::user_id.eq(user_id_join)),
+                        .eq(post_vote::post_id)
+                        .and(post_vote::user_id.eq(user_id_join)),
                 ),
             )
             .select((
@@ -242,7 +242,7 @@ impl<'a> PostQuery<'a> {
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 user_block::all_columns.nullable(),
-                post_like::score.nullable(),
+                post_vote::score.nullable(),
             ))
             .into_boxed();
         

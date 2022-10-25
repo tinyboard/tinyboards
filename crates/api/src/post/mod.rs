@@ -1,2 +1,2 @@
-pub mod like;
+pub mod vote;
 pub mod save;

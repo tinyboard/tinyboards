@@ -14,8 +14,8 @@ use porpl_api_common::{
 };
 use porpl_db::{
     models::post::post::Post,
-    models::post::post_like::{PostLike, PostLikeForm},
-    traits::{Crud, Likeable},
+    models::post::post_vote::{PostVote, PostVoteForm},
+    traits::{Crud, Voteable},
 };
 use porpl_db_views::structs::PostView;
 use porpl_utils::error::PorplError;
@@ -77,7 +77,7 @@ impl<'des> Perform<'des> for CreatePostLike {
         )
         ?;
 
-        let like_form = PostLikeForm {
+        let vote_form = PostVoteForm {
             post_id: data.post_id,
             user_id: user_view.user.id,
             score: data.score,
@@ -86,21 +86,21 @@ impl<'des> Perform<'des> for CreatePostLike {
         // remove any existing votes first
         let user_id = user_view.user.id;
         blocking(context.pool(), move |conn| {
-            PostLike::remove(conn, user_id, post_id)
+            PostVote::remove(conn, user_id, post_id)
         })
         .await??;
 
-        let do_add = like_form.score != 0 && (like_form.score == 1 || like_form.score == -1);
+        let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);
 
         if do_add {
-            let cloned_form = like_form.clone();
-            let like = move |conn: &mut _| PostLike::vote(conn, &cloned_form);
+            let cloned_form = vote_form.clone();
+            let like = move |conn: &mut _| PostVote::vote(conn, &cloned_form);
             blocking(context.pool(), like)
                 .await?
                 .map_err(|_e| PorplError::from_string("could not vote on post", 500))?;       
         } else {
-            let cloned_form = like_form.clone();
-            let like = move |conn: &mut _| PostLike::remove(conn, cloned_form.user_id, cloned_form.post_id);
+            let cloned_form = vote_form.clone();
+            let like = move |conn: &mut _| PostVote::remove(conn, cloned_form.user_id, cloned_form.post_id);
             blocking(context.pool(), like)
                 .await?
                 .map_err(|_e| PorplError::from_string("could not remove vote on post", 500))?;
@@ -111,7 +111,7 @@ impl<'des> Perform<'des> for CreatePostLike {
         // grab the post view here for the response
         let post_view =
             blocking(context.pool(), move |conn| {
-                PostView::read(conn, like_form.post_id, Some(like_form.user_id))
+                PostView::read(conn, vote_form.post_id, Some(vote_form.user_id))
                     .map_err(|_e| PorplError::from_string("could not find post", 404))
             })
             .await??;

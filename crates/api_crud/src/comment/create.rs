@@ -12,11 +12,11 @@ use porpl_db::{
     models::{
         comment::{
             comment::{Comment, CommentForm},
-            comment_like::{CommentLike, CommentLikeForm},
+            comment_vote::{CommentVote, CommentVoteForm},
         },
         post::post::Post,
     },
-    traits::{Crud, Likeable},
+    traits::{Crud, Voteable},
 };
 use porpl_db_views::structs::CommentView;
 use porpl_utils::{parser::parse_markdown, PorplError};
@@ -110,14 +110,14 @@ impl<'des> PerformCrud<'des> for CreateComment {
         .await??;
 
         // auto upvote own comment
-        let comment_like = CommentLikeForm {
+        let comment_vote = CommentVoteForm {
             user_id: user_view.user.id,
             comment_id: new_comment.id,
             score: 1,
         };
 
         blocking(context.pool(), move |conn| {
-            CommentLike::vote(conn, &comment_like)
+            CommentVote::vote(conn, &comment_vote)
         })
         .await??;
 

@@ -45,7 +45,7 @@ pub trait Joinable {
         Self: Sized;
 }
 
-pub trait Likeable {
+pub trait Voteable {
     type Form;
     type IdType;
     fn vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>

@@ -1,10 +1,8 @@
 use crate::{
     models::{
-        post::post_like::{PostLike, PostLikeForm},
+        post::post_vote::{PostVote, PostVoteForm},
     },
-    traits::{
-        Likeable,
-    },
+    traits::Voteable,
 };
 use diesel::{
     prelude::*,
@@ -12,13 +10,13 @@ use diesel::{
 };
 use porpl_utils::PorplError;
 
-impl Likeable for PostLike {
-    type Form = PostLikeForm;
+impl Voteable for PostVote {
+    type Form = PostVoteForm;
     type IdType = i32;
 
-    fn vote(conn: &mut PgConnection, form: &PostLikeForm) -> Result<Self, PorplError> {
-        use crate::schema::post_like::dsl::*;
-        diesel::insert_into(post_like)
+    fn vote(conn: &mut PgConnection, form: &PostVoteForm) -> Result<Self, PorplError> {
+        use crate::schema::post_vote::dsl::*;
+        diesel::insert_into(post_vote)
             .values(form)
             .on_conflict((post_id, user_id))
             .do_update()
@@ -31,9 +29,9 @@ impl Likeable for PostLike {
     }
 
     fn remove(conn: &mut PgConnection, user_id: i32, post_id: i32) -> Result<usize, PorplError> {
-        use crate::schema::post_like::dsl;
+        use crate::schema::post_vote::dsl;
         diesel::delete(
-            dsl::post_like
+            dsl::post_vote
                 .filter(dsl::post_id.eq(post_id))
                 .filter(dsl::user_id.eq(user_id)),
         )

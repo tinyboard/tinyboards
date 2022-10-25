@@ -16,7 +16,7 @@ use porpl_db::{
     },
     schema::{
         board, board_block, board_subscriber, board_user_ban, comment, comment_aggregates,
-        comment_like, comment_saved, post, user_, user_block,
+        comment_vote, comment_saved, post, user_, user_block,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
@@ -119,7 +119,7 @@ impl CommentView {
             subscriber,
             saved,
             creator_blocked,
-            comment_like,
+            comment_vote,
         ) = comment::table
             .find(comment_id)
             .inner_join(user_::table)
@@ -152,9 +152,9 @@ impl CommentView {
                     .and(user_block::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_like::table.on(comment::id
-                    .eq(comment_like::comment_id)
-                    .and(comment_like::user_id.eq(user_id_join))),
+                comment_vote::table.on(comment::id
+                    .eq(comment_vote::comment_id)
+                    .and(comment_vote::user_id.eq(user_id_join))),
             )
             .select((
                 comment::all_columns,
@@ -166,14 +166,14 @@ impl CommentView {
                 board_subscriber::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
-                comment_like::score.nullable(),
+                comment_vote::score.nullable(),
             ))
             .first::<CommentViewTuple>(conn)?;
 
-        let my_vote = if user_id.is_some() && comment_like.is_none() {
+        let my_vote = if user_id.is_some() && comment_vote.is_none() {
             Some(0)
         } else {
-            comment_like
+            comment_vote
         };
 
         Ok(CommentView {
@@ -253,9 +253,9 @@ impl<'a> CommentQuery<'a> {
                     .and(board_block::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_like::table.on(comment::id
-                    .eq(comment_like::comment_id)
-                    .and(comment_like::user_id.eq(user_id_join))),
+                comment_vote::table.on(comment::id
+                    .eq(comment_vote::comment_id)
+                    .and(comment_vote::user_id.eq(user_id_join))),
             )
             .select((
                 comment::all_columns,
@@ -267,7 +267,7 @@ impl<'a> CommentQuery<'a> {
                 board_subscriber::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
-                comment_like::score.nullable(),
+                comment_vote::score.nullable(),
             ))
             .into_boxed();
 

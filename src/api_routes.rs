@@ -27,21 +27,27 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             )
             .service(
                 web::scope("/user")
-                    .route("/@{username}", web::get().to(route_get::<Profile>))
+                    .route("/{username}", web::get().to(route_get::<Profile>))
                     .route("/me", web::get().to(route_get::<GetLoggedInUser>)),
             )
             // Post
             .service(
                 web::scope("/post")
                     .wrap(rate_limit.message())
-                    .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
-                    .route("/list", web::get().to(route_get_crud::<ListPosts>))
                     .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
-                    .route("/vote", web::post().to(route_post::<CreatePostLike>))
-                    .route("/save", web::post().to(route_post::<SavePost>))
-                    .route("/delete", web::post().to(route_post_crud::<DeletePost>)),
+                        .guard(guard::Post())
+                    .route("/list", web::get().to(route_get_crud::<ListPosts>))
+                        .guard(guard::Get())
+                    .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
+                        .guard(guard::Get())
+                    .route("/{post_id}/vote", web::post().to(route_post::<CreatePostLike>))
+                        .guard(guard::Post())
+                    .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
+                        .guard(guard::Post())
+                    .route("/{post_id}/delete", web::post().to(route_post_crud::<DeletePost>))
+                        .guard(guard::Delete()),
             )
-            // Comments
+            // Comment
             .service(
                 web::scope("/comment")
                     .wrap(rate_limit.message())

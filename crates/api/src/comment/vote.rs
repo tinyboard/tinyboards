@@ -14,8 +14,8 @@ use porpl_api_common::{
     data::PorplContext,
 };
 use porpl_db::{
-    models::comment::comment_like::{CommentLike, CommentLikeForm},
-    traits::Likeable,
+    models::comment::comment_vote::{CommentVote, CommentVoteForm},
+    traits::Voteable,
 };
 use porpl_db_views::structs::CommentView;
 use porpl_utils::error::PorplError;
@@ -78,7 +78,7 @@ impl<'des> Perform<'des> for CreateCommentLike {
         )
         ?;
 
-        let like_form = CommentLikeForm {
+        let vote_form = CommentVoteForm {
             comment_id: data.comment_id,
             user_id: user_view.user.id,
             score: data.score,
@@ -86,21 +86,21 @@ impl<'des> Perform<'des> for CreateCommentLike {
 
         // remove any existing votes first
         blocking(context.pool(), move |conn| {
-            CommentLike::remove(conn, user_view.user.id, comment_id)
+            CommentVote::remove(conn, user_view.user.id, comment_id)
         })
         .await??;
 
-        let do_add = like_form.score != 0 && (like_form.score == 1 || like_form.score == -1);
+        let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);
 
         if do_add {
-            let cloned_form = like_form.clone();
-            let like = move |conn: &mut _| CommentLike::vote(conn, &cloned_form);
+            let cloned_form = vote_form.clone();
+            let like = move |conn: &mut _| CommentVote::vote(conn, &cloned_form);
             blocking(context.pool(), like)
                 .await?
                 .map_err(|_e| PorplError::from_string("could not vote on comment", 500))?;
         } else {
-            let cloned_form = like_form.clone();
-            let like = move |conn: &mut _| CommentLike::remove(conn, cloned_form.user_id, cloned_form.comment_id);
+            let cloned_form = vote_form.clone();
+            let like = move |conn: &mut _| CommentVote::remove(conn, cloned_form.user_id, cloned_form.comment_id);
             blocking(context.pool(), like)
                 .await?
                 .map_err(|_e| PorplError::from_string("could not remove vote on comment", 500))?;
