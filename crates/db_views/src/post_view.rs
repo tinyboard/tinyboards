@@ -322,10 +322,13 @@ impl DeleteableOrRemoveable for PostView {
         }*/
 
         if let Some(user_view) = user_view {
-            // the user can read the comment if they are its creator or are an admin (deleted is blank for everyone)
-            if self.post.removed
-                && (user_view.user.admin || user_view.user.id == self.post.creator_id)
-            {
+            // admins see everything
+            if user_view.user.admin {
+                return;
+            }
+
+            // users can see their own removed content
+            if self.post.removed && user_view.user.id == self.post.creator_id {
                 return;
             }
         }
