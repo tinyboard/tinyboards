@@ -6,11 +6,7 @@ use crate::{
 use diesel::{result::Error, PgConnection, QueryDsl, RunQueryDsl};
 
 pub mod safe_type {
-    use crate::{
-        models::{board::board::BoardSafe, user::user::UserSafe},
-        schema::board::*,
-        traits::{DeleteableOrRemoveable, ToSafe},
-    };
+    use crate::{models::board::board::BoardSafe, schema::board::*, traits::ToSafe};
 
     type Columns = (
         id,
@@ -38,16 +34,6 @@ pub mod safe_type {
                 nsfw,
                 hidden,
             )
-        }
-    }
-
-    impl DeleteableOrRemoveable for BoardSafe {
-        fn blank_out_deleted_info(mut self, user: Option<&UserSafe>) -> Self {
-            self.title = "".into();
-            self.name = "".into();
-            self.description = None;
-
-            self
         }
     }
 }

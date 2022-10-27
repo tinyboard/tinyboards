@@ -1,10 +1,7 @@
 use crate::{
-    models::{
-        post::post::{Post, PostForm},
-        user::user::UserSafe,
-    },
+    models::post::post::{Post, PostForm},
     schema::post,
-    traits::{Crud, DeleteableOrRemoveable},
+    traits::Crud,
     utils::naive_now,
 };
 use diesel::{prelude::*, result::Error, PgConnection};
@@ -68,24 +65,5 @@ impl Crud for Post {
         diesel::update(post::table.find(post_id))
             .set(form)
             .get_result::<Self>(conn)
-    }
-}
-
-impl DeleteableOrRemoveable for Post {
-    fn blank_out_deleted_info(mut self, user: Option<&UserSafe>) -> Self {
-        if let Some(user) = user {
-            if user.admin || self.creator_id == user.id {
-                return self;
-            }
-        }
-
-        self.title = "[ removed ]".into();
-        self.url = None;
-        self.body = "[ removed ]".into();
-        self.body_html = "[ removed ]".into();
-        self.thumbnail_url = None;
-        self.permalink = None;
-
-        self
     }
 }

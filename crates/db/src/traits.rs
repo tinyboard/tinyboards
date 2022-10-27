@@ -1,4 +1,4 @@
-use crate::{models::user::user::UserSafe, porpl_types::UserId};
+use crate::porpl_types::UserId;
 use diesel::{result::Error, PgConnection};
 use porpl_utils::PorplError;
 
@@ -129,8 +129,4 @@ pub trait ViewToVec {
     fn from_tuple_to_vec(tuple: Vec<Self::DbTuple>) -> Vec<Self>
     where
         Self: Sized;
-}
-
-pub trait DeleteableOrRemoveable {
-    fn blank_out_deleted_info(self, user: Option<&UserSafe>) -> Self;
 }

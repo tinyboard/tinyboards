@@ -1,9 +1,8 @@
-use crate::models::user::user::UserSafe;
 use crate::schema::comment::dsl::*;
 use crate::utils::naive_now;
 use crate::{
     models::comment::comment::{Comment, CommentForm},
-    traits::{Crud, DeleteableOrRemoveable},
+    traits::Crud,
 };
 use diesel::{prelude::*, result::Error, PgConnection, QueryDsl, RunQueryDsl};
 use porpl_utils::PorplError;
@@ -89,14 +88,5 @@ impl Crud for Comment {
         diesel::update(comment.find(comment_id))
             .set(form)
             .get_result::<Self>(conn)
-    }
-}
-
-impl DeleteableOrRemoveable for Comment {
-    fn blank_out_deleted_info(mut self, user: Option<&UserSafe>) -> Self {
-        self.body = "".into();
-        self.body_html = "".into();
-
-        self
     }
 }
