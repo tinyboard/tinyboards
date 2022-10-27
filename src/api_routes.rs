@@ -40,12 +40,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                         .guard(guard::Get())
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                         .guard(guard::Get())
+                    .route("/{post_id}", web::delete().to(route_post_crud::<DeletePost>))
+                        .guard(guard::Delete())
+                    .route("/{post_id}", web::put().to(route_post_crud::<EditPost>))
+                        .guard(guard::Put())
                     .route("/{post_id}/vote", web::post().to(route_post::<CreatePostVote>))
                         .guard(guard::Post())
                     .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
-                        .guard(guard::Post())
-                    .route("/{post_id}/delete", web::delete().to(route_post_crud::<DeletePost>))
-                        .guard(guard::Delete()),
+                        .guard(guard::Post()),
             )
             // Comment
             .service(
@@ -57,12 +59,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                         .guard(guard::Get())
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                         .guard(guard::Get())
+                    .route("/{comment_id}", web::delete().to(route_post_crud::<DeleteComment>))
+                        .guard(guard::Delete())
+                    .route("/{comment_id}", web::put().to(route_post_crud::<EditComment>))
+                        .guard(guard::Put())
                     .route("/{comment_id}/vote", web::post().to(route_post::<CreateCommentVote>))
                         .guard(guard::Post())
                     .route("/{comment_id}/save", web::post().to(route_post::<SaveComment>))
-                        .guard(guard::Post())
-                    .route("/{comment_id}/delete", web::delete().to(route_post_crud::<DeleteComment>))
-                        .guard(guard::Delete()),
+                        .guard(guard::Post()),
             ),
     );
 }

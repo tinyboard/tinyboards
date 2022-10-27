@@ -70,6 +70,12 @@ pub struct SavePost {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct EditPost {
+    pub body: Option<String>,
+    pub body_html: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DeletePost {
     pub deleted: bool,
 }

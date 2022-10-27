@@ -28,6 +28,12 @@ pub struct DeleteComment {
     pub deleted: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct EditComment {
+    pub body: Option<String>,
+    pub body_html: Option<String>,
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct CreateCommentVote {
     pub score: i16,

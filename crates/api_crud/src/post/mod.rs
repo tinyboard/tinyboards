@@ -1,4 +1,5 @@
-mod create;
-mod list;
-mod read;
-mod delete;
+pub mod create;
+pub mod list;
+pub mod read;
+pub mod delete;
+pub mod update;
