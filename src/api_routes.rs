@@ -1,11 +1,6 @@
 use actix_web::*;
 use porpl_api::Perform;
-use porpl_api_common::{
-    comment::*,
-    post::*,
-    user::*,
-    data::PorplContext,
-};
+use porpl_api_common::{comment::*, data::PorplContext, post::*, user::*};
 use porpl_api_crud::PerformCrud;
 use porpl_utils::{rate_limit::RateLimit, PorplError};
 use serde::Deserialize;
@@ -33,40 +28,62 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             // Post
             .service(
                 web::scope("/post")
-                    .wrap(rate_limit.message())
+                    //.wrap(rate_limit.message())
                     .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
-                        .guard(guard::Post())
+                    //.guard(guard::Post())
                     .route("/list", web::get().to(route_get_crud::<ListPosts>))
-                        .guard(guard::Get())
+                    //.guard(guard::Get())
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
-                        .guard(guard::Get())
-                    .route("/{post_id}", web::delete().to(route_post_crud::<DeletePost>))
-                        .guard(guard::Delete())
+                    //.guard(guard::Get())
+                    .route(
+                        "/{post_id}",
+                        web::delete().to(route_post_crud::<DeletePost>),
+                    )
+                    //.guard(guard::Delete())
                     .route("/{post_id}", web::put().to(route_post_crud::<EditPost>))
-                        .guard(guard::Put())
-                    .route("/{post_id}/vote", web::post().to(route_post::<CreatePostVote>))
-                        .guard(guard::Post())
+                    //.guard(guard::Put())
+                    .route(
+                        "/{post_id}/vote",
+                        web::post().to(route_post::<CreatePostVote>),
+                    )
+                    //.guard(guard::Post())
                     .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
-                        .guard(guard::Post()),
+                    //.guard(guard::Post())
+                    .route(
+                        "/{post_id}/comments",
+                        web::get().to(route_get_crud::<GetPostComments>),
+                    ),
             )
             // Comment
             .service(
                 web::scope("/comment")
                     .wrap(rate_limit.message())
                     .route("/submit", web::post().to(route_post_crud::<CreateComment>))
-                        .guard(guard::Post())
+                    .guard(guard::Post())
                     .route("/list", web::get().to(route_get_crud::<ListComments>))
-                        .guard(guard::Get())
+                    .guard(guard::Get())
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
-                        .guard(guard::Get())
-                    .route("/{comment_id}", web::delete().to(route_post_crud::<DeleteComment>))
-                        .guard(guard::Delete())
-                    .route("/{comment_id}", web::put().to(route_post_crud::<EditComment>))
-                        .guard(guard::Put())
-                    .route("/{comment_id}/vote", web::post().to(route_post::<CreateCommentVote>))
-                        .guard(guard::Post())
-                    .route("/{comment_id}/save", web::post().to(route_post::<SaveComment>))
-                        .guard(guard::Post()),
+                    .guard(guard::Get())
+                    .route(
+                        "/{comment_id}",
+                        web::delete().to(route_post_crud::<DeleteComment>),
+                    )
+                    .guard(guard::Delete())
+                    .route(
+                        "/{comment_id}",
+                        web::put().to(route_post_crud::<EditComment>),
+                    )
+                    .guard(guard::Put())
+                    .route(
+                        "/{comment_id}/vote",
+                        web::post().to(route_post::<CreateCommentVote>),
+                    )
+                    .guard(guard::Post())
+                    .route(
+                        "/{comment_id}/save",
+                        web::post().to(route_post::<SaveComment>),
+                    )
+                    .guard(guard::Post()),
             ),
     );
 }

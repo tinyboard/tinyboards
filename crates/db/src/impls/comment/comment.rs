@@ -1,3 +1,4 @@
+use crate::models::user::user::UserSafe;
 use crate::schema::comment::dsl::*;
 use crate::utils::naive_now;
 use crate::{
@@ -92,7 +93,7 @@ impl Crud for Comment {
 }
 
 impl DeleteableOrRemoveable for Comment {
-    fn blank_out_deleted_info(mut self) -> Self {
+    fn blank_out_deleted_info(mut self, user: Option<&UserSafe>) -> Self {
         self.body = "".into();
         self.body_html = "".into();
 

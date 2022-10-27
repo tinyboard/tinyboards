@@ -1,24 +1,21 @@
-use diesel::{
-    result::Error,
-    PgConnection
-};
+use crate::{models::user::user::UserSafe, porpl_types::UserId};
+use diesel::{result::Error, PgConnection};
 use porpl_utils::PorplError;
-use crate::porpl_types::UserId;
 
 pub trait Crud {
     type Form;
     type IdType;
-    
+
     fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    
+
     fn read(conn: &mut PgConnection, id: Self::IdType) -> Result<Self, Error>
     where
         Self: Sized;
-    
+
     fn update(conn: &mut PgConnection, id: Self::IdType, form: &Self::Form) -> Result<Self, Error>
-    where 
+    where
         Self: Sized;
     fn delete(_conn: &mut PgConnection, _id: Self::IdType) -> Result<usize, Error>
     where
@@ -31,7 +28,7 @@ pub trait Subscribeable {
     where
         Self: Sized;
     fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
-    where 
+    where
         Self: Sized;
 }
 
@@ -41,7 +38,7 @@ pub trait Joinable {
     where
         Self: Sized;
     fn leave(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
-    where 
+    where
         Self: Sized;
 }
 
@@ -119,7 +116,7 @@ pub trait Reportable {
         resolver_id: UserId,
     ) -> Result<usize, PorplError>
     where
-        Self: Sized;   
+        Self: Sized;
 }
 
 pub trait ToSafe {
@@ -131,9 +128,9 @@ pub trait ViewToVec {
     type DbTuple;
     fn from_tuple_to_vec(tuple: Vec<Self::DbTuple>) -> Vec<Self>
     where
-      Self: Sized;
+        Self: Sized;
 }
 
 pub trait DeleteableOrRemoveable {
-    fn blank_out_deleted_info(self) -> Self;
+    fn blank_out_deleted_info(self, user: Option<&UserSafe>) -> Self;
 }

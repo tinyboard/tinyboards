@@ -1,14 +1,12 @@
+use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
-    post::{PostResponse, EditPost, PostIdPath},
-    utils::{
-        blocking,
-        check_board_ban,
-        check_board_deleted_or_removed,
-        check_post_deleted_removed_or_locked,
-        get_user_view_from_jwt,
-    },
     data::PorplContext,
+    post::{EditPost, PostIdPath, PostResponse},
+    utils::{
+        blocking, check_board_ban, check_board_deleted_or_removed,
+        check_post_deleted_removed_or_locked, get_user_view_from_jwt,
+    },
 };
 use porpl_db::{
     models::post::post::{Post, PostForm},
@@ -16,10 +14,9 @@ use porpl_db::{
 };
 use porpl_db_views::structs::PostView;
 use porpl_utils::error::PorplError;
-use crate::PerformCrud;
 
 #[async_trait::async_trait(?Send)]
-impl <'des> PerformCrud<'des> for EditPost {
+impl<'des> PerformCrud<'des> for EditPost {
     type Response = PostResponse;
     type Route = PostIdPath;
 
@@ -31,9 +28,10 @@ impl <'des> PerformCrud<'des> for EditPost {
         auth: Option<&str>,
     ) -> Result<PostResponse, PorplError> {
         let data: &EditPost = &self;
-        let user_view = 
-            get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key()).await?;
-        
+        let user_view =
+            get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key())
+                .await?;
+
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, None)
@@ -41,26 +39,13 @@ impl <'des> PerformCrud<'des> for EditPost {
         })
         .await??;
 
-        check_board_ban(
-            user_view.user.id, 
-            orig_post.board.id, 
-            context.pool(),
-        )
-        .await?;
+        check_board_ban(user_view.user.id, orig_post.board.id, context.pool()).await?;
 
-        check_board_deleted_or_removed(
-            orig_post.board.id, 
-            context.pool(),
-        )
-        .await?;
+        check_board_deleted_or_removed(orig_post.board.id, context.pool()).await?;
 
-        check_post_deleted_removed_or_locked(
-            orig_post.post.id, 
-            context.pool(),
-        )
-        .await?;
+        check_post_deleted_removed_or_locked(orig_post.post.id, context.pool()).await?;
 
-        if user_view.user.id != orig_post.creator.id {
+        if user_view.user.id != orig_post.post.creator_id {
             return Err(PorplError::from_string("post edit not allowed", 405));
         }
 
@@ -85,11 +70,11 @@ impl <'des> PerformCrud<'des> for EditPost {
         // send post notifications here (to mentioned users)
 
         let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, post_id, Some(orig_post.creator.id))
+            PostView::read(conn, post_id, Some(orig_post.post.creator_id))
                 .map_err(|_e| PorplError::from_string("could not find updated post", 404))
         })
         .await??;
 
-        Ok( PostResponse { post_view } )
+        Ok(PostResponse { post_view })
     }
 }

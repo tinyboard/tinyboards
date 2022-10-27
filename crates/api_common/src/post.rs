@@ -54,6 +54,9 @@ pub struct ListPosts {
     pub auth: Option<Sensitive<String>>,
 }
 
+#[derive(Deserialize)]
+pub struct GetPostComments {}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ListPostsResponse {
     pub posts: Vec<PostView>,

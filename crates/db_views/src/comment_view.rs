@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::structs::CommentView;
+use crate::{
+    structs::{CommentView, UserView},
+    DeleteableOrRemoveable,
+};
 use diesel::{dsl::*, result::Error, *};
 use porpl_db::{
     aggregates::structs::CommentAggregates,
@@ -16,7 +19,7 @@ use porpl_db::{
     },
     schema::{
         board, board_block, board_subscriber, board_user_ban, comment, comment_aggregates,
-        comment_vote, comment_saved, post, user_, user_block,
+        comment_saved, comment_vote, post, user_, user_block,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
@@ -178,7 +181,7 @@ impl CommentView {
 
         Ok(CommentView {
             comment,
-            creator,
+            creator: Some(creator),
             post,
             board,
             counts,
@@ -344,6 +347,86 @@ impl<'a> CommentQuery<'a> {
     }
 }
 
+impl DeleteableOrRemoveable for CommentView {
+    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&UserView>) {
+        // if the user is admin, nothing is being removed
+        if let Some(user_view) = user_view {
+            if user_view.user.admin {
+                return;
+            }
+        }
+
+        let blank_out_comment = {
+            if self.comment.removed || self.comment.deleted {
+                match user_view {
+                    Some(user_view) => {
+                        // the user can read the comment if they are its creator (deleted is blank for everyone)
+                        if self.comment.removed && user_view.user.id == self.comment.creator_id {
+                            false
+                        } else {
+                            true
+                        }
+                    }
+                    None => true,
+                }
+            } else {
+                false
+            }
+        };
+
+        if blank_out_comment {
+            let obscure_text: String = {
+                if self.comment.deleted {
+                    "[ deleted ]"
+                } else {
+                    "[ removed ]"
+                }
+            }
+            .into();
+
+            self.comment.body = obscure_text.clone();
+            self.comment.body_html = obscure_text;
+            self.comment.creator_id = -1;
+            self.creator = None;
+        }
+
+        let blank_out_post = {
+            if self.post.deleted || self.post.removed {
+                match user_view {
+                    Some(user_view) => {
+                        if self.post.removed && user_view.user.id == self.post.creator_id {
+                            false
+                        } else {
+                            true
+                        }
+                    }
+                    None => true,
+                }
+            } else {
+                false
+            }
+        };
+
+        // also blank out post
+        if blank_out_post {
+            let obscure_text: String = {
+                if self.post.deleted {
+                    "[ deleted ]"
+                } else {
+                    "[ removed ]"
+                }
+            }
+            .into();
+
+            self.post.title = obscure_text.clone();
+            self.post.body = obscure_text.clone();
+            self.post.body_html = obscure_text;
+            self.post.url = None;
+            self.post.creator_id = -1;
+        }
+    }
+}
+
 impl ViewToVec for CommentView {
     type DbTuple = CommentViewTuple;
     fn from_tuple_to_vec(items: Vec<Self::DbTuple>) -> Vec<Self> {
@@ -351,7 +434,7 @@ impl ViewToVec for CommentView {
             .into_iter()
             .map(|a| Self {
                 comment: a.0,
-                creator: a.1,
+                creator: Some(a.1),
                 post: a.2,
                 board: a.3,
                 counts: a.4,

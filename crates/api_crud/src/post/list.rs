@@ -3,13 +3,10 @@ use actix_web::web::Data;
 use porpl_api_common::{
     data::PorplContext,
     post::{ListPosts, ListPostsResponse},
-    utils::{blocking, get_user_view_from_jwt_opt, check_private_instance},
+    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
 };
-use porpl_db::{
-    map_to_sort_type,
-    map_to_listing_type, traits::DeleteableOrRemoveable,
-};
-use porpl_db_views::post_view::PostQuery;
+use porpl_db::{map_to_listing_type, map_to_sort_type};
+use porpl_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
 use porpl_utils::error::PorplError;
 
 #[async_trait::async_trait(?Send)]
@@ -29,16 +26,13 @@ impl<'des> PerformCrud<'des> for ListPosts {
         // check to see if user is logged in or not
         let user_view =
             get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
-        
+
         // check to see if the instance is private or not before listing
-        check_private_instance(
-            &user_view, 
-            context.pool()
-        ).await?;
+        check_private_instance(&user_view, context.pool()).await?;
 
         let is_logged_in = user_view.is_some();
-        
-        let user = user_view.map(|u| u.user);
+
+        let user_id = user_view.as_ref().map(|u| u.user.id);
         let sort = map_to_sort_type(data.sort.as_deref());
         let listing_type = map_to_listing_type(data.listing_type.as_deref());
         let page = data.page;
@@ -52,7 +46,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
-                .user(user)
+                .user_id(user_id)
                 .saved_only(saved_only)
                 .page(page)
                 .limit(limit)
@@ -70,15 +64,15 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 .iter_mut()
                 .filter(|p| p.post.deleted || p.post.removed)
             {
-                pv.post = pv.to_owned().post.blank_out_deleted_info();
+                pv.hide_if_removed_or_deleted(user_view.as_ref());
             }
 
-            for pv in posts
+            /*for pv in posts
                 .iter_mut()
                 .filter(|p| p.board.deleted)
             {
                 pv.board = pv.to_owned().board.blank_out_deleted_info();
-            }
+            }*/
         }
 
         Ok(ListPostsResponse { posts })

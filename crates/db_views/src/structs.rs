@@ -25,7 +25,7 @@ pub struct UserSettingsView {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct PostView {
     pub post: Post,
-    pub creator: UserSafe,
+    pub creator: Option<UserSafe>,
     pub board: BoardSafe,
     pub creator_banned_from_board: bool, // Left Join BoardUserBan
     pub counts: PostAggregates,
@@ -39,7 +39,7 @@ pub struct PostView {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommentView {
     pub comment: Comment,
-    pub creator: UserSafe,
+    pub creator: Option<UserSafe>,
     pub post: Post,
     pub board: BoardSafe,
     pub counts: CommentAggregates,

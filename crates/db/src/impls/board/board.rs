@@ -1,19 +1,16 @@
+use crate::schema::board::dsl::*;
 use crate::{
-    models::board::{
-        board::{Board, BoardForm},
-    },
+    models::board::board::{Board, BoardForm},
     traits::Crud,
 };
-use crate::schema::board::dsl::*;
-use diesel::{
-    result::Error,
-    PgConnection,
-    QueryDsl,
-    RunQueryDsl,
-};
+use diesel::{result::Error, PgConnection, QueryDsl, RunQueryDsl};
 
 pub mod safe_type {
-    use crate::{schema::board::*, models::board::board::BoardSafe, traits::{ToSafe, DeleteableOrRemoveable}};
+    use crate::{
+        models::{board::board::BoardSafe, user::user::UserSafe},
+        schema::board::*,
+        traits::{DeleteableOrRemoveable, ToSafe},
+    };
 
     type Columns = (
         id,
@@ -45,15 +42,14 @@ pub mod safe_type {
     }
 
     impl DeleteableOrRemoveable for BoardSafe {
-        fn blank_out_deleted_info(mut self) -> Self {
+        fn blank_out_deleted_info(mut self, user: Option<&UserSafe>) -> Self {
             self.title = "".into();
             self.name = "".into();
             self.description = None;
-        
+
             self
         }
     }
-
 }
 
 impl Crud for Board {
@@ -79,4 +75,3 @@ impl Crud for Board {
             .get_result::<Self>(conn)
     }
 }
-
