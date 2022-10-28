@@ -57,33 +57,33 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             // Comment
             .service(
                 web::scope("/comment")
-                    .wrap(rate_limit.message())
+                    //.wrap(rate_limit.message())
                     .route("/submit", web::post().to(route_post_crud::<CreateComment>))
-                    .guard(guard::Post())
+                    //.guard(guard::Post())
                     .route("/list", web::get().to(route_get_crud::<ListComments>))
-                    .guard(guard::Get())
+                    //.guard(guard::Get())
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
-                    .guard(guard::Get())
+                    //.guard(guard::Get())
                     .route(
                         "/{comment_id}",
                         web::delete().to(route_post_crud::<DeleteComment>),
                     )
-                    .guard(guard::Delete())
+                    //.guard(guard::Delete())
                     .route(
                         "/{comment_id}",
                         web::put().to(route_post_crud::<EditComment>),
                     )
-                    .guard(guard::Put())
+                    //.guard(guard::Put())
                     .route(
                         "/{comment_id}/vote",
                         web::post().to(route_post::<CreateCommentVote>),
                     )
-                    .guard(guard::Post())
+                    //.guard(guard::Post())
                     .route(
                         "/{comment_id}/save",
                         web::post().to(route_post::<SaveComment>),
                     )
-                    .guard(guard::Post()),
+                    //.guard(guard::Post()),
             ),
     );
 }
