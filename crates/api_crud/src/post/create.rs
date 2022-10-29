@@ -2,18 +2,19 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use porpl_api_common::{
     data::PorplContext,
-    post::{SubmitPost, SubmitPostResponse},
+    post::{SubmitPost, PostResponse},
     utils::{
         blocking, check_board_ban, check_board_deleted_or_removed, check_user_valid,
         get_user_view_from_jwt,
     },
 };
-use porpl_db::models::post::post::{Post, PostForm};
+use porpl_db::{models::post::{post::{Post, PostForm}, post_vote::{PostVoteForm, PostVote}}, traits::Voteable};
 use porpl_utils::{parser::parse_markdown, PorplError};
+use porpl_db_views::structs::PostView;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for SubmitPost {
-    type Response = SubmitPostResponse;
+    type Response = PostResponse;
     type Route = ();
 
     async fn perform(
@@ -21,7 +22,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         context: &Data<PorplContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<SubmitPostResponse, PorplError> {
+    ) -> Result<PostResponse, PorplError> {
         let data: SubmitPost = self;
 
         let user_view =
@@ -62,14 +63,33 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             ..PostForm::default()
         };
 
-        let _published_post =
-            blocking(context.pool(), move |conn| Post::submit(conn, post_form)).await??;
+        let published_post =
+            blocking(context.pool(), move |conn| Post::submit(conn, post_form)
+                .map_err(|_e| PorplError::from_string("could not submit post", 500)))
+                .await??;
 
-        let submit_post_response = SubmitPostResponse {
-            message: String::from("Post submitted successfully!"),
-            status_code: 200,
+  
+
+        // auto upvote own post
+        let post_vote = PostVoteForm {
+            post_id: published_post.id,
+            user_id: user_view.user.id,
+            score: 1,
         };
 
-        Ok(submit_post_response)
+        blocking(context.pool(), move |conn| {
+            PostVote::vote(conn, &post_vote)
+        })
+        .await??;
+
+         
+
+        let post_view = blocking(context.pool(), move |conn| {
+            PostView::read(conn, published_post.id, Some(user_view.user.id))
+                .map_err(|_e| PorplError::from_string("could not find newly published post", 404))
+        })
+        .await??;
+
+        Ok( PostResponse { post_view } )
     }
 }
