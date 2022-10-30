@@ -1,5 +1,5 @@
 use console_subscriber::ConsoleLayer;
-use porpl_utils::error::PorplError;
+use tinyboards_utils::error::TinyBoardsError;
 use opentelemetry::{
     sdk::{propagation::TraceContextPropagator, Resource},
     KeyValue,
@@ -12,7 +12,7 @@ pub fn init_tracing<S> (
     opentelemetry_url: &str,
     subscriber: S,
     targets: Targets,
- ) -> Result<(), PorplError> 
+ ) -> Result<(), TinyBoardsError> 
 where
     S: Subscriber + for<'a> LookupSpan<'a> + Send + Sync + 'static 
 {
@@ -30,7 +30,7 @@ where
         .tracing()
         .with_trace_config(
             opentelemetry::sdk::trace::config()
-                .with_resource(Resource::new(vec![KeyValue::new("service.name", "porpl")])),
+                .with_resource(Resource::new(vec![KeyValue::new("service.name", "tinyboards")])),
         )
         .with_exporter(
             opentelemetry_otlp::new_exporter()

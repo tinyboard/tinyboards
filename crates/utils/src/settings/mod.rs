@@ -1,5 +1,5 @@
 use crate::{
-    error::PorplError,
+    error::TinyBoardsError,
     location_info,
     settings::structs::Settings,
   };
@@ -20,20 +20,20 @@ impl Settings {
     /// Reads config from the configuration file
     /// 
     /// Warning: Only call this once.
-    pub(crate) fn init() -> Result<Self, PorplError> {
+    pub(crate) fn init() -> Result<Self, TinyBoardsError> {
         let config = from_str::<Settings>(&Self::read_config_file()
-            .map_err(|_| PorplError::from_string("error reading config file", 500))?)
-            .map_err(|_| PorplError::from_string("error converting config to string", 500))?;
+            .map_err(|_| TinyBoardsError::from_string("error reading config file", 500))?)
+            .map_err(|_| TinyBoardsError::from_string("error converting config to string", 500))?;
         
         if config.hostname == "unset" {
-            return Err(PorplError::from_string("Hostname variable is not set!", 500));
+            return Err(TinyBoardsError::from_string("Hostname variable is not set!", 500));
         }
 
         Ok(config)
     }
 
     pub fn get_config_location() -> String {
-        env::var("PORPL_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string())
+        env::var("TB_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string())
     }
 
     pub fn read_config_file() -> Result<String, Error> {

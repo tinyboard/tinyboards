@@ -3,7 +3,7 @@ use crate::{
     DeleteableOrRemoveable,
 };
 use diesel::{dsl::*, pg::Pg, result::Error, *};
-use porpl_db::{
+use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
         board::board::BoardSafe,

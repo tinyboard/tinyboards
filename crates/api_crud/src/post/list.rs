@@ -1,13 +1,13 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
-    data::PorplContext,
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
     post::{ListPosts, ListPostsResponse},
     utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
 };
-use porpl_db::{map_to_listing_type, map_to_sort_type};
-use porpl_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
-use porpl_utils::error::PorplError;
+use tinyboards_db::{map_to_listing_type, map_to_sort_type};
+use tinyboards_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for ListPosts {
@@ -17,10 +17,10 @@ impl<'des> PerformCrud<'des> for ListPosts {
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<ListPostsResponse, PorplError> {
+    ) -> Result<ListPostsResponse, TinyBoardsError> {
         let data: ListPosts = self;
 
         // check to see if user is logged in or not
@@ -56,7 +56,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
         .await?
         .map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::err_500()
+            TinyBoardsError::err_500()
         })?;
 
         if !is_logged_in {

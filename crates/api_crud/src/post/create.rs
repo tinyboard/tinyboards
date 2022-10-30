@@ -1,16 +1,16 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
-    data::PorplContext,
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
     post::{SubmitPost, PostResponse},
     utils::{
         blocking, check_board_ban, check_board_deleted_or_removed, check_user_valid,
         get_user_view_from_jwt,
     },
 };
-use porpl_db::{models::post::{post::{Post, PostForm}, post_vote::{PostVoteForm, PostVote}}, traits::Voteable};
-use porpl_utils::{parser::parse_markdown, PorplError};
-use porpl_db_views::structs::PostView;
+use tinyboards_db::{models::post::{post::{Post, PostForm}, post_vote::{PostVoteForm, PostVote}}, traits::Voteable};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError};
+use tinyboards_db_views::structs::PostView;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for SubmitPost {
@@ -19,10 +19,10 @@ impl<'des> PerformCrud<'des> for SubmitPost {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<PostResponse, PorplError> {
+    ) -> Result<PostResponse, TinyBoardsError> {
         let data: SubmitPost = self;
 
         let user_view =
@@ -65,7 +65,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
 
         let published_post =
             blocking(context.pool(), move |conn| Post::submit(conn, post_form)
-                .map_err(|_e| PorplError::from_string("could not submit post", 500)))
+                .map_err(|_e| TinyBoardsError::from_string("could not submit post", 500)))
                 .await??;
 
   
@@ -86,7 +86,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
 
         let post_view = blocking(context.pool(), move |conn| {
             PostView::read(conn, published_post.id, Some(user_view.user.id))
-                .map_err(|_e| PorplError::from_string("could not find newly published post", 404))
+                .map_err(|_e| TinyBoardsError::from_string("could not find newly published post", 404))
         })
         .await??;
 

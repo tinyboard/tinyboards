@@ -1,19 +1,19 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
-    data::PorplContext,
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
     post::{EditPost, PostIdPath, PostResponse},
     utils::{
         blocking, check_board_ban, check_board_deleted_or_removed,
         check_post_deleted_removed_or_locked, get_user_view_from_jwt,
     },
 };
-use porpl_db::{
+use tinyboards_db::{
     models::post::post::{Post, PostForm},
     traits::Crud,
 };
-use porpl_db_views::structs::PostView;
-use porpl_utils::error::PorplError;
+use tinyboards_db_views::structs::PostView;
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditPost {
@@ -23,10 +23,10 @@ impl<'des> PerformCrud<'des> for EditPost {
     #[tracing::instrument(skip(context))]
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<PostResponse, PorplError> {
+    ) -> Result<PostResponse, TinyBoardsError> {
         let data: &EditPost = &self;
         let user_view =
             get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key())
@@ -35,7 +35,7 @@ impl<'des> PerformCrud<'des> for EditPost {
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, None)
-                .map_err(|_e| PorplError::from_string("could not find original post", 404))
+                .map_err(|_e| TinyBoardsError::from_string("could not find original post", 404))
         })
         .await??;
 
@@ -46,7 +46,7 @@ impl<'des> PerformCrud<'des> for EditPost {
         check_post_deleted_removed_or_locked(orig_post.post.id, context.pool()).await?;
 
         if user_view.user.id != orig_post.post.creator_id {
-            return Err(PorplError::from_string("post edit not allowed", 405));
+            return Err(TinyBoardsError::from_string("post edit not allowed", 405));
         }
 
         let body = data.body.clone();
@@ -62,7 +62,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         blocking(context.pool(), move |conn| {
             Post::update(conn, post_id, &form)
-                .map_err(|_e| PorplError::from_string("could not update post", 500))
+                .map_err(|_e| TinyBoardsError::from_string("could not update post", 500))
         })
         .await??;
 
@@ -71,7 +71,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         let post_view = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, Some(orig_post.post.creator_id))
-                .map_err(|_e| PorplError::from_string("could not find updated post", 404))
+                .map_err(|_e| TinyBoardsError::from_string("could not find updated post", 404))
         })
         .await??;
 

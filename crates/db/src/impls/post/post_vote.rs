@@ -8,13 +8,13 @@ use diesel::{
     prelude::*,
     PgConnection,
 };
-use porpl_utils::PorplError;
+use tinyboards_utils::TinyBoardsError;
 
 impl Voteable for PostVote {
     type Form = PostVoteForm;
     type IdType = i32;
 
-    fn vote(conn: &mut PgConnection, form: &PostVoteForm) -> Result<Self, PorplError> {
+    fn vote(conn: &mut PgConnection, form: &PostVoteForm) -> Result<Self, TinyBoardsError> {
         use crate::schema::post_vote::dsl::*;
         diesel::insert_into(post_vote)
             .values(form)
@@ -24,11 +24,11 @@ impl Voteable for PostVote {
             .get_result::<Self>(conn)
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
-                PorplError::err_500()
+                TinyBoardsError::err_500()
         })
     }
 
-    fn remove(conn: &mut PgConnection, user_id: i32, post_id: i32) -> Result<usize, PorplError> {
+    fn remove(conn: &mut PgConnection, user_id: i32, post_id: i32) -> Result<usize, TinyBoardsError> {
         use crate::schema::post_vote::dsl;
         diesel::delete(
             dsl::post_vote
@@ -38,7 +38,7 @@ impl Voteable for PostVote {
         .execute(conn)
         .map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::err_500()
+            TinyBoardsError::err_500()
             }
         )
     }

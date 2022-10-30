@@ -1,14 +1,14 @@
 [package]
-name = "porpl_api_crud"
+name = "tinyboards_api_crud"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-porpl_utils = { version = "0.1.0", path = "../utils" }
-porpl_db = { version = "0.1.0", path = "../db" }
-porpl_db_views = { version = "0.1.0", path = "../db_views" }
-porpl_api = { version = "0.1.0", path = "../api" }
-porpl_api_common = { version = "0.1.0", path = "../api_common" }
+tinyboards_utils = { version = "0.1.0", path = "../utils" }
+tinyboards_db = { version = "0.1.0", path = "../db" }
+tinyboards_db_views = { version = "0.1.0", path = "../db_views" }
+tinyboards_api = { version = "0.1.0", path = "../api" }
+tinyboards_api_common = { version = "0.1.0", path = "../api_common" }
 activitypub_federation = { version = "0.2.2" }
 bcrypt = "0.13.0"
 serde_json = { version = "1.0.85", features = ["preserve_order"] }

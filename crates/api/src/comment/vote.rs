@@ -1,6 +1,6 @@
 use crate::Perform;
 use actix_web::web::Data;
-use porpl_api_common::{
+use tinyboards_api_common::{
     comment::{CreateCommentVote, CommentResponse, CommentIdPath},
     utils::{
         blocking,
@@ -11,14 +11,14 @@ use porpl_api_common::{
         check_comment_deleted_or_removed,
         check_user_valid,
     },
-    data::PorplContext,
+    data::TinyBoardsContext,
 };
-use porpl_db::{
+use tinyboards_db::{
     models::comment::comment_vote::{CommentVote, CommentVoteForm},
     traits::Voteable,
 };
-use porpl_db_views::structs::CommentView;
-use porpl_utils::error::PorplError;
+use tinyboards_db_views::structs::CommentView;
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for CreateCommentVote {
@@ -27,10 +27,10 @@ impl<'des> Perform<'des> for CreateCommentVote {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let data: &CreateCommentVote = &self;
 
         let user_view =
@@ -41,7 +41,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
         let orig_comment =
             blocking(context.pool(), move |conn| {
                 CommentView::read(conn, comment_id, Some(user_view.user.id))
-                    .map_err(|_| PorplError::err_500())
+                    .map_err(|_| TinyBoardsError::err_500())
             })
             .await??;
         
@@ -97,13 +97,13 @@ impl<'des> Perform<'des> for CreateCommentVote {
             let like = move |conn: &mut _| CommentVote::vote(conn, &cloned_form);
             blocking(context.pool(), like)
                 .await?
-                .map_err(|_e| PorplError::from_string("could not vote on comment", 500))?;
+                .map_err(|_e| TinyBoardsError::from_string("could not vote on comment", 500))?;
         } else {
             let cloned_form = vote_form.clone();
             let like = move |conn: &mut _| CommentVote::remove(conn, cloned_form.user_id, cloned_form.comment_id);
             blocking(context.pool(), like)
                 .await?
-                .map_err(|_e| PorplError::from_string("could not remove vote on comment", 500))?;
+                .map_err(|_e| TinyBoardsError::from_string("could not remove vote on comment", 500))?;
         }
 
         // mark comment as read here
@@ -112,7 +112,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
         let comment_view =
             blocking(context.pool(), move |conn| {
                 CommentView::read(conn, comment_id, Some(user_view.user.id))
-                    .map_err(|_| PorplError::err_500())
+                    .map_err(|_| TinyBoardsError::err_500())
             })
             .await??;
 

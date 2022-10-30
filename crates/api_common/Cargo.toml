@@ -1,17 +1,17 @@
 [package]
-name = "porpl_api_common"
+name = "tinyboards_api_common"
 version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "porpl_api_common"
+name = "tinyboards_api_common"
 path = "src/lib.rs"
 doctest = false
 
 [dependencies]
-porpl_db = { version = "0.1.0", path = "../db" }
-porpl_db_views = { version = "0.1.0", path = "../db_views" }
-porpl_utils = { version = "0.1.0", path = "../utils" }
+tinyboards_db = { version = "0.1.0", path = "../db" }
+tinyboards_db_views = { version = "0.1.0", path = "../db_views" }
+tinyboards_utils = { version = "0.1.0", path = "../utils" }
 async-trait = "0.1.57"
 jwt = "0.16.0"
 hmac = "0.12.1"

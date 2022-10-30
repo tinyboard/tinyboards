@@ -2533,183 +2533,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
 
 [[package]]
-name = "porpl_api"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "async-trait",
- "bcrypt",
- "bigdecimal",
- "derive_more",
- "diesel",
- "porpl_api_common",
- "porpl_db",
- "porpl_db_views",
- "porpl_utils",
- "regex",
- "serde",
- "tracing",
-]
-
-[[package]]
-name = "porpl_api_common"
-version = "0.1.0"
-dependencies = [
- "actix-rt",
- "actix-web",
- "async-trait",
- "chrono",
- "diesel",
- "encoding",
- "hmac",
- "jwt",
- "percent-encoding",
- "porpl_db",
- "porpl_db_views",
- "porpl_utils",
- "reqwest",
- "reqwest-middleware",
- "rosetta-i18n",
- "serde",
- "sha2",
- "tracing",
- "url",
- "webpage",
-]
-
-[[package]]
-name = "porpl_api_crud"
-version = "0.1.0"
-dependencies = [
- "activitypub_federation",
- "actix-web",
- "async-trait",
- "bcrypt",
- "porpl_api",
- "porpl_api_common",
- "porpl_db",
- "porpl_db_views",
- "porpl_utils",
- "regex",
- "serde",
- "serde_json",
- "tracing",
- "url",
- "webmention",
-]
-
-[[package]]
-name = "porpl_db"
-version = "0.1.0"
-dependencies = [
- "bigdecimal",
- "chrono",
- "diesel",
- "diesel-derive-newtype",
- "diesel_ltree",
- "diesel_migrations",
- "dotenvy",
- "hmac",
- "jwt",
- "porpl_utils",
- "r2d2",
- "serde",
- "sha2",
- "strum",
- "strum_macros",
- "url",
-]
-
-[[package]]
-name = "porpl_db_views"
-version = "0.1.0"
-dependencies = [
- "diesel",
- "diesel_ltree",
- "porpl_db",
- "serde",
- "serial_test",
- "tracing",
- "typed-builder",
-]
-
-[[package]]
-name = "porpl_server"
-version = "0.1.0"
-dependencies = [
- "actix",
- "actix-web",
- "bigdecimal",
- "clokwerk",
- "console-subscriber",
- "diesel",
- "diesel_migrations",
- "doku",
- "dotenv",
- "opentelemetry 0.18.0",
- "opentelemetry-otlp",
- "parking_lot",
- "porpl_api",
- "porpl_api_common",
- "porpl_api_crud",
- "porpl_db",
- "porpl_db_views",
- "porpl_utils",
- "reqwest",
- "reqwest-middleware",
- "reqwest-retry",
- "reqwest-tracing",
- "serde",
- "tracing",
- "tracing-actix-web",
- "tracing-error",
- "tracing-log",
- "tracing-opentelemetry 0.18.0",
- "tracing-subscriber",
- "url",
-]
-
-[[package]]
-name = "porpl_utils"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "anyhow",
- "chrono",
- "comrak",
- "derive_more",
- "deser-hjson",
- "diesel",
- "doku",
- "dotenv",
- "dotenv_codegen",
- "futures",
- "html2text",
- "http",
- "jsonwebtoken",
- "lettre",
- "markdown",
- "once_cell",
- "openssl",
- "parking_lot",
- "rand 0.8.5",
- "regex",
- "reqwest-middleware",
- "rosetta-i18n",
- "rust-argon2",
- "serde",
- "serde_json",
- "smart-default",
- "strum",
- "strum_macros",
- "temp-env",
- "tracing",
- "tracing-error",
- "url",
- "uuid",
-]
-
-[[package]]
 name = "ppv-lite86"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3634,6 +3457,183 @@ name = "time-macros"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
+
+[[package]]
+name = "tinyboards_api"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "async-trait",
+ "bcrypt",
+ "bigdecimal",
+ "derive_more",
+ "diesel",
+ "regex",
+ "serde",
+ "tinyboards_api_common",
+ "tinyboards_db",
+ "tinyboards_db_views",
+ "tinyboards_utils",
+ "tracing",
+]
+
+[[package]]
+name = "tinyboards_api_common"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "async-trait",
+ "chrono",
+ "diesel",
+ "encoding",
+ "hmac",
+ "jwt",
+ "percent-encoding",
+ "reqwest",
+ "reqwest-middleware",
+ "rosetta-i18n",
+ "serde",
+ "sha2",
+ "tinyboards_db",
+ "tinyboards_db_views",
+ "tinyboards_utils",
+ "tracing",
+ "url",
+ "webpage",
+]
+
+[[package]]
+name = "tinyboards_api_crud"
+version = "0.1.0"
+dependencies = [
+ "activitypub_federation",
+ "actix-web",
+ "async-trait",
+ "bcrypt",
+ "regex",
+ "serde",
+ "serde_json",
+ "tinyboards_api",
+ "tinyboards_api_common",
+ "tinyboards_db",
+ "tinyboards_db_views",
+ "tinyboards_utils",
+ "tracing",
+ "url",
+ "webmention",
+]
+
+[[package]]
+name = "tinyboards_db"
+version = "0.1.0"
+dependencies = [
+ "bigdecimal",
+ "chrono",
+ "diesel",
+ "diesel-derive-newtype",
+ "diesel_ltree",
+ "diesel_migrations",
+ "dotenvy",
+ "hmac",
+ "jwt",
+ "r2d2",
+ "serde",
+ "sha2",
+ "strum",
+ "strum_macros",
+ "tinyboards_utils",
+ "url",
+]
+
+[[package]]
+name = "tinyboards_db_views"
+version = "0.1.0"
+dependencies = [
+ "diesel",
+ "diesel_ltree",
+ "serde",
+ "serial_test",
+ "tinyboards_db",
+ "tracing",
+ "typed-builder",
+]
+
+[[package]]
+name = "tinyboards_server"
+version = "0.1.0"
+dependencies = [
+ "actix",
+ "actix-web",
+ "bigdecimal",
+ "clokwerk",
+ "console-subscriber",
+ "diesel",
+ "diesel_migrations",
+ "doku",
+ "dotenv",
+ "opentelemetry 0.18.0",
+ "opentelemetry-otlp",
+ "parking_lot",
+ "reqwest",
+ "reqwest-middleware",
+ "reqwest-retry",
+ "reqwest-tracing",
+ "serde",
+ "tinyboards_api",
+ "tinyboards_api_common",
+ "tinyboards_api_crud",
+ "tinyboards_db",
+ "tinyboards_db_views",
+ "tinyboards_utils",
+ "tracing",
+ "tracing-actix-web",
+ "tracing-error",
+ "tracing-log",
+ "tracing-opentelemetry 0.18.0",
+ "tracing-subscriber",
+ "url",
+]
+
+[[package]]
+name = "tinyboards_utils"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "anyhow",
+ "chrono",
+ "comrak",
+ "derive_more",
+ "deser-hjson",
+ "diesel",
+ "doku",
+ "dotenv",
+ "dotenv_codegen",
+ "futures",
+ "html2text",
+ "http",
+ "jsonwebtoken",
+ "lettre",
+ "markdown",
+ "once_cell",
+ "openssl",
+ "parking_lot",
+ "rand 0.8.5",
+ "regex",
+ "reqwest-middleware",
+ "rosetta-i18n",
+ "rust-argon2",
+ "serde",
+ "serde_json",
+ "smart-default",
+ "strum",
+ "strum_macros",
+ "temp-env",
+ "tracing",
+ "tracing-error",
+ "url",
+ "uuid",
+]
 
 [[package]]
 name = "tinyvec"

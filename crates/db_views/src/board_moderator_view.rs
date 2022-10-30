@@ -1,6 +1,6 @@
 use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
-use porpl_db::{
+use tinyboards_db::{
     schema::{
         board,
         board_moderator,

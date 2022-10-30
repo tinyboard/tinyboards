@@ -7,7 +7,7 @@ pub mod time;
 pub mod utils;
 pub mod version;
 
-pub use error::PorplError;
+pub use error::TinyBoardsError;
 pub use passhash::hash_password;
 pub use time::time;
 

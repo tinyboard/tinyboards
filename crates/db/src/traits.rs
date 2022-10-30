@@ -1,6 +1,6 @@
-use crate::porpl_types::UserId;
+use crate::tinyboards_types::UserId;
 use diesel::{result::Error, PgConnection};
-use porpl_utils::PorplError;
+use tinyboards_utils::TinyBoardsError;
 
 pub trait Crud {
     type Form;
@@ -24,20 +24,20 @@ pub trait Crud {
 
 pub trait Subscribeable {
     type Form;
-    fn subscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn subscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
 }
 
 pub trait Joinable {
     type Form;
-    fn join(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn join(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn leave(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn leave(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
 }
@@ -45,54 +45,54 @@ pub trait Joinable {
 pub trait Voteable {
     type Form;
     type IdType;
-    fn vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
     fn remove(
         conn: &mut PgConnection,
         user_id: i32,
         item_id: Self::IdType,
-    ) -> Result<usize, PorplError>
+    ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
 pub trait Bannable {
     type Form;
-    fn ban(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn ban(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn unban(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, PorplError>
+    fn unban(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
 pub trait Saveable {
     type Form;
-    fn save(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn save(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn unsave(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, PorplError>
+    fn unsave(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
 pub trait Blockable {
     type Form;
-    fn block(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn block(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn unblock(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, PorplError>
+    fn unblock(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
 pub trait Readable {
     type Form;
-    fn mark_as_read(conn: &mut PgConnection, form: &Self) -> Result<Self, PorplError>
+    fn mark_as_read(conn: &mut PgConnection, form: &Self) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn mark_as_unread(conn: &mut PgConnection, form: &Self) -> Result<usize, PorplError>
+    fn mark_as_unread(conn: &mut PgConnection, form: &Self) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
@@ -100,21 +100,21 @@ pub trait Readable {
 pub trait Reportable {
     type Form;
     type IdType;
-    fn report(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, PorplError>
+    fn report(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
     fn resolve(
         conn: &mut PgConnection,
         report_id: Self::IdType,
         resolver_id: UserId,
-    ) -> Result<usize, PorplError>
+    ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
     fn unresolve(
         conn: &mut PgConnection,
         report_id: Self::IdType,
         resolver_id: UserId,
-    ) -> Result<usize, PorplError>
+    ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }

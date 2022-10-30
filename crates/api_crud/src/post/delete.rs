@@ -1,6 +1,6 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
+use tinyboards_api_common::{
     post::{DeletePost, PostResponse, PostIdPath},
     utils::{
         blocking,
@@ -9,14 +9,14 @@ use porpl_api_common::{
         check_board_ban,
         check_user_valid,
     },
-    data::PorplContext,
+    data::TinyBoardsContext,
 };
-use porpl_db::{
+use tinyboards_db::{
     models::post::post::{Post},
     traits::Crud,
 };
-use porpl_db_views::structs::PostView;
-use porpl_utils::error::PorplError;
+use tinyboards_db_views::structs::PostView;
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeletePost {
@@ -26,10 +26,10 @@ impl<'des> PerformCrud<'des> for DeletePost {
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let data: &DeletePost = &self;
         let user_view
              = get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
@@ -39,12 +39,12 @@ impl<'des> PerformCrud<'des> for DeletePost {
                 Post::read(conn, post_id)
                     .map_err(|e| {
                         eprintln!("ERROR: {}", e);
-                        PorplError::err_500()
+                        TinyBoardsError::err_500()
                     })
             }).await??;
         
         if orig_post.deleted == data.deleted {
-            return Err(PorplError::from_string("couldn't delete post again", 500));
+            return Err(TinyBoardsError::from_string("couldn't delete post again", 500));
         }
 
         check_board_ban(
@@ -68,7 +68,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         ?;
 
         if !Post::is_post_creator(user_view.user.id, orig_post.creator_id) {
-            return Err(PorplError::from_string("post edit not allowed", 405));
+            return Err(TinyBoardsError::from_string("post edit not allowed", 405));
         }
 
         let post_id = path.post_id;
@@ -76,7 +76,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         
         blocking(context.pool(), move |conn| {
             Post::update_deleted(conn, post_id, deleted)
-                .map_err(|_e| PorplError::err_500())
+                .map_err(|_e| TinyBoardsError::err_500())
         })
         .await??;
 
@@ -84,7 +84,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         let post_view =
             blocking(context.pool(), move |conn| {
                 PostView::read(conn, post_id, Some(user_view.user.id))
-                    .map_err(|_e| PorplError::from_string("could not find post", 404))
+                    .map_err(|_e| TinyBoardsError::from_string("could not find post", 404))
             })
             .await??;
 

@@ -5,16 +5,16 @@ pub mod scheduled_tasks;
 #[cfg(feature = "console")]
 pub mod telemetry;
 
-use porpl_utils::error::PorplError;
+use tinyboards_utils::error::TinyBoardsError;
 use tracing::subscriber::set_global_default;
 use tracing_error::ErrorLayer;
 use tracing_log::LogTracer;
 use tracing_subscriber::{filter::Targets, Layer, Registry, layer::SubscriberExt};
 use url::Url;
 
-pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), PorplError> {
+pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), TinyBoardsError> {
     LogTracer::init()
-        .map_err(|_| PorplError::from_string("failed to initialize log tracer", 500))?;
+        .map_err(|_| TinyBoardsError::from_string("failed to initialize log tracer", 500))?;
 
     let log_description = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into());
 
@@ -22,7 +22,7 @@ pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), PorplError> {
         .trim()
         .trim_matches('"')
         .parse::<Targets>()
-        .map_err(|_| PorplError::from_string("failed to get logger targets", 500))?;
+        .map_err(|_| TinyBoardsError::from_string("failed to get logger targets", 500))?;
     
     let format_layer = tracing_subscriber::fmt::layer().with_filter(targets.clone());
 
@@ -37,7 +37,7 @@ pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), PorplError> {
         tracing::error!("Feature `console` must be enabled for opentelemetry tracing");
     } else {
         set_global_default(subscriber)
-            .map_err(|_| PorplError::from_string("failed to set global default for logger", 500))?;
+            .map_err(|_| TinyBoardsError::from_string("failed to set global default for logger", 500))?;
     }
 
     Ok(())

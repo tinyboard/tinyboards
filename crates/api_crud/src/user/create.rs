@@ -1,13 +1,13 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::data::PorplContext;
-use porpl_api_common::{
+use tinyboards_api_common::data::TinyBoardsContext;
+use tinyboards_api_common::{
     user::{Register, SignupResponse},
     sensitive::Sensitive,
     utils::blocking,
 };
-use porpl_db::models::user::user::{User, UserForm};
-use porpl_utils::PorplError;
+use tinyboards_db::models::user::user::{User, UserForm};
+use tinyboards_utils::TinyBoardsError;
 use regex::Regex;
 
 #[async_trait::async_trait(?Send)]
@@ -17,10 +17,10 @@ impl<'des> PerformCrud<'des> for Register {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         _: Self::Route,
         _: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let data: Register = self;
 
         // some email verification logic here?
@@ -30,13 +30,13 @@ impl<'des> PerformCrud<'des> for Register {
         // USERNAME CHECK
         let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
         if !re.is_match(&data.username) {
-            return Err(PorplError::new(400, String::from("Invalid username!")));
+            return Err(TinyBoardsError::new(400, String::from("Invalid username!")));
         }
 
         // PASSWORD CHECK
         // password_length_check(&data.password)?;
         if !(8..60).contains(&data.password.len()) {
-            return Err(PorplError::new(
+            return Err(TinyBoardsError::new(
                 400,
                 String::from("Your password must be between 8 and 60 characters long."),
             ));
@@ -45,7 +45,7 @@ impl<'des> PerformCrud<'des> for Register {
         // error messages here if email verification is on and no email provided, same for applicaction not being filled out
 
         if data.password != data.password_verify {
-            return Err(PorplError::new(
+            return Err(TinyBoardsError::new(
                 400,
                 String::from("passwords do not match!"),
             ));

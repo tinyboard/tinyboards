@@ -1,8 +1,8 @@
 [package]
-name = "porpl_server"
+name = "tinyboards_server"
 version = "0.1.0"
 edition = "2021"
-description = "The backend server for Porpl!"
+description = "The backend server for TinyBoards!"
 license  = "AGPL-3.0"
 
 [lib]
@@ -26,12 +26,12 @@ members = [
 ]
 
 [dependencies]
-porpl_api = { version = "0.1.0", path="./crates/api" }
-porpl_api_common = { version = "0.1.0", path="./crates/api_common" }
-porpl_api_crud = { version = "0.1.0", path="./crates/api_crud" }
-porpl_utils = { version = "0.1.0", path="./crates/utils" }
-porpl_db = { version = "0.1.0", path="./crates/db" }
-porpl_db_views = { version = "0.1.0", path="./crates/db_views" }
+tinyboards_api = { version = "0.1.0", path="./crates/api" }
+tinyboards_api_common = { version = "0.1.0", path="./crates/api_common" }
+tinyboards_api_crud = { version = "0.1.0", path="./crates/api_crud" }
+tinyboards_utils = { version = "0.1.0", path="./crates/utils" }
+tinyboards_db = { version = "0.1.0", path="./crates/db" }
+tinyboards_db_views = { version = "0.1.0", path="./crates/db_views" }
 diesel = "2.0.0"
 diesel_migrations = "2.0.0"
 actix = "0.13.0"

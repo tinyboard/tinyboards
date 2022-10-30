@@ -1,9 +1,9 @@
-use porpl_db::{
+use tinyboards_db::{
     models::{
         user::user::User,
     }
 };
-use porpl_db_views::structs::CommentView;
+use tinyboards_db_views::structs::CommentView;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]

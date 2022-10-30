@@ -5,13 +5,13 @@ use crate::{
     utils::naive_now,
 };
 use diesel::{prelude::*, result::Error, PgConnection};
-use porpl_utils::PorplError;
+use tinyboards_utils::TinyBoardsError;
 
 impl Post {
-    pub fn submit(conn: &mut PgConnection, form: PostForm) -> Result<Self, PorplError> {
+    pub fn submit(conn: &mut PgConnection, form: PostForm) -> Result<Self, TinyBoardsError> {
         Self::create(conn, &form).map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::new(500, String::from("Internal error, please try again later"))
+            TinyBoardsError::new(500, String::from("Internal error, please try again later"))
         })
     }
 
@@ -20,7 +20,7 @@ impl Post {
     }
 
     /// Checks if a post with a given id exists. Don't use if you need a whole Post object.
-    pub fn check_if_exists(conn: &mut PgConnection, pid: i32) -> Result<Option<i32>, PorplError> {
+    pub fn check_if_exists(conn: &mut PgConnection, pid: i32) -> Result<Option<i32>, TinyBoardsError> {
         use crate::schema::post::dsl::*;
         post.select(id)
             .filter(id.eq(pid))
@@ -28,7 +28,7 @@ impl Post {
             .optional()
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
-                PorplError::err_500()
+                TinyBoardsError::err_500()
             })
     }
 

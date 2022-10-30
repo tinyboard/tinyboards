@@ -1,6 +1,6 @@
 use actix_web::web::Data;
-use porpl_api_common::data::PorplContext;
-use porpl_utils::error::PorplError;
+use tinyboards_api_common::data::TinyBoardsContext;
+use tinyboards_utils::error::TinyBoardsError;
 use serde::Deserialize;
 
 pub mod comment;
@@ -14,8 +14,8 @@ pub trait PerformCrud<'des> {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         authorization: Option<&str>,
-    ) -> Result<Self::Response, PorplError>;
+    ) -> Result<Self::Response, TinyBoardsError>;
 }

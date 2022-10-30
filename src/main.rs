@@ -10,20 +10,20 @@ use diesel::{
     PgConnection,
 };
 use diesel_migrations::EmbeddedMigrations;
-use porpl_api_common::{utils::blocking, data::PorplContext, request::build_user_agent};
-use porpl_server::{
+use tinyboards_api_common::{utils::blocking, data::TinyBoardsContext, request::build_user_agent};
+use tinyboards_server::{
     api_routes,
     init_logging, 
     scheduled_tasks,
     root_span_builder::QuieterRootSpanBuilder,
 };
-use porpl_utils::{
-    error::PorplError,
+use tinyboards_utils::{
+    error::TinyBoardsError,
     rate_limit::{rate_limiter::RateLimiter, RateLimit},
     settings::{SETTINGS},
 };
-use porpl_db::utils::{get_database_url_from_env};
-use porpl_db::models::secret::Secret;
+use tinyboards_db::utils::{get_database_url_from_env};
+use tinyboards_db::models::secret::Secret;
 use reqwest::Client;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -43,13 +43,13 @@ pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 
 #[actix_web::main]
-async fn main() -> Result<(), PorplError> {
+async fn main() -> Result<(), TinyBoardsError> {
     dotenv().ok();
 
     let settings = SETTINGS.to_owned();
 
     init_logging(&settings.opentelemetry_url)
-        .map_err(|_| PorplError::from_string("failed to initialize logger", 500))?;
+        .map_err(|_| TinyBoardsError::from_string("failed to initialize logger", 500))?;
     
     let db_url = match get_database_url_from_env() {
         Ok(url) => url,
@@ -68,8 +68,8 @@ async fn main() -> Result<(), PorplError> {
     blocking(&pool, move |conn| {
         let _ = conn
             .run_pending_migrations(MIGRATIONS)
-            .map_err(|_| PorplError::from_string("Couldn't run migrations", 500))?;
-        Ok(()) as Result<(), PorplError>
+            .map_err(|_| TinyBoardsError::from_string("Couldn't run migrations", 500))?;
+        Ok(()) as Result<(), TinyBoardsError>
     })
     .await??;
 
@@ -85,7 +85,7 @@ async fn main() -> Result<(), PorplError> {
 
     // init the secret
     let conn = &mut pool.get()
-        .map_err(|_| PorplError::from_string("could not establish connection pool for initializing secrets", 500))?;
+        .map_err(|_| TinyBoardsError::from_string("could not establish connection pool for initializing secrets", 500))?;
     let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
 
     println!(
@@ -97,7 +97,7 @@ async fn main() -> Result<(), PorplError> {
         .user_agent(build_user_agent(&settings))
         .timeout(REQWEST_TIMEOUT)
         .build()
-        .map_err(|_| PorplError::from_string("could not build reqwest client", 500))?;
+        .map_err(|_| TinyBoardsError::from_string("could not build reqwest client", 500))?;
 
     let retry_policy = ExponentialBackoff {
         max_n_retries: 3,
@@ -113,7 +113,7 @@ async fn main() -> Result<(), PorplError> {
 
     let settings_bind = settings.clone();
     HttpServer::new(move || {
-        let context = PorplContext::create(
+        let context = TinyBoardsContext::create(
             pool.clone(),
             client.clone(),
             settings.clone(),
@@ -128,10 +128,10 @@ async fn main() -> Result<(), PorplError> {
             .configure(|cfg| api_routes::config(cfg, &rate_limiter))
     })
     .bind((settings_bind.bind, settings_bind.port))
-    .map_err(|_| PorplError::from_string("could not bind to ip", 500))?
+    .map_err(|_| TinyBoardsError::from_string("could not bind to ip", 500))?
     .run()
     .await
-    .map_err(|_| PorplError::from_string("could not start web server", 500))?;
+    .map_err(|_| TinyBoardsError::from_string("could not start web server", 500))?;
 
     Ok(())
 }

@@ -9,8 +9,8 @@ sudo docker-compose down
 sudo docker-compose build --no-cache
 sudo docker-compose up
 
-#sudo docker build ../ --file Dockerfile -t porpl-dev:latest
-#sudo docker build ../../porpl-fe --file Dockerfile -t porpl-fe:latest
-#sudo docker build /home/bunchies/gits/porpl/porpl-fe --file Dockerfile -t porpl-fe:latest
+#sudo docker build ../ --file Dockerfile -t tinyboards-dev:latest
+#sudo docker build ../../tinyboards-fe --file Dockerfile -t tinyboards-fe:latest
+#sudo docker build /home/bunchies/gits/tinyboards/tinyboards-fe --file Dockerfile -t tinyboards-fe:latest
 #sudo docker-compose pull --ignore-pull-failures || true
 #sudo docker-compose up -d

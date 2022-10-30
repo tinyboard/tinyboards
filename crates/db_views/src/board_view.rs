@@ -1,6 +1,6 @@
 use crate::{structs::{BoardView, BoardModeratorView, UserView}};
 use diesel::{result::Error, *};
-use porpl_db::{
+use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     schema::{
         board,

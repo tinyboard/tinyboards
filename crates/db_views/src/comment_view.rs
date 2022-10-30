@@ -5,7 +5,7 @@ use crate::{
     DeleteableOrRemoveable,
 };
 use diesel::{dsl::*, result::Error, *};
-use porpl_db::{
+use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
         board::board::BoardSafe,

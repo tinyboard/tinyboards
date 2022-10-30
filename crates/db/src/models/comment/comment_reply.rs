@@ -1,4 +1,4 @@
-use crate::porpl_types::{CommentId, UserId};
+use crate::tinyboards_types::{CommentId, UserId};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::sensitive::Sensitive;
-use porpl_db::{
+use tinyboards_db::{
     ListingType,
     SortType,
 };

@@ -1,13 +1,13 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
+use tinyboards_api_common::{
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{blocking, get_user_view_from_jwt_opt, check_private_instance}, data::PorplContext,
+    utils::{blocking, get_user_view_from_jwt_opt, check_private_instance}, data::TinyBoardsContext,
 };
 
-use porpl_utils::PorplError;
+use tinyboards_utils::TinyBoardsError;
 
-use porpl_db_views::structs::{
+use tinyboards_db_views::structs::{
     PostView,
     BoardView,
     BoardModeratorView,
@@ -20,10 +20,10 @@ impl<'des> PerformCrud<'des> for GetPost {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<GetPostResponse, PorplError> {
+    ) -> Result<GetPostResponse, TinyBoardsError> {
 
         let _data = self;
         
@@ -47,7 +47,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         .await?
         .map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::err_500()
+            TinyBoardsError::err_500()
         })?;
 
         let _post_id = post_view.post.id;
@@ -61,7 +61,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         .await?
         .map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::err_500()
+            TinyBoardsError::err_500()
         })?;
 
         // blank out deleted or removed info here
@@ -70,7 +70,7 @@ impl<'des> PerformCrud<'des> for GetPost {
             BoardModeratorView::for_board(conn, board_id)
                 .map_err(|e| {
                     eprintln!("ERROR: {}", e);
-                    PorplError::err_500()
+                    TinyBoardsError::err_500()
                 })
         })
         .await??;

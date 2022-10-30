@@ -1,6 +1,6 @@
 use crate::structs::{UserView, UserSettingsView};
 use diesel::{result::Error, *};
-use porpl_db::{
+use tinyboards_db::{
     aggregates::structs::UserAggregates,
     schema::{
         user_,

@@ -1,5 +1,5 @@
 use crate::sensitive::Sensitive;
-use porpl_db_views::structs::{BoardModeratorView, BoardView, PostView};
+use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

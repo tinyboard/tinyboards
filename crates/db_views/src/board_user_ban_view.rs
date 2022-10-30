@@ -1,6 +1,6 @@
 use crate::structs::BoardUserBanView;
 use diesel::{dsl::*, result::Error, *};
-use porpl_db::{
+use tinyboards_db::{
     schema::{
         board,
         board_user_ban,

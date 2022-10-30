@@ -2,15 +2,15 @@
   # settings related to the postgresql database
   database: {
     # Username to connect to postgres
-    user: "porpl"
+    user: "tb"
     # Password to connect to postgres
-    password: "porpl"
+    password: "tb"
     # Host where postgres is running
     host: "postgres"
     # Port where postgres can be accessed
     port: 5432
-    # Name of the postgres database for porpl
-    database: "porpl"
+    # Name of the postgres database for tinyboards
+    database: "tinyboards"
     # Maximum number of active sql connections
     pool_size: 5
   }
@@ -66,15 +66,15 @@
     # Password for the admin user. It must be at least 10 characters.
     admin_password: "VMQaLH24Tjc3aGqRfNew"
     # Name of the site (can be changed later)
-    site_name: "My Porpl Site"
+    site_name: "My Tiny Board"
     # Email for the admin user (optional, can be omitted and set later through the website)
     admin_email: "user@example.com"
   }
   # the domain name of your server (mandatory)
   hostname: "unset"
-  # Address where porpl should listen for incoming requests
+  # Address where tinyboards should listen for incoming requests
   bind: "0.0.0.0"
-  # Port where porpl should listen for incoming requests
+  # Port where tinyboards should listen for incoming requests
   port: 8536
   # Whether the site is available over TLS. Needs to be true for federation to work.
   tls_enabled: true

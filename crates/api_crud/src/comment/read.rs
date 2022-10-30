@@ -1,12 +1,12 @@
 use crate::PerformCrud;
 use actix_web::web;
-use porpl_api_common::{
+use tinyboards_api_common::{
     comment::{GetComment, CommentResponse, CommentIdPath},
-    data::PorplContext,
+    data::TinyBoardsContext,
     utils::{blocking, get_user_view_from_jwt_opt, check_private_instance},
 };
-use porpl_db_views::structs::CommentView;
-use porpl_utils::PorplError;
+use tinyboards_db_views::structs::CommentView;
+use tinyboards_utils::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for GetComment {
@@ -15,10 +15,10 @@ impl<'des> PerformCrud<'des> for GetComment {
 
     async fn perform(
         self,
-        context: &web::Data<PorplContext>,
+        context: &web::Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         
         let _data = self;
 
@@ -37,7 +37,7 @@ impl<'des> PerformCrud<'des> for GetComment {
 
         let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, user_id)
-                .map_err(|_e| PorplError::from_string("could not find comment", 404))
+                .map_err(|_e| TinyBoardsError::from_string("could not find comment", 404))
         })
         .await??;
         

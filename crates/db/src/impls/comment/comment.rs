@@ -5,17 +5,17 @@ use crate::{
     traits::Crud,
 };
 use diesel::{prelude::*, result::Error, PgConnection, QueryDsl, RunQueryDsl};
-use porpl_utils::PorplError;
+use tinyboards_utils::TinyBoardsError;
 
 impl Comment {
-    pub fn submit(conn: &mut PgConnection, form: CommentForm) -> Result<Self, PorplError> {
+    pub fn submit(conn: &mut PgConnection, form: CommentForm) -> Result<Self, TinyBoardsError> {
         Self::create(conn, &form).map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::err_500()
+            TinyBoardsError::err_500()
         })
     }
     /// Checks if a comment with a given id exists. Don't use if you need a whole Comment object.
-    pub fn check_if_exists(conn: &mut PgConnection, cid: i32) -> Result<Option<i32>, PorplError> {
+    pub fn check_if_exists(conn: &mut PgConnection, cid: i32) -> Result<Option<i32>, TinyBoardsError> {
         use crate::schema::comment::dsl::*;
         comment
             .select(id)
@@ -24,7 +24,7 @@ impl Comment {
             .optional()
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
-                PorplError::err_500()
+                TinyBoardsError::err_500()
             })
     }
 
@@ -43,7 +43,7 @@ impl Comment {
             .get_result::<Self>(conn)
     }
 
-    pub fn get_by_id(conn: &mut PgConnection, cid: i32) -> Result<Option<Self>, PorplError> {
+    pub fn get_by_id(conn: &mut PgConnection, cid: i32) -> Result<Option<Self>, TinyBoardsError> {
         use crate::schema::comment::dsl::*;
         comment
             .filter(id.eq(cid))
@@ -51,19 +51,19 @@ impl Comment {
             .optional()
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
-                PorplError::err_500()
+                TinyBoardsError::err_500()
             })
     }
 
     /// Loads list of comments replying to the specified post.
-    pub fn replies_to_post(conn: &mut PgConnection, pid: i32) -> Result<Vec<Self>, PorplError> {
+    pub fn replies_to_post(conn: &mut PgConnection, pid: i32) -> Result<Vec<Self>, TinyBoardsError> {
         use crate::schema::comment::dsl::*;
         comment
             .filter(post_id.eq(pid))
             .load::<Self>(conn)
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
-                PorplError::err_500()
+                TinyBoardsError::err_500()
             })
     }
 }

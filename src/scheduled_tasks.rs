@@ -2,17 +2,17 @@
 use clokwerk::{Scheduler, TimeUnits};
 // Import week days and WeekDay
 use diesel::{sql_query, PgConnection, RunQueryDsl};
-use porpl_db::utils::DbPool;
-use porpl_utils::error::PorplError;
+use tinyboards_db::utils::DbPool;
+use tinyboards_utils::error::TinyBoardsError;
 use std::{thread, time::Duration};
 use tracing::info;
 
-/// Schedules various cleanup tasks for porpl in a background thread
-pub fn setup(pool: DbPool) -> Result<(), PorplError> {
+/// Schedules various cleanup tasks for tinyboards in a background thread
+pub fn setup(pool: DbPool) -> Result<(), TinyBoardsError> {
   let mut scheduler = Scheduler::new();
 
   let mut conn = pool.get()
-    .map_err(|_| PorplError::from_string("error getting db pool", 500))?;
+    .map_err(|_| TinyBoardsError::from_string("error getting db pool", 500))?;
   update_banned_when_expired(&mut conn);
 
   // On startup, reindex the tables non-concurrently

@@ -1,14 +1,14 @@
 use crate::Perform;
 use actix_web::web::Data;
-use porpl_api_common::{
-    data::PorplContext,
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
     user::{Login, LoginResponse},
     sensitive::Sensitive,
     utils::{blocking},
 };
-use porpl_db::models::user::user::User;
-use porpl_utils::{
-    error::PorplError,
+use tinyboards_db::models::user::user::User;
+use tinyboards_utils::{
+    error::TinyBoardsError,
     passhash::verify_password,
 };
 
@@ -19,10 +19,10 @@ impl<'des> Perform<'des> for Login {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         _: Self::Route,
         _: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let u = blocking(context.pool(), move |conn| {
             if self.username_or_email.contains('@') {
                 User::get_by_email(conn, &self.username_or_email)
@@ -31,10 +31,10 @@ impl<'des> Perform<'des> for Login {
             }
         })
         .await?
-        .map_err(|_| PorplError::new(403, String::from("Login failed")))?;
+        .map_err(|_| TinyBoardsError::new(403, String::from("Login failed")))?;
 
         if !verify_password(&u.passhash, &self.password) {
-            return Err(PorplError::new(403, String::from("Login failed")));
+            return Err(TinyBoardsError::new(403, String::from("Login failed")));
         }
 
         Ok(LoginResponse {

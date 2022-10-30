@@ -1,6 +1,6 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
+use tinyboards_api_common::{
     comment::{DeleteComment, CommentResponse, CommentIdPath},
     utils::{
         blocking,
@@ -10,17 +10,17 @@ use porpl_api_common::{
         check_post_deleted_removed_or_locked,
         check_user_valid,
     },
-    data::PorplContext,
+    data::TinyBoardsContext,
 };
-use porpl_db::{
+use tinyboards_db::{
     models::{
         comment::comment::Comment, 
         post::post::Post
     },
     traits::Crud,
 };
-use porpl_db_views::structs::CommentView;
-use porpl_utils::error::PorplError;
+use tinyboards_db_views::structs::CommentView;
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeleteComment {
@@ -30,10 +30,10 @@ impl<'des> PerformCrud<'des> for DeleteComment {
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let data: &DeleteComment = &self;
 
         let user_view = 
@@ -43,18 +43,18 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         
         let orig_comment = blocking(context.pool(), move |conn| {
             Comment::read(conn, comment_id)
-                .map_err(|_e| PorplError::from_string("original comment not found", 404))
+                .map_err(|_e| TinyBoardsError::from_string("original comment not found", 404))
         })
         .await??;
 
         let orig_post = blocking(context.pool(), move |conn| {
             Post::read(conn, orig_comment.post_id)
-                .map_err(|_e| PorplError::from_string("original post not found", 404))
+                .map_err(|_e| TinyBoardsError::from_string("original post not found", 404))
         })
         .await??;
 
         if orig_comment.deleted == data.deleted {
-            return Err(PorplError::from_string("couldn't delete comment again", 500));
+            return Err(TinyBoardsError::from_string("couldn't delete comment again", 500));
         }
 
         check_board_ban(
@@ -84,21 +84,21 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         ?;
 
         if !Comment::is_comment_creator(user_view.user.id, orig_comment.creator_id) {
-            return Err(PorplError::from_string("comment edit not allowed", 405));
+            return Err(TinyBoardsError::from_string("comment edit not allowed", 405));
         }
 
         let deleted = data.deleted;
 
         blocking(context.pool(), move |conn| {
             Comment::update_deleted(conn, comment_id, deleted)
-                .map_err(|_e| PorplError::err_500())
+                .map_err(|_e| TinyBoardsError::err_500())
         })
         .await??;
 
         let comment_view = 
             blocking(context.pool(), move |conn| {
                 CommentView::read(conn, comment_id, Some(user_view.user.id))
-                    .map_err(|_e| PorplError::from_string("could not find comment", 404))
+                    .map_err(|_e| TinyBoardsError::from_string("could not find comment", 404))
             })
             .await??;
 

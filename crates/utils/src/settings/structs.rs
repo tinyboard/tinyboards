@@ -28,11 +28,11 @@ pub struct Settings {
   #[default("unset")]
   #[doku(example = "example.com")]
   pub hostname: String,
-  /// Address where porpl should listen for incoming requests
+  /// Address where tinyboards should listen for incoming requests
   #[default(IpAddr::V4(Ipv4Addr::new(0, 0, 0, 0)))]
   #[doku(as = "String")]
   pub bind: IpAddr,
-  /// Port where porpl should listen for incoming requests
+  /// Port where tinyboards should listen for incoming requests
   #[default(8536)]
   pub port: u16,
   /// Whether the site is available over TLS.
@@ -99,7 +99,7 @@ pub struct SetupConfig {
   #[doku(example = "VMQaLH24Tjc3aGqRfNew")]
   pub admin_password: String,
   /// Name of the site (can be changed later)
-  #[doku(example = "My Porpl Site")]
+  #[doku(example = "My Tiny Board")]
   pub site_name: String,
   /// Email for the admin user (optional, can be omitted and set later through the website)
   #[doku(example = "user@example.com")]
@@ -129,7 +129,7 @@ pub struct EmailConfig {
 #[serde(default)]
 pub struct DatabaseConfig {
   /// Username to connect to postgres
-  #[default("porpl")]
+  #[default("tinyboards")]
   pub(super) user: String,
   /// Password to connect to postgres
   #[default("password")]
@@ -140,8 +140,8 @@ pub struct DatabaseConfig {
   /// Port where postgres can be accessed
   #[default(5432)]
   pub(super) port: i32,
-  /// Name of the postgres database for porpl
-  #[default("porpl")]
+  /// Name of the postgres database for tinyboards
+  #[default("tinyboards")]
   pub(super) database: String,
   /// Maximum number of active sql connections
   #[default(5)]

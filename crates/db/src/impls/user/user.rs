@@ -9,14 +9,14 @@ use crate::traits::Crud;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::PgConnection;
-use porpl_utils::{hash_password, PorplError};
+use tinyboards_utils::{hash_password, TinyBoardsError};
 
 impl User {
     pub fn check_name_and_email(
         conn: &mut PgConnection,
         username: &str,
         emailaddr: &Option<String>,
-    ) -> Result<(), PorplError> {
+    ) -> Result<(), TinyBoardsError> {
         use crate::schema::user_::dsl::*;
 
         let user = if let Some(emailaddr) = emailaddr {
@@ -34,11 +34,11 @@ impl User {
         .optional()
         .map_err(|e| {
             eprintln!("ERROR: {e}");
-            PorplError::err_500()
+            TinyBoardsError::err_500()
         })?;
 
         if user.is_some() {
-            return Err(PorplError::new(
+            return Err(TinyBoardsError::new(
                 400,
                 String::from("Username/Email already taken!"),
             ));
@@ -71,18 +71,18 @@ impl User {
         conn: &mut PgConnection,
         token: String,
         master_key: String,
-    ) -> Result<Option<Self>, PorplError> {
+    ) -> Result<Option<Self>, TinyBoardsError> {
         use crate::schema::user_::dsl::*;
 
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
         let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::err_500()
+            TinyBoardsError::err_500()
         })?;
 
         let uid = claims["uid"]
             .parse::<i32>()
-            .map_err(|_| PorplError::err_500())?;
+            .map_err(|_| TinyBoardsError::err_500())?;
 
         user_
             .filter(id.eq(uid))
@@ -90,7 +90,7 @@ impl User {
             .optional()
             .map_err(|e| {
                 eprintln!("ERROR: {}", e);
-                PorplError::err_500()
+                TinyBoardsError::err_500()
             })
     }
 
@@ -123,7 +123,7 @@ impl User {
             .first::<Self>(conn)
     }
 
-    pub fn register(conn: &mut PgConnection, form: UserForm) -> Result<Self, PorplError> {
+    pub fn register(conn: &mut PgConnection, form: UserForm) -> Result<Self, TinyBoardsError> {
         Self::check_name_and_email(conn, &form.name, &form.email)?;
 
         // hash the password here
@@ -134,7 +134,7 @@ impl User {
 
         Self::create(conn, &form).map_err(|e| {
             eprintln!("ERROR: {}", e);
-            PorplError::new(500, String::from("Internal error, please try again later"))
+            TinyBoardsError::new(500, String::from("Internal error, please try again later"))
         })
     }
 

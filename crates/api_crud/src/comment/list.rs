@@ -1,14 +1,14 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
-use porpl_api_common::{
+use tinyboards_api_common::{
     comment::{ListComments, ListCommentsResponse},
-    data::PorplContext,
+    data::TinyBoardsContext,
     post::{GetPostComments, PostIdPath},
     utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
 };
-use porpl_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post};
-use porpl_db_views::{comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable};
-use porpl_utils::error::PorplError;
+use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post};
+use tinyboards_db_views::{comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable};
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for ListComments {
@@ -18,10 +18,10 @@ impl<'des> PerformCrud<'des> for ListComments {
     #[tracing::instrument(skip(context))]
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<ListCommentsResponse, PorplError> {
+    ) -> Result<ListCommentsResponse, TinyBoardsError> {
         let data: ListComments = self;
 
         let user_view =
@@ -60,7 +60,7 @@ impl<'des> PerformCrud<'des> for ListComments {
                 .list()
         })
         .await?
-        .map_err(|_| PorplError::from_string("could not get comments", 500))?;
+        .map_err(|_| TinyBoardsError::from_string("could not get comments", 500))?;
 
         // blank out comment info if deleted or removed
         for cv in comments.iter_mut()
@@ -85,10 +85,10 @@ impl<'des> PerformCrud<'des> for GetPostComments {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         path: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let user_view =
             get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
 
@@ -102,7 +102,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         .await??
         .is_none()
         {
-            return Err(PorplError::from_string("Invalid post ID", 404));
+            return Err(TinyBoardsError::from_string("Invalid post ID", 404));
         }
 
         let mut comments = blocking(context.pool(), move |conn| {
@@ -117,7 +117,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
                 .list()
         })
         .await?
-        .map_err(|_| PorplError::err_500())?;
+        .map_err(|_| TinyBoardsError::err_500())?;
 
         // blank out comment info if deleted or removed
         for cv in comments.iter_mut()

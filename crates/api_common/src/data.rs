@@ -1,24 +1,24 @@
-use porpl_db::{models::secret::Secret, utils::DbPool};
-use porpl_utils::settings::{structs::Settings, SETTINGS};
+use tinyboards_db::{models::secret::Secret, utils::DbPool};
+use tinyboards_utils::settings::{structs::Settings, SETTINGS};
 use reqwest_middleware::ClientWithMiddleware;
 
 
 /// The global context for the application
-pub struct PorplContext {
+pub struct TinyBoardsContext {
     pool: DbPool,
     client: ClientWithMiddleware,
     settings: Settings,
     master_key: Secret,
 }
 
-impl PorplContext {
+impl TinyBoardsContext {
     pub fn create(
         pool: DbPool,
         client: ClientWithMiddleware,
         settings: Settings,
         master_key: Secret,
-    ) -> PorplContext {
-        PorplContext {
+    ) -> TinyBoardsContext {
+        TinyBoardsContext {
             pool,
             client,
             settings,
@@ -43,9 +43,9 @@ impl PorplContext {
     }
 }
 
-impl Clone for PorplContext {
+impl Clone for TinyBoardsContext {
     fn clone(&self) -> Self {
-        PorplContext {
+        TinyBoardsContext {
             pool: self.pool.clone(),
             client: self.client.clone(),
             settings: self.settings.clone(),

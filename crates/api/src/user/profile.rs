@@ -1,14 +1,14 @@
 use crate::Perform;
 use actix_web::web::Data;
-use porpl_api_common::{
-    data::PorplContext,
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::{blocking, require_user},
 };
-use porpl_db::models::user::user::{User, UserSafe};
-use porpl_db_views::structs::UserView;
-use porpl_utils::{
-    error::PorplError,
+use tinyboards_db::models::user::user::{User, UserSafe};
+use tinyboards_db_views::structs::UserView;
+use tinyboards_utils::{
+    error::TinyBoardsError,
     settings::SETTINGS,
 };
 
@@ -19,10 +19,10 @@ impl<'des> Perform<'des> for GetLoggedInUser {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let user = require_user(context.pool(), context.master_key(), auth).await?;
 
         Ok(user.into_safe())
@@ -36,17 +36,17 @@ impl<'des> Perform<'des> for Profile {
 
     async fn perform(
         self,
-        context: &Data<PorplContext>,
+        context: &Data<TinyBoardsContext>,
         route: Self::Route,
         _: Option<&str>,
-    ) -> Result<Self::Response, PorplError> {
+    ) -> Result<Self::Response, TinyBoardsError> {
         let rcopy = route.clone();
 
         let user = blocking(context.pool(), move |conn| {
             User::get_by_name(conn, &rcopy.username)
         })
         .await?
-        .map_err(|_| PorplError::from_string("user not found", 404))?;
+        .map_err(|_| TinyBoardsError::from_string("user not found", 404))?;
 
         let settings = SETTINGS.to_owned();
         let domain = settings.hostname;
@@ -90,7 +90,7 @@ impl<'des> Perform<'des> for Profile {
 
         let rcopy2 = route.clone();
         let view = blocking(context.pool(), move |conn| {
-            UserView::read_from_name(conn, &rcopy2.username).map_err(|_| PorplError::err_500())
+            UserView::read_from_name(conn, &rcopy2.username).map_err(|_| TinyBoardsError::err_500())
         })
         .await??;
 

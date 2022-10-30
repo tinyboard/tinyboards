@@ -1,10 +1,5 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
-// use porpl_db::{
-//     porpl_types::{CommentReplyId, BoardId, PersonId, PersonMentionId},
-//     CommentSortType,
-//     SortType,
-// };
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

@@ -9,12 +9,12 @@ struct ErrorResponse<'a> {
 }
 
 #[derive(Debug, Error)]
-pub struct PorplError {
+pub struct TinyBoardsError {
     pub message: String,
     pub error_code: u16,
 }
 
-impl PorplError {
+impl TinyBoardsError {
     pub fn new(error_code: u16, message: String) -> Self {
         Self {
             message,
@@ -35,13 +35,13 @@ impl PorplError {
     }
 }
 
-impl std::fmt::Display for PorplError {
+impl std::fmt::Display for TinyBoardsError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Error {}: {}", self.error_code, self.message)
     }
 }
 
-impl error::ResponseError for PorplError {
+impl error::ResponseError for TinyBoardsError {
     fn error_response(&self) -> HttpResponse {
         HttpResponse::build(self.status_code()).json(ErrorResponse {
             code: self.error_code,

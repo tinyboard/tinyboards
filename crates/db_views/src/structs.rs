@@ -1,4 +1,4 @@
-use porpl_db::{
+use tinyboards_db::{
     aggregates::structs::{BoardAggregates, CommentAggregates, PostAggregates, UserAggregates},
     models::{
         board::board::BoardSafe,

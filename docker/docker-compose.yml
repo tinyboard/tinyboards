@@ -8,13 +8,13 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
     networks:
-      porpl:
+      tinyboards:
         aliases:
           - nginx
     restart: always
 
-  porpl:
-    image: porpl-dev
+  tinyboards:
+    image: tinyboards-dev
     ports:
       - "8536:8536"
       - "6669:6669"
@@ -27,29 +27,29 @@ services:
     links:
       - postgres
     networks:
-      porpl:
+      tinyboards:
         aliases:
-          - porpl-be
+          - tinyboards-be
 
     # might need to add a volume bridge here for a custom config file, otherwise the dockerfile sets up the default config
 
-  porpl-fe:
-    image: porpl-fe-dev
+  tinyboards-fe:
+    image: tinyboards-fe-dev
     ports:
       - "3000:3000"
     restart: always
     build:
-      context: ../../porpl-fe
+      context: ../../tinyboards-fe
       dockerfile: Dockerfile
     volumes:
-      - ../../porpl-fe/package.json:/usr/src/app/package.json
-      - ../../porpl-fe/package.json:/usr/src/app/package-lock.json
+      - ../../tinyboards-fe/package.json:/usr/src/app/package.json
+      - ../../tinyboards-fe/package.json:/usr/src/app/package-lock.json
     networks:
-      porpl:
+      tinyboards:
         aliases:
-          - porpl-fe
+          - tinyboards-fe
     depends_on:
-      - porpl
+      - tinyboards
 
 
   postgres:
@@ -58,16 +58,16 @@ services:
       # use a different port so it doesnt conflict with postgres running on the host
       - "5433:5432"
     environment:
-      - POSTGRES_USER=porpl
-      - POSTGRES_PASSWORD=porpl
-      - POSTGRES_DB=porpl
+      - POSTGRES_USER=tinyboards
+      - POSTGRES_PASSWORD=tinyboards
+      - POSTGRES_DB=tinyboards
     volumes:
       - ./volumes/postgres:/var/lib/postgresql/data
     networks:
-      porpl:
+      tinyboards:
         aliases:
           - postgres
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
 networks:
-  porpl: {}
+  tinyboards: {}
