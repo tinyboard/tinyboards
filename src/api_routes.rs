@@ -29,9 +29,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             .service(
                 web::scope("/post")
                     //.wrap(rate_limit.message())
-                    .route("/submit", web::post().to(route_post_crud::<SubmitPost>))
+                    .route("", web::post().to(route_post_crud::<SubmitPost>))
                     //.guard(guard::Post())
-                    .route("/list", web::get().to(route_get_crud::<ListPosts>))
+                    .route("", web::get().to(route_get_crud::<ListPosts>))
                     //.guard(guard::Get())
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     //.guard(guard::Get())
@@ -58,9 +58,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             .service(
                 web::scope("/comment")
                     //.wrap(rate_limit.message())
-                    .route("/submit", web::post().to(route_post_crud::<CreateComment>))
+                    .route("", web::post().to(route_post_crud::<CreateComment>))
                     //.guard(guard::Post())
-                    .route("/list", web::get().to(route_get_crud::<ListComments>))
+                    .route("", web::get().to(route_get_crud::<ListComments>))
                     //.guard(guard::Get())
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     //.guard(guard::Get())
