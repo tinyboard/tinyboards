@@ -55,7 +55,7 @@ services:
   postgres:
     image: postgres:14-alpine
     ports:
-      # use a different port so it doesnt conflict with postgres running on the host
+      # use a different port so it doesn't conflict with postgres running on the host
       - "5433:5432"
     environment:
       - POSTGRES_USER=tinyboards

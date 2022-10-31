@@ -2,7 +2,7 @@
   # settings related to the postgresql database
   database: {
     # Username to connect to postgres
-    user: "tb"
+    user: "tinyboards"
     # Password to connect to postgres
     password: "tb"
     # Host where postgres is running
