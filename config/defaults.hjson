@@ -4,7 +4,7 @@
     # Username to connect to postgres
     user: "tinyboards"
     # Password to connect to postgres
-    password: "tb"
+    password: "tinyboards"
     # Host where postgres is running
     host: "postgres"
     # Port where postgres can be accessed
@@ -71,7 +71,7 @@
     admin_email: "user@example.com"
   }
   # the domain name of your server (mandatory)
-  hostname: "unset"
+  hostname: "localhost"
   # Address where tinyboards should listen for incoming requests
   bind: "0.0.0.0"
   # Port where tinyboards should listen for incoming requests
