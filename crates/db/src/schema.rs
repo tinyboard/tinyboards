@@ -1,6 +1,46 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    admin_purge_board (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        board_id -> Int4,
+        reason -> Nullable<Text>,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    admin_purge_comment (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        comment_id -> Int4,
+        reason -> Nullable<Text>,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    admin_purge_post (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        post_id -> Int4,
+        reason -> Nullable<Text>,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    admin_purge_user (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        user_id -> Int4,
+        reason -> Nullable<Text>,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     board (id) {
         id -> Int4,
         name -> Varchar,
@@ -405,6 +445,12 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(admin_purge_board -> board (board_id));
+diesel::joinable!(admin_purge_board -> user_ (admin_id));
+diesel::joinable!(admin_purge_comment -> comment (comment_id));
+diesel::joinable!(admin_purge_comment -> user_ (admin_id));
+diesel::joinable!(admin_purge_post -> post (post_id));
+diesel::joinable!(admin_purge_post -> user_ (admin_id));
 diesel::joinable!(board -> tag (tag_id));
 diesel::joinable!(board -> user_ (creator_id));
 diesel::joinable!(board_aggregates -> board (board_id));
@@ -452,6 +498,10 @@ diesel::joinable!(user_mention -> comment (comment_id));
 diesel::joinable!(user_mention -> user_ (recipient_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    admin_purge_board,
+    admin_purge_comment,
+    admin_purge_post,
+    admin_purge_user,
     board,
     board_aggregates,
     board_block,
