@@ -6,7 +6,7 @@ diesel::table! {
         admin_id -> Int4,
         board_id -> Int4,
         reason -> Nullable<Text>,
-        published -> Timestamp,
+        when_ -> Timestamp,
     }
 }
 
@@ -16,7 +16,7 @@ diesel::table! {
         admin_id -> Int4,
         comment_id -> Int4,
         reason -> Nullable<Text>,
-        published -> Timestamp,
+        when_ -> Timestamp,
     }
 }
 
@@ -26,7 +26,7 @@ diesel::table! {
         admin_id -> Int4,
         post_id -> Int4,
         reason -> Nullable<Text>,
-        published -> Timestamp,
+        when_ -> Timestamp,
     }
 }
 
@@ -36,7 +36,7 @@ diesel::table! {
         admin_id -> Int4,
         user_id -> Int4,
         reason -> Nullable<Text>,
-        published -> Timestamp,
+        when_ -> Timestamp,
     }
 }
 

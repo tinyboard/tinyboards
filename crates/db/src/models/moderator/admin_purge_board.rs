@@ -10,7 +10,7 @@ pub struct AdminPurgeBoard {
     pub admin_id: i32,
     pub board_id: i32,
     pub reason: Option<String>,
-    pub published: NaiveDateTime,
+    pub when_: NaiveDateTime,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]

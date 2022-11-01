@@ -10,7 +10,7 @@ pub struct AdminPurgePost {
     pub admin_id: i32,
     pub post_id: i32,
     pub reason: Option<String>,
-    pub published: NaiveDateTime,
+    pub when_: NaiveDateTime,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
