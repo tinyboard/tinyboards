@@ -4,7 +4,7 @@ use tinyboards_db::{
         board::board::BoardSafe,
         comment::comment::Comment,
         post::post::Post,
-        user::user::{UserSafe, UserSettings},
+        user::{user::{UserSafe, UserSettings}, user_mention::UserMention},
     },
     SubscribedType,
 };
@@ -89,7 +89,7 @@ pub struct UserBlockView {
     pub target: UserSafe,
 }
 
-/*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct UserMentionView {
     pub user_mention: UserMention,
     pub comment: Comment,
@@ -103,7 +103,7 @@ pub struct UserMentionView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to UserBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
-}*/
+}
 
 /*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CommentReplyView {
