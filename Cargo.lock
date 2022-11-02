@@ -3560,6 +3560,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyboards_db_views_mod"
+version = "0.1.0"
+dependencies = [
+ "diesel",
+ "diesel_ltree",
+ "serde",
+ "serial_test",
+ "tinyboards_db",
+ "tracing",
+ "typed-builder",
+]
+
+[[package]]
 name = "tinyboards_server"
 version = "0.1.0"
 dependencies = [
@@ -3585,6 +3598,7 @@ dependencies = [
  "tinyboards_api_crud",
  "tinyboards_db",
  "tinyboards_db_views",
+ "tinyboards_db_views_mod",
  "tinyboards_utils",
  "tracing",
  "tracing-actix-web",
