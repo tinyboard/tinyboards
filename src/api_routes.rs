@@ -8,22 +8,21 @@ use serde::Deserialize;
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     cfg.service(
         web::scope("/api/v1")
+            // Authenticate
             .service(
-                web::resource("/signup")
-                    .guard(guard::Post())
-                    .wrap(rate_limit.register())
-                    .route(web::post().to(route_post_crud::<Register>)),
-            )
-            .service(
-                web::resource("/login")
+                web::scope("/auth")
                     .guard(guard::Post())
                     .wrap(rate_limit.message())
-                    .route(web::post().to(route_post::<Login>)),
+                    .route("/login", web::post().to(route_post::<Login>))
             )
+            // User
             .service(
                 web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
-                    .route("/me", web::get().to(route_get::<GetLoggedInUser>)),
+                    .route("/me", web::get().to(route_get::<GetLoggedInUser>))
+                    .guard(guard::Post())
+                    .wrap(rate_limit.register())
+                    .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
             // Post
             .service(
