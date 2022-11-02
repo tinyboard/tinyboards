@@ -22,7 +22,8 @@ members = [
     "crates/api_crud",
     "crates/utils",
     "crates/db",
-    "crates/db_views"
+    "crates/db_views",
+    "crates/db_views_mod",
 ]
 
 [dependencies]
@@ -32,6 +33,7 @@ tinyboards_api_crud = { version = "0.1.0", path="./crates/api_crud" }
 tinyboards_utils = { version = "0.1.0", path="./crates/utils" }
 tinyboards_db = { version = "0.1.0", path="./crates/db" }
 tinyboards_db_views = { version = "0.1.0", path="./crates/db_views" }
+tinyboards_db_views_mod = { version = "0.1.0", path="./crates/db_views_mod" }
 diesel = "2.0.0"
 diesel_migrations = "2.0.0"
 actix = "0.13.0"
