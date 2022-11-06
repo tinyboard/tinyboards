@@ -108,7 +108,7 @@ pub struct AdminPurgeBoardView {
 pub struct AdminPurgeCommentView {
     pub admin_purge_comment: AdminPurgeComment,
     pub admin: Option<UserSafe>,
-    pub post: Post,
+    pub comment: Comment,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
