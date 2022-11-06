@@ -48,6 +48,10 @@ pub struct Settings {
   #[default(None)]
   #[doku(skip)]
   pub opentelemetry_url: Option<Url>,
+  /// Environment in which the code is being ran. Valid values are `prod` or `dev`
+  #[default("prod")]
+  #[doku(example = "prod")]
+  pub environment: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]

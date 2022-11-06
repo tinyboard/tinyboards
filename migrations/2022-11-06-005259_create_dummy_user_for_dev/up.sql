@@ -1,0 +1,1 @@
+insert into user_ (name, passhash, email) values ('dev_user', '$argon2i$v=19$m=4096,t=3,p=1$c29tZXNhbHQ$iWh06vD8Fy27wf9npn6FXWiCX4K6pW6Ue1Bnzz07Z8A', 'developer@tinyboards.net');

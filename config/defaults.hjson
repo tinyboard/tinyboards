@@ -82,4 +82,6 @@
   name_max_length: 20
   # The salt suffix used for making password hashes (it still uses a UUID along with this suffix)
   salt_suffix: "somesalt"
+  # Environment where the code is being ran (prod or dev)
+  environment: "dev"
 }
