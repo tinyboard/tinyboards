@@ -9,3 +9,5 @@ pub mod mod_sticky_post_view;
 pub mod structs;
 pub mod admin_purge_comment_view;
 pub mod admin_purge_user_view;
+pub mod admin_purge_board_view;
+pub mod admin_purge_post_view;

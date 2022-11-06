@@ -120,7 +120,6 @@ pub struct AdminPurgeUserView {
 pub struct AdminPurgePostView {
     pub admin_purge_post: AdminPurgePost,
     pub admin: Option<UserSafe>,
-    pub board: BoardSafe,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
