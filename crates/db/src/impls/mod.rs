@@ -4,3 +4,4 @@ pub mod board;
 pub mod secret;
 pub mod comment;
 pub mod site;
+pub mod moderation;
