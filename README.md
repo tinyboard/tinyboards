@@ -33,3 +33,6 @@ TB_CONFIG_LOCATION=/path/to/tinyboards/config/file.hjson
 4. run the start script with `./docker-start.sh`, this command should reference the `docker-compose.yml` file within the `docker` directory and then build, compile, and launch everything that TinyBoards needs.
 
 5. you should be able to turn off TinyBoards by using `CTRL + C` and docker-compose will spin everything down.
+
+
+# NOTE: while developing we will have a dev user you can use to login to the docker build with, username = dev_user & password = password
