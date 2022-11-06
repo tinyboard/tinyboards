@@ -4,12 +4,10 @@ use tinyboards_db::{
     schema::{
         admin_purge_comment,
         user_,
-        comment,
     },
     models::{
         moderator::admin_actions::AdminPurgeComment,
         user::user::UserSafe,
-        comment::comment::Comment,
     },
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
@@ -18,7 +16,6 @@ use tinyboards_db::{
 type AdminPurgeCommentViewTuple = (
     AdminPurgeComment,
     Option<UserSafe>,
-    Comment,
 );
 
 impl AdminPurgeCommentView {
@@ -33,11 +30,9 @@ impl AdminPurgeCommentView {
         
         let mut query = admin_purge_comment::table
             .left_join(user_::table.on(admin_names_join))
-            .inner_join(comment::table)
             .select((
                 admin_purge_comment::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),
-                comment::all_columns,
             ))
             .into_boxed();
 
@@ -67,7 +62,6 @@ impl ViewToVec for AdminPurgeCommentView {
             .map(|a| Self {
                 admin_purge_comment: a.0,
                 admin: a.1,
-                comment: a.2,
             })
             .collect::<Vec<Self>>()
     }
