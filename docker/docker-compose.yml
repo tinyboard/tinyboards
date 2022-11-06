@@ -10,7 +10,7 @@ services:
     networks:
       tinyboards:
         aliases:
-          - nginx
+          - tinyboards.test
     restart: always
 
   tinyboards:
