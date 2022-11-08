@@ -93,7 +93,16 @@ impl User {
                 TinyBoardsError::err_500()
             })
     }
-
+    pub fn update_ban(
+        conn: &mut PgConnection,
+        user_id: i32,
+        new_banned: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::user::dsl::*;
+        diesel::update(user_.find(user_id))
+            .set((banned_.eq(new_banned), expires.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
     pub fn get_by_name(conn: &mut PgConnection, username: &str) -> Result<Self, Error> {
         use crate::schema::user_::dsl::*;
         // sanitization could be better
