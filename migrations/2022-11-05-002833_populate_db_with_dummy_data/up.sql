@@ -77,7 +77,7 @@ insert into comment (creator_id, post_id, parent_id, body, body_html) values (3,
 insert into comment (creator_id, post_id, parent_id, body, body_html) values (4, 9, null, 'generic comment', '');
 
 -- body html
-update comment set body_html = '<p>' || body || <'</p>';
+update comment set body_html = '<p>' || body || '</p>';
 
 
 --dummy comment_votes
