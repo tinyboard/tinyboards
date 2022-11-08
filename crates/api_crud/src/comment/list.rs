@@ -7,7 +7,9 @@ use tinyboards_api_common::{
     utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
 };
 use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post};
-use tinyboards_db_views::{comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable};
+use tinyboards_db_views::{
+    comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable,
+};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -70,11 +72,9 @@ impl<'des> PerformCrud<'des> for ListComments {
         }
 
         // order into tree
-        let comment_tree = CommentView::into_tree(comments);
+        let comments = CommentView::into_tree(comments);
 
-        Ok(ListCommentsResponse {
-            comments: comment_tree,
-        })
+        Ok(ListCommentsResponse { comments: comments })
     }
 }
 
