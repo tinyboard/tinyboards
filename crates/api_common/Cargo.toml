@@ -11,6 +11,7 @@ doctest = false
 [dependencies]
 tinyboards_db = { version = "0.1.0", path = "../db" }
 tinyboards_db_views = { version = "0.1.0", path = "../db_views" }
+tinyboards_db_views_mod = { version = "0.1.0", path = "../db_views_mod" }
 tinyboards_utils = { version = "0.1.0", path = "../utils" }
 async-trait = "0.1.57"
 jwt = "0.16.0"

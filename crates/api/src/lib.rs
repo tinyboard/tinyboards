@@ -1,6 +1,7 @@
 pub mod user;
 pub mod post;
 pub mod comment;
+pub mod moderator;
 use actix_web::web::Data;
 use tinyboards_utils::TinyBoardsError;
 

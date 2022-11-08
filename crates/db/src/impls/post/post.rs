@@ -32,6 +32,17 @@ impl Post {
             })
     }
 
+    pub fn update_locked(
+        conn: &mut PgConnection,
+        post_id: i32,
+        new_locked: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::post::dsl::*;
+        diesel::update(post.find(post_id))
+            .set((locked.eq(new_locked), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
     pub fn update_deleted(
         conn: &mut PgConnection,
         post_id: i32,

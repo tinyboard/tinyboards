@@ -1,0 +1,27 @@
+// use tinyboards_db::{
+//     models::moderator::mod_actions,
+// };
+
+// use tinyboards_db_views_mod::{
+//     structs,
+//     mod_add_board_view,
+//     mod_add_view,
+//     mod_ban_from_board_view,
+//     mod_lock_post_view,
+//     mod_remove_board_view,
+//     mod_remove_comment_view,
+//     mod_remove_post_view,
+//     mod_sticky_post_view,
+// };
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ModActionResponse<T> {
+    pub mod_action: T,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LockPost {
+    pub post_id: i32,
+    pub locked: bool,
+}

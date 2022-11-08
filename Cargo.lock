@@ -3473,6 +3473,7 @@ dependencies = [
  "tinyboards_api_common",
  "tinyboards_db",
  "tinyboards_db_views",
+ "tinyboards_db_views_mod",
  "tinyboards_utils",
  "tracing",
 ]
@@ -3497,6 +3498,7 @@ dependencies = [
  "sha2",
  "tinyboards_db",
  "tinyboards_db_views",
+ "tinyboards_db_views_mod",
  "tinyboards_utils",
  "tracing",
  "url",

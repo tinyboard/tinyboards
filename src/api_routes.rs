@@ -1,6 +1,6 @@
 use actix_web::*;
 use tinyboards_api::Perform;
-use tinyboards_api_common::{comment::*, data::TinyBoardsContext, post::*, user::*};
+use tinyboards_api_common::{comment::*, data::TinyBoardsContext, post::*, user::*, moderator::*};
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimit, TinyBoardsError};
 use serde::Deserialize;
@@ -83,6 +83,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                         web::post().to(route_post::<SaveComment>),
                     )
                     //.guard(guard::Post()),
+            )
+            // Mod & Admin Actions
+            .service(
+                web::scope("/mod")
+                    .route("/lock_post", web::post().to(route_post::<LockPost>))
             ),
     );
 }
