@@ -98,9 +98,9 @@ impl User {
         user_id: i32,
         new_banned: bool,
     ) -> Result<Self, Error> {
-        use crate::schema::user::dsl::*;
+        //use crate::schema::user::dsl::*;
         diesel::update(user_.find(user_id))
-            .set((banned_.eq(new_banned), expires.eq(naive_now())))
+            .set(banned.eq(new_banned))
             .get_result::<Self>(conn)
     }
     pub fn get_by_name(conn: &mut PgConnection, username: &str) -> Result<Self, Error> {

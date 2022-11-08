@@ -1,6 +1,7 @@
 use crate::Perform;
+use crate::utils::naive_now;
 use tinyboards_db::{
-    models::moderator::mod_actions::{ModBanUser, ModBanUserForm},
+    models::moderator::mod_actions::{ModBan, ModBanForm},
     models::user::user::User,
     traits::Crud,
 };
@@ -18,7 +19,7 @@ use tinyboards_api_common::{
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for BanUser {
-    type Response = ModActionResponse<ModBanUser>;
+    type Response = ModActionResponse<ModBanForm>;
     type Route = ();
 
     #[tracing::instrument(skip(context))]
@@ -29,9 +30,11 @@ impl<'des> Perform<'des> for BanUser {
         auth: Option<&str>
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanUser = &self;
-
-        let user_id = data.user_id;
+        let mod_user_id = data.mod_user_id;
+        let other_user_id = data.ban_user_id;
         let banned = data.banned;
+        let reason = data.reason;
+        let expires = data.expires;
 
         let user_view =
             get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key()).await?;
@@ -47,6 +50,7 @@ impl<'des> Perform<'des> for BanUser {
         is_mod_or_admin(
             context.pool(),
             user_view.user.id,
+            1,
         ).await?;
 
         // update the user in the database to be banned
@@ -57,14 +61,19 @@ impl<'des> Perform<'des> for BanUser {
             .await??;
 
         // form for submitting ban action for mod log
-        let ban_form = ModBanUserForm {
+        let ban_form = ModBan {
             mod_user_id: user_view.user.id,
-            banned: Some(Some(banned.clone())),
+            other_user_id: orig_user.id,
+            banned: banned,
+            expires: expires.equals(naive_now()),
+            reason: Some(reason),
+            when_: expires.equals(naive_now())
+
         };
 
         // enter mod log action
         let mod_action = blocking(context.pool(), move |conn| {
-            ModBanUser::create(conn, &ban_form)
+            ModBanForm::create(conn, &ban_form)
                 .map_err(|_e| TinyBoardsError::from_string("could not log mod action", 500))
         })
             .await??;
