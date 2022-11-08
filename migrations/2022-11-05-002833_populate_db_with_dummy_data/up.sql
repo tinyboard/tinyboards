@@ -66,15 +66,15 @@ insert into post_vote (post_id, user_id, score) values (15, 3, 1);
 truncate table comment cascade;
 truncate table comment_vote cascade;
 --id 1
-insert into comment (creator_id, post_id, parent_id, body, body_html) values (2, 10, 1, 'Haha yessss! that is such a funny meme!', '');
+insert into comment (creator_id, post_id, parent_id, body, body_html) values (2, 10, null, 'Haha yessss! that is such a funny meme!', '');
 --id 2
-insert into comment (creator_id, post_id, parent_id, body, body_html) values (2, 5, 2, 'yup, definitely a meme', '');
+insert into comment (creator_id, post_id, parent_id, body, body_html) values (2, 5, null, 'yup, definitely a meme', '');
 --id 3
-insert into comment (creator_id, post_id, parent_id, body, body_html) values (3, 7, 3, 'Matt Damon vill own nothing when the plan goes through!', '');
+insert into comment (creator_id, post_id, parent_id, body, body_html) values (3, 7, null, 'Matt Damon vill own nothing when the plan goes through!', '');
 --id 4
-insert into comment (creator_id, post_id, parent_id, body, body_html) values (3, 8, 4, 'My favorite cricket flavor is lemon meringue.', '');
+insert into comment (creator_id, post_id, parent_id, body, body_html) values (3, 8, null, 'My favorite cricket flavor is lemon meringue.', '');
 --id 5
-insert into comment (creator_id, post_id, parent_id, body, body_html) values (4, 9, 5, 'generic comment', '');
+insert into comment (creator_id, post_id, parent_id, body, body_html) values (4, 9, null, 'generic comment', '');
 
 
 --dummy comment_votes
