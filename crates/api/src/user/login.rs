@@ -2,15 +2,13 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    user::{Login, LoginResponse},
     sensitive::Sensitive,
-    utils::{blocking},
+    user::{Login, LoginResponse},
+    utils::blocking,
 };
 use tinyboards_db::models::user::user::User;
-use tinyboards_utils::{
-    error::TinyBoardsError,
-    passhash::verify_password,
-};
+use tinyboards_db_views::structs::UserView;
+use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for Login {
@@ -23,22 +21,28 @@ impl<'des> Perform<'des> for Login {
         _: Self::Route,
         _: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let u = blocking(context.pool(), move |conn| {
-            if self.username_or_email.contains('@') {
+        let (user, user_view) = blocking(context.pool(), move |conn| {
+            let user = if self.username_or_email.contains('@') {
                 User::get_by_email(conn, &self.username_or_email)
             } else {
                 User::get_by_name(conn, &self.username_or_email)
             }
-        })
-        .await?
-        .map_err(|_| TinyBoardsError::new(403, String::from("Login failed")))?;
+            .map_err(|_| TinyBoardsError::new(403, String::from("Login failed")))?;
 
-        if !verify_password(&u.passhash, &self.password) {
+            let user_view =
+                UserView::read(conn, user.id).map_err(|_| TinyBoardsError::err_500())?;
+
+            Ok((user, user_view))
+        })
+        .await??;
+
+        if !verify_password(&user.passhash, &self.password) {
             return Err(TinyBoardsError::new(403, String::from("Login failed")));
         }
 
         Ok(LoginResponse {
-            jwt: Sensitive::new(u.get_jwt(context.master_key().jwt.as_ref())),
+            jwt: Sensitive::new(user.get_jwt(&context.master_key().jwt)),
+            user: user_view,
         })
     }
 }
