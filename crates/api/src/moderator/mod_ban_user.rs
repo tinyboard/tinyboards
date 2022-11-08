@@ -38,7 +38,7 @@ impl<'des> Perform<'des> for BanUser {
 
         // get the user object
         let orig_user = blocking(context.pool(), move |conn| {
-            Post::read(conn, user_id.clone())
+            User::read(conn, user_id.clone())
                 .map_err(|_e| TinyBoardsError::from_string("couldn't find user", 404))
         })
             .await??;
@@ -47,25 +47,24 @@ impl<'des> Perform<'des> for BanUser {
         is_mod_or_admin(
             context.pool(),
             user_view.user.id,
-            orig_post.board_id,
         ).await?;
 
         // update the user in the database to be banned
         blocking(context.pool(), move |conn| {
-            Post::update_ban(conn, user_id.clone(), banned.clone())
-                .map_err(|_e| TinyBoardsError::from_string("could not lock post", 500))
+            User::update_ban(conn, user_id.clone(), banned.clone())
+                .map_err(|_e| TinyBoardsError::from_string("could not ban user", 500))
         })
             .await??;
 
         // form for submitting ban action for mod log
-        let ban_form = ModLockPostForm {
+        let ban_form = ModBanUserForm {
             mod_user_id: user_view.user.id,
             banned: Some(Some(banned.clone())),
         };
 
         // enter mod log action
         let mod_action = blocking(context.pool(), move |conn| {
-            ModLockPost::create(conn, &ban_form)
+            ModBanUser::create(conn, &ban_form)
                 .map_err(|_e| TinyBoardsError::from_string("could not log mod action", 500))
         })
             .await??;
