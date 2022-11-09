@@ -1,9 +1,9 @@
 use actix_web::*;
+use serde::Deserialize;
 use tinyboards_api::Perform;
-use tinyboards_api_common::{comment::*, data::TinyBoardsContext, post::*, user::*, moderator::*};
+use tinyboards_api_common::{comment::*, data::TinyBoardsContext, moderator::*, post::*, user::*};
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimit, TinyBoardsError};
-use serde::Deserialize;
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     cfg.service(
@@ -11,17 +11,17 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             // Authenticate
             .service(
                 web::scope("/auth")
-                    .guard(guard::Post())
-                    .wrap(rate_limit.message())
-                    .route("/login", web::post().to(route_post::<Login>))
+                    //.guard(guard::Post())
+                    //.wrap(rate_limit.message())
+                    .route("/login", web::post().to(route_post::<Login>)),
             )
             // User
             .service(
                 web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
                     .route("/me", web::get().to(route_get::<GetLoggedInUser>))
-                    .guard(guard::Post())
-                    .wrap(rate_limit.register())
+                    //.guard(guard::Post())
+                    //.wrap(rate_limit.register())
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
             // Post
@@ -55,12 +55,13 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             )
             // Comment
             .service(
+                web::scope("/comments").route("", web::get().to(route_get_crud::<ListComments>)), //.guard(guard::Get())
+            )
+            .service(
                 web::scope("/comment")
                     //.wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateComment>))
                     //.guard(guard::Post())
-                    .route("", web::get().to(route_get_crud::<ListComments>))
-                    //.guard(guard::Get())
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     //.guard(guard::Get())
                     .route(
@@ -81,8 +82,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                     .route(
                         "/{comment_id}/save",
                         web::post().to(route_post::<SaveComment>),
-                    )
-                    //.guard(guard::Post()),
+                    ), //.guard(guard::Post()),
             )
             // Mod & Admin Actions
             .service(

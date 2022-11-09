@@ -1,6 +1,7 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use tinyboards_db_views::structs::UserView;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -18,6 +19,7 @@ pub struct SignupResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LoginResponse {
     pub jwt: Sensitive<String>,
+    pub user: UserView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
