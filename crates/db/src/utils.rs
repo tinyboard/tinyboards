@@ -1,12 +1,21 @@
 use diesel::{
-    result::Error::QueryBuilderError,
+  // backend::Backend,
+  // deserialize::FromSql,
+  // pg::Pg,
+  result::Error::QueryBuilderError,
+  // serialize::{Output, ToSql},
+  // sql_types::Text,
+  Connection,
+  PgConnection,
 };
+use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
+
 
 
 pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
 pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
-  std::env::var("tinyboards_DATABASE_URL")
+  std::env::var("TINYBOARDS_DATABASE_URL")
 }
 
 const DEFAULT_FETCH_LIMIT: i64 = 20;
@@ -66,4 +75,25 @@ pub fn limit_and_offset_unlimited(
 
 pub fn naive_now() -> chrono::NaiveDateTime {
   chrono::prelude::Utc::now().naive_utc()
+}
+
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+pub fn establish_unpooled_connection() -> PgConnection {
+  let db_url = match get_database_url_from_env() {
+    Ok(url) => url,
+    Err(e) => panic!(
+      "Failed to read database URL from env var TINYBOARDS_DATABASE_URL: {}",
+      e
+    ),
+  };
+
+  let mut conn = 
+    PgConnection::establish(&db_url).unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
+  
+  let _ = &mut conn
+    .run_pending_migrations(MIGRATIONS)
+    .unwrap_or_else(|_| panic!("Couldn't run DB Migrations"));
+
+  conn
 }

@@ -21,7 +21,7 @@ pub struct Board {
     pub hidden: bool,
 }
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
 #[derive(Insertable, AsChangeset)]
 #[diesel(table_name = board)]
 pub struct BoardForm {

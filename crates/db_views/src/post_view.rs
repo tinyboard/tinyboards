@@ -371,3 +371,122 @@ impl ViewToVec for PostView {
             .collect::<Vec<Self>>()
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use crate::post_view::{PostQuery, PostView};
+//     use diesel::PgConnection;
+//     use tinyboards_db::{
+//         aggregates::structs::PostAggregates,
+//         utils::establish_unpooled_connection,
+//         models::{
+//             board::board::*,
+//             board::board_block::{BoardBlock, BoardBlockForm},
+//             site::site::{Site, SiteForm},
+//             user::user::{User, UserForm},
+//             user::user_block::{UserBlock, UserBlockForm},
+//             post::post::*,
+//         },
+//         traits::{Blockable, Crud, Voteable}, SortType,
+//     };
+//     use serial_test::serial;
+
+//     struct Data {
+//         inserted_site: Site,
+//         inserted_user: User,
+//         inserted_blocked_user: User,
+//         inserted_board: Board,
+//         inserted_post: Post,
+//     }
+
+//     fn init_data(conn: &mut PgConnection) -> Data {
+
+//         let inserted_site_form = SiteForm {
+//             name: Some("domain.tld".to_string()),
+//             description: Some("my heckin website".to_string()),
+//             ..SiteForm::default()
+//         };
+
+//         let inserted_site = Site::create(conn, &inserted_site_form).unwrap();
+
+//         let inserted_user_form = UserForm {
+//             name: "kroner".to_string(),
+//             passhash: "the_most_secure_password".to_string(),
+//             email: Some("example@domain.tld".to_string()),
+//             ..UserForm::default()
+//         };
+
+//         let inserted_user = User::create(conn, &inserted_user_form).unwrap();
+
+//         let inserted_blocked_user_form = UserForm {
+//             name: "bullyhunter05".to_string(),
+//             passhash: "the_most_secure_password2".to_string(),
+//             email: Some("example@domain.tld".to_string()),
+//             ..UserForm::default()
+//         };
+
+//         let inserted_blocked_user = User::create(conn, &inserted_blocked_user_form).unwrap();
+
+//         let inserted_board_form = BoardForm {
+//             name: Some("Test Board".to_string()),
+//             creator_id: Some(inserted_user.id.clone()),
+//             ..BoardForm::default()
+//         };
+
+//         let inserted_board = Board::create(conn, &inserted_board_form).unwrap();
+
+//         let inserted_post_form = PostForm {
+//             title: "test post".to_string(),
+//             type_: Some("text".to_string()),
+//             body: Some("this is a test post lol".to_string()),
+//             creator_id: inserted_user.id.clone(),
+//             board_id: inserted_board.id.clone(),
+//             ..PostForm::default()
+//         };
+
+//         let inserted_post = Post::create(conn, &inserted_post_form).unwrap();
+
+//         // also create a post from blocked user
+//         let inserted_post_blocked_user_form = PostForm {
+//             title: "test post 2 (should not appear)".to_string(),
+//             type_: Some("text".to_string()),
+//             body: Some("this is a test post lol".to_string()),
+//             creator_id: inserted_blocked_user.id.clone(),
+//             board_id: inserted_board.id.clone(),
+//             ..PostForm::default()
+//         };
+
+//         Post::create(conn, &inserted_post_blocked_user_form).unwrap();
+
+//         Data {
+//             inserted_site,
+//             inserted_user,
+//             inserted_blocked_user,
+//             inserted_board,
+//             inserted_post,
+//         }
+//     }
+
+//     #[test]
+//     #[serial]
+//     fn post_listing_with_user() {
+//         let conn = &mut establish_unpooled_connection();
+//         let data = init_data(conn);
+
+//         let read_post_listing = PostQuery::builder()
+//             .conn(conn)
+//             .sort(Some(SortType::New))
+//             .board_id(Some(data.inserted_board.id))
+//             .user_id(Some(data.inserted_user.id))
+//             .build()
+//             .list()
+//             .unwrap();
+
+//         let post_listing_single_with_user = 
+//             PostView::read(conn, data.inserted_post.id, Some(data.inserted_user.id)).unwrap();
+
+//         let mut expected_post_listing_with_user = todo!()
+
+
+//     }
+// }

@@ -12,3 +12,11 @@ pub struct BoardBlock {
     pub board_id: i32,
     pub published: NaiveDateTime,
 }
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = board_block)]
+pub struct BoardBlockForm {
+    pub user_id: i32,
+    pub board_id: i32,
+}
