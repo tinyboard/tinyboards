@@ -86,7 +86,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             )
             // Mod & Admin Actions
             .service(
-                web::scope("/mod").route("/lock_post", web::post().to(route_post::<LockPost>)),
+                web::scope("/mod")
+                    .route("/lock_post", web::post().to(route_post::<LockPost>))
+                    .route("/ban", web::post().to(route_post::<BanUser>))
             ),
     );
 }

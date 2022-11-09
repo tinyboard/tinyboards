@@ -14,6 +14,7 @@
 //     mod_sticky_post_view,
 // };
 use serde::{Serialize, Deserialize};
+use chrono::NaiveDateTime;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModActionResponse<T> {
@@ -24,4 +25,13 @@ pub struct ModActionResponse<T> {
 pub struct LockPost {
     pub post_id: i32,
     pub locked: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BanUser {
+    pub mod_user_id: i32,
+    pub other_user_id: i32,
+    pub banned: bool,
+    pub expires: Option<Option<NaiveDateTime>>,
+    pub reason: String
 }
