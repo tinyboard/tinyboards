@@ -371,3 +371,23 @@ impl ViewToVec for PostView {
             .collect::<Vec<Self>>()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::post_view::{PostQuery, PostView};
+    use diesel::PgConnection;
+    use tinyboards_db::{
+        aggregates::structs::PostAggregates,
+        models::{
+            board::board::*,
+            board::board_block::{BoardBlock, BoardBlockForm},
+            site::site::Site,
+            user::user::{User, UserForm},
+            user::user_block::{UserBlock, UserBlockForm},
+            post::post::*,
+        },
+        traits::{Blockable, Crud, Voteable},
+        
+    };
+    use serial_test::serial;
+}
