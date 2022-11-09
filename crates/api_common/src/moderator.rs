@@ -34,5 +34,4 @@ pub struct BanUser {
     pub banned: bool,
     pub expires: Option<Option<NaiveDateTime>>,
     pub reason: String
-
 }

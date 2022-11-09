@@ -231,6 +231,21 @@ pub async fn check_private_instance(
 }
 
 #[tracing::instrument(skip_all)]
+pub async fn is_admin(pool: &PgPool, user_id: i32) -> Result<(), TinyBoardsError> {
+    let user = blocking(pool, move |conn| {
+        User::read(conn, user_id)
+            .map_err(|_e| TinyBoardsError::from_string("could not find user", 404))
+    })
+    .await??;
+
+    if !user.admin {
+        return Err(TinyBoardsError::from_string("not an admin", 405));
+    }
+
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
 pub async fn is_mod_or_admin(pool: &PgPool, user_id: i32, board_id: i32) -> Result<(), TinyBoardsError> {
     let is_mod_or_admin = blocking(pool, move |conn| {
         BoardView::is_mod_or_admin(conn, user_id, board_id)
