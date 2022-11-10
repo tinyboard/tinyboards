@@ -48,7 +48,7 @@ impl<'des> PerformCrud<'des> for GetPost {
             TinyBoardsError::err_500()
         })?;
 
-        if (post_view.post.removed || post_view.post.removed) {
+        if (post_view.post.removed || post_view.post.deleted) {
             post_view.hide_if_removed_or_deleted(user_view.as_ref());
         }
 
