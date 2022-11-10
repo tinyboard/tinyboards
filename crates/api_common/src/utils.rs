@@ -1,23 +1,23 @@
+use actix_web::web;
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
-use actix_web::web;
+use sha2::Sha384;
+use std::collections::BTreeMap;
 use tinyboards_db::{
     database::PgPool,
     impls::user::is_banned,
     models::{
-        board::board::Board, 
-        post::post::Post, 
-        secret::Secret, 
-        user::user::User,
+        board::board::Board,
         comment::comment::Comment,
-        site::{site::Site, registration_application::RegistrationApplication},
+        post::post::Post,
+        secret::Secret,
+        site::{registration_application::RegistrationApplication, site::Site},
+        user::user::User,
     },
     traits::Crud,
 };
+use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
 use tinyboards_utils::error::TinyBoardsError;
-use sha2::Sha384;
-use std::{collections::BTreeMap};
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -57,7 +57,9 @@ where
         Ok(res) as Result<T, TinyBoardsError>
     })
     .await
-    .map_err(|_| TinyBoardsError::new(500, String::from("Internal Server Error (BlockingError)")))?;
+    .map_err(|_| {
+        TinyBoardsError::new(500, String::from("Internal Server Error (BlockingError)"))
+    })?;
 
     res
 }
@@ -86,6 +88,10 @@ pub async fn load_user_opt(
 
     // here it is safe to unwrap, because the above check ensures that `auth` isn't None here
     let auth = auth.unwrap();
+    if auth.is_empty() {
+        return Ok(None);
+    }
+
     if !auth.starts_with("Bearer ") {
         return Err(TinyBoardsError::new(400, String::from("Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`")));
     }
@@ -165,7 +171,7 @@ pub async fn get_user_view_from_jwt_opt(
 ) -> Result<Option<UserView>, TinyBoardsError> {
     match jwt {
         Some(jwt) => Ok(Some(get_user_view_from_jwt(jwt, pool, master_key).await?)),
-        None => Ok(None)
+        None => Ok(None),
     }
 }
 
@@ -175,10 +181,7 @@ pub async fn check_registration_application(
     user_view: &UserView,
     pool: &PgPool,
 ) -> Result<(), TinyBoardsError> {
-    if site.require_application
-        && !user_view.user.admin
-        && !user_view.user.application_accepted
-    {
+    if site.require_application && !user_view.user.admin && !user_view.user.application_accepted {
         let user_id = user_view.user.id;
         let registration = blocking(pool, move |conn| {
             RegistrationApplication::find_by_user_id(conn, user_id)
@@ -188,9 +191,15 @@ pub async fn check_registration_application(
 
         if let Some(deny_reason) = registration.deny_reason {
             let registration_denied_message = &deny_reason;
-            return Err(TinyBoardsError::from_string(registration_denied_message, 405));
+            return Err(TinyBoardsError::from_string(
+                registration_denied_message,
+                405,
+            ));
         } else {
-            return Err(TinyBoardsError::from_string("registration application pending", 401));
+            return Err(TinyBoardsError::from_string(
+                "registration application pending",
+                401,
+            ));
         }
     }
     Ok(())
@@ -202,7 +211,8 @@ pub async fn check_downvotes_enabled(score: i16, pool: &PgPool) -> Result<(), Ti
         let site = blocking(pool, move |conn| {
             Site::read_local(conn)
                 .map_err(|_e| TinyBoardsError::from_string("could not read site", 500))
-        }).await??;
+        })
+        .await??;
 
         if !site.enable_downvotes {
             return Err(TinyBoardsError::from_string("downvotes are disabled", 405));
@@ -217,9 +227,7 @@ pub async fn check_private_instance(
     pool: &PgPool,
 ) -> Result<(), TinyBoardsError> {
     if user_view.is_none() {
-        let site = blocking(pool, move |conn| {
-            Site::read_local(conn)
-        }).await?;
+        let site = blocking(pool, move |conn| Site::read_local(conn)).await?;
 
         if let Ok(site) = site {
             if site.private_instance {
@@ -246,7 +254,11 @@ pub async fn is_admin(pool: &PgPool, user_id: i32) -> Result<(), TinyBoardsError
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn is_mod_or_admin(pool: &PgPool, user_id: i32, board_id: i32) -> Result<(), TinyBoardsError> {
+pub async fn is_mod_or_admin(
+    pool: &PgPool,
+    user_id: i32,
+    board_id: i32,
+) -> Result<(), TinyBoardsError> {
     let is_mod_or_admin = blocking(pool, move |conn| {
         BoardView::is_mod_or_admin(conn, user_id, board_id)
     })
@@ -260,7 +272,11 @@ pub async fn is_mod_or_admin(pool: &PgPool, user_id: i32, board_id: i32) -> Resu
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_board_ban(user_id: i32, board_id: i32, pool: &PgPool) -> Result<(), TinyBoardsError> {
+pub async fn check_board_ban(
+    user_id: i32,
+    board_id: i32,
+    pool: &PgPool,
+) -> Result<(), TinyBoardsError> {
     let is_banned = move |conn: &mut _| BoardUserBanView::get(conn, user_id, board_id).is_ok();
 
     if blocking(pool, is_banned).await? {
@@ -280,7 +296,10 @@ pub async fn check_board_deleted_or_removed(
         .map_err(|_e| TinyBoardsError::from_string("couldn't find board", 404))?;
 
     if board.deleted || board.removed {
-        Err(TinyBoardsError::from_string("board deleted or removed", 404))
+        Err(TinyBoardsError::from_string(
+            "board deleted or removed",
+            404,
+        ))
     } else {
         Ok(())
     }
@@ -312,9 +331,12 @@ pub async fn check_comment_deleted_or_removed(
     let comment = blocking(pool, move |conn| Comment::read(conn, comment_id))
         .await?
         .map_err(|_e| TinyBoardsError::from_string("couldn't find comment", 404))?;
-    
+
     if comment.deleted || comment.removed {
-        Err(TinyBoardsError::from_string("comment deleted or removed", 404))
+        Err(TinyBoardsError::from_string(
+            "comment deleted or removed",
+            404,
+        ))
     } else {
         Ok(())
     }
