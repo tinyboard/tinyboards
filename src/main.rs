@@ -4,26 +4,14 @@ extern crate diesel_migrations;
 use crate::diesel_migrations::MigrationHarness;
 #[allow(unused_imports)]
 use actix::prelude::*;
+use actix_files as fs;
 use actix_web::{web::Data, *};
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
 };
 use diesel_migrations::EmbeddedMigrations;
-use tinyboards_api_common::{utils::blocking, data::TinyBoardsContext, request::build_user_agent};
-use tinyboards_server::{
-    api_routes,
-    init_logging, 
-    scheduled_tasks,
-    root_span_builder::QuieterRootSpanBuilder,
-};
-use tinyboards_utils::{
-    error::TinyBoardsError,
-    rate_limit::{rate_limiter::RateLimiter, RateLimit},
-    settings::{SETTINGS},
-};
-use tinyboards_db::utils::{get_database_url_from_env};
-use tinyboards_db::models::secret::Secret;
+use dotenv::dotenv;
 use reqwest::Client;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
@@ -33,14 +21,23 @@ use std::{
     thread,
     time::Duration,
 };
+use tinyboards_api_common::{data::TinyBoardsContext, request::build_user_agent, utils::blocking};
+use tinyboards_db::models::secret::Secret;
+use tinyboards_db::utils::get_database_url_from_env;
+use tinyboards_server::{
+    api_routes, init_logging, root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
+};
+use tinyboards_utils::{
+    error::TinyBoardsError,
+    rate_limit::{rate_limiter::RateLimiter, RateLimit},
+    settings::SETTINGS,
+};
 use tracing_actix_web::TracingLogger;
-use dotenv::dotenv;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 // max timeout for http requests
 pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
-
 
 #[actix_web::main]
 async fn main() -> Result<(), TinyBoardsError> {
@@ -50,7 +47,7 @@ async fn main() -> Result<(), TinyBoardsError> {
 
     init_logging(&settings.opentelemetry_url)
         .map_err(|_| TinyBoardsError::from_string("failed to initialize logger", 500))?;
-    
+
     let db_url = match get_database_url_from_env() {
         Ok(url) => url,
         Err(_) => settings.get_database_url(),
@@ -62,7 +59,7 @@ async fn main() -> Result<(), TinyBoardsError> {
         .min_idle(Some(1))
         .build(manager)
         .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
-    
+
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
 
     blocking(&pool, move |conn| {
@@ -84,8 +81,12 @@ async fn main() -> Result<(), TinyBoardsError> {
     };
 
     // init the secret
-    let conn = &mut pool.get()
-        .map_err(|_| TinyBoardsError::from_string("could not establish connection pool for initializing secrets", 500))?;
+    let conn = &mut pool.get().map_err(|_| {
+        TinyBoardsError::from_string(
+            "could not establish connection pool for initializing secrets",
+            500,
+        )
+    })?;
     let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
 
     println!(
@@ -126,6 +127,7 @@ async fn main() -> Result<(), TinyBoardsError> {
             .app_data(Data::new(context))
             .app_data(Data::new(rate_limiter.clone()))
             .configure(|cfg| api_routes::config(cfg, &rate_limiter))
+            .service(fs::Files::new("/assets", "./assets"))
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_string("could not bind to ip", 500))?
