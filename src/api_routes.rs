@@ -8,21 +8,20 @@ use tinyboards_utils::{rate_limit::RateLimit, TinyBoardsError};
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     cfg.service(
         web::scope("/api/v1")
+            .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             // Authenticate
             .service(
                 web::scope("/auth")
                     //.guard(guard::Post())
                     //.wrap(rate_limit.message())
-                    .route("/login", web::post().to(route_post::<Login>)),
+                    .route("/login", web::post().to(route_post::<Login>))
+                    .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
             // User
             .service(
-                web::scope("/user")
-                    .route("/{username}", web::get().to(route_get::<Profile>))
-                    .route("/me", web::get().to(route_get::<GetLoggedInUser>))
-                    //.guard(guard::Post())
-                    //.wrap(rate_limit.register())
-                    .route("/signup", web::post().to(route_post_crud::<Register>)),
+                web::scope("/user").route("/{username}", web::get().to(route_get::<Profile>)), //.route("/me", web::get().to(route_get::<GetLoggedInUser>))
+                                                                                               //.guard(guard::Post())
+                                                                                               //.wrap(rate_limit.register())
             )
             // Post
             .service(
@@ -86,9 +85,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
             )
             // Mod & Admin Actions
             .service(
-                web::scope("/mod")
-                    .route("/lock_post", web::post().to(route_post::<LockPost>))
-                    .route("/ban", web::post().to(route_post::<BanUser>))
+                web::scope("/mod").route("/lock_post", web::post().to(route_post::<LockPost>)), //.route("/ban", web::post().to(route_post::<BanUser>)),
             ),
     );
 }
