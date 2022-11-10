@@ -1,14 +1,14 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
+use regex::Regex;
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::{
-    user::{Register, SignupResponse},
     sensitive::Sensitive,
+    user::{Register, SignupResponse},
     utils::blocking,
 };
 use tinyboards_db::models::user::user::{User, UserForm};
 use tinyboards_utils::TinyBoardsError;
-use regex::Regex;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
@@ -44,12 +44,12 @@ impl<'des> PerformCrud<'des> for Register {
 
         // error messages here if email verification is on and no email provided, same for applicaction not being filled out
 
-        if data.password != data.password_verify {
+        /*if data.password != data.password_verify {
             return Err(TinyBoardsError::new(
                 400,
                 String::from("passwords do not match!"),
             ));
-        }
+        }*/
 
         // captcha logic here (when we implement captcha)
 
@@ -68,7 +68,9 @@ impl<'des> PerformCrud<'des> for Register {
         // logic about emailing the admins of the site if application submitted and email notification for user etc
 
         let response = SignupResponse {
-            jwt: Some(Sensitive::new(inserted_user.get_jwt(context.master_key().jwt.as_ref()))),
+            jwt: Some(Sensitive::new(
+                inserted_user.get_jwt(context.master_key().jwt.as_ref()),
+            )),
             registration_created: false,
             verify_email_sent: false,
         };

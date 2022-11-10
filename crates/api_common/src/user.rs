@@ -26,7 +26,7 @@ pub struct LoginResponse {
 pub struct Register {
     pub username: String,
     pub password: Sensitive<String>,
-    pub password_verify: Sensitive<String>,
+    // pub password_verify: Sensitive<String>,
     // pub show_nsfw: bool,
     // email = mandatory if email verification enabled on server
     pub email: Option<String>,
