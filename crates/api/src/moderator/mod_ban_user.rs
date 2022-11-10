@@ -1,20 +1,16 @@
 use crate::Perform;
+use actix_web::web::Data;
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
+    moderator::{BanUser, ModActionResponse},
+    utils::{blocking, get_user_view_from_jwt, is_admin},
+};
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
     models::user::user::User,
     traits::Crud,
 };
-use actix_web::web::Data;
 use tinyboards_utils::error::TinyBoardsError;
-use tinyboards_api_common::{
-    moderator::{BanUser, ModActionResponse},
-    utils::{
-        blocking,
-        get_user_view_from_jwt,
-        is_admin,
-    },
-    data::TinyBoardsContext,
-};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for BanUser {
@@ -26,7 +22,7 @@ impl<'des> Perform<'des> for BanUser {
         self,
         context: &Data<TinyBoardsContext>,
         _: Self::Route,
-        auth: Option<&str>
+        auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanUser = &self;
         let other_user_id = data.other_user_id;
@@ -34,21 +30,17 @@ impl<'des> Perform<'des> for BanUser {
         let reason = &data.reason;
         let expires = data.expires;
 
-        let user_view =
-            get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key()).await?;
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         // first of all this user MUST be an admin to ban site-wide
-        is_admin(
-            context.pool(),
-            user_view.user.id,
-        ).await?;
+        is_admin(context.pool(), user_view.user.id).await?;
 
         // update the user in the database to be banned
         blocking(context.pool(), move |conn| {
             User::update_ban(conn, other_user_id.clone(), banned.clone())
                 .map_err(|_e| TinyBoardsError::from_string("could not ban user", 500))
         })
-            .await??;
+        .await??;
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
@@ -64,8 +56,8 @@ impl<'des> Perform<'des> for BanUser {
             ModBan::create(conn, &ban_form)
                 .map_err(|_e| TinyBoardsError::from_string("could not log mod action", 500))
         })
-            .await??;
+        .await??;
 
-        Ok( ModActionResponse { mod_action })
+        Ok(ModActionResponse { mod_action })
     }
 }

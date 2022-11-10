@@ -28,9 +28,7 @@ impl<'des> PerformCrud<'des> for EditPost {
         auth: Option<&str>,
     ) -> Result<PostResponse, TinyBoardsError> {
         let data: &EditPost = &self;
-        let user_view =
-            get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key())
-                .await?;
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {

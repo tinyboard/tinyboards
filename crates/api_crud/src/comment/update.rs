@@ -29,9 +29,7 @@ impl<'des> PerformCrud<'des> for EditComment {
         auth: Option<&str>,
     ) -> Result<CommentResponse, TinyBoardsError> {
         let data: &EditComment = &self;
-        let user_view =
-            get_user_view_from_jwt(auth.unwrap_or(""), context.pool(), context.master_key())
-                .await?;
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         let comment_id = path.comment_id;
         let orig_comment = blocking(context.pool(), move |conn| {
@@ -49,7 +47,10 @@ impl<'des> PerformCrud<'des> for EditComment {
         check_comment_deleted_or_removed(orig_comment.comment.id, context.pool()).await?;
 
         if user_view.user.id != orig_comment.comment.creator_id {
-            return Err(TinyBoardsError::from_string("comment edit not allowed", 405));
+            return Err(TinyBoardsError::from_string(
+                "comment edit not allowed",
+                405,
+            ));
         }
 
         let body = data.body.clone();

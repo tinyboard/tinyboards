@@ -34,8 +34,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data = self;
 
-        let user_view =
-            get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         let post = blocking(context.pool(), move |conn| {
             Post::read(conn, data.post_id).map_err(|_| TinyBoardsError::err_500())
@@ -75,7 +74,10 @@ impl<'des> PerformCrud<'des> for CreateComment {
             let parent_comment =
                 blocking(context.pool(), move |conn| Comment::get_by_id(conn, cid)).await??;
             if parent_comment.is_none() {
-                return Err(TinyBoardsError::from_string("Invalid parent comment ID", 404));
+                return Err(TinyBoardsError::from_string(
+                    "Invalid parent comment ID",
+                    404,
+                ));
             }
 
             // we can unwrap safely, because the above check made sure to abort if the comment is None

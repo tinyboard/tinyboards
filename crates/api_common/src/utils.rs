@@ -144,6 +144,54 @@ pub fn check_user_valid(
 }
 
 #[tracing::instrument(skip_all)]
+pub async fn get_user_view_from_jwt_opt(
+    auth: Option<&str>,
+    pool: &PgPool,
+    master_key: &Secret,
+) -> Result<Option<UserView>, TinyBoardsError> {
+    if auth.is_none() {
+        return Ok(None);
+    }
+
+    // safe unwrap: previous block returns if None
+    let auth = auth.unwrap();
+    if auth.is_empty() {
+        return Ok(None);
+    }
+
+    if !auth.starts_with("Bearer ") {
+        return Err(TinyBoardsError::new(400, String::from("Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`")));
+    }
+    // Reference to the string stored in `auth` skipping the `Bearer ` part
+    // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
+    // maybe there's a better solution to this but I feel like this is too memory-consuming.
+    let token = String::from(&auth[7..]);
+    let master_key = String::from(master_key.jwt.clone());
+
+    blocking(pool, move |conn| {
+        UserView::from_jwt(conn, token, master_key)
+    })
+    .await?
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn get_user_view_from_jwt(
+    auth: Option<&str>,
+    pool: &PgPool,
+    master_key: &Secret,
+) -> Result<UserView, TinyBoardsError> {
+    if auth.is_none() {
+        return Err(TinyBoardsError::err_401());
+    }
+
+    let user_view = get_user_view_from_jwt_opt(auth, pool, master_key).await?;
+    match user_view {
+        Some(user_view) => Ok(user_view),
+        None => Err(TinyBoardsError::err_401()),
+    }
+}
+
+/* #[tracing::instrument(skip_all)]
 pub async fn get_user_view_from_jwt(
     jwt: &str,
     pool: &PgPool,
@@ -158,7 +206,7 @@ pub async fn get_user_view_from_jwt(
     })
     .await??;
 
-    check_user_valid(u.banned, u.expires, u.deleted)?;
+    //check_user_valid(u.banned, u.expires, u.deleted)?;
 
     Ok(user_view)
 }
@@ -173,7 +221,7 @@ pub async fn get_user_view_from_jwt_opt(
         Some(jwt) => Ok(Some(get_user_view_from_jwt(jwt, pool, master_key).await?)),
         None => Ok(None),
     }
-}
+} */
 
 #[tracing::instrument(skip_all)]
 pub async fn check_registration_application(

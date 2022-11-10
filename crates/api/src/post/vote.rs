@@ -1,16 +1,12 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    post::{CreatePostVote, PostResponse, PostIdPath},
-    utils::{
-        blocking,
-        get_user_view_from_jwt,
-        check_board_ban,
-        check_board_deleted_or_removed,
-        check_post_deleted_removed_or_locked,
-        check_user_valid,
-    }, 
     data::TinyBoardsContext,
+    post::{CreatePostVote, PostIdPath, PostResponse},
+    utils::{
+        blocking, check_board_ban, check_board_deleted_or_removed,
+        check_post_deleted_removed_or_locked, check_user_valid, get_user_view_from_jwt,
+    },
 };
 use tinyboards_db::{
     models::post::post::Post,
@@ -31,51 +27,33 @@ impl<'des> Perform<'des> for CreatePostVote {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-
         let data: &CreatePostVote = &self;
-        let user_view = 
-            get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         // check if downvotes are disabled (when/if we implement this feature)
 
         let post_id = path.post_id;
 
-        let post 
-            = blocking(context.pool(), move |conn| {
-                Post::read(conn, post_id)
-                .map_err(|_| TinyBoardsError::err_500())
-            })
-            .await??;
-        
+        let post = blocking(context.pool(), move |conn| {
+            Post::read(conn, post_id).map_err(|_| TinyBoardsError::err_500())
+        })
+        .await??;
+
         // check if post can be liked (not deleted, removed, or locked)
-        check_post_deleted_removed_or_locked(
-            post_id, 
-            context.pool()
-        )
-        .await?;
+        check_post_deleted_removed_or_locked(post_id, context.pool()).await?;
 
         // check if the user is banned from the board
-        check_board_ban(
-            user_view.user.id, 
-            post.board_id, 
-            context.pool()
-        )
-        .await?;
+        check_board_ban(user_view.user.id, post.board_id, context.pool()).await?;
 
         // check if the board is there or not
-        check_board_deleted_or_removed(
-            post.board_id, 
-            context.pool(),
-        )
-        .await?;
+        check_board_deleted_or_removed(post.board_id, context.pool()).await?;
 
         // check if the user is valid
         check_user_valid(
-            user_view.user.banned, 
-            user_view.user.expires, 
-            user_view.user.deleted
-        )
-        ?;
+            user_view.user.banned,
+            user_view.user.expires,
+            user_view.user.deleted,
+        )?;
 
         let vote_form = PostVoteForm {
             post_id: path.post_id,
@@ -97,10 +75,12 @@ impl<'des> Perform<'des> for CreatePostVote {
             let like = move |conn: &mut _| PostVote::vote(conn, &cloned_form);
             blocking(context.pool(), like)
                 .await?
-                .map_err(|_e| TinyBoardsError::from_string("could not vote on post", 500))?;       
+                .map_err(|_e| TinyBoardsError::from_string("could not vote on post", 500))?;
         } else {
             let cloned_form = vote_form.clone();
-            let like = move |conn: &mut _| PostVote::remove(conn, cloned_form.user_id, cloned_form.post_id);
+            let like = move |conn: &mut _| {
+                PostVote::remove(conn, cloned_form.user_id, cloned_form.post_id)
+            };
             blocking(context.pool(), like)
                 .await?
                 .map_err(|_e| TinyBoardsError::from_string("could not remove vote on post", 500))?;
@@ -109,12 +89,11 @@ impl<'des> Perform<'des> for CreatePostVote {
         // mark the post as read here
 
         // grab the post view here for the response
-        let post_view =
-            blocking(context.pool(), move |conn| {
-                PostView::read(conn, vote_form.post_id, Some(vote_form.user_id))
-                    .map_err(|_e| TinyBoardsError::from_string("could not find post", 404))
-            })
-            .await??;
+        let post_view = blocking(context.pool(), move |conn| {
+            PostView::read(conn, vote_form.post_id, Some(vote_form.user_id))
+                .map_err(|_e| TinyBoardsError::from_string("could not find post", 404))
+        })
+        .await??;
 
         Ok(PostResponse { post_view })
     }

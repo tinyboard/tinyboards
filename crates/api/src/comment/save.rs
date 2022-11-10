@@ -1,12 +1,9 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    comment::{SaveComment, CommentResponse, CommentIdPath},
-    utils::{
-        blocking,
-        get_user_view_from_jwt,
-    }, 
+    comment::{CommentIdPath, CommentResponse, SaveComment},
     data::TinyBoardsContext,
+    utils::{blocking, get_user_view_from_jwt},
 };
 use tinyboards_db::{
     models::comment::comment_saved::{CommentSaved, CommentSavedForm},
@@ -29,9 +26,8 @@ impl<'des> Perform<'des> for SaveComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &SaveComment = &self;
 
-        let user_view =
-            get_user_view_from_jwt(auth.unwrap(), context.pool(), context.master_key()).await?;
-        
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+
         let saved_form = CommentSavedForm {
             comment_id: path.comment_id,
             user_id: user_view.user.id,
@@ -57,6 +53,6 @@ impl<'des> Perform<'des> for SaveComment {
         })
         .await??;
 
-        Ok( CommentResponse { comment_view } )
+        Ok(CommentResponse { comment_view })
     }
 }
