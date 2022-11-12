@@ -14,9 +14,6 @@ use tinyboards_utils::{rate_limit::RateLimit, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
     cfg.service(
-        web::scope("")
-            .route("/feed", web::get().to(route_get_query::<GetFeed>)),
-    ).service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             // Authenticate
@@ -26,6 +23,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                     //.wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
+            )
+            .service(
+                web::scope("")
+                .route("/feed", web::get().to(route_get_query::<GetFeed>)),
             )
             // User
             .service(
