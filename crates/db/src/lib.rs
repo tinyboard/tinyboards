@@ -84,16 +84,16 @@ pub enum ModlogActionType {
 
 pub fn map_to_sort_type(match_string: Option<&str>) -> SortType {
     match match_string {
-      Some("Active") => SortType::Active,
-      Some("Hot") => SortType::Hot,
-      Some("New") => SortType::New,
-      Some("Old") => SortType::Old,
-      Some("TopDay") => SortType::TopDay,
-      Some("TopWeek") => SortType::TopWeek,
-      Some("TopMonth") => SortType::TopMonth,
-      Some("TopAll") => SortType::TopAll,
-      Some("MostComments") => SortType::MostComments,
-      Some("NewComments") => SortType::NewComments,
+      Some("active") => SortType::Active,
+      Some("hot") => SortType::Hot,
+      Some("new") => SortType::New,
+      Some("old") => SortType::Old,
+      Some("topday") => SortType::TopDay,
+      Some("topweek") => SortType::TopWeek,
+      Some("topmonth") => SortType::TopMonth,
+      Some("topall") => SortType::TopAll,
+      Some("mostcomments") => SortType::MostComments,
+      Some("newcomments") => SortType::NewComments,
       Some(&_) => SortType::Hot,
       None => SortType::Hot
     }
