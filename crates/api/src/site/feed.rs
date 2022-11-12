@@ -1,49 +1,35 @@
-use crate::PerformQuery;
-use actix_web::web::{Data, Query};
+use crate::Perform;
+use actix_web::web::Data;
 use tinyboards_api_common::{
-    site::GetFeed,
-    post::ListPostsResponse,
     data::TinyBoardsContext,
-    utils::{
-        blocking,
-        get_user_view_from_jwt_opt,
-        check_private_instance,
-    }
+    post::ListPostsResponse,
+    site::GetFeed,
+    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
 };
+use tinyboards_db::{map_to_listing_type, map_to_sort_type, ListingType, SortType};
+use tinyboards_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
 use tinyboards_utils::error::TinyBoardsError;
-use tinyboards_db::{
-    map_to_listing_type,
-    map_to_sort_type, 
-    ListingType,
-    SortType,
-};
-use tinyboards_db_views::{
-    post_view::PostQuery, DeleteableOrRemoveable,
-};
-
-
 
 #[async_trait::async_trait(?Send)]
-impl<'des> PerformQuery<'des> for GetFeed {
-
+impl<'des> Perform<'des> for GetFeed {
     type Response = ListPostsResponse;
-    type QueryForm = GetFeed;
+    type Route = ();
 
     #[tracing::instrument(skip_all)]
-    async fn perform_query(
+    async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        params: Query<Self::QueryForm>,
+        _path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        
+        let params: &Self = &self;
+
         // get optional user view (don't need to be logged in to see posts)
         let user_view =
             get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
 
         // check if feed is visible or not
         check_private_instance(&user_view, context.pool()).await?;
-
 
         let listing_type = match params.listing_type.as_ref() {
             Some(ltype) => map_to_listing_type(Some(&ltype.to_lowercase())),
@@ -77,9 +63,7 @@ impl<'des> PerformQuery<'des> for GetFeed {
                 .list()
         })
         .await?
-        .map_err(|_e| {
-            TinyBoardsError::err_500()
-        })?;
+        .map_err(|_e| TinyBoardsError::err_500())?;
 
         if !user_view.is_some() {
             for pv in posts
@@ -90,6 +74,6 @@ impl<'des> PerformQuery<'des> for GetFeed {
             }
         }
 
-        Ok( ListPostsResponse { posts } )
+        Ok(ListPostsResponse { posts })
     }
 }

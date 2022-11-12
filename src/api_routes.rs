@@ -1,18 +1,13 @@
 use actix_web::*;
 use serde::Deserialize;
-use tinyboards_api::{Perform, PerformQuery};
+use tinyboards_api::Perform;
 use tinyboards_api_common::{
-    comment::*, 
-    moderator::*, 
-    site::*,
-    post::*,
-    user::*,
-    data::TinyBoardsContext,  
+    comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimit, TinyBoardsError};
 
-pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
+pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
     cfg.service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
@@ -24,10 +19,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimit) {
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
-            .service(
-                web::scope("")
-                .route("/feed", web::get().to(route_get_query::<GetFeed>)),
-            )
+            .service(web::scope("").route("/feed", web::get().to(route_get::<GetFeed>)))
             // User
             .service(
                 web::scope("/user").route("/{username}", web::get().to(route_get::<Profile>)), //.route("/me", web::get().to(route_get::<GetLoggedInUser>))
@@ -131,36 +123,6 @@ where
     Ok(res)
 }
 
-async fn perform_query<'des, Request>(
-    data: Request,
-    context: web::Data<TinyBoardsContext>,
-    params: web::Query<Request::QueryForm>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Request: PerformQuery<'des>,
-    Request: Send + 'static,
-{
-    let auth_header = req
-        .headers()
-        .get("Authorization")
-        .map(|header| header.to_str());
-    let auth_header = match auth_header {
-        Some(h) => match h {
-            Ok(h) => Some(h),
-            Err(_) => None,
-        },
-        None => None,
-    };
-
-    let res = data
-        .perform_query(&context, actix_web::web::Query(params.into_inner()), auth_header)
-        .await
-        .map(|json| HttpResponse::Ok().json(json))?;
-
-    Ok(res)
-}
-
 async fn route_get<'des, Request>(
     data: web::Data<TinyBoardsContext>,
     query: web::Query<Request>,
@@ -171,19 +133,6 @@ where
     Request: Deserialize<'des> + Send + 'static + Perform<'des>,
 {
     perform::<Request>(query.0, data, path, req).await
-}
-
-
-async fn route_get_query<'des, Request>(
-    data: web::Data<TinyBoardsContext>,
-    query: web::Query<Request>,
-    params: web::Query<Request::QueryForm>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Request: Deserialize<'des> + Send + 'static + PerformQuery<'des>,
-{
-    perform_query::<Request>(query.0, data, params, req).await
 }
 
 async fn route_post<'des, Request>(

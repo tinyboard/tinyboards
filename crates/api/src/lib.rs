@@ -1,13 +1,13 @@
-pub mod user;
-pub mod post;
 pub mod comment;
 pub mod moderator;
+pub mod post;
 pub mod site;
-use actix_web::web::{Data, Query};
+pub mod user;
+use actix_web::web::Data;
 use tinyboards_utils::TinyBoardsError;
 
-use tinyboards_api_common::data::TinyBoardsContext;
 use serde::{Deserialize, Serialize};
+use tinyboards_api_common::data::TinyBoardsContext;
 
 #[async_trait::async_trait(?Send)]
 pub trait Perform<'des> {
@@ -24,21 +24,6 @@ pub trait Perform<'des> {
         self,
         context: &Data<TinyBoardsContext>,
         path: Self::Route,
-        authorization: Option<&str>,
-    ) -> Result<Self::Response, TinyBoardsError>;
-}
-
-#[async_trait::async_trait(?Send)]
-pub trait PerformQuery<'des> {
-    type Response: Serialize;
-    type QueryForm: Deserialize<'des>;
-    /**
-     *  Fn that performs the operation (with a query string on the url). Takes a `TinyBoardsContext` object (for the db connecction) and an `Option<&str>` which might contain the `Authorization` header.
-     */
-    async fn perform_query(
-        self,
-        context: &Data<TinyBoardsContext>,
-        params: Query<Self::QueryForm>,
         authorization: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError>;
 }
