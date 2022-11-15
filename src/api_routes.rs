@@ -12,6 +12,7 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/feed", web::get().to(route_get::<GetFeed>))
+            .route("/members", web::get().to(route_get::<GetMembers>))
             // Authenticate
             .service(
                 web::scope("/auth")

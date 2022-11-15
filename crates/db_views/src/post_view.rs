@@ -24,7 +24,6 @@ use tinyboards_db::{
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
     ListingType, SortType,
 };
-use tracing::debug;
 use typed_builder::TypedBuilder;
 
 type PostViewTuple = (

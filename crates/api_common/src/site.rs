@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tinyboards_db_views::structs::UserView;
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct GetFeed {
@@ -10,4 +11,16 @@ pub struct GetFeed {
     pub saved_only: Option<bool>,
     pub limit: Option<i64>,
     pub page: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetMembers {
+    pub sort: Option<String>,
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetMembersResponse {
+    pub members: Vec<UserView>,
 }
