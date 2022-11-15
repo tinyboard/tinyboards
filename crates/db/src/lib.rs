@@ -32,6 +32,15 @@ pub enum SortType {
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
+pub enum UserSortType {
+  New,
+  Old,
+  MostRep,
+  MostPosts,
+  MostComments,
+}
+
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum CommentSortType {
   Hot,
   Top,
@@ -96,6 +105,18 @@ pub fn map_to_sort_type(match_string: Option<&str>) -> SortType {
       Some("newcomments") => SortType::NewComments,
       Some(&_) => SortType::Hot,
       None => SortType::Hot
+    }
+}
+
+pub fn map_to_user_sort_type(match_string: Option<&str>) -> UserSortType {
+    match match_string {
+      Some("new") => UserSortType::New,
+      Some("old") => UserSortType::Old,
+      Some("mostrep") => UserSortType::MostRep,
+      Some("mostposts") => UserSortType::MostPosts,
+      Some("mostcomments") => UserSortType::MostComments,
+      Some(&_) => UserSortType::MostRep,
+      None => UserSortType::MostRep,
     }
 }
 

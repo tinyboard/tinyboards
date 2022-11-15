@@ -2,7 +2,7 @@ use crate::{
     structs::{PostView, UserView},
     DeleteableOrRemoveable,
 };
-use diesel::{dsl::*, pg::Pg, result::Error, *};
+use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
@@ -306,8 +306,6 @@ impl<'a> PostQuery<'a> {
             .filter(post::deleted.eq(false))
             .filter(board::removed.eq(false))
             .filter(board::deleted.eq(false));
-
-        debug!("Post Query View: {:?}", debug_query::<Pg, _>(&query));
 
         let res = query.load::<PostViewTuple>(self.conn)?;
 

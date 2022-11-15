@@ -5,13 +5,16 @@ use tinyboards_db::{
     models::user::user::{UserSafe, UserSettings},
     schema::{user_, user_aggregates},
     traits::{ToSafe, ViewToVec},
-    utils::functions::lower,
+    utils::{functions::lower, limit_and_offset},
+    UserSortType,
+    map_to_user_sort_type,
 };
 use tinyboards_utils::TinyBoardsError;
 
 use hmac::{Hmac, Mac};
 use jwt::VerifyWithKey;
 use sha2::Sha384;
+use typed_builder::TypedBuilder;
 use std::collections::BTreeMap;
 
 type UserViewTuple = (UserSafe, UserAggregates);
@@ -153,5 +156,60 @@ impl ViewToVec for UserView {
                 counts: a.1,
             })
             .collect::<Vec<Self>>()
+    }
+}
+
+#[derive(TypedBuilder)]
+#[builder(field_defaults(default))]
+pub struct UserQuery<'a> {
+    #[builder(!default)]
+    conn: &'a mut PgConnection,
+    sort: Option<String>,
+    page: Option<i64>,
+    limit: Option<i64>,
+}
+
+impl<'a> UserQuery<'a> {
+    pub fn list(self) -> Result<Vec<UserView>, Error> {
+        
+        let mut query = user_::table
+            .inner_join(user_aggregates::table)
+            .select((
+                UserSafe::safe_columns_tuple(),
+                user_aggregates::all_columns,
+            ))
+            .into_boxed();
+        
+        let sort = match self.sort {
+            Some(s) => map_to_user_sort_type(Some(&s.to_lowercase().as_str())),
+            None => UserSortType::MostRep,
+        };
+
+        query = match sort {
+            UserSortType::New => query
+                .then_order_by(user_::published.asc()),
+            UserSortType::Old => query
+                .then_order_by(user_::published.desc()),
+            UserSortType::MostRep => query
+                .then_order_by(user_aggregates::post_score.desc())
+                .then_order_by(user_aggregates::comment_score.desc()),
+            UserSortType::MostPosts => query
+                .then_order_by(user_aggregates::post_count.desc()),
+            UserSortType::MostComments => query
+                .then_order_by(user_aggregates::comment_count.desc()),
+        };
+
+        let (limit, offset) = limit_and_offset(self.page, self.limit)?;
+
+        query = query
+            .limit(limit)
+            .offset(offset)
+            .filter(user_::deleted.eq(false))
+            .filter(user_::banned.eq(false));
+        
+        let res = query.load::<UserViewTuple>(self.conn)?;
+
+        Ok(UserView::from_tuple_to_vec(res))
+
     }
 }
