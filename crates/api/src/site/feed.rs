@@ -44,6 +44,7 @@ impl<'des> Perform<'des> for GetFeed {
         let board_id = params.board_id;
         let creator_id = params.creator_id;
         let user_id = params.user_id;
+        let search_term = params.search.clone();
         let saved_only = params.saved_only;
         let limit = params.limit;
         let page = params.page;
@@ -54,6 +55,7 @@ impl<'des> Perform<'des> for GetFeed {
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
+                .search_term(search_term)
                 .user_id(user_id)
                 .creator_id(creator_id)
                 .saved_only(saved_only)

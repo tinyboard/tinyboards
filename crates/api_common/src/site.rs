@@ -8,6 +8,7 @@ pub struct GetFeed {
     pub creator_id: Option<i32>,
     pub board_id: Option<i32>,
     pub user_id: Option<i32>,
+    pub search: Option<String>,
     pub saved_only: Option<bool>,
     pub limit: Option<i64>,
     pub page: Option<i64>,
