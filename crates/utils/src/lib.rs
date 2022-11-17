@@ -6,6 +6,7 @@ pub mod settings;
 pub mod time;
 pub mod utils;
 pub mod version;
+pub mod email;
 
 pub use error::TinyBoardsError;
 pub use passhash::hash_password;
