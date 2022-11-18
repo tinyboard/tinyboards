@@ -16,46 +16,27 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             // Authenticate
             .service(
                 web::scope("/auth")
-                    //.guard(guard::Post())
                     //.wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
-            //.service(web::scope("").route("/feed", web::get().to(route_get::<GetFeed>)))
             // User
-            .service(
-                web::scope("/user").route("/{username}", web::get().to(route_get::<Profile>)), //.route("/me", web::get().to(route_get::<GetLoggedInUser>))
-                                                                                               //.guard(guard::Post())
-                                                                                               //.wrap(rate_limit.register())
+            .service(web::scope("/user")
+                    .route("/{username}", web::get().to(route_get::<Profile>))
+                    .route("/settings", web::get().to(route_get::<GetUserSettings>))
             )
             // Post
             .service(
                 web::scope("/posts")
                     //.wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
-                    //.guard(guard::Post())
                     .route("", web::get().to(route_get_crud::<ListPosts>))
-                    //.guard(guard::Get())
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
-                    //.guard(guard::Get())
-                    .route(
-                        "/{post_id}",
-                        web::delete().to(route_post_crud::<DeletePost>),
-                    )
-                    //.guard(guard::Delete())
+                    .route("/{post_id}", web::delete().to(route_post_crud::<DeletePost>))
                     .route("/{post_id}", web::put().to(route_post_crud::<EditPost>))
-                    //.guard(guard::Put())
-                    .route(
-                        "/{post_id}/vote",
-                        web::post().to(route_post::<CreatePostVote>),
-                    )
-                    //.guard(guard::Post())
+                    .route("/{post_id}/vote", web::post().to(route_post::<CreatePostVote>))
                     .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
-                    //.guard(guard::Post())
-                    .route(
-                        "/{post_id}/comments",
-                        web::get().to(route_get_crud::<GetPostComments>),
-                    ),
+                    .route("/{post_id}/comments", web::get().to(route_get_crud::<GetPostComments>))
             )
             // Comment
             .service(
@@ -65,28 +46,11 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
                 web::scope("/comment")
                     //.wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateComment>))
-                    //.guard(guard::Post())
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
-                    //.guard(guard::Get())
-                    .route(
-                        "/{comment_id}",
-                        web::delete().to(route_post_crud::<DeleteComment>),
-                    )
-                    //.guard(guard::Delete())
-                    .route(
-                        "/{comment_id}",
-                        web::put().to(route_post_crud::<EditComment>),
-                    )
-                    //.guard(guard::Put())
-                    .route(
-                        "/{comment_id}/vote",
-                        web::post().to(route_post::<CreateCommentVote>),
-                    )
-                    //.guard(guard::Post())
-                    .route(
-                        "/{comment_id}/save",
-                        web::post().to(route_post::<SaveComment>),
-                    ), //.guard(guard::Post()),
+                    .route("/{comment_id}", web::delete().to(route_post_crud::<DeleteComment>))
+                    .route("/{comment_id}", web::put().to(route_post_crud::<EditComment>))
+                    .route("/{comment_id}/vote", web::post().to(route_post::<CreateCommentVote>))
+                    .route("/{comment_id}/save", web::post().to(route_post::<SaveComment>))
             )
             // Mod & Admin Actions
             .service(

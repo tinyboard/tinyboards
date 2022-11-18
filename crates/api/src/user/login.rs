@@ -15,6 +15,7 @@ impl<'des> Perform<'des> for Login {
     type Response = LoginResponse;
     type Route = ();
 
+    #[tracing::instrument(skip(context))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
