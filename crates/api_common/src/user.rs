@@ -1,7 +1,7 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::UserView;
+use tinyboards_db_views::structs::{UserView, UserSettingsView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -75,4 +75,12 @@ pub struct GetPostPath {
 #[derive(Deserialize, Clone)]
 pub struct GetUserNamePath {
     pub username: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetUserSettings {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetUserSettingsResponse {
+    pub settings: UserSettingsView,
 }
