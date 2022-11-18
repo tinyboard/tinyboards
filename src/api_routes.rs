@@ -13,6 +13,7 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/feed", web::get().to(route_get::<GetFeed>))
             .route("/members", web::get().to(route_get::<GetMembers>))
+            .route("/settings", web::get().to(route_get::<GetUserSettings>))
             // Authenticate
             .service(
                 web::scope("/auth")
@@ -23,7 +24,6 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             // User
             .service(web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
-                    .route("/settings", web::get().to(route_get::<GetUserSettings>))
             )
             // Post
             .service(
