@@ -10,6 +10,7 @@ pub struct GetFeed {
     pub user_id: Option<i32>,
     pub search: Option<String>,
     pub saved_only: Option<bool>,
+    pub nsfw: Option<bool>,
     pub limit: Option<i64>,
     pub page: Option<i64>,
 }
