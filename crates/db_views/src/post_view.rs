@@ -147,6 +147,7 @@ pub struct PostQuery<'a> {
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,
+    show_nsfw: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
 }
@@ -256,6 +257,11 @@ impl<'a> PostQuery<'a> {
 
         if self.saved_only.unwrap_or(false) {
             query = query.filter(post_saved::id.is_not_null());
+        }
+
+        // if show_nsfw is NOT TRUE, then we filter nsfw posts from query
+        if !self.show_nsfw.unwrap_or(false) {
+            query = query.filter(post::nsfw.eq(false));
         }
 
         query = match self.sort.unwrap_or(SortType::Hot) {

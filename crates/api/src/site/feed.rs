@@ -41,12 +41,24 @@ impl<'des> Perform<'des> for GetFeed {
             None => SortType::Hot,
         };
 
+        let params_nsfw = params.nsfw;
         let board_id = params.board_id;
         let creator_id = params.creator_id;
         let user_id = params.user_id;
         let saved_only = params.saved_only;
         let limit = params.limit;
         let page = params.page;
+        let mut nsfw = false;
+        
+        // normally we would get if the user has show_nsfw set to true/false when querying posts
+        if let Some(ref user_view) = user_view {
+            nsfw = user_view.user.show_nsfw;
+        };
+
+        // if we are getting nsfw from query string param in the api call, override the user setting (allows querying of nsfw posts independent of auth)
+        if params_nsfw.is_some() {
+            nsfw = params_nsfw.unwrap();
+        }
 
         let mut posts = blocking(context.pool(), move |conn| {
             PostQuery::builder()
@@ -57,6 +69,7 @@ impl<'des> Perform<'des> for GetFeed {
                 .user_id(user_id)
                 .creator_id(creator_id)
                 .saved_only(saved_only)
+                .show_nsfw(Some(nsfw))
                 .limit(limit)
                 .page(page)
                 .build()
