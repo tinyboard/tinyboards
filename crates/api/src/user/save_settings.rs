@@ -16,6 +16,7 @@ use tinyboards_db::{
 };
 use tinyboards_utils::{
     error::TinyBoardsError,
+    claims::Claims,
 };
 
 #[async_trait::async_trait(?Send)]
@@ -97,6 +98,16 @@ impl<'des> Perform<'des> for SaveUserSettings {
             get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         // return the jwt
-        Ok(LoginResponse { jwt: auth, user: updated_user_view } )
+        Ok(LoginResponse { 
+            jwt: Some(
+                Claims::jwt(
+                    updated_user_view.user.id,
+                    &context.master_key(),
+                    &context.settings().hostname,
+                )?
+                .into()
+            ), 
+            user: updated_user_view 
+        })
     }
 }
