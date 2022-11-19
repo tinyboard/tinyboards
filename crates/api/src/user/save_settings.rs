@@ -49,6 +49,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let bio = diesel_option_overwrite(&data.bio);
         let email = data.email.as_deref().map(str::to_lowercase);
 
+
+        // UNCOMMENT THIS WHEN WE HAVE NOTIFICATION EMAIL LOGIC DONE (and send email notification to the user if email is changed) 
+
         // if let Some(Some(email)) = &email {
         //     let previous_email = user_view.user.email.unwrap_or_default();
         //     // send email notification if email was changed
