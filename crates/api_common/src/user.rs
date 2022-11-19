@@ -84,3 +84,25 @@ pub struct GetUserSettings {}
 pub struct GetUserSettingsResponse {
     pub settings: UserSettingsView,
 }
+
+
+/// Struct for saving user settings, update this with any additional settings we need to be able to set
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SaveUserSettings {
+    pub show_nsfw: Option<bool>,
+    pub theme: Option<String>,
+    pub default_sort_type: Option<i16>,
+    pub default_listing_type: Option<i16>,
+    pub avatar: Option<String>,
+    pub banner: Option<String>,
+    pub email: Option<String>,
+    pub bio: Option<String>,
+}
+
+/// Struct for changing passwords
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ChangePassword {
+    pub new_password: Option<String>,
+    pub new_password_verify: Option<String>,
+    pub old_password: Option<String>,
+}

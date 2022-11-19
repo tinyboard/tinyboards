@@ -1,4 +1,4 @@
-use crate::tinyboards_types::UserId;
+use crate::newtypes::UserId;
 use diesel::{result::Error, PgConnection};
 use tinyboards_utils::TinyBoardsError;
 
