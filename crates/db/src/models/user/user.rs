@@ -1,4 +1,4 @@
-use crate::{schema::user_, newtypes::DbUrl};
+use crate::schema::user_;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -20,13 +20,13 @@ pub struct User {
     pub theme: String,
     pub default_sort_type: i16,
     pub default_listing_type: i16,
-    pub avatar: Option<DbUrl>,
+    pub avatar: Option<String>,
     pub email_notifications_enabled: bool,
     pub show_nsfw: bool,
     pub accepted_application: bool,
     pub deleted: bool,
     pub expires: Option<NaiveDateTime>,
-    pub banner: Option<DbUrl>,
+    pub banner: Option<String>,
     pub bio: Option<String>,
     pub application_accepted: bool,
 }
@@ -46,13 +46,13 @@ pub struct UserSafe {
     pub theme: String,
     pub default_sort_type: i16,
     pub default_listing_type: i16,
-    pub avatar: Option<DbUrl>,
+    pub avatar: Option<String>,
     pub email: Option<String>,
     pub email_notifications_enabled: bool,
     pub show_nsfw: bool,
     pub deleted: bool,
     pub expires: Option<NaiveDateTime>,
-    pub banner: Option<DbUrl>,
+    pub banner: Option<String>,
     pub bio: Option<String>,
     pub application_accepted: bool,
 }
@@ -85,13 +85,13 @@ pub struct UserForm {
     pub theme: Option<String>,
     pub default_sort_type: Option<i16>,
     pub default_listing_type: Option<i16>,
-    pub avatar: Option<Option<DbUrl>>,
+    pub avatar: Option<Option<String>>,
     pub email_notifications_enabled: Option<bool>,
     pub show_nsfw: Option<bool>,
     pub accepted_application: Option<bool>,
     pub deleted: Option<bool>,
     pub expires: Option<Option<NaiveDateTime>>,
-    pub banner: Option<Option<DbUrl>>,
+    pub banner: Option<Option<String>>,
     pub bio: Option<Option<String>>,
     pub application_accepted: Option<bool>,
 }
