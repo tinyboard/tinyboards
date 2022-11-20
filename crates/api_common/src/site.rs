@@ -26,3 +26,19 @@ pub struct GetMembers {
 pub struct GetMembersResponse {
     pub members: Vec<UserView>,
 }
+
+#[derive(Serialize)]
+pub struct Message {
+    pub code: i32,
+    pub message: String,
+}
+
+/// Generic response
+impl Message {
+    pub fn new(msg: &str) -> Self {
+        Self {
+            code: 200,
+            message: String::from(msg),
+        }
+    }
+}

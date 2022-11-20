@@ -4,8 +4,8 @@ use tinyboards_api_common::{
     comment::CreateComment,
     data::TinyBoardsContext,
     utils::{
-        blocking, check_board_ban, check_board_deleted_or_removed,
-        check_post_deleted_removed_or_locked, check_user_valid, get_user_view_from_jwt,
+        blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
+        require_user,
     },
 };
 use tinyboards_db::{
@@ -34,27 +34,23 @@ impl<'des> PerformCrud<'des> for CreateComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data = self;
 
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
-
         let post = blocking(context.pool(), move |conn| {
             Post::read(conn, data.post_id).map_err(|_| TinyBoardsError::err_500())
         })
         .await??;
 
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .not_banned()
+            .not_banned_from_board(post.board_id, context.pool())
+            .await
+            .unwrap()?;
+
         // checks to see if the board even exists in the first place
         check_board_deleted_or_removed(post.board_id, context.pool()).await?;
-        // checks the board to see if user is banned
-        check_board_ban(user_view.user.id, post.board_id, context.pool()).await?;
 
         // checks to see if the post was deleted, removed, or locked
         check_post_deleted_removed_or_locked(post.id, context.pool()).await?;
-
-        // checks the user to see if the user is site banned (is valid or not)
-        check_user_valid(
-            user_view.user.banned,
-            user_view.user.expires,
-            user_view.user.deleted,
-        )?;
 
         // check if parent comment exists
         // TODO: check if post's op is blocking the user (?)
@@ -97,7 +93,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // TODO: scrape comment text for @mentions and send notifs
         let new_comment = CommentForm {
-            creator_id: user_view.user.id,
+            creator_id: user.id,
             body: Some(data.body),
             body_html,
             post_id: data.post_id,
@@ -113,7 +109,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
-            user_id: user_view.user.id,
+            user_id: user.id,
             comment_id: new_comment.id,
             score: 1,
         };
@@ -124,7 +120,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         .await??;
 
         let new_comment = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, new_comment.id, Some(user_view.user.id))
+            CommentView::read(conn, new_comment.id, Some(user.id))
         })
         .await?
         .map_err(|_| TinyBoardsError::err_500())?;

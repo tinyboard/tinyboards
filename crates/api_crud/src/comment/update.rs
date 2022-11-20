@@ -4,9 +4,8 @@ use tinyboards_api_common::{
     comment::{CommentIdPath, CommentResponse, EditComment},
     data::TinyBoardsContext,
     utils::{
-        blocking, check_board_ban, check_board_deleted_or_removed,
-        check_comment_deleted_or_removed, check_post_deleted_removed_or_locked,
-        get_user_view_from_jwt,
+        blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
+        check_post_deleted_removed_or_locked, require_user,
     },
 };
 use tinyboards_db::{
@@ -29,7 +28,10 @@ impl<'des> PerformCrud<'des> for EditComment {
         auth: Option<&str>,
     ) -> Result<CommentResponse, TinyBoardsError> {
         let data: &EditComment = &self;
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .not_banned()
+            .unwrap()?;
 
         let comment_id = path.comment_id;
         let orig_comment = blocking(context.pool(), move |conn| {
@@ -38,15 +40,13 @@ impl<'des> PerformCrud<'des> for EditComment {
         })
         .await??;
 
-        check_board_ban(user_view.user.id, orig_comment.board.id, context.pool()).await?;
-
         check_board_deleted_or_removed(orig_comment.board.id, context.pool()).await?;
 
         check_post_deleted_removed_or_locked(orig_comment.post.id, context.pool()).await?;
 
         check_comment_deleted_or_removed(orig_comment.comment.id, context.pool()).await?;
 
-        if user_view.user.id != orig_comment.comment.creator_id {
+        if user.id != orig_comment.comment.creator_id {
             return Err(TinyBoardsError::from_string(
                 "comment edit not allowed",
                 405,
