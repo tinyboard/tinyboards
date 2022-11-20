@@ -19,10 +19,7 @@ impl Board {
             .first::<i32>(conn)
             .optional();
 
-        mod_id.map(|opt| match opt {
-            Some(_) => true,
-            None => false,
-        })
+        mod_id.map(|opt| opt.is_some())
     }
 
     /// Takes a board id and an user id, and returns true if the user is banned from the board with the given id
@@ -43,10 +40,7 @@ impl Board {
             .first::<i32>(conn)
             .optional();
 
-        ban_id.map(|opt| match opt {
-            Some(_) => true,
-            None => false,
-        })
+        ban_id.map(|opt| opt.is_some())
     }
 }
 

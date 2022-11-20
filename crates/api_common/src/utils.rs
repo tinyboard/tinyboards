@@ -98,7 +98,7 @@ pub async fn load_user_opt(pool: &PgPool, master_key: &Secret, auth: Option<&str
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
     // maybe there's a better solution to this but I feel like this is too memory-consuming.
     let token = String::from(&auth[7..]);
-    let master_key = String::from(master_key.jwt.clone());
+    let master_key = master_key.jwt.clone();
 
     blocking(pool, |conn| User::from_jwt(conn, token, master_key)).await?
 }
@@ -217,7 +217,7 @@ impl UserResult {
                     Err(e) => Err(e),
                 };
 
-                return Self(inner);
+                Self(inner)
             }
             Err(e) => Self(Err(e)),
         }
@@ -257,7 +257,7 @@ impl UserResult {
                     Err(e) => Err(e),
                 };
 
-                return Self(inner);
+                Self(inner)
             }
             Err(e) => Self(Err(e)),
         }
@@ -287,7 +287,7 @@ pub async fn get_user_view_from_jwt_opt(
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
     // maybe there's a better solution to this but I feel like this is too memory-consuming.
     let token = String::from(&auth[7..]);
-    let master_key = String::from(master_key.jwt.clone());
+    let master_key = master_key.jwt.clone();
 
     blocking(pool, move |conn| {
         UserView::from_jwt(conn, token, master_key)
