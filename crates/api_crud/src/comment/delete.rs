@@ -1,23 +1,23 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    comment::{CommentIdPath, CommentResponse, DeleteComment},
+    comment::{CommentIdPath, DeleteComment},
     data::TinyBoardsContext,
+    site::Message,
     utils::{
-        blocking, check_board_ban, check_board_deleted_or_removed,
-        check_post_deleted_removed_or_locked, check_user_valid, get_user_view_from_jwt,
+        blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
+        require_user,
     },
 };
 use tinyboards_db::{
     models::{comment::comment::Comment, post::post::Post},
     traits::Crud,
 };
-use tinyboards_db_views::structs::CommentView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeleteComment {
-    type Response = CommentResponse;
+    type Response = Message;
     type Route = CommentIdPath;
 
     #[tracing::instrument(skip(context, auth))]
@@ -29,7 +29,9 @@ impl<'des> PerformCrud<'des> for DeleteComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &DeleteComment = &self;
 
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
 
         let comment_id = path.comment_id;
 
@@ -52,19 +54,11 @@ impl<'des> PerformCrud<'des> for DeleteComment {
             ));
         }
 
-        check_board_ban(user_view.user.id, orig_post.board_id, context.pool()).await?;
-
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;
 
         check_post_deleted_removed_or_locked(orig_post.id, context.pool()).await?;
 
-        check_user_valid(
-            user_view.user.banned,
-            user_view.user.expires,
-            user_view.user.deleted,
-        )?;
-
-        if !Comment::is_comment_creator(user_view.user.id, orig_comment.creator_id) {
+        if !Comment::is_comment_creator(user.id, orig_comment.creator_id) {
             return Err(TinyBoardsError::from_string(
                 "comment edit not allowed",
                 405,
@@ -79,12 +73,6 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         })
         .await??;
 
-        let comment_view = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, comment_id, Some(user_view.user.id))
-                .map_err(|_e| TinyBoardsError::from_string("could not find comment", 404))
-        })
-        .await??;
-
-        Ok(CommentResponse { comment_view })
+        Ok(Message::new("Comment deleted!"))
     }
 }

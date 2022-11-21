@@ -2,20 +2,20 @@ use crate::structs::{UserSettingsView, UserView};
 use diesel::{result::Error, PgConnection, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
+    map_to_user_sort_type,
     models::user::user::{UserSafe, UserSettings},
     schema::{user_, user_aggregates},
     traits::{ToSafe, ViewToVec},
     utils::{functions::lower, limit_and_offset},
     UserSortType,
-    map_to_user_sort_type,
 };
 use tinyboards_utils::TinyBoardsError;
 
 use hmac::{Hmac, Mac};
 use jwt::VerifyWithKey;
 use sha2::Sha384;
-use typed_builder::TypedBuilder;
 use std::collections::BTreeMap;
+use typed_builder::TypedBuilder;
 
 type UserViewTuple = (UserSafe, UserAggregates);
 
@@ -32,10 +32,7 @@ impl UserView {
             .optional()
             .map_err(|_| TinyBoardsError::err_500())?;
 
-        Ok(match user_view_tuple {
-            Some((user, counts)) => Some(Self { user, counts }),
-            None => None,
-        })
+        Ok(user_view_tuple.map(|(user, counts)| Self { user, counts }))
     }
 
     pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, TinyBoardsError> {
@@ -171,32 +168,26 @@ pub struct UserQuery<'a> {
 
 impl<'a> UserQuery<'a> {
     pub fn list(self) -> Result<Vec<UserView>, Error> {
-        
         let mut query = user_::table
             .inner_join(user_aggregates::table)
-            .select((
-                UserSafe::safe_columns_tuple(),
-                user_aggregates::all_columns,
-            ))
+            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .into_boxed();
-        
+
         let sort = match self.sort {
-            Some(s) => map_to_user_sort_type(Some(&s.to_lowercase().as_str())),
+            Some(s) => map_to_user_sort_type(Some(s.to_lowercase().as_str())),
             None => UserSortType::MostRep,
         };
 
         query = match sort {
-            UserSortType::New => query
-                .then_order_by(user_::published.asc()),
-            UserSortType::Old => query
-                .then_order_by(user_::published.desc()),
+            UserSortType::New => query.then_order_by(user_::published.asc()),
+            UserSortType::Old => query.then_order_by(user_::published.desc()),
             UserSortType::MostRep => query
                 .then_order_by(user_aggregates::post_score.desc())
                 .then_order_by(user_aggregates::comment_score.desc()),
-            UserSortType::MostPosts => query
-                .then_order_by(user_aggregates::post_count.desc()),
-            UserSortType::MostComments => query
-                .then_order_by(user_aggregates::comment_count.desc()),
+            UserSortType::MostPosts => query.then_order_by(user_aggregates::post_count.desc()),
+            UserSortType::MostComments => {
+                query.then_order_by(user_aggregates::comment_count.desc())
+            }
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -206,10 +197,9 @@ impl<'a> UserQuery<'a> {
             .offset(offset)
             .filter(user_::deleted.eq(false))
             .filter(user_::banned.eq(false));
-        
+
         let res = query.load::<UserViewTuple>(self.conn)?;
 
         Ok(UserView::from_tuple_to_vec(res))
-
     }
 }

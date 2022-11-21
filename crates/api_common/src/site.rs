@@ -8,6 +8,7 @@ pub struct GetFeed {
     pub creator_id: Option<i32>,
     pub board_id: Option<i32>,
     pub user_id: Option<i32>,
+    pub search: Option<String>,
     pub saved_only: Option<bool>,
     pub nsfw: Option<bool>,
     pub limit: Option<i64>,
@@ -24,4 +25,20 @@ pub struct GetMembers {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetMembersResponse {
     pub members: Vec<UserView>,
+}
+
+#[derive(Serialize)]
+pub struct Message {
+    pub code: i32,
+    pub message: String,
+}
+
+/// Generic response
+impl Message {
+    pub fn new(msg: &str) -> Self {
+        Self {
+            code: 200,
+            message: String::from(msg),
+        }
+    }
 }

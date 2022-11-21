@@ -361,11 +361,7 @@ impl DeleteableOrRemoveable for CommentView {
                 match user_view {
                     Some(user_view) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        if self.comment.removed && user_view.user.id == self.comment.creator_id {
-                            false
-                        } else {
-                            true
-                        }
+                        !(self.comment.removed && user_view.user.id == self.comment.creator_id)
                     }
                     None => true,
                 }
@@ -394,11 +390,7 @@ impl DeleteableOrRemoveable for CommentView {
             if self.post.deleted || self.post.removed {
                 match user_view {
                     Some(user_view) => {
-                        if self.post.removed && user_view.user.id == self.post.creator_id {
-                            false
-                        } else {
-                            true
-                        }
+                        !(self.post.removed && user_view.user.id == self.post.creator_id)
                     }
                     None => true,
                 }

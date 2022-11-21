@@ -147,6 +147,14 @@ impl User {
         })
     }
 
+    pub fn has_active_ban(&self) -> bool {
+        if let Some(expires_) = self.expires {
+            self.banned && expires_.gt(&chrono::prelude::Utc::now().naive_utc())
+        } else {
+            self.banned
+        }
+    }
+
     pub fn into_safe(self) -> UserSafe {
         UserSafe {
             id: self.id,

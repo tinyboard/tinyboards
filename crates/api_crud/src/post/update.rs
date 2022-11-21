@@ -4,8 +4,8 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{EditPost, PostIdPath, PostResponse},
     utils::{
-        blocking, check_board_ban, check_board_deleted_or_removed,
-        check_post_deleted_removed_or_locked, get_user_view_from_jwt,
+        blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
+        require_user,
     },
 };
 use tinyboards_db::{
@@ -28,7 +28,10 @@ impl<'des> PerformCrud<'des> for EditPost {
         auth: Option<&str>,
     ) -> Result<PostResponse, TinyBoardsError> {
         let data: &EditPost = &self;
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .not_banned()
+            .unwrap()?;
 
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
@@ -37,13 +40,11 @@ impl<'des> PerformCrud<'des> for EditPost {
         })
         .await??;
 
-        check_board_ban(user_view.user.id, orig_post.board.id, context.pool()).await?;
-
         check_board_deleted_or_removed(orig_post.board.id, context.pool()).await?;
 
         check_post_deleted_removed_or_locked(orig_post.post.id, context.pool()).await?;
 
-        if user_view.user.id != orig_post.post.creator_id {
+        if user.id != orig_post.post.creator_id {
             return Err(TinyBoardsError::from_string("post edit not allowed", 405));
         }
 
@@ -60,7 +61,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         blocking(context.pool(), move |conn| {
             Post::update(conn, post_id, &form)
-                .map_err(|_e| TinyBoardsError::from_string("could not update post", 500))
+                .map_err(|_| TinyBoardsError::from_string("could not update post", 500))
         })
         .await??;
 

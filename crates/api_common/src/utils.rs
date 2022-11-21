@@ -5,7 +5,6 @@ use sha2::Sha384;
 use std::collections::BTreeMap;
 use tinyboards_db::{
     database::PgPool,
-    impls::user::is_banned,
     models::{
         board::board::Board,
         comment::comment::Comment,
@@ -16,7 +15,7 @@ use tinyboards_db::{
     },
     traits::Crud,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
+use tinyboards_db_views::structs::{BoardUserBanView, UserView};
 use tinyboards_utils::error::TinyBoardsError;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
@@ -76,12 +75,12 @@ pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
     }
 }
 
+// less typing !!
+type UResultOpt = Result<Option<User>, TinyBoardsError>;
+type UResult = Result<User, TinyBoardsError>;
+
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
-pub async fn load_user_opt(
-    pool: &PgPool,
-    master_key: &Secret,
-    auth: Option<&str>,
-) -> Result<Option<User>, TinyBoardsError> {
+pub async fn load_user_opt(pool: &PgPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
     if auth.is_none() {
         return Ok(None);
     };
@@ -99,48 +98,170 @@ pub async fn load_user_opt(
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
     // maybe there's a better solution to this but I feel like this is too memory-consuming.
     let token = String::from(&auth[7..]);
-    let master_key = String::from(master_key.jwt.clone());
+    let master_key = master_key.jwt.clone();
 
     blocking(pool, |conn| User::from_jwt(conn, token, master_key)).await?
 }
 
+/**
+ A newtype-ish wrapper around UResult with additional methods to make adding additional requirements (enforce lack of site ban, etc) easier.
+ Call `unwrap` to get a regular Result.
+*/
+pub struct UserResult(UResult);
+
 /// Enforces a logged in user. Returns `Ok<User>` if everything is OK, otherwise errors. If being logged in is optional, `load_user_opt` should be used.
-pub async fn require_user(
-    pool: &PgPool,
-    master_key: &Secret,
-    auth: Option<&str>,
-) -> Result<User, TinyBoardsError> {
+pub async fn require_user(pool: &PgPool, master_key: &Secret, auth: Option<&str>) -> UserResult {
     if auth.is_none() {
-        return Err(TinyBoardsError::err_401());
+        let err: UResult = Err(TinyBoardsError::err_401());
+        return err.into();
     }
 
-    let u = load_user_opt(pool, master_key, auth).await?;
-    match u {
-        Some(u) => Ok(u),
-        None => Err(TinyBoardsError::err_401()),
+    load_user_opt(pool, master_key, auth).await.into()
+}
+
+impl From<UResultOpt> for UserResult {
+    fn from(r: UResultOpt) -> Self {
+        let u_res = match r {
+            Ok(u) => match u {
+                Some(u) => {
+                    if u.deleted {
+                        Err(TinyBoardsError::err_401())
+                    } else {
+                        Ok(u)
+                    }
+                }
+                None => Err(TinyBoardsError::err_401()),
+            },
+            Err(e) => Err(e),
+        };
+
+        Self(u_res)
     }
 }
 
-pub fn check_user_valid(
-    banned: bool,
-    ban_expires: Option<chrono::NaiveDateTime>,
-    deleted: bool,
-) -> Result<(), TinyBoardsError> {
-    if is_banned(banned, ban_expires) {
-        return Err(TinyBoardsError {
-            message: String::from("site ban"),
-            error_code: 401,
-        });
+impl From<UResult> for UserResult {
+    fn from(r: UResult) -> Self {
+        Self(match r {
+            Ok(u) => {
+                if u.deleted {
+                    Err(TinyBoardsError::err_401())
+                } else {
+                    Ok(u)
+                }
+            }
+            Err(e) => Err(e),
+        })
+    }
+}
+
+impl UserResult {
+    pub fn unwrap(self) -> UResult {
+        self.0
     }
 
-    if deleted {
-        return Err(TinyBoardsError {
-            message: String::from("deleted"),
-            error_code: 401,
-        });
+    pub fn not_banned(self) -> Self {
+        match self.0 {
+            Ok(u) => {
+                return Self(if u.has_active_ban() {
+                    println!("user is banned!");
+                    Err(TinyBoardsError::from_string(
+                        "You are banned from the whole site lol! Sucks to be you.",
+                        403,
+                    ))
+                } else {
+                    Ok(u)
+                });
+            }
+            Err(e) => Self(Err(e)),
+        }
     }
 
-    Ok(())
+    pub fn require_admin(self) -> Self {
+        Self(match self.0 {
+            Ok(u) => {
+                if u.admin {
+                    Ok(u)
+                } else {
+                    Err(TinyBoardsError::from_string("nerd", 403))
+                }
+            }
+            Err(e) => Err(e),
+        })
+    }
+
+    pub async fn not_banned_from_board(self, board_id: i32, pool: &PgPool) -> Self {
+        match self.0 {
+            Ok(u) => {
+                // skip this check for admins :))))
+                if u.admin {
+                    return Self(Ok(u));
+                }
+
+                let is_banned = blocking(pool, move |conn| {
+                    BoardUserBanView::get(conn, u.id, board_id)
+                        .map_err(|_| TinyBoardsError::err_500())
+                })
+                .await;
+
+                let inner = match is_banned {
+                    Ok(is_banned) => {
+                        if let Ok(board_ban) = is_banned {
+                            Err(TinyBoardsError::new(
+                                403,
+                                format!("You are banned from +{}", board_ban.board.name),
+                            ))
+                        } else {
+                            Ok(u)
+                        }
+                    }
+                    Err(e) => Err(e),
+                };
+
+                Self(inner)
+            }
+            Err(e) => Self(Err(e)),
+        }
+    }
+
+    pub async fn require_board_mod(self, board_id: i32, pool: &PgPool) -> Self {
+        match self.0 {
+            Ok(u) => {
+                // admins can do everything
+                if u.admin {
+                    return Self(Ok(u));
+                }
+
+                let is_mod = blocking(pool, move |conn| {
+                    Board::board_has_mod(conn, board_id, u.id)
+                        .map_err(|_| TinyBoardsError::err_401())
+                })
+                .await;
+
+                if is_mod.is_err() {
+                    return Self(Err(TinyBoardsError::err_500()));
+                };
+
+                let is_mod = is_mod.unwrap();
+
+                let inner = match is_mod {
+                    Ok(is_mod) => {
+                        if is_mod {
+                            Ok(u)
+                        } else {
+                            Err(TinyBoardsError::from_string(
+                                "You must be a mod to do that!",
+                                403,
+                            ))
+                        }
+                    }
+                    Err(e) => Err(e),
+                };
+
+                Self(inner)
+            }
+            Err(e) => Self(Err(e)),
+        }
+    }
 }
 
 #[tracing::instrument(skip_all)]
@@ -166,7 +287,7 @@ pub async fn get_user_view_from_jwt_opt(
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
     // maybe there's a better solution to this but I feel like this is too memory-consuming.
     let token = String::from(&auth[7..]);
-    let master_key = String::from(master_key.jwt.clone());
+    let master_key = master_key.jwt.clone();
 
     blocking(pool, move |conn| {
         UserView::from_jwt(conn, token, master_key)
@@ -190,38 +311,6 @@ pub async fn get_user_view_from_jwt(
         None => Err(TinyBoardsError::err_401()),
     }
 }
-
-/* #[tracing::instrument(skip_all)]
-pub async fn get_user_view_from_jwt(
-    jwt: &str,
-    pool: &PgPool,
-    master_key: &Secret,
-) -> Result<UserView, TinyBoardsError> {
-    let u = require_user(pool, master_key, Some(jwt)).await?;
-    let user_id = u.id;
-
-    let user_view = blocking(pool, move |conn| {
-        UserView::read(conn, user_id)
-            .map_err(|_e| TinyBoardsError::from_string("could not find user", 404))
-    })
-    .await??;
-
-    //check_user_valid(u.banned, u.expires, u.deleted)?;
-
-    Ok(user_view)
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn get_user_view_from_jwt_opt(
-    jwt: Option<&str>,
-    pool: &PgPool,
-    master_key: &Secret,
-) -> Result<Option<UserView>, TinyBoardsError> {
-    match jwt {
-        Some(jwt) => Ok(Some(get_user_view_from_jwt(jwt, pool, master_key).await?)),
-        None => Ok(None),
-    }
-} */
 
 #[tracing::instrument(skip_all)]
 pub async fn check_registration_application(
@@ -284,54 +373,6 @@ pub async fn check_private_instance(
         }
     }
     Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn is_admin(pool: &PgPool, user_id: i32) -> Result<(), TinyBoardsError> {
-    let user = blocking(pool, move |conn| {
-        User::read(conn, user_id)
-            .map_err(|_e| TinyBoardsError::from_string("could not find user", 404))
-    })
-    .await??;
-
-    if !user.admin {
-        return Err(TinyBoardsError::from_string("not an admin", 405));
-    }
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn is_mod_or_admin(
-    pool: &PgPool,
-    user_id: i32,
-    board_id: i32,
-) -> Result<(), TinyBoardsError> {
-    let is_mod_or_admin = blocking(pool, move |conn| {
-        BoardView::is_mod_or_admin(conn, user_id, board_id)
-    })
-    .await?;
-
-    if !is_mod_or_admin {
-        return Err(TinyBoardsError::from_string("not a mod or admin", 405));
-    }
-
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn check_board_ban(
-    user_id: i32,
-    board_id: i32,
-    pool: &PgPool,
-) -> Result<(), TinyBoardsError> {
-    let is_banned = move |conn: &mut _| BoardUserBanView::get(conn, user_id, board_id).is_ok();
-
-    if blocking(pool, is_banned).await? {
-        Err(TinyBoardsError::from_string("board banned", 405))
-    } else {
-        Ok(())
-    }
 }
 
 #[tracing::instrument(skip_all)]
