@@ -1,0 +1,1 @@
+alter table site drop column email_verification_required cascade;
