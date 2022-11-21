@@ -3,7 +3,7 @@
 pub mod aggregates;
 pub mod database;
 pub mod models;
-pub mod tinyboards_types;
+pub mod newtypes;
 pub mod traits;
 
 pub mod impls;

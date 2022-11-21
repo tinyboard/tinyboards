@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{LockPost, ModActionResponse},
-    utils::{blocking, get_user_view_from_jwt, is_mod_or_admin},
+    utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModLockPost, ModLockPostForm},
@@ -29,8 +29,6 @@ impl<'des> Perform<'des> for LockPost {
         let post_id = data.post_id;
         let locked = data.locked;
 
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
-
         // get the post object
         let orig_post = blocking(context.pool(), move |conn| {
             Post::read(conn, post_id.clone())
@@ -38,8 +36,12 @@ impl<'des> Perform<'des> for LockPost {
         })
         .await??;
 
-        // first of all this user MUST be an admin or a mod
-        is_mod_or_admin(context.pool(), user_view.user.id, orig_post.board_id).await?;
+        // require a mod/admin user for this
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .require_board_mod(orig_post.board_id, context.pool())
+            .await
+            .unwrap()?;
 
         // update the post in the database to be locked
         blocking(context.pool(), move |conn| {
@@ -50,7 +52,7 @@ impl<'des> Perform<'des> for LockPost {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_user_id: user_view.user.id,
+            mod_user_id: user.id,
             post_id: post_id.clone(),
             locked: Some(Some(locked.clone())),
         };

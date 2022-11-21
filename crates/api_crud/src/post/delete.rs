@@ -2,19 +2,16 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{DeletePost, PostIdPath, PostResponse},
-    utils::{
-        blocking, check_board_ban, check_board_deleted_or_removed, check_user_valid,
-        get_user_view_from_jwt,
-    },
+    post::{DeletePost, PostIdPath},
+    site::Message,
+    utils::{blocking, check_board_deleted_or_removed, require_user},
 };
 use tinyboards_db::{models::post::post::Post, traits::Crud};
-use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeletePost {
-    type Response = PostResponse;
+    type Response = Message;
     type Route = PostIdPath;
 
     #[tracing::instrument(skip(context, auth))]
@@ -25,7 +22,9 @@ impl<'des> PerformCrud<'des> for DeletePost {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &DeletePost = &self;
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
 
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
@@ -43,17 +42,9 @@ impl<'des> PerformCrud<'des> for DeletePost {
             ));
         }
 
-        check_board_ban(user_view.user.id, orig_post.board_id, context.pool()).await?;
-
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;
 
-        check_user_valid(
-            user_view.user.banned,
-            user_view.user.expires,
-            user_view.user.deleted,
-        )?;
-
-        if !Post::is_post_creator(user_view.user.id, orig_post.creator_id) {
+        if !Post::is_post_creator(user.id, orig_post.creator_id) {
             return Err(TinyBoardsError::from_string("post edit not allowed", 405));
         }
 
@@ -61,17 +52,10 @@ impl<'des> PerformCrud<'des> for DeletePost {
         let deleted = data.deleted;
 
         blocking(context.pool(), move |conn| {
-            Post::update_deleted(conn, post_id, deleted).map_err(|_e| TinyBoardsError::err_500())
+            Post::update_deleted(conn, post_id, deleted).map_err(|_| TinyBoardsError::err_500())
         })
         .await??;
 
-        // grab the post view here for the response
-        let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, post_id, Some(user_view.user.id))
-                .map_err(|_e| TinyBoardsError::from_string("could not find post", 404))
-        })
-        .await??;
-
-        Ok(PostResponse { post_view })
+        Ok(Message::new("Post deleted!"))
     }
 }

@@ -9,6 +9,9 @@ use diesel::{
   PgConnection,
 };
 use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
+use url::Url;
+use crate::newtypes::DbUrl;
+use tinyboards_utils::error::TinyBoardsError;
 
 
 
@@ -96,4 +99,34 @@ pub fn establish_unpooled_connection() -> PgConnection {
     .unwrap_or_else(|_| panic!("Couldn't run DB Migrations"));
 
   conn
+}
+
+pub fn diesel_option_overwrite_to_url(
+  opt: &Option<String>,
+) -> Result<Option<Option<DbUrl>>, TinyBoardsError> {
+  match opt.as_ref().map(std::string::String::as_str) {
+    //empty string = erase
+    Some("") => Ok(Some(None)),
+    Some(str_url) => match Url::parse(str_url) {
+      Ok(url) => Ok(Some(Some(url.into()))),
+      Err(_e) => Err(TinyBoardsError::from_string("invalid url", 500)),
+    },
+    None => Ok(None)
+  }
+}
+
+pub fn diesel_option_overwrite(
+  opt: &Option<String>
+) -> Option<Option<String>> {
+  match opt {
+    // empty string is erase
+    Some(unwrapped) => {
+      if !unwrapped.eq("") {
+        Some(Some(unwrapped.clone()))
+      } else {
+        Some(None)
+      }
+    },
+    None => None,
+  }
 }

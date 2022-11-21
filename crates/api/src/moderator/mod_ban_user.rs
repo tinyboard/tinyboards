@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{BanUser, ModActionResponse},
-    utils::{blocking, get_user_view_from_jwt, is_admin},
+    utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
@@ -30,10 +30,10 @@ impl<'des> Perform<'des> for BanUser {
         let reason = &data.reason;
         let expires = data.expires;
 
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
-
-        // first of all this user MUST be an admin to ban site-wide
-        is_admin(context.pool(), user_view.user.id).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .require_admin()
+            .unwrap()?;
 
         // update the user in the database to be banned
         blocking(context.pool(), move |conn| {
@@ -44,7 +44,7 @@ impl<'des> Perform<'des> for BanUser {
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
-            mod_user_id: user_view.user.id,
+            mod_user_id: user.id,
             other_user_id: other_user_id.clone(),
             banned: Some(Some(banned)),
             expires: expires,

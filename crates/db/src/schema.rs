@@ -370,6 +370,7 @@ diesel::table! {
         require_application -> Bool,
         application_question -> Nullable<Text>,
         private_instance -> Bool,
+        email_verification_required -> Bool,
     }
 }
 

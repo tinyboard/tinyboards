@@ -7,10 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::models::user::user::{User, UserSafe};
 use tinyboards_db_views::structs::UserView;
-use tinyboards_utils::{
-    error::TinyBoardsError,
-    settings::SETTINGS,
-};
+use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for GetLoggedInUser {
@@ -23,7 +20,9 @@ impl<'des> Perform<'des> for GetLoggedInUser {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let user = require_user(context.pool(), context.master_key(), auth).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
 
         Ok(user.into_safe())
     }
