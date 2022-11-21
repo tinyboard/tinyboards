@@ -68,6 +68,9 @@ pub struct UserSettings {
     pub default_sort_type: i16,
     pub default_listing_type: i16,
     pub email_notifications_enabled: bool,
+    pub avatar: Option<String>,
+    pub banner: Option<String>,
+    pub bio: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]

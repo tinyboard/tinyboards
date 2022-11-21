@@ -241,6 +241,9 @@ pub mod safe_type {
         default_sort_type,
         default_listing_type,
         email_notifications_enabled,
+        avatar,
+        banner,
+        bio,
     );
 
     impl ToSafe for UserSafe {
@@ -283,6 +286,9 @@ pub mod safe_type {
                 default_sort_type,
                 default_listing_type,
                 email_notifications_enabled,
+                avatar,
+                banner,
+                bio,
             )
         }
     }
