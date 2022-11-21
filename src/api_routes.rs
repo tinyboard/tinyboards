@@ -40,11 +40,9 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             )
             // Comment
             .service(
-                web::scope("/comments").route("", web::get().to(route_get_crud::<ListComments>)), //.guard(guard::Get())
-            )
-            .service(
-                web::scope("/comment")
+                web::scope("/comments")
                     //.wrap(rate_limit.message())
+                    .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     .route("/{comment_id}", web::delete().to(route_post_crud::<DeleteComment>))
