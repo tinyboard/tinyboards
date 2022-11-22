@@ -36,20 +36,17 @@ impl<'des> Perform<'des> for SavePost {
         if data.save {
             let save_post = move |conn: &mut _| PostSaved::save(conn, &saved_form);
             blocking(context.pool(), save_post)
-                .await?
-                .map_err(|_e| TinyBoardsError::from_string("could not save post", 500))?;
+                .await??;
         } else {
             let unsave_post = move |conn: &mut _| PostSaved::unsave(conn, &saved_form);
             blocking(context.pool(), unsave_post)
-                .await?
-                .map_err(|_e| TinyBoardsError::from_string("could not unsave post", 500))?;
+                .await??;
         }
 
         let post_id = path.post_id;
         let user_id = user_view.user.id;
         let post_view = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, Some(user_id))
-                .map_err(|_e| TinyBoardsError::from_string("could not find post", 404))
         })
         .await??;
 

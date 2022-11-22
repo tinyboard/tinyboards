@@ -39,7 +39,6 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let site =
             blocking(context.pool(), move |conn| {
                 Site::read_local(conn)
-                    .map_err(|_| TinyBoardsError::from_string("could not read local site", 500))
             })
             .await??;
             
@@ -62,13 +61,13 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         
         if email.is_none() && site.email_verification_required {
-            return Err(TinyBoardsError::from_string("email required", 500));
+            return Err(TinyBoardsError::from_message("email required"));
         }
         
         if let Some(Some(bio)) = &bio {
             // seems sort of arbitrary? do we want a setting for this length somewhere?
             if bio.chars().count() > 300 {
-                return Err(TinyBoardsError::from_string("bio too long", 500));
+                return Err(TinyBoardsError::from_message("bio too long"));
             }
         }
 
@@ -90,7 +89,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // perform settings update
         blocking(context.pool(), move |conn| {
             User::update(conn, user_view.user.id, &user_form)
-                .map_err(|_| TinyBoardsError::from_string("could not update user settings", 500))
+                .map_err(|_| TinyBoardsError::from_message("could not update user settings"))
         })
         .await??;
 

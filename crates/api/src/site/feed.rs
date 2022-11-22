@@ -77,8 +77,7 @@ impl<'des> Perform<'des> for GetFeed {
                 .build()
                 .list()
         })
-        .await?
-        .map_err(|_e| TinyBoardsError::err_500())?;
+        .await??;
 
         if !user_view.is_some() {
             for pv in posts

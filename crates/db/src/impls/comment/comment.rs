@@ -9,10 +9,7 @@ use tinyboards_utils::TinyBoardsError;
 
 impl Comment {
     pub fn submit(conn: &mut PgConnection, form: CommentForm) -> Result<Self, TinyBoardsError> {
-        Self::create(conn, &form).map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-        })
+        Self::create(conn, &form).map_err(|e| TinyBoardsError::from_error_message(e, "could not submit comment"))
     }
     /// Checks if a comment with a given id exists. Don't use if you need a whole Comment object.
     pub fn check_if_exists(conn: &mut PgConnection, cid: i32) -> Result<Option<i32>, TinyBoardsError> {
@@ -22,10 +19,7 @@ impl Comment {
             .filter(id.eq(cid))
             .first::<i32>(conn)
             .optional()
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "error while checking existence of comment"))
     }
 
     pub fn is_comment_creator(user_id: i32, comment_creator_id: i32) -> bool {
@@ -49,10 +43,7 @@ impl Comment {
             .filter(id.eq(cid))
             .first::<Self>(conn)
             .optional()
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "could not get comment by id"))
     }
 
     /// Loads list of comments replying to the specified post.
@@ -61,10 +52,7 @@ impl Comment {
         comment
             .filter(post_id.eq(pid))
             .load::<Self>(conn)
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "could not get replies to post"))
     }
 }
 

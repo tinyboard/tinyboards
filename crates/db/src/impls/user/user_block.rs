@@ -17,7 +17,7 @@ impl UserBlock {
             .filter(user_id.eq(for_user_id))
             .filter(target_id.eq(for_recipient_id))
             .first::<Self>(conn)
-            .map_err(|_e| TinyBoardsError::from_string("error reading user block", 500))
+            .map_err(|_| TinyBoardsError::from_message("error reading user block"))
     }
 }
 
@@ -31,7 +31,7 @@ impl Blockable for UserBlock {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|_e| TinyBoardsError::from_string("could not block user", 500))
+            .map_err(|_| TinyBoardsError::from_message("could not block user"))
     }
 
     fn unblock(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError> {
@@ -41,6 +41,6 @@ impl Blockable for UserBlock {
                 .filter(target_id.eq(form.target_id)),
         )
         .execute(conn)
-        .map_err(|_e| TinyBoardsError::from_string("could not unblock user", 500))
+        .map_err(|_| TinyBoardsError::from_message("could not unblock user"))
     }
 }

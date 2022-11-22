@@ -42,8 +42,7 @@ impl<'des> Perform<'des> for GetMembers {
                 .build()
                 .list()
         })
-        .await?
-        .map_err(|_e| TinyBoardsError::err_500())?;
+        .await??;
 
         Ok(GetMembersResponse { members })
     }

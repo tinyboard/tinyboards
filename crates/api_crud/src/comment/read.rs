@@ -37,7 +37,6 @@ impl<'des> PerformCrud<'des> for GetComment {
 
         let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, user_id)
-                .map_err(|_e| TinyBoardsError::from_string("could not find comment", 404))
         })
         .await??;
         

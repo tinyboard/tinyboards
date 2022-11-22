@@ -17,10 +17,7 @@ impl Voteable for CommentVote {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "could not vote on comment"))
     }
 
     fn remove(conn: &mut PgConnection, user_id: i32, cid: i32) -> Result<usize, TinyBoardsError> {
@@ -31,9 +28,6 @@ impl Voteable for CommentVote {
                 .filter(dsl::user_id.eq(user_id)),
         )
         .execute(conn)
-        .map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-        })
+        .map_err(|e| TinyBoardsError::from_error_message(e, "could not remove vote on comment"))
     }
 }

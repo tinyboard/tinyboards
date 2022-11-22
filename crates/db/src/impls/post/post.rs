@@ -9,10 +9,7 @@ use tinyboards_utils::TinyBoardsError;
 
 impl Post {
     pub fn submit(conn: &mut PgConnection, form: PostForm) -> Result<Self, TinyBoardsError> {
-        Self::create(conn, &form).map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::new(500, String::from("Internal error, please try again later"))
-        })
+        Self::create(conn, &form).map_err(|e| TinyBoardsError::from_error_message(e, "could not submit post"))
     }
 
     pub fn is_post_creator(user_id: i32, post_creator_id: i32) -> bool {
@@ -26,10 +23,7 @@ impl Post {
             .filter(id.eq(pid))
             .first::<i32>(conn)
             .optional()
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "error while checking existence of post"))
     }
 
     pub fn update_locked(

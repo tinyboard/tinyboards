@@ -37,21 +37,16 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         let orig_comment = blocking(context.pool(), move |conn| {
             Comment::read(conn, comment_id)
-                .map_err(|_e| TinyBoardsError::from_string("original comment not found", 404))
         })
         .await??;
 
         let orig_post = blocking(context.pool(), move |conn| {
             Post::read(conn, orig_comment.post_id)
-                .map_err(|_e| TinyBoardsError::from_string("original post not found", 404))
         })
         .await??;
 
         if orig_comment.deleted == data.deleted {
-            return Err(TinyBoardsError::from_string(
-                "couldn't delete comment again",
-                500,
-            ));
+            return Err(TinyBoardsError::from_message("couldn't delete comment a second time!"));
         }
 
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;
@@ -59,17 +54,13 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         check_post_deleted_removed_or_locked(orig_post.id, context.pool()).await?;
 
         if !Comment::is_comment_creator(user.id, orig_comment.creator_id) {
-            return Err(TinyBoardsError::from_string(
-                "comment edit not allowed",
-                405,
-            ));
+            return Err(TinyBoardsError::from_message("comment edit not allowed"));
         }
 
         let deleted = data.deleted;
 
         blocking(context.pool(), move |conn| {
             Comment::update_deleted(conn, comment_id, deleted)
-                .map_err(|_e| TinyBoardsError::err_500())
         })
         .await??;
 

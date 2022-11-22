@@ -44,8 +44,7 @@ impl<'des> Perform<'des> for Profile {
         let user = blocking(context.pool(), move |conn| {
             User::get_by_name(conn, &rcopy.username)
         })
-        .await?
-        .map_err(|_| TinyBoardsError::from_string("user not found", 404))?;
+        .await??;
 
         let settings = SETTINGS.to_owned();
         let domain = settings.hostname;
@@ -89,7 +88,7 @@ impl<'des> Perform<'des> for Profile {
 
         let rcopy2 = route.clone();
         let view = blocking(context.pool(), move |conn| {
-            UserView::read_from_name(conn, &rcopy2.username).map_err(|_| TinyBoardsError::err_500())
+            UserView::read_from_name(conn, &rcopy2.username)
         })
         .await??;
 

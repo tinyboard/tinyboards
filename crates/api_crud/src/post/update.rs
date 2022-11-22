@@ -36,7 +36,6 @@ impl<'des> PerformCrud<'des> for EditPost {
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, None)
-                .map_err(|_e| TinyBoardsError::from_string("could not find original post", 404))
         })
         .await??;
 
@@ -45,7 +44,7 @@ impl<'des> PerformCrud<'des> for EditPost {
         check_post_deleted_removed_or_locked(orig_post.post.id, context.pool()).await?;
 
         if user.id != orig_post.post.creator_id {
-            return Err(TinyBoardsError::from_string("post edit not allowed", 405));
+            return Err(TinyBoardsError::from_message("post edit not allowed"));
         }
 
         let body = data.body.clone();
@@ -61,7 +60,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         blocking(context.pool(), move |conn| {
             Post::update(conn, post_id, &form)
-                .map_err(|_| TinyBoardsError::from_string("could not update post", 500))
+                .map_err(|_| TinyBoardsError::from_message("could not update post"))
         })
         .await??;
 
@@ -70,7 +69,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         let post_view = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, Some(orig_post.post.creator_id))
-                .map_err(|_e| TinyBoardsError::from_string("could not find updated post", 404))
+                .map_err(|_e| TinyBoardsError::from_message("could not find updated post"))
         })
         .await??;
 

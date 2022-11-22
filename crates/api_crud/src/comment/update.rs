@@ -36,7 +36,6 @@ impl<'des> PerformCrud<'des> for EditComment {
         let comment_id = path.comment_id;
         let orig_comment = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, None)
-                .map_err(|_e| TinyBoardsError::from_string("could not find original comment", 404))
         })
         .await??;
 
@@ -47,10 +46,7 @@ impl<'des> PerformCrud<'des> for EditComment {
         check_comment_deleted_or_removed(orig_comment.comment.id, context.pool()).await?;
 
         if user.id != orig_comment.comment.creator_id {
-            return Err(TinyBoardsError::from_string(
-                "comment edit not allowed",
-                405,
-            ));
+            return Err(TinyBoardsError::from_message("comment edit not allowed"));
         }
 
         let body = data.body.clone();
@@ -67,7 +63,6 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         blocking(context.pool(), move |conn| {
             Comment::update(conn, comment_id, &form)
-                .map_err(|_e| TinyBoardsError::from_string("could not update comment", 500))
         })
         .await??;
 
@@ -76,7 +71,6 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, Some(orig_comment.comment.creator_id))
-                .map_err(|_e| TinyBoardsError::from_string("could not find updated comment", 500))
         })
         .await??;
 

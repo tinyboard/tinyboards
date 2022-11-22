@@ -32,7 +32,6 @@ impl<'des> Perform<'des> for LockPost {
         // get the post object
         let orig_post = blocking(context.pool(), move |conn| {
             Post::read(conn, post_id.clone())
-                .map_err(|_e| TinyBoardsError::from_string("couldn't find post", 404))
         })
         .await??;
 
@@ -46,7 +45,6 @@ impl<'des> Perform<'des> for LockPost {
         // update the post in the database to be locked
         blocking(context.pool(), move |conn| {
             Post::update_locked(conn, post_id.clone(), locked.clone())
-                .map_err(|_e| TinyBoardsError::from_string("could not lock post", 500))
         })
         .await??;
 
@@ -60,7 +58,6 @@ impl<'des> Perform<'des> for LockPost {
         // enter mod log action
         let mod_action = blocking(context.pool(), move |conn| {
             ModLockPost::create(conn, &lock_form)
-                .map_err(|_e| TinyBoardsError::from_string("could not log mod action", 500))
         })
         .await??;
 

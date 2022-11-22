@@ -1,4 +1,4 @@
-use crate::{settings::structs::RateLimitConfig, utils::get_ip, IpAddr};
+use crate::{settings::structs::RateLimitConfig, utils::get_ip, IpAddr, TinyBoardsError};
 use actix_web::{
     dev::{Service, ServiceRequest, ServiceResponse, Transform},
     HttpResponse
@@ -12,6 +12,7 @@ use std::{
     sync::{Arc, Mutex},
     task::{Context, Poll},
 };
+use tokio::sync::{mpsc, mpsc::Sender, OnceCell};
 
 pub mod rate_limiter;
 
@@ -28,10 +29,86 @@ pub struct RateLimited {
     type_: RateLimitType,
 }
 
+#[derive(Debug, Clone)]
+pub struct RateLimitedGuard {
+  rate_limit: Arc<Mutex<RateLimit>>,
+  type_: RateLimitType,
+}
+
 pub struct RateLimitedMiddleware<S> {
     rate_limited: RateLimited,
     service: Rc<S>,
 }
+
+#[derive(Clone)]
+pub struct RateLimitCell {
+  tx: Sender<RateLimitConfig>,
+  rate_limit: Arc<Mutex<RateLimit>>,
+}
+
+impl RateLimitCell {
+    /// Initialize cell if it wasnt initialized yet. Otherwise returns the existing cell.
+    pub async fn new(rate_limit_config: RateLimitConfig) -> &'static Self {
+      static LOCAL_INSTANCE: OnceCell<RateLimitCell> = OnceCell::const_new();
+      LOCAL_INSTANCE
+        .get_or_init(|| async {
+          let (tx, mut rx) = mpsc::channel::<RateLimitConfig>(4);
+          let rate_limit = Arc::new(Mutex::new(RateLimit {
+            rate_limiter: Default::default(),
+            rate_limit_config,
+          }));
+          let rate_limit2 = rate_limit.clone();
+          tokio::spawn(async move {
+            while let Some(r) = rx.recv().await {
+              rate_limit2
+                .lock()
+                .expect("Failed to lock rate limit mutex for updating")
+                .rate_limit_config = r;
+            }
+          });
+          RateLimitCell { tx, rate_limit }
+        })
+        .await
+    }
+  
+    /// Call this when the config was updated, to update all in-memory cells.
+    pub async fn send(&self, config: RateLimitConfig) -> Result<(), TinyBoardsError> {
+      self.tx.send(config).await?;
+      Ok(())
+    }
+  
+    pub fn message(&self) -> RateLimitedGuard {
+      self.kind(RateLimitType::Message)
+    }
+  
+    pub fn post(&self) -> RateLimitedGuard {
+      self.kind(RateLimitType::Post)
+    }
+  
+    pub fn register(&self) -> RateLimitedGuard {
+      self.kind(RateLimitType::Register)
+    }
+  
+    pub fn image(&self) -> RateLimitedGuard {
+      self.kind(RateLimitType::Image)
+    }
+  
+    pub fn comment(&self) -> RateLimitedGuard {
+      self.kind(RateLimitType::Comment)
+    }
+  
+    pub fn search(&self) -> RateLimitedGuard {
+      self.kind(RateLimitType::Search)
+    }
+  
+    fn kind(&self, type_: RateLimitType) -> RateLimitedGuard {
+      RateLimitedGuard {
+        rate_limit: self.rate_limit.clone(),
+        type_,
+      }
+    }
+  }
+
 
 impl RateLimit {
 

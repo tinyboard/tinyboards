@@ -22,11 +22,11 @@ impl Settings {
     /// Warning: Only call this once.
     pub(crate) fn init() -> Result<Self, TinyBoardsError> {
         let config = from_str::<Settings>(&Self::read_config_file()
-            .map_err(|_| TinyBoardsError::from_string("error reading config file", 500))?)
-            .map_err(|_| TinyBoardsError::from_string("error converting config to string", 500))?;
+            .map_err(|_| TinyBoardsError::from_message("error reading config file"))?)
+            .map_err(|_| TinyBoardsError::from_message("error converting config to string"))?;
         
         if config.hostname == "unset" {
-            return Err(TinyBoardsError::from_string("Hostname variable is not set!", 500));
+            return Err(TinyBoardsError::from_message("Hostname variable is not set!"));
         }
 
         Ok(config)

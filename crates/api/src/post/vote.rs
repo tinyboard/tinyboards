@@ -38,7 +38,7 @@ impl<'des> Perform<'des> for CreatePostVote {
         let post_id = path.post_id;
 
         let post = blocking(context.pool(), move |conn| {
-            Post::read(conn, post_id).map_err(|_| TinyBoardsError::err_500())
+            Post::read(conn, post_id)
         })
         .await??;
 
@@ -52,8 +52,7 @@ impl<'des> Perform<'des> for CreatePostVote {
         let is_board_banned = blocking(context.pool(), move |conn| {
             Board::board_has_ban(conn, post.board_id, user.id)
         })
-        .await?
-        .map_err(|_| TinyBoardsError::err_500())?;
+        .await??;
 
         if !is_board_banned {
             let vote_form = PostVoteForm {
@@ -75,16 +74,13 @@ impl<'des> Perform<'des> for CreatePostVote {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| PostVote::vote(conn, &cloned_form);
                 blocking(context.pool(), like)
-                    .await?
-                    .map_err(|_e| TinyBoardsError::from_string("could not vote on post", 500))?;
+                    .await??;
             } else {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| {
                     PostVote::remove(conn, cloned_form.user_id, cloned_form.post_id)
                 };
-                blocking(context.pool(), like).await?.map_err(|_e| {
-                    TinyBoardsError::from_string("could not remove vote on post", 500)
-                })?;
+                blocking(context.pool(), like).await??;
             }
         }
 

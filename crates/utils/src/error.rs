@@ -1,55 +1,113 @@
-use actix_web::{error, http::StatusCode, HttpResponse};
-use derive_more::Error;
-use serde::Serialize;
+use std::fmt;
+use std::fmt::{Debug, Display};
+use tracing_error::SpanTrace;
 
-#[derive(Serialize)]
-struct ErrorResponse<'a> {
-    code: u16,
-    error: &'a str,
+#[derive(serde::Serialize)]
+struct ApiError {
+  error: String,
 }
 
-#[derive(Debug, Error)]
 pub struct TinyBoardsError {
-    pub message: String,
-    pub error_code: u16,
+    pub message: Option<String>,
+    pub inner: anyhow::Error,
+    pub context: SpanTrace,
 }
 
 impl TinyBoardsError {
-    pub fn new(error_code: u16, message: String) -> Self {
-        Self {
-            message,
-            error_code,
+    /// Create a TinyBoardsError from a message, including stack trace
+    pub fn from_message(message: &str) -> Self {
+        let inner = anyhow::anyhow!("{}", message);
+        TinyBoardsError { 
+            message: Some(message.into()), 
+            inner, 
+            context: SpanTrace::capture(), 
         }
     }
 
-    pub fn from_string(message: &str, error_code: u16) -> Self {
-        Self::new(error_code, String::from(message))
+    /// Create a TinyBoardsError from a error and a message, including stack trace
+    pub fn from_error_message<E>(error: E, message: &str) -> Self 
+    where 
+        E: Into<anyhow::Error>, 
+    {
+        TinyBoardsError { 
+            message: Some(message.into()), 
+            inner: error.into(), 
+            context: SpanTrace::capture(),
+         }
     }
 
-    pub fn err_500() -> Self {
-        Self::new(500, String::from("Internal Server Error"))
+    /// Add a message to existing error (or overwrite error)
+    pub fn with_message(self, message: &str) -> Self {
+        TinyBoardsError {
+            message: Some(message.into()),
+            ..self
+        }
     }
 
-    pub fn err_401() -> Self {
-        Self::new(401, String::from("You must be logged in to do that!"))
+    pub fn to_json(&self) -> Result<String, Self> {
+        let api_error = match &self.message {
+          Some(error) => ApiError {
+            error: error.into(),
+          },
+          None => ApiError {
+            error: "Unknown".into(),
+          },
+        };
+    
+        Ok(serde_json::to_string(&api_error)?)
     }
 }
 
-impl std::fmt::Display for TinyBoardsError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Error {}: {}", self.error_code, self.message)
+impl<T> From<T> for TinyBoardsError
+where
+    T: Into<anyhow::Error> 
+{
+    fn from(t: T) -> Self {
+        TinyBoardsError {
+            message: None,
+            inner: t.into(),
+            context: SpanTrace::capture(),
+        }
     }
 }
 
-impl error::ResponseError for TinyBoardsError {
-    fn error_response(&self) -> HttpResponse {
-        HttpResponse::build(self.status_code()).json(ErrorResponse {
-            code: self.error_code,
-            error: &self.message,
-        })
+impl Debug for TinyBoardsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("TinyBoardsError")
+            .field("message", &self.message)
+            .field("inner", &self.inner)
+            .field("context", &"SpanTrace")
+            .finish()
+    }
+}
+
+impl Display for TinyBoardsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(message) = &self.message {
+            write!(f, "{}: ", message)?;
+        }
+        writeln!(f, "{}", self.inner)?;
+        fmt::Display::fmt(&self.context, f)
+    }
+}
+
+impl actix_web::error::ResponseError for TinyBoardsError {
+    fn status_code(&self) -> http::StatusCode {
+        match self.inner.downcast_ref::<diesel::result::Error>() {
+            Some(diesel::result::Error::NotFound) => http::StatusCode::NOT_FOUND,
+            _ => http::StatusCode::BAD_REQUEST
+        }
     }
 
-    fn status_code(&self) -> StatusCode {
-        StatusCode::from_u16(self.error_code).expect("Invalid error code")
+    fn error_response(&self) -> actix_web::HttpResponse {
+        if let Some(message) = &self.message {
+            actix_web::HttpResponse::build(self.status_code()).json(ApiError {
+                error: message.into(),
+            })
+        } else {
+            actix_web::HttpResponse::build(self.status_code())
+                .content_type("text/plain")
+                .body(self.inner.to_string())
+        }
     }
 }

@@ -109,7 +109,7 @@ pub fn diesel_option_overwrite_to_url(
     Some("") => Ok(Some(None)),
     Some(str_url) => match Url::parse(str_url) {
       Ok(url) => Ok(Some(Some(url.into()))),
-      Err(_e) => Err(TinyBoardsError::from_string("invalid url", 500)),
+      Err(e) => Err(TinyBoardsError::from_error_message(e, "invalid url")),
     },
     None => Ok(None)
   }

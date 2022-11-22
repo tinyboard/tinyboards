@@ -53,11 +53,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 .build()
                 .list()
         })
-        .await?
-        .map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-        })?;
+        .await??;
 
         if !is_logged_in {
             for pv in posts

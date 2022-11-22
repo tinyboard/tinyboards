@@ -21,7 +21,7 @@ pub fn send_email(
     let email_config = settings
         .email
         .to_owned()
-        .ok_or_else(|| TinyBoardsError::from_string("no email setup", 500))?;
+        .ok_or_else(|| TinyBoardsError::from_message("no email setup"))?;
     
     let domain = settings.hostname.to_owned();
 
@@ -29,8 +29,9 @@ pub fn send_email(
         let email_and_port = email_config.smtp_server.split(':').collect::<Vec<&str>>();
         if email_and_port.len() == 1 {
             return Err(
-                TinyBoardsError::from_string(
-                    "email.smtp_server needs a port, EX: smtp.example.com:401", 500)
+                TinyBoardsError::from_message(
+                    "email.smtp_server needs a port, EX: smtp.example.com:401"
+                )
             );
         }
         (
@@ -67,8 +68,8 @@ pub fn send_email(
     let builder_dangerous = SmtpTransport::builder_dangerous(smtp_server).port(smtp_port);
 
     let mut builder = match email_config.tls_type.as_str() {
-        "starttls" => SmtpTransport::starttls_relay(smtp_server).map_err(|_| TinyBoardsError::err_500())?,
-        "tls" => SmtpTransport::relay(smtp_server).map_err(|_| TinyBoardsError::err_500())?,
+        "starttls" => SmtpTransport::starttls_relay(smtp_server)?,
+        "tls" => SmtpTransport::relay(smtp_server)?,
         _ => builder_dangerous,
     };
 
@@ -82,6 +83,6 @@ pub fn send_email(
 
     match result {
         Ok(_) => Ok(()),
-        Err(e) => Err(TinyBoardsError::from_string(e.to_string().as_str(), 500)),
+        Err(e) => Err(TinyBoardsError::from_message(e.to_string().as_str())),
     }
 }

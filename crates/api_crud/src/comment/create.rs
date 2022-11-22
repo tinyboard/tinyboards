@@ -35,7 +35,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         let data = self;
 
         let post = blocking(context.pool(), move |conn| {
-            Post::read(conn, data.post_id).map_err(|_| TinyBoardsError::err_500())
+            Post::read(conn, data.post_id)
         })
         .await??;
 
@@ -60,7 +60,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         .await??
         .is_none()
         {
-            return Err(TinyBoardsError::from_string("Invalid post ID", 404));
+            return Err(TinyBoardsError::from_message("invalid post id"));
         }
 
         let mut level = 1;
@@ -70,20 +70,14 @@ impl<'des> PerformCrud<'des> for CreateComment {
             let parent_comment =
                 blocking(context.pool(), move |conn| Comment::get_by_id(conn, cid)).await??;
             if parent_comment.is_none() {
-                return Err(TinyBoardsError::from_string(
-                    "Invalid parent comment ID",
-                    404,
-                ));
+                return Err(TinyBoardsError::from_message("invalid parent comment id"));
             }
 
             // we can unwrap safely, because the above check made sure to abort if the comment is None
             // abort if the comment the user is replying to doesn't belong to the specified post - may be useful later
             let parent_comment = parent_comment.unwrap();
             if parent_comment.post_id != data.post_id {
-                return Err(TinyBoardsError::from_string(
-                    "What a bad request! Now you have a good reason to be ashamed of yourself.",
-                    400,
-                ));
+                return Err(TinyBoardsError::from_message("bad request"));
             }
 
             level = parent_comment.level + 1;
@@ -122,8 +116,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         let new_comment = blocking(context.pool(), move |conn| {
             CommentView::read(conn, new_comment.id, Some(user.id))
         })
-        .await?
-        .map_err(|_| TinyBoardsError::err_500())?;
+        .await??;
 
         Ok(new_comment)
     }

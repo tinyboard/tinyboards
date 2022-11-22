@@ -22,10 +22,7 @@ impl Voteable for PostVote {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-        })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "could not create post vote"))
     }
 
     fn remove(conn: &mut PgConnection, user_id: i32, post_id: i32) -> Result<usize, TinyBoardsError> {
@@ -36,10 +33,6 @@ impl Voteable for PostVote {
                 .filter(dsl::user_id.eq(user_id)),
         )
         .execute(conn)
-        .map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-            }
-        )
+        .map_err(|e| TinyBoardsError::from_error_message(e, "could not remove post vote"))
     }
 }

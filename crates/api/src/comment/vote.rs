@@ -40,7 +40,6 @@ impl<'des> Perform<'des> for CreateCommentVote {
 
         let orig_comment = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, Some(user.id))
-                .map_err(|_| TinyBoardsError::err_500())
         })
         .await??;
 
@@ -56,8 +55,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
         let is_board_banned = blocking(context.pool(), move |conn| {
             Board::board_has_ban(conn, orig_comment.post.board_id, user.id)
         })
-        .await?
-        .map_err(|_| TinyBoardsError::err_500())?;
+        .await??;
 
         if !is_board_banned {
             let vote_form = CommentVoteForm {
@@ -78,16 +76,13 @@ impl<'des> Perform<'des> for CreateCommentVote {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| CommentVote::vote(conn, &cloned_form);
                 blocking(context.pool(), like)
-                    .await?
-                    .map_err(|_e| TinyBoardsError::from_string("could not vote on comment", 500))?;
+                    .await??;
             } else {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| {
                     CommentVote::remove(conn, cloned_form.user_id, cloned_form.comment_id)
                 };
-                blocking(context.pool(), like).await?.map_err(|_e| {
-                    TinyBoardsError::from_string("could not remove vote on comment", 500)
-                })?;
+                blocking(context.pool(), like).await??;
             }
         }
 

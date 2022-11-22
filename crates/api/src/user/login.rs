@@ -23,22 +23,21 @@ impl<'des> Perform<'des> for Login {
         _: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let (user, user_view) = blocking(context.pool(), move |conn| {
-            let user = if self.username_or_email.contains('@') {
+            let user: User = if self.username_or_email.contains('@') {
                 User::get_by_email(conn, &self.username_or_email)
             } else {
                 User::get_by_name(conn, &self.username_or_email)
-            }
-            .map_err(|_| TinyBoardsError::new(403, String::from("Login failed")))?;
+            }?;
 
-            let user_view =
-                UserView::read(conn, user.id).map_err(|_| TinyBoardsError::err_500())?;
+            let user_view: UserView =
+                UserView::read(conn, user.id)?;
 
-            Ok((user, user_view))
+            Ok::<(User, UserView), TinyBoardsError>((user, user_view))
         })
         .await??;
 
         if !verify_password(&user.passhash, &self.password) {
-            return Err(TinyBoardsError::new(403, String::from("Login failed")));
+            return Err(TinyBoardsError::from_message("login failed"));
         }
 
         Ok(LoginResponse {

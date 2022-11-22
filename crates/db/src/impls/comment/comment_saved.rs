@@ -16,7 +16,7 @@ impl Saveable for CommentSaved {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|_| TinyBoardsError::err_500())
+            .map_err(|e| TinyBoardsError::from_error_message(e, "could not save comment"))
     }
 
     fn unsave(conn: &mut PgConnection, form: &CommentSavedForm) -> Result<usize, TinyBoardsError> {
@@ -26,6 +26,6 @@ impl Saveable for CommentSaved {
                 .filter(user_id.eq(form.user_id))
         )
         .execute(conn)
-        .map_err(|_| TinyBoardsError::err_500())
+        .map_err(|e| TinyBoardsError::from_error_message(e, "could not unsave comment"))
     }
 }

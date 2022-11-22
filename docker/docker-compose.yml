@@ -26,12 +26,15 @@ services:
       dockerfile: ./docker/Dockerfile
     links:
       - postgres
+    volumes:
+      - ./tinyboards.hjson:/config/defaults.hjson
     networks:
       tinyboards:
         aliases:
           - tinyboards-be
-
-    # might need to add a volume bridge here for a custom config file, otherwise the dockerfile sets up the default config
+    depends_on:
+      - postgres
+      - pictrs
 
   tinyboards-fe:
     image: tinyboards-fe-dev
@@ -50,7 +53,21 @@ services:
     depends_on:
       - tinyboards
 
-
+  pictrs:
+    image: asonix/pictrs:0.3.1
+    # needs to match the pictrs url in the config hjson
+    hostname: pictrs
+    networks:
+      tinyboards:
+        aliases:
+          - pictrs
+    environment:
+      - PICTRS__API_KEY=65sSuBc$Dont#Ebk3Bw* 
+    user: 991:991
+    volumes:
+      - ./volumes/pictrs:/mnt
+    restart: always
+  
   postgres:
     image: postgres:14-alpine
     ports:

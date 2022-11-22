@@ -58,7 +58,6 @@ impl<'des> PerformCrud<'des> for SubmitPost {
 
         let published_post = blocking(context.pool(), move |conn| {
             Post::submit(conn, post_form)
-                .map_err(|_e| TinyBoardsError::from_string("could not submit post", 500))
         })
         .await??;
 
@@ -72,9 +71,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         blocking(context.pool(), move |conn| PostVote::vote(conn, &post_vote)).await??;
 
         let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, published_post.id, Some(user.id)).map_err(|_e| {
-                TinyBoardsError::from_string("could not find newly published post", 404)
-            })
+            PostView::read(conn, published_post.id, Some(user.id))
         })
         .await??;
 

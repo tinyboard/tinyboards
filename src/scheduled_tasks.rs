@@ -12,7 +12,7 @@ pub fn setup(pool: DbPool) -> Result<(), TinyBoardsError> {
   let mut scheduler = Scheduler::new();
 
   let mut conn = pool.get()
-    .map_err(|_| TinyBoardsError::from_string("error getting db pool", 500))?;
+    .map_err(|_| TinyBoardsError::from_message("error getting db pool"))?;
   update_banned_when_expired(&mut conn);
 
   // On startup, reindex the tables non-concurrently

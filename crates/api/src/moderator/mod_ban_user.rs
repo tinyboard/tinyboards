@@ -38,7 +38,6 @@ impl<'des> Perform<'des> for BanUser {
         // update the user in the database to be banned
         blocking(context.pool(), move |conn| {
             User::update_ban(conn, other_user_id.clone(), banned.clone())
-                .map_err(|_e| TinyBoardsError::from_string("could not ban user", 500))
         })
         .await??;
 
@@ -54,7 +53,6 @@ impl<'des> Perform<'des> for BanUser {
         // enter mod log action
         let mod_action = blocking(context.pool(), move |conn| {
             ModBan::create(conn, &ban_form)
-                .map_err(|_e| TinyBoardsError::from_string("could not log mod action", 500))
         })
         .await??;
 

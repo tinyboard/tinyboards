@@ -20,7 +20,7 @@ impl Claims {
         validation.validate_exp = false;
         validation.required_spec_claims.remove("exp");
         let key = DecodingKey::from_secret(jwt_secret.as_ref());
-        Ok(decode::<Claims>(jwt, &key, &validation).map_err(|_| TinyBoardsError::err_500())?)
+        Ok(decode::<Claims>(jwt, &key, &validation)?)
     }
 
     pub fn jwt(user_id: i32, jwt_secret: &str, hostname: &str) -> Result<Jwt, TinyBoardsError> {
@@ -30,6 +30,6 @@ impl Claims {
             iat: Utc::now().timestamp(),
         };
         let key = EncodingKey::from_secret(jwt_secret.as_ref());
-        Ok(encode(&Header::default(), &claims, &key).map_err(|_| TinyBoardsError::err_500())?)
+        Ok(encode(&Header::default(), &claims, &key)?)
     }
 }

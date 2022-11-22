@@ -31,17 +31,10 @@ impl User {
                 .filter(name.ilike(username))
                 .first::<i32>(conn)
         }
-        .optional()
-        .map_err(|e| {
-            eprintln!("ERROR: {e}");
-            TinyBoardsError::err_500()
-        })?;
+        .optional()?;
 
         if user.is_some() {
-            return Err(TinyBoardsError::new(
-                400,
-                String::from("Username/Email already taken!"),
-            ));
+            return Err(TinyBoardsError::from_message("username or email was already taken"));
         }
 
         Ok(())
@@ -75,23 +68,16 @@ impl User {
         use crate::schema::user_::dsl::*;
 
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
-        let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-        })?;
+        let claims: BTreeMap<String, String> = token.verify_with_key(&key)?;
 
         let uid = claims["uid"]
-            .parse::<i32>()
-            .map_err(|_| TinyBoardsError::err_500())?;
+            .parse::<i32>()?;
 
         user_
             .filter(id.eq(uid))
             .first::<Self>(conn)
             .optional()
-            .map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            .map_err(|e| TinyBoardsError::from_error_message(e, "error getting user from jwt"))
     }
     pub fn update_ban(
         conn: &mut PgConnection,
@@ -141,10 +127,7 @@ impl User {
             ..form
         };
 
-        Self::create(conn, &form).map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::new(500, String::from("Internal error, please try again later"))
-        })
+        Self::create(conn, &form).map_err(|e| TinyBoardsError::from_error_message(e, "could not create user"))
     }
 
     pub fn has_active_ban(&self) -> bool {

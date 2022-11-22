@@ -28,31 +28,25 @@ impl<'des> PerformCrud<'des> for DeletePost {
 
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| {
-            Post::read(conn, post_id).map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            Post::read(conn, post_id)
         })
         .await??;
 
         if orig_post.deleted == data.deleted {
-            return Err(TinyBoardsError::from_string(
-                "couldn't delete post again",
-                500,
-            ));
+            return Err(TinyBoardsError::from_message("couldn't delete post a second time!"));
         }
 
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;
 
         if !Post::is_post_creator(user.id, orig_post.creator_id) {
-            return Err(TinyBoardsError::from_string("post edit not allowed", 405));
+            return Err(TinyBoardsError::from_message("post edit not allowed"));
         }
 
         let post_id = path.post_id;
         let deleted = data.deleted;
 
         blocking(context.pool(), move |conn| {
-            Post::update_deleted(conn, post_id, deleted).map_err(|_| TinyBoardsError::err_500())
+            Post::update_deleted(conn, post_id, deleted)
         })
         .await??;
 

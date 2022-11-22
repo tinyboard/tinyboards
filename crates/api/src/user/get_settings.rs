@@ -30,7 +30,6 @@ impl<'des> Perform<'des> for GetUserSettings {
         let settings = 
             blocking(context.pool(), move |conn| {
                 UserSettingsView::read(conn, user_view.user.id)
-                    .map_err(|_| TinyBoardsError::from_string("could not read user settings", 500))
             })
             .await??;
         

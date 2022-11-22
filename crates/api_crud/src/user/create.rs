@@ -30,16 +30,13 @@ impl<'des> PerformCrud<'des> for Register {
         // USERNAME CHECK
         let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
         if !re.is_match(&data.username) {
-            return Err(TinyBoardsError::new(400, String::from("Invalid username!")));
+            return Err(TinyBoardsError::from_message("invalid username"));
         }
 
         // PASSWORD CHECK
         // password_length_check(&data.password)?;
         if !(8..60).contains(&data.password.len()) {
-            return Err(TinyBoardsError::new(
-                400,
-                String::from("Your password must be between 8 and 60 characters long."),
-            ));
+            return Err(TinyBoardsError::from_message("Your password must be between 8 and 60 characters long."));
         }
 
         // error messages here if email verification is on and no email provided, same for applicaction not being filled out

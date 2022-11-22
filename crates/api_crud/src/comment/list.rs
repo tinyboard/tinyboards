@@ -61,8 +61,7 @@ impl<'des> PerformCrud<'des> for ListComments {
                 .build()
                 .list()
         })
-        .await?
-        .map_err(|_| TinyBoardsError::from_string("could not get comments", 500))?;
+        .await??;
 
         // blank out comment info if deleted or removed
         for cv in comments.iter_mut()
@@ -102,7 +101,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         .await??
         .is_none()
         {
-            return Err(TinyBoardsError::from_string("Invalid post ID", 404));
+            return Err(TinyBoardsError::from_message("invalid post id"));
         }
 
         let mut comments = blocking(context.pool(), move |conn| {
@@ -116,8 +115,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
                 .build()
                 .list()
         })
-        .await?
-        .map_err(|_| TinyBoardsError::err_500())?;
+        .await??;
 
         // blank out comment info if deleted or removed
         for cv in comments.iter_mut()

@@ -2,6 +2,7 @@
 pub mod api_routes;
 pub mod root_span_builder;
 pub mod scheduled_tasks;
+pub mod media;
 #[cfg(feature = "console")]
 pub mod telemetry;
 
@@ -14,7 +15,7 @@ use url::Url;
 
 pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), TinyBoardsError> {
     LogTracer::init()
-        .map_err(|_| TinyBoardsError::from_string("failed to initialize log tracer", 500))?;
+        .map_err(|_| TinyBoardsError::from_message("failed to initialize log tracer"))?;
 
     let log_description = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into());
 
@@ -22,7 +23,7 @@ pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), TinyBoardsErr
         .trim()
         .trim_matches('"')
         .parse::<Targets>()
-        .map_err(|_| TinyBoardsError::from_string("failed to get logger targets", 500))?;
+        .map_err(|_| TinyBoardsError::from_message("failed to get logger targets"))?;
     
     let format_layer = tracing_subscriber::fmt::layer().with_filter(targets.clone());
 
@@ -37,7 +38,7 @@ pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), TinyBoardsErr
         tracing::error!("Feature `console` must be enabled for opentelemetry tracing");
     } else {
         set_global_default(subscriber)
-            .map_err(|_| TinyBoardsError::from_string("failed to set global default for logger", 500))?;
+            .map_err(|_| TinyBoardsError::from_message("failed to set global default for logger"))?;
     }
 
     Ok(())

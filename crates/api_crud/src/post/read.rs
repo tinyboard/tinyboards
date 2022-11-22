@@ -42,11 +42,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         let mut post_view = blocking(context.pool(), move |conn| {
             PostView::read(conn, post_id, user_id)
         })
-        .await?
-        .map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-        })?;
+        .await??;
 
         if post_view.post.removed || post_view.post.deleted {
             post_view.hide_if_removed_or_deleted(user_view.as_ref());
@@ -60,19 +56,12 @@ impl<'des> PerformCrud<'des> for GetPost {
         let board_view = blocking(context.pool(), move |conn| {
             BoardView::read(conn, board_id, user_id)
         })
-        .await?
-        .map_err(|e| {
-            eprintln!("ERROR: {}", e);
-            TinyBoardsError::err_500()
-        })?;
+        .await??;
 
         // blank out deleted or removed info here
 
         let moderators = blocking(context.pool(), move |conn| {
-            BoardModeratorView::for_board(conn, board_id).map_err(|e| {
-                eprintln!("ERROR: {}", e);
-                TinyBoardsError::err_500()
-            })
+            BoardModeratorView::for_board(conn, board_id)
         })
         .await??;
 

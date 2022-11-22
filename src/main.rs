@@ -46,7 +46,7 @@ async fn main() -> Result<(), TinyBoardsError> {
     let settings = SETTINGS.to_owned();
 
     init_logging(&settings.opentelemetry_url)
-        .map_err(|_| TinyBoardsError::from_string("failed to initialize logger", 500))?;
+        .map_err(|_| TinyBoardsError::from_message("failed to initialize logger"))?;
 
     let db_url = match get_database_url_from_env() {
         Ok(url) => url,
@@ -65,7 +65,7 @@ async fn main() -> Result<(), TinyBoardsError> {
     blocking(&pool, move |conn| {
         let _ = conn
             .run_pending_migrations(MIGRATIONS)
-            .map_err(|_| TinyBoardsError::from_string("Couldn't run migrations", 500))?;
+            .map_err(|_| TinyBoardsError::from_message("Couldn't run migrations"))?;
         Ok(()) as Result<(), TinyBoardsError>
     })
     .await??;
@@ -82,9 +82,8 @@ async fn main() -> Result<(), TinyBoardsError> {
 
     // init the secret
     let conn = &mut pool.get().map_err(|_| {
-        TinyBoardsError::from_string(
-            "could not establish connection pool for initializing secrets",
-            500,
+        TinyBoardsError::from_message(
+            "could not establish connection pool for initializing secrets"
         )
     })?;
     let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
@@ -98,7 +97,7 @@ async fn main() -> Result<(), TinyBoardsError> {
         .user_agent(build_user_agent(&settings))
         .timeout(REQWEST_TIMEOUT)
         .build()
-        .map_err(|_| TinyBoardsError::from_string("could not build reqwest client", 500))?;
+        .map_err(|_| TinyBoardsError::from_message("could not build reqwest client"))?;
 
     let retry_policy = ExponentialBackoff {
         max_n_retries: 3,
@@ -130,10 +129,10 @@ async fn main() -> Result<(), TinyBoardsError> {
             .service(fs::Files::new("/assets", "./assets"))
     })
     .bind((settings_bind.bind, settings_bind.port))
-    .map_err(|_| TinyBoardsError::from_string("could not bind to ip", 500))?
+    .map_err(|_| TinyBoardsError::from_message("could not bind to ip"))?
     .run()
     .await
-    .map_err(|_| TinyBoardsError::from_string("could not start web server", 500))?;
+    .map_err(|_| TinyBoardsError::from_message("could not start web server"))?;
 
     Ok(())
 }
