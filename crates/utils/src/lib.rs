@@ -15,6 +15,8 @@ pub use time::time;
 
 use std::{fmt, time::Duration};
 
+pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
+
 #[derive(PartialEq, Eq, Hash, Debug, Clone)]
 pub struct IpAddr(pub String);
 

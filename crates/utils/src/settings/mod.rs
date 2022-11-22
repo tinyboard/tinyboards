@@ -8,6 +8,9 @@ use deser_hjson::from_str;
 use once_cell::sync::Lazy;
 use std::{env, fs, io::Error};
 
+use self::structs::PictrsConfig;
+use anyhow::anyhow;
+
 pub mod structs;
 
 static DEFAULT_CONFIG_FILE: &str = "./config/defaults.hjson";
@@ -72,6 +75,13 @@ impl Settings {
                 .context(location_info!())?
                 .to_string(),
         )
+    }
+
+    pub fn pictrs_config(&self) -> Result<PictrsConfig, TinyBoardsError> {
+        self
+            .pictrs
+            .clone()
+            .ok_or_else(|| anyhow!("images disabled").into())
     }
 
 
