@@ -1,6 +1,6 @@
 use actix_web::{
     body::BodyStream,
-    error::{self, ErrorBadRequest},
+    error::ErrorBadRequest,
     http::{
         header::{HeaderName, ACCEPT_ENCODING, HOST},
         StatusCode,
@@ -14,7 +14,7 @@ use futures::stream::{Stream, StreamExt};
 use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking};
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db::models::site::site::Site;
-use tinyboards_utils::{claims::Claims, rate_limit::RateLimitCell, REQWEST_TIMEOUT, TinyBoardsError};
+use tinyboards_utils::{claims::Claims, rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest::Body;
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ use serde::{Deserialize, Serialize};
 pub fn config(
     cfg: &mut web::ServiceConfig,
     client: ClientWithMiddleware,
-    rate_limit: &RateLimitCell,
+    _rate_limit: &RateLimitCell,
 ) {
     cfg
     .app_data(web::Data::new(client))
@@ -102,7 +102,7 @@ async fn full_res(
         Site::read_local(conn)
     })
     .await?
-    .map_err(error::ErrorBadRequest)?;
+    .map_err(ErrorBadRequest)?;
 
     if site.private_instance {
         let jwt = req
@@ -153,7 +153,7 @@ async fn image(
         client_req = client_req.header("X-Forwarded-For", addr.to_string());
     }
 
-    let res = client_req.send().await.map_err(error::ErrorBadRequest)?;
+    let res = client_req.send().await.map_err(ErrorBadRequest)?;
 
     if res.status() == StatusCode::NOT_FOUND {
         return Ok(HttpResponse::NotFound().finish());
@@ -196,10 +196,10 @@ async fn upload(
         .body(Body::wrap_stream(make_send(body)))
         .send()
         .await
-        .map_err(error::ErrorBadRequest)?;
+        .map_err(ErrorBadRequest)?;
     
     let status = res.status();
-    let images = res.json::<Images>().await.map_err(error::ErrorBadRequest)?;
+    let images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
 
     Ok(HttpResponse::build(status).json(images))
 }
@@ -221,7 +221,7 @@ async fn delete(
       client_req = client_req.header("X-Forwarded-For", addr.to_string());
     }
   
-    let res = client_req.send().await.map_err(error::ErrorBadRequest)?;
+    let res = client_req.send().await.map_err(ErrorBadRequest)?;
   
     Ok(HttpResponse::build(res.status()).body(BodyStream::new(res.bytes_stream())))
   }
