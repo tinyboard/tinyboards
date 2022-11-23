@@ -5,9 +5,9 @@ use tinyboards_api_common::{
     comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*,
 };
 use tinyboards_api_crud::PerformCrud;
-use tinyboards_utils::{rate_limit::RateLimit, TinyBoardsError};
+use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
-pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
+pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     cfg.service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
@@ -18,7 +18,7 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             // Authenticate
             .service(
                 web::scope("/auth")
-                    //.wrap(rate_limit.message())
+                    .wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
@@ -29,7 +29,7 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             // Post
             .service(
                 web::scope("/posts")
-                    //.wrap(rate_limit.message())
+                    .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("", web::get().to(route_get_crud::<ListPosts>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
@@ -42,7 +42,7 @@ pub fn config(cfg: &mut web::ServiceConfig, _rate_limit: &RateLimit) {
             // Comment
             .service(
                 web::scope("/comments")
-                    //.wrap(rate_limit.message())
+                    .wrap(rate_limit.message())
                     .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))

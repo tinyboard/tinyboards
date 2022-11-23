@@ -16,7 +16,7 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::{BoardUserBanView, UserView};
-use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_utils::{error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::RateLimitSettings};
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -404,3 +404,23 @@ pub async fn check_comment_deleted_or_removed(
         Ok(())
     }
 }
+
+pub fn get_rate_limit_config(
+    rate_limit_settings: &RateLimitSettings,
+  ) -> RateLimitConfig {
+    let l = rate_limit_settings;
+    RateLimitConfig {
+      message: l.message,
+      message_per_second: l.message_per_second,
+      post: l.post,
+      post_per_second: l.post_per_second,
+      register: l.register,
+      register_per_second: l.register_per_second,
+      image: l.image,
+      image_per_second: l.image_per_second,
+      comment: l.comment,
+      comment_per_second: l.comment_per_second,
+      search: l.search,
+      search_per_second: l.search_per_second,
+    }
+  }

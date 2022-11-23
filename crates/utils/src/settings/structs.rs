@@ -13,7 +13,7 @@ pub struct Settings {
   pub database: DatabaseConfig,
   /// rate limits for various user actions, by user ip
   #[default(Some(Default::default()))]
-  pub rate_limit: Option<RateLimitConfig>,
+  pub rate_limit: Option<RateLimitSettings>,
   #[default(Default::default())]
   pub captcha: CaptchaConfig,
   /// Image server configuration.
@@ -72,7 +72,7 @@ pub struct PictrsConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
 #[serde(default)]
-pub struct RateLimitConfig {
+pub struct RateLimitSettings {
   /// Maximum number of messages created in interval
   #[default(180)]
   pub message: i32,

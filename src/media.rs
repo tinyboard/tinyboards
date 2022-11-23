@@ -22,13 +22,13 @@ use serde::{Deserialize, Serialize};
 pub fn config(
     cfg: &mut web::ServiceConfig,
     client: ClientWithMiddleware,
-    _rate_limit: &RateLimitCell,
+    rate_limit: &RateLimitCell,
 ) {
     cfg
     .app_data(web::Data::new(client))
     .service(
         web::resource("/pictrs/image")
-        //.wrap(rate_limit.image())
+        .wrap(rate_limit.image())
         .route(web::get().to(upload)),
     )
     .service(

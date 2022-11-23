@@ -17,11 +17,10 @@ use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
 use std::{
-    sync::{Arc, Mutex},
     thread,
     time::Duration,
 };
-use tinyboards_api_common::{data::TinyBoardsContext, request::build_user_agent, utils::blocking};
+use tinyboards_api_common::{data::TinyBoardsContext, request::build_user_agent, utils::{blocking, get_rate_limit_config},};
 use tinyboards_db::models::secret::Secret;
 use tinyboards_db::utils::get_database_url_from_env;
 use tinyboards_server::{
@@ -29,7 +28,7 @@ use tinyboards_server::{
 };
 use tinyboards_utils::{
     error::TinyBoardsError,
-    rate_limit::{rate_limiter::RateLimiter, RateLimit, RateLimitCell},
+    rate_limit::RateLimitCell,
     settings::SETTINGS,
 };
 use tracing_actix_web::TracingLogger;
@@ -75,12 +74,10 @@ async fn main() -> Result<(), TinyBoardsError> {
         scheduled_tasks::setup(task_pool).expect("Couldn't setup scheduled tasks");
     });
 
-    let rate_limiter = RateLimit {
-        rate_limiter: Arc::new(Mutex::new(RateLimiter::default())),
-        rate_limit_config: settings.rate_limit.to_owned().unwrap_or_default(),
-    };
 
-    let rate_limit_cell = RateLimitCell::new(settings.rate_limit.to_owned().unwrap_or_default()).await;
+    let rate_limit_config =
+        get_rate_limit_config(&settings.rate_limit.to_owned().unwrap());
+    let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;
 
     // init the secret
     let conn = &mut pool.get().map_err(|_| {
@@ -126,15 +123,14 @@ async fn main() -> Result<(), TinyBoardsError> {
             secret.clone(),
             rate_limit_cell.clone(),
         );
-        let rate_limiter = rate_limiter.clone();
         App::new()
             .wrap(actix_web::middleware::Logger::default())
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
             .app_data(Data::new(rate_limit_cell.clone()))
-            .configure(|cfg| api_routes::config(cfg, &rate_limiter))
+            .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
             // the extra routes
-            .configure(|cfg| media::config(cfg, pictrs_client.clone(), rate_limit_cell))
+            .configure(|cfg| media::config(cfg, pictrs_client.clone(), &rate_limit_cell))
             .service(fs::Files::new("/assets", "./assets"))
     })
     .bind((settings_bind.bind, settings_bind.port))

@@ -3691,6 +3691,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-error",
+ "typed-builder",
  "url",
  "uuid",
 ]
