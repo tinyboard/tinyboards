@@ -2,8 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{CreatePostVote, PostIdPath},
-    site::Message,
+    post::{CreatePostVote, PostIdPath, PostResponse},
     utils::{
         blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         require_user,
@@ -14,11 +13,12 @@ use tinyboards_db::{
     models::{board::board::Board, post::post::Post},
     traits::{Crud, Voteable},
 };
+use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for CreatePostVote {
-    type Response = Message;
+    type Response = PostResponse;
     type Route = PostIdPath;
 
     async fn perform(
@@ -82,17 +82,19 @@ impl<'des> Perform<'des> for CreatePostVote {
                 };
                 blocking(context.pool(), like).await??;
             }
+
+            // mark the post as read here
+
+            // grab the post view here for the response
+            let post_view = blocking(context.pool(), move |conn| {
+                PostView::read(conn, vote_form.post_id, Some(vote_form.user_id))
+            })
+            .await??;
+
+            Ok(PostResponse { post_view })
+        } else {
+            Err(TinyBoardsError::from_message("user is banned on the board"))
         }
-
-        // mark the post as read here
-
-        // grab the post view here for the response
-        /*let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, vote_form.post_id, Some(vote_form.user_id))
-                .map_err(|_e| TinyBoardsError::from_string("could not find post", 404))
-        })
-        .await??;*/
-
-        Ok(Message::new("Vote saved!"))
+        
     }
 }

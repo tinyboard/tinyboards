@@ -108,9 +108,9 @@ impl CommentView {
     pub fn read(
         conn: &mut PgConnection,
         comment_id: i32,
-        user_id: Option<i32>,
+        my_user_id: Option<i32>,
     ) -> Result<Self, Error> {
-        let user_id_join = user_id.unwrap_or(-1);
+        let user_id_join = my_user_id.unwrap_or(-1);
 
         let (
             comment,
@@ -173,7 +173,7 @@ impl CommentView {
             ))
             .first::<CommentViewTuple>(conn)?;
 
-        let my_vote = if user_id.is_some() && comment_vote.is_none() {
+        let my_vote = if my_user_id.is_some() && comment_vote.is_none() {
             Some(0)
         } else {
             comment_vote

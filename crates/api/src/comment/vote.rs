@@ -1,9 +1,8 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    comment::{CommentIdPath, CreateCommentVote},
+    comment::{CommentIdPath, CreateCommentVote, CommentResponse},
     data::TinyBoardsContext,
-    site::Message,
     utils::{
         blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_removed_or_locked, require_user,
@@ -21,7 +20,7 @@ use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for CreateCommentVote {
-    type Response = Message;
+    type Response = CommentResponse;
     type Route = CommentIdPath;
 
     async fn perform(
@@ -89,12 +88,11 @@ impl<'des> Perform<'des> for CreateCommentVote {
         // mark comment as read here
 
         // grab updated comment view here
-        /*let comment_view = blocking(context.pool(), move |conn| {
+        let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, Some(user.id))
-                .map_err(|_| TinyBoardsError::err_500())
         })
-        .await??;*/
+        .await??;
 
-        Ok(Message::new("Vote saved!"))
+        Ok(CommentResponse { comment_view })
     }
 }
