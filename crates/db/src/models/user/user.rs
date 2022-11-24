@@ -84,7 +84,7 @@ pub struct UserForm {
     pub login_nonce: Option<Option<i32>>,
     pub admin: Option<bool>,
     pub banned: Option<bool>,
-    pub updated: Option<Option<NaiveDateTime>>,
+    pub updated: Option<NaiveDateTime>,
     pub theme: Option<String>,
     pub default_sort_type: Option<i16>,
     pub default_listing_type: Option<i16>,

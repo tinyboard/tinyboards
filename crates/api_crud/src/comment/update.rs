@@ -10,7 +10,8 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::comment::comment::{Comment, CommentForm},
-    traits::Crud,
+    traits::Crud, 
+    utils::naive_now,
 };
 use tinyboards_db_views::structs::CommentView;
 use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown};
@@ -53,12 +54,15 @@ impl<'des> PerformCrud<'des> for EditComment {
         // we re-parse the markdown right here
         let body_html = parse_markdown(&body.clone().unwrap().as_str());
         let comment_id = path.comment_id;
+        // grabbing the current timestamp for the update
+        let updated = Some(naive_now());
 
         let form = CommentForm {
             creator_id: orig_comment.comment.creator_id,
             post_id: orig_comment.comment.post_id,
             body,
             body_html,
+            updated,
             ..CommentForm::default()
         };
 

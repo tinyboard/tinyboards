@@ -10,7 +10,8 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::post::post::{Post, PostForm},
-    traits::Crud,
+    traits::Crud, 
+    utils::naive_now,
 };
 use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown};
@@ -51,11 +52,14 @@ impl<'des> PerformCrud<'des> for EditPost {
         // we need to re-parse the markdown here
         let body_html = parse_markdown(&body.clone().unwrap().as_str());
         let post_id = path.post_id;
+        // grabbing the current timestamp for the update
+        let updated = Some(naive_now());
 
         let form = PostForm {
             creator_id: orig_post.post.creator_id,
             body,
             body_html,
+            updated,
             ..PostForm::default()
         };
 

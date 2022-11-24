@@ -10,7 +10,8 @@ use tinyboards_db::{
     models::site::site::Site,
     traits::Crud,
     utils::{
-        diesel_option_overwrite,
+        diesel_option_overwrite, 
+        naive_now,
     },
 };
 use tinyboards_utils::{
@@ -73,6 +74,8 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let default_listing_type = data.default_listing_type;
         let default_sort_type = data.default_sort_type;
+        // grabbing the current timestamp for the update
+        let updated = Some(naive_now());
 
         let user_form = UserForm {
             bio,
@@ -83,6 +86,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             banner,
             default_listing_type,
             default_sort_type,
+            updated,
             ..UserForm::default()
         };
 
