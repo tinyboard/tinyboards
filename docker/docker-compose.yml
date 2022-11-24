@@ -54,18 +54,20 @@ services:
       - tinyboards
 
   pictrs:
-    image: asonix/pictrs:0.3.1
+    image: asonix/pictrs:0.4.0-beta.7
     # needs to match the pictrs url in the config hjson
     hostname: pictrs
+    ports:
+      - "127.0.0.1:8080:8080"
     networks:
       tinyboards:
         aliases:
           - pictrs
     environment:
       - PICTRS__API_KEY=API_KEY 
-    user: 991:991
+    user: "991:991"
     volumes:
-      - ./volumes/pictrs:/mnt
+      - ./volumes/pictrs:/tmp
     restart: always
   
   postgres:
