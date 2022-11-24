@@ -30,8 +30,7 @@ pub struct DeleteComment {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct EditComment {
-    pub body: Option<String>,
-    pub body_html: Option<String>,
+    pub body: String,
 }
 
 #[derive(Deserialize, Serialize)]

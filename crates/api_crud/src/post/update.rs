@@ -13,7 +13,7 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::PostView;
-use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditPost {
@@ -47,8 +47,9 @@ impl<'des> PerformCrud<'des> for EditPost {
             return Err(TinyBoardsError::from_message("post edit not allowed"));
         }
 
-        let body = data.body.clone();
-        let body_html = data.body_html.clone();
+        let body = Some(data.body.clone());
+        // we need to re-parse the markdown here
+        let body_html = parse_markdown(&body.clone().unwrap().as_str());
         let post_id = path.post_id;
 
         let form = PostForm {

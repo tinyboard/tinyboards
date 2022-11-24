@@ -13,7 +13,7 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::CommentView;
-use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditComment {
@@ -49,8 +49,9 @@ impl<'des> PerformCrud<'des> for EditComment {
             return Err(TinyBoardsError::from_message("comment edit not allowed"));
         }
 
-        let body = data.body.clone();
-        let body_html = data.body_html.clone();
+        let body = Some(data.body.clone());
+        // we re-parse the markdown right here
+        let body_html = parse_markdown(&body.clone().unwrap().as_str());
         let comment_id = path.comment_id;
 
         let form = CommentForm {
