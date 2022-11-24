@@ -14,7 +14,7 @@ use tinyboards_db::{
         comment::comment::Comment,
         comment::comment_saved::CommentSaved,
         post::post::Post,
-        user::user::{User, UserSafe},
+        user::user::UserSafe,
         user::user_block::UserBlock,
     },
     schema::{
@@ -206,7 +206,7 @@ pub struct CommentQuery<'a> {
     post_id: Option<i32>,
     parent_id: Option<i32>,
     creator_id: Option<i32>,
-    user: Option<&'a User>,
+    user: Option<&'a UserSafe>,
     search_term: Option<String>,
     saved_only: Option<bool>,
     show_deleted_and_removed: Option<bool>,

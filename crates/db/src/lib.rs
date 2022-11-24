@@ -57,11 +57,10 @@ pub enum ListingType {
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SearchType {
   All,
-  Comments,
-  Posts,
-  Communities,
   Users,
-  Url,
+  Posts,
+  Comments,
+  Boards,
 }
 
 #[derive(EnumString, Display, Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
@@ -89,6 +88,18 @@ pub enum ModlogActionType {
   AdminPurgeCommunity,
   AdminPurgePost,
   AdminPurgeComment,
+}
+
+pub fn map_to_search_type(match_string: Option<&str>) -> SearchType {
+    match match_string {
+      Some("all") => SearchType::All,
+      Some("users") => SearchType::Users,
+      Some("posts") => SearchType::Posts,
+      Some("comments") => SearchType::Comments,
+      Some("boards") => SearchType::Boards,
+      Some(&_) => SearchType::All,
+      None => SearchType::All,
+    }
 }
 
 pub fn map_to_sort_type(match_string: Option<&str>) -> SortType {

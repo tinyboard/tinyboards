@@ -6,7 +6,7 @@ use tinyboards_db::{
     models::user::user::{UserSafe, UserSettings},
     schema::{user_, user_aggregates},
     traits::{ToSafe, ViewToVec},
-    utils::{functions::lower, limit_and_offset},
+    utils::{functions::lower, limit_and_offset, fuzzy_search},
     UserSortType,
 };
 use tinyboards_utils::TinyBoardsError;
@@ -160,6 +160,7 @@ pub struct UserQuery<'a> {
     sort: Option<String>,
     page: Option<i64>,
     limit: Option<i64>,
+    search_term: Option<String>,
 }
 
 impl<'a> UserQuery<'a> {
@@ -184,6 +185,10 @@ impl<'a> UserQuery<'a> {
             UserSortType::MostComments => {
                 query.then_order_by(user_aggregates::comment_count.desc())
             }
+        };
+
+        if let Some(search_term) = self.search_term {
+            query = query.filter(user_::name.ilike(fuzzy_search(&search_term)));
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

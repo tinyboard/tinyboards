@@ -57,8 +57,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
 
         if !is_logged_in {
             for pv in posts
-                .iter_mut()
-                .filter(|p| p.post.deleted || p.post.removed)
+            .iter_mut()
             {
                 pv.hide_if_removed_or_deleted(user_view.as_ref());
             }

@@ -4,7 +4,7 @@ use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
         board::board::BoardSafe, board::board_block::BoardBlock,
-        board::board_subscriber::BoardSubscriber, user::user::User,
+        board::board_subscriber::BoardSubscriber, user::user::{UserSafe},
     },
     schema::{board, board_aggregates, board_block, board_subscriber, user_},
     traits::{ToSafe, ViewToVec},
@@ -93,7 +93,7 @@ pub struct BoardQuery<'a> {
     conn: &'a mut PgConnection,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
-    user: Option<&'a User>,
+    user: Option<&'a UserSafe>,
     search_term: Option<String>,
     page: Option<i64>,
     limit: Option<i64>,

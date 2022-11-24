@@ -10,7 +10,7 @@ use diesel::{
 };
 use diesel_migrations::{EmbeddedMigrations, embed_migrations, MigrationHarness};
 use url::Url;
-use crate::newtypes::DbUrl;
+use crate::{newtypes::DbUrl, SortType, CommentSortType};
 use tinyboards_utils::error::TinyBoardsError;
 
 
@@ -128,5 +128,18 @@ pub fn diesel_option_overwrite(
       }
     },
     None => None,
+  }
+}
+
+pub fn post_to_comment_sort_type(sort: SortType) -> CommentSortType {
+  match sort {
+    SortType::Active | SortType::Hot => CommentSortType::Hot,
+    SortType::New | SortType::NewComments | SortType::MostComments => CommentSortType::New,
+    SortType::Old => CommentSortType::Old,
+    SortType::TopDay
+    | SortType::TopAll
+    | SortType::TopWeek
+    | SortType::TopMonth
+    | SortType::TopYear => CommentSortType::Top,
   }
 }

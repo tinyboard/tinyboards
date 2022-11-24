@@ -15,7 +15,7 @@ impl<'des> Perform<'des> for GetFeed {
     type Response = ListPostsResponse;
     type Route = ();
 
-    #[tracing::instrument(skip_all)]
+    #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
