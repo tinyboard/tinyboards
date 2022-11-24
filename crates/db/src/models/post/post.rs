@@ -39,7 +39,6 @@ pub struct PostForm {
     pub board_id: i32,
     pub removed: Option<bool>,
     pub locked: Option<bool>,
-    pub published: Option<NaiveDateTime>,
     pub updated: Option<NaiveDateTime>,
     pub deleted: Option<bool>,
     pub nsfw: Option<bool>,
