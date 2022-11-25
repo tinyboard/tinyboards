@@ -134,6 +134,22 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 }).await??;
             },
+            SearchType::Url => {
+                posts = blocking(context.pool(), move |conn| {
+                    PostQuery::builder()
+                        .conn(conn)
+                        .url_search(search_term)
+                        .sort(Some(sort))
+                        .listing_type(Some(listing_type))
+                        .board_id(board_id)
+                        .creator_id(creator_id)
+                        .user(user.as_ref())
+                        .page(page)
+                        .limit(limit)
+                        .build()
+                        .list()
+                }).await??;
+            }
         };
 
         if user_id.is_none() {
