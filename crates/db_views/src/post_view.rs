@@ -239,7 +239,8 @@ impl<'a> PostQuery<'a> {
         }
 
         if let Some(url_search) = self.url_search {
-            query = query.filter(post::url.eq(url_search));
+            let url_searcher = fuzzy_search(&url_search);
+            query = query.filter(post::url.ilike(url_searcher.to_owned()));
         }
 
         if let Some(search_term) = self.search_term {
