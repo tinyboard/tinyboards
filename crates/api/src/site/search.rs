@@ -46,7 +46,7 @@ impl<'des> Perform<'des> for Search {
         check_private_instance(&user_view, context.pool()).await?;
 
         // get the search type
-        let search_type = map_to_search_type(Some(&params.kind.as_str().to_lowercase()));
+        let search_type = map_to_search_type(params.kind.as_deref());
 
         let user_id = user_view.as_ref().map(|u| u.user.id);
         let user = user_view.as_ref().map(|u| u.user.clone());
@@ -57,6 +57,7 @@ impl<'des> Perform<'des> for Search {
         let mut users = Vec::new();
 
         let search_term = params.query.clone();
+        let url_search = params.domain.clone();
         let page = params.page.clone();
         let limit = params.limit.clone();
 
@@ -86,6 +87,7 @@ impl<'des> Perform<'des> for Search {
                         .creator_id(creator_id)
                         .user(user.as_ref())
                         .search_term(search_term)
+                        .url_search(url_search)
                         .page(page)
                         .limit(limit)
                         .build()
@@ -134,22 +136,6 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 }).await??;
             },
-            SearchType::Url => {
-                posts = blocking(context.pool(), move |conn| {
-                    PostQuery::builder()
-                        .conn(conn)
-                        .url_search(search_term)
-                        .sort(Some(sort))
-                        .listing_type(Some(listing_type))
-                        .board_id(board_id)
-                        .creator_id(creator_id)
-                        .user(user.as_ref())
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                }).await??;
-            }
         };
 
         if user_id.is_none() {

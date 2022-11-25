@@ -60,7 +60,6 @@ pub enum SearchType {
   Post,
   Comment,
   Board,
-  Url,
 }
 
 #[derive(EnumString, Display, Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
@@ -96,7 +95,6 @@ pub fn map_to_search_type(match_string: Option<&str>) -> SearchType {
       Some("post") => SearchType::Post,
       Some("comment") => SearchType::Comment,
       Some("board") => SearchType::Board,
-      Some("url") => SearchType::Url,
       Some(&_) => SearchType::Post,
       None => SearchType::Post,
     }

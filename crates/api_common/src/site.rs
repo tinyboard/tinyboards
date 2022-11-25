@@ -4,11 +4,12 @@ use tinyboards_db_views::structs::{UserView, CommentView, PostView, BoardView};
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Search {
     pub query: Option<String>,
+    pub domain: Option<String>,
     pub board_id: Option<i32>,
     pub board_name: Option<String>,
     pub creator_id: Option<i32>,
     #[serde(rename = "type")]
-    pub kind: String,
+    pub kind: Option<String>,
     pub sort: Option<String>,
     pub listing_type: Option<String>,
     pub limit: Option<i64>,
