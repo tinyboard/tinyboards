@@ -76,7 +76,7 @@ impl<'des> Perform<'des> for Search {
         let creator_id = params.creator_id.clone();
 
         match search_type {
-            SearchType::Posts => {
+            SearchType::Post => {
                 posts = blocking(context.pool(), move |conn| {
                     PostQuery::builder()
                         .conn(conn)
@@ -93,7 +93,7 @@ impl<'des> Perform<'des> for Search {
 
                 }).await??;
             },
-            SearchType::Comments => {
+            SearchType::Comment => {
                 comments = blocking(context.pool(), move |conn| {
                     CommentQuery::builder()
                         .conn(conn)
@@ -109,7 +109,7 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 }).await??;
             },
-            SearchType::Boards => {
+            SearchType::Board => {
                 boards = blocking(context.pool(), move |conn| {
                     BoardQuery::builder()
                         .conn(conn)
@@ -123,7 +123,7 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 }).await??;
             },
-            SearchType::Users => {
+            SearchType::User => {
                 users = blocking(context.pool(), move |conn| {
                     UserQuery::builder()
                         .conn(conn)
@@ -134,83 +134,6 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 }).await??;
             },
-            SearchType::All => {
-                // if board or creator is included don't search for boards or users
-                let board_or_creator_included = 
-                    params.board_id.is_some() || params.board_name.is_some() || params.creator_id.is_some();
-                
-                let user_ = user.clone();
-                posts = blocking(context.pool(), move |conn| {
-                    PostQuery::builder()
-                        .conn(conn)
-                        .sort(Some(sort))
-                        .listing_type(Some(listing_type))
-                        .board_id(board_id)
-                        .creator_id(creator_id)
-                        .user(user_.as_ref())
-                        .search_term(search_term)
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-
-                }).await??;
-
-                let search_term = params.query.clone();
-                let user_ = user.clone();
-
-                comments = blocking(context.pool(), move |conn| {
-                    CommentQuery::builder()
-                        .conn(conn)
-                        .sort(Some(comment_sort_type))
-                        .listing_type(Some(listing_type))
-                        .search_term(search_term)
-                        .board_id(board_id)
-                        .creator_id(creator_id)
-                        .user(user_.as_ref())
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                }).await??;
-
-                match board_or_creator_included {
-                    false => {
-                        let search_term = params.query.clone();
-
-                        users = blocking(context.pool(), move |conn| {
-                            UserQuery::builder()
-                                .conn(conn)
-                                .search_term(search_term)
-                                .page(page)
-                                .limit(limit)
-                                .build()
-                                .list()
-                        }).await??;
-
-                        let search_term = params.query.clone();
-                        let user_ = user.clone();
-
-                        boards = blocking(context.pool(), move |conn| {
-                            BoardQuery::builder()
-                                .conn(conn)
-                                .listing_type(Some(listing_type))
-                                .sort(Some(sort))
-                                .user(user_.as_ref())
-                                .search_term(search_term)
-                                .page(page)
-                                .limit(limit)
-                                .build()
-                                .list()
-                        }).await??;
-
-                    },
-                    true => {
-                        users = vec![];
-                        boards = vec![];
-                    },
-                };
-            }
         };
 
         if user_id.is_none() {

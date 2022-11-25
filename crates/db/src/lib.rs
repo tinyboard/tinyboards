@@ -56,11 +56,10 @@ pub enum ListingType {
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SearchType {
-  All,
-  Users,
-  Posts,
-  Comments,
-  Boards,
+  User,
+  Post,
+  Comment,
+  Board,
 }
 
 #[derive(EnumString, Display, Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
@@ -92,13 +91,12 @@ pub enum ModlogActionType {
 
 pub fn map_to_search_type(match_string: Option<&str>) -> SearchType {
     match match_string {
-      Some("all") => SearchType::All,
-      Some("users") => SearchType::Users,
-      Some("posts") => SearchType::Posts,
-      Some("comments") => SearchType::Comments,
-      Some("boards") => SearchType::Boards,
-      Some(&_) => SearchType::All,
-      None => SearchType::All,
+      Some("user") => SearchType::User,
+      Some("post") => SearchType::Post,
+      Some("comment") => SearchType::Comment,
+      Some("board") => SearchType::Board,
+      Some(&_) => SearchType::Post,
+      None => SearchType::Post,
     }
 }
 
