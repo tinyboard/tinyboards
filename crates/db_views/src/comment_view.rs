@@ -8,13 +8,9 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board::BoardSafe,
-        board::board_subscriber::BoardSubscriber,
-        board::board_user_ban::BoardUserBan,
-        comment::comment::Comment,
-        comment::comment_saved::CommentSaved,
-        post::post::Post,
-        user::user::UserSafe,
+        board::board::BoardSafe, board::board_subscriber::BoardSubscriber,
+        board::board_user_ban::BoardUserBan, comment::comment::Comment,
+        comment::comment_saved::CommentSaved, post::post::Post, user::user::UserSafe,
         user::user_block::UserBlock,
     },
     schema::{
@@ -206,7 +202,7 @@ pub struct CommentQuery<'a> {
     post_id: Option<i32>,
     parent_id: Option<i32>,
     creator_id: Option<i32>,
-    user: Option<&'a UserSafe>,
+    user_id: Option<i32>,
     search_term: Option<String>,
     saved_only: Option<bool>,
     show_deleted_and_removed: Option<bool>,
@@ -218,7 +214,7 @@ impl<'a> CommentQuery<'a> {
     pub fn list(self) -> Result<Vec<CommentView>, Error> {
         use diesel::dsl::*;
 
-        let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
+        let user_id_join = self.user_id.unwrap_or(-1);
 
         let mut query = comment::table
             .inner_join(user_::table)
@@ -318,7 +314,7 @@ impl<'a> CommentQuery<'a> {
             query = query.filter(comment::deleted.eq(false));
         }
 
-        if self.user.is_some() {
+        if self.user_id.is_some() {
             query = query.filter(board_block::user_id.is_null());
             query = query.filter(user_block::user_id.is_null());
         }

@@ -32,6 +32,10 @@ impl<'des> PerformCrud<'des> for ListComments {
         // check if instance is private before listing comments
         check_private_instance(&user_view, context.pool()).await?;
 
+        let user_id = match user_view {
+            Some(ref user_view) => Some(user_view.user.id),
+            None => None,
+        };
         let sort = map_to_comment_sort_type(data.sort.as_deref());
         let listing_type = map_to_listing_type(data.listing_type.as_deref());
         let page = data.page;
@@ -56,6 +60,7 @@ impl<'des> PerformCrud<'des> for ListComments {
                 .search_term(search_term)
                 .saved_only(saved_only)
                 .show_deleted_and_removed(show_deleted_and_removed)
+                .user_id(user_id)
                 .page(page)
                 .limit(limit)
                 .build()

@@ -6,19 +6,11 @@ use tinyboards_api_common::{
     utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
 };
 use tinyboards_db::{
-    map_to_listing_type,
-    map_to_sort_type,
-    map_to_search_type,
-    ListingType,
-    SortType,
-    SearchType,
-    utils::post_to_comment_sort_type,
+    map_to_listing_type, map_to_search_type, map_to_sort_type, utils::post_to_comment_sort_type,
+    ListingType, SearchType, SortType,
 };
 use tinyboards_db_views::{
-    post_view::PostQuery,
-    comment_view::CommentQuery,
-    user_view::UserQuery,
-    board_view::BoardQuery,
+    board_view::BoardQuery, comment_view::CommentQuery, post_view::PostQuery, user_view::UserQuery,
     DeleteableOrRemoveable,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -35,11 +27,10 @@ impl<'des> Perform<'des> for Search {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<SearchResponse, TinyBoardsError> {
-
         let params: &Self = &self;
 
         // get optional user view
-        let user_view = 
+        let user_view =
             get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
 
         // search should not function on private instances if you are not authed
@@ -50,8 +41,8 @@ impl<'des> Perform<'des> for Search {
 
         let user_id = user_view.as_ref().map(|u| u.user.id);
         let user = user_view.as_ref().map(|u| u.user.clone());
-        
-        let mut posts= Vec::new();
+
+        let mut posts = Vec::new();
         let mut comments = Vec::new();
         let mut boards = Vec::new();
         let mut users = Vec::new();
@@ -92,9 +83,9 @@ impl<'des> Perform<'des> for Search {
                         .limit(limit)
                         .build()
                         .list()
-
-                }).await??;
-            },
+                })
+                .await??;
+            }
             SearchType::Comment => {
                 comments = blocking(context.pool(), move |conn| {
                     CommentQuery::builder()
@@ -104,13 +95,14 @@ impl<'des> Perform<'des> for Search {
                         .search_term(search_term)
                         .board_id(board_id)
                         .creator_id(creator_id)
-                        .user(user.as_ref())
+                        .user_id(user_id)
                         .page(page)
                         .limit(limit)
                         .build()
                         .list()
-                }).await??;
-            },
+                })
+                .await??;
+            }
             SearchType::Board => {
                 boards = blocking(context.pool(), move |conn| {
                     BoardQuery::builder()
@@ -123,8 +115,9 @@ impl<'des> Perform<'des> for Search {
                         .limit(limit)
                         .build()
                         .list()
-                }).await??;
-            },
+                })
+                .await??;
+            }
             SearchType::User => {
                 users = blocking(context.pool(), move |conn| {
                     UserQuery::builder()
@@ -134,37 +127,31 @@ impl<'des> Perform<'des> for Search {
                         .limit(limit)
                         .build()
                         .list()
-                }).await??;
-            },
+                })
+                .await??;
+            }
         };
 
         if user_id.is_none() {
             // TODO: blank out info for deleted or removed boards here too!
 
             // hide info if comment is deleted or removed
-            for cv in comments
-            .iter_mut()
-            {
+            for cv in comments.iter_mut() {
                 cv.hide_if_removed_or_deleted(user_view.as_ref());
             }
 
             // hide info if post is deleted or removed
-            for pv in posts
-            .iter_mut()
-            {
+            for pv in posts.iter_mut() {
                 pv.hide_if_removed_or_deleted(user_view.as_ref());
             }
         }
 
-
-        Ok(SearchResponse { 
-            kind: search_type.to_string(), 
-            comments, 
-            posts, 
-            boards, 
-            users, 
+        Ok(SearchResponse {
+            kind: search_type.to_string(),
+            comments,
+            posts,
+            boards,
+            users,
         })
-
     }
-
 }
