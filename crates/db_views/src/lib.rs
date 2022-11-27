@@ -4,11 +4,12 @@ pub mod board_view;
 pub mod comment_view;
 pub mod post_view;
 pub mod structs;
-pub mod user_view;
 pub mod user_mention_view;
+pub mod user_view;
 
 pub use comment_view::CommentQuery;
-use structs::UserView;
+
+use tinyboards_db::models::user::user::User;
 pub trait DeleteableOrRemoveable {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&UserView>);
+    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&User>);
 }

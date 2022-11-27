@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{ListPosts, ListPostsResponse},
-    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
+    utils::{blocking, check_private_instance, load_user_opt},
 };
 use tinyboards_db::{map_to_listing_type, map_to_sort_type};
 use tinyboards_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
@@ -24,15 +24,11 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let data: ListPosts = self;
 
         // check to see if user is logged in or not
-        let user_view =
-            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check to see if the instance is private or not before listing
-        check_private_instance(&user_view, context.pool()).await?;
+        check_private_instance(&user, context.pool()).await?;
 
-        let is_logged_in = user_view.is_some();
-
-        let user_id = user_view.as_ref().map(|u| u.user.id);
         let sort = map_to_sort_type(data.sort.as_deref());
         let listing_type = map_to_listing_type(data.listing_type.as_deref());
         let page = data.page;
@@ -40,35 +36,38 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let board_id = data.board_id;
         let saved_only = data.saved_only;
 
-        let mut posts = blocking(context.pool(), move |conn| {
-            PostQuery::builder()
+        let posts = blocking(context.pool(), move |conn| {
+            let mut posts = PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
-                .user_id(user_id)
+                .user(user.as_ref())
                 .saved_only(saved_only)
                 .page(page)
                 .limit(limit)
                 .build()
-                .list()
+                .list();
+
+            if let Ok(ref mut posts) = posts {
+                for pv in posts
+                    .iter_mut()
+                    .filter(|p| p.post.removed || p.post.deleted)
+                {
+                    pv.hide_if_removed_or_deleted(user.as_ref());
+                }
+            }
+
+            posts
         })
         .await??;
 
-        if !is_logged_in {
-            for pv in posts
+        /*for pv in posts
             .iter_mut()
-            {
-                pv.hide_if_removed_or_deleted(user_view.as_ref());
-            }
-
-            /*for pv in posts
-                .iter_mut()
-                .filter(|p| p.board.deleted)
-            {
-                pv.board = pv.to_owned().board.blank_out_deleted_info();
-            }*/
-        }
+            .filter(|p| p.board.deleted)
+        {
+            pv.board = pv.to_owned().board.blank_out_deleted_info();
+        }*/
 
         Ok(ListPostsResponse { posts })
     }

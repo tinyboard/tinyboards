@@ -16,7 +16,9 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::{BoardUserBanView, UserView};
-use tinyboards_utils::{error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::RateLimitSettings};
+use tinyboards_utils::{
+    error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::RateLimitSettings,
+};
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -56,7 +58,9 @@ where
         Ok(res) as Result<T, TinyBoardsError>
     })
     .await
-    .map_err(|e| TinyBoardsError::from_error_message(e, "Internal Server Error (Blocking Error)"))?;
+    .map_err(|e| {
+        TinyBoardsError::from_error_message(e, "Internal Server Error (Blocking Error)")
+    })?;
 
     res
 }
@@ -107,7 +111,9 @@ pub struct UserResult(UResult);
 /// Enforces a logged in user. Returns `Ok<User>` if everything is OK, otherwise errors. If being logged in is optional, `load_user_opt` should be used.
 pub async fn require_user(pool: &PgPool, master_key: &Secret, auth: Option<&str>) -> UserResult {
     if auth.is_none() {
-        let err: UResult = Err(TinyBoardsError::from_message("you need to be logged in to do this"));
+        let err: UResult = Err(TinyBoardsError::from_message(
+            "you need to be logged in to do this",
+        ));
         return err.into();
     }
 
@@ -120,12 +126,16 @@ impl From<UResultOpt> for UserResult {
             Ok(u) => match u {
                 Some(u) => {
                     if u.deleted {
-                        Err(TinyBoardsError::from_message("you need to be logged in to do this"))
+                        Err(TinyBoardsError::from_message(
+                            "you need to be logged in to do this",
+                        ))
                     } else {
                         Ok(u)
                     }
                 }
-                None => Err(TinyBoardsError::from_message("you need to be logged in to do this")),
+                None => Err(TinyBoardsError::from_message(
+                    "you need to be logged in to do this",
+                )),
             },
             Err(e) => Err(e),
         };
@@ -139,7 +149,9 @@ impl From<UResult> for UserResult {
         Self(match r {
             Ok(u) => {
                 if u.deleted {
-                    Err(TinyBoardsError::from_message("you need to be logged in to do this"))
+                    Err(TinyBoardsError::from_message(
+                        "you need to be logged in to do this",
+                    ))
                 } else {
                     Ok(u)
                 }
@@ -159,7 +171,9 @@ impl UserResult {
             Ok(u) => {
                 return Self(if u.has_active_ban() {
                     println!("user is banned!");
-                    Err(TinyBoardsError::from_message("you are banned from the site"))
+                    Err(TinyBoardsError::from_message(
+                        "you are banned from the site",
+                    ))
                 } else {
                     Ok(u)
                 });
@@ -174,7 +188,9 @@ impl UserResult {
                 if u.admin {
                     Ok(u)
                 } else {
-                    Err(TinyBoardsError::from_message("you need to be an admin to do this"))
+                    Err(TinyBoardsError::from_message(
+                        "you need to be an admin to do this",
+                    ))
                 }
             }
             Err(e) => Err(e),
@@ -197,7 +213,9 @@ impl UserResult {
                 let inner = match is_banned {
                     Ok(is_banned) => {
                         if let Ok(board_ban) = is_banned {
-                            Err(TinyBoardsError::from_message(format!("You are banned from {}", board_ban.board.name).as_str()))
+                            Err(TinyBoardsError::from_message(
+                                format!("You are banned from {}", board_ban.board.name).as_str(),
+                            ))
                         } else {
                             Ok(u)
                         }
@@ -219,10 +237,8 @@ impl UserResult {
                     return Self(Ok(u));
                 }
 
-                let is_mod = blocking(pool, move |conn| {
-                    Board::board_has_mod(conn, board_id, u.id)
-                })
-                .await;
+                let is_mod =
+                    blocking(pool, move |conn| Board::board_has_mod(conn, board_id, u.id)).await;
 
                 if is_mod.is_err() {
                     return Self(Err(TinyBoardsError::from_message("nerd")));
@@ -236,7 +252,7 @@ impl UserResult {
                             Ok(u)
                         } else {
                             Err(TinyBoardsError::from_message(
-                                "You must be a mod to do that!"
+                                "You must be a mod to do that!",
                             ))
                         }
                     }
@@ -288,13 +304,17 @@ pub async fn get_user_view_from_jwt(
     master_key: &Secret,
 ) -> Result<UserView, TinyBoardsError> {
     if auth.is_none() {
-        return Err(TinyBoardsError::from_message("you need to be logged in to do that"));
+        return Err(TinyBoardsError::from_message(
+            "you need to be logged in to do that",
+        ));
     }
 
     let user_view = get_user_view_from_jwt_opt(auth, pool, master_key).await?;
     match user_view {
         Some(user_view) => Ok(user_view),
-        None => Err(TinyBoardsError::from_message("you need to be logged in to do that")),
+        None => Err(TinyBoardsError::from_message(
+            "you need to be logged in to do that",
+        )),
     }
 }
 
@@ -316,7 +336,9 @@ pub async fn check_registration_application(
             let registration_denied_message = &deny_reason;
             return Err(TinyBoardsError::from_message(registration_denied_message));
         } else {
-            return Err(TinyBoardsError::from_message("registration application pending"));
+            return Err(TinyBoardsError::from_message(
+                "registration application pending",
+            ));
         }
     }
     Ok(())
@@ -340,10 +362,10 @@ pub async fn check_downvotes_enabled(score: i16, pool: &PgPool) -> Result<(), Ti
 
 #[tracing::instrument(skip_all)]
 pub async fn check_private_instance(
-    user_view: &Option<UserView>,
+    user: &Option<User>,
     pool: &PgPool,
 ) -> Result<(), TinyBoardsError> {
-    if user_view.is_none() {
+    if user.is_none() {
         let site = blocking(pool, move |conn| Site::read_local(conn)).await?;
 
         if let Ok(site) = site {
@@ -405,22 +427,20 @@ pub async fn check_comment_deleted_or_removed(
     }
 }
 
-pub fn get_rate_limit_config(
-    rate_limit_settings: &RateLimitSettings,
-  ) -> RateLimitConfig {
+pub fn get_rate_limit_config(rate_limit_settings: &RateLimitSettings) -> RateLimitConfig {
     let l = rate_limit_settings;
     RateLimitConfig {
-      message: l.message,
-      message_per_second: l.message_per_second,
-      post: l.post,
-      post_per_second: l.post_per_second,
-      register: l.register,
-      register_per_second: l.register_per_second,
-      image: l.image,
-      image_per_second: l.image_per_second,
-      comment: l.comment,
-      comment_per_second: l.comment_per_second,
-      search: l.search,
-      search_per_second: l.search_per_second,
+        message: l.message,
+        message_per_second: l.message_per_second,
+        post: l.post,
+        post_per_second: l.post_per_second,
+        register: l.register,
+        register_per_second: l.register_per_second,
+        image: l.image,
+        image_per_second: l.image_per_second,
+        comment: l.comment,
+        comment_per_second: l.comment_per_second,
+        search: l.search,
+        search_per_second: l.search_per_second,
     }
-  }
+}

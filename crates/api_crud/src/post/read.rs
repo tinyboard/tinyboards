@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
+    utils::{blocking, check_private_instance, load_user_opt},
 };
 
 use tinyboards_utils::TinyBoardsError;
@@ -26,14 +26,13 @@ impl<'des> PerformCrud<'des> for GetPost {
     ) -> Result<GetPostResponse, TinyBoardsError> {
         let _data = self;
 
-        let user_view =
-            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check to see if instance is set to private before listing post
-        check_private_instance(&user_view, context.pool()).await?;
+        check_private_instance(&user, context.pool()).await?;
 
-        let user_id = match user_view {
-            Some(ref user_view) => Some(user_view.user.id),
+        let user_id = match user {
+            Some(ref user) => Some(user.id),
             None => None,
         };
 
@@ -45,7 +44,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         .await??;
 
         if post_view.post.removed || post_view.post.deleted {
-            post_view.hide_if_removed_or_deleted(user_view.as_ref());
+            post_view.hide_if_removed_or_deleted(user.as_ref());
         }
 
         let _post_id = post_view.post.id;

@@ -1,7 +1,4 @@
-use crate::{
-    structs::{PostView, UserView},
-    DeleteableOrRemoveable,
-};
+use crate::{structs::PostView, DeleteableOrRemoveable};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
@@ -13,7 +10,10 @@ use tinyboards_db::{
         post::post_read::PostRead,
         post::post_saved::PostSaved,
         //user::user::User,
-        user::{user::UserSafe, user_block::UserBlock},
+        user::{
+            user::{User, UserSafe},
+            user_block::UserBlock,
+        },
     },
     schema::{
         board::{self},
@@ -143,11 +143,11 @@ pub struct PostQuery<'a> {
     sort: Option<SortType>,
     creator_id: Option<i32>,
     board_id: Option<i32>,
-    user_id: Option<i32>,
+    show_deleted_or_removed: Option<bool>,
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,
-    user: Option<&'a UserSafe>,
+    user: Option<&'a User>,
     show_nsfw: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -157,7 +157,10 @@ impl<'a> PostQuery<'a> {
     pub fn list(self) -> Result<Vec<PostView>, Error> {
         use diesel::dsl::*;
 
-        let user_id_join = self.user_id.unwrap_or(-1);
+        let user_id_join = match self.user {
+            Some(user) => user.id,
+            None => -1,
+        };
 
         let mut query = post::table
             .inner_join(user_::table)
@@ -232,6 +235,12 @@ impl<'a> PostQuery<'a> {
             }
         }
 
+        if !self.show_deleted_or_removed.unwrap_or(false) {
+            query = query
+                .filter(post::removed.eq(false))
+                .filter(post::deleted.eq(false));
+        }
+
         if let Some(board_id) = self.board_id {
             query = query
                 .filter(post::board_id.eq(board_id))
@@ -265,7 +274,7 @@ impl<'a> PostQuery<'a> {
         if !self.show_nsfw.unwrap_or(false) {
             query = query.filter(post::nsfw.eq(false));
         }
-        
+
         // filter posts from blocked boards and users
         if self.user.is_some() {
             query = query.filter(board_block::user_id.is_null());
@@ -327,19 +336,19 @@ impl<'a> PostQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for PostView {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&UserView>) {
+    fn hide_if_removed_or_deleted(&mut self, user: Option<&User>) {
         /*if !(self.post.deleted || self.post.removed) {
             return self;
         }*/
 
-        if let Some(user_view) = user_view {
+        if let Some(user) = user {
             // admins see everything
-            if user_view.user.admin {
+            if user.admin {
                 return;
             }
 
             // users can see their own removed content
-            if self.post.removed && user_view.user.id == self.post.creator_id {
+            if self.post.removed && user.id == self.post.creator_id {
                 return;
             }
         }
@@ -493,11 +502,10 @@ impl ViewToVec for PostView {
 //             .list()
 //             .unwrap();
 
-//         let post_listing_single_with_user = 
+//         let post_listing_single_with_user =
 //             PostView::read(conn, data.inserted_post.id, Some(data.inserted_user.id)).unwrap();
 
 //         let mut expected_post_listing_with_user = todo!()
-
 
 //     }
 // }

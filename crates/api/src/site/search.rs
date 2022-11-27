@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{Search, SearchResponse},
-    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
+    utils::{blocking, check_private_instance, load_user_opt},
 };
 use tinyboards_db::{
     map_to_listing_type, map_to_search_type, map_to_sort_type, utils::post_to_comment_sort_type,
@@ -11,7 +11,6 @@ use tinyboards_db::{
 };
 use tinyboards_db_views::{
     board_view::BoardQuery, comment_view::CommentQuery, post_view::PostQuery, user_view::UserQuery,
-    DeleteableOrRemoveable,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -30,17 +29,16 @@ impl<'des> Perform<'des> for Search {
         let params: &Self = &self;
 
         // get optional user view
-        let user_view =
-            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // search should not function on private instances if you are not authed
-        check_private_instance(&user_view, context.pool()).await?;
+        check_private_instance(&user, context.pool()).await?;
 
         // get the search type
         let search_type = map_to_search_type(params.kind.as_deref());
 
-        let user_id = user_view.as_ref().map(|u| u.user.id);
-        let user = user_view.as_ref().map(|u| u.user.clone());
+        let user_id = user.as_ref().map(|u| u.id);
+        let is_admin = user.as_ref().map(|u| u.admin);
 
         let mut posts = Vec::new();
         let mut comments = Vec::new();
@@ -72,6 +70,7 @@ impl<'des> Perform<'des> for Search {
                 posts = blocking(context.pool(), move |conn| {
                     PostQuery::builder()
                         .conn(conn)
+                        .show_deleted_or_removed(is_admin)
                         .sort(Some(sort))
                         .listing_type(Some(listing_type))
                         .board_id(board_id)
@@ -90,6 +89,7 @@ impl<'des> Perform<'des> for Search {
                 comments = blocking(context.pool(), move |conn| {
                     CommentQuery::builder()
                         .conn(conn)
+                        .show_deleted_and_removed(is_admin)
                         .sort(Some(comment_sort_type))
                         .listing_type(Some(listing_type))
                         .search_term(search_term)
@@ -132,19 +132,18 @@ impl<'des> Perform<'des> for Search {
             }
         };
 
-        if user_id.is_none() {
-            // TODO: blank out info for deleted or removed boards here too!
+        // TODO: blank out info for deleted or removed boards here too!
 
-            // hide info if comment is deleted or removed
-            for cv in comments.iter_mut() {
-                cv.hide_if_removed_or_deleted(user_view.as_ref());
-            }
-
-            // hide info if post is deleted or removed
-            for pv in posts.iter_mut() {
-                pv.hide_if_removed_or_deleted(user_view.as_ref());
-            }
+        // hide info if comment is deleted or removed
+        // UNNEEDED: query doesn't load deleted/removed stuff if unauthorized
+        /*for cv in comments.iter_mut() {
+            cv.hide_if_removed_or_deleted(user.as_ref());
         }
+
+        // hide info if post is deleted or removed
+        for pv in posts.iter_mut() {
+            pv.hide_if_removed_or_deleted(user.as_ref());
+        }*/
 
         Ok(SearchResponse {
             kind: search_type.to_string(),

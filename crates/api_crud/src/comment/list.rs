@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::{ListComments, ListCommentsResponse},
     data::TinyBoardsContext,
     post::{GetPostComments, PostIdPath},
-    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
+    utils::{blocking, check_private_instance, load_user_opt},
 };
 use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post};
 use tinyboards_db_views::{
@@ -26,14 +26,13 @@ impl<'des> PerformCrud<'des> for ListComments {
     ) -> Result<ListCommentsResponse, TinyBoardsError> {
         let data: ListComments = self;
 
-        let user_view =
-            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if instance is private before listing comments
-        check_private_instance(&user_view, context.pool()).await?;
+        check_private_instance(&user, context.pool()).await?;
 
-        let user_id = match user_view {
-            Some(ref user_view) => Some(user_view.user.id),
+        let user_id = match user {
+            Some(ref user) => Some(user.id),
             None => None,
         };
         let sort = map_to_comment_sort_type(data.sort.as_deref());
@@ -69,10 +68,11 @@ impl<'des> PerformCrud<'des> for ListComments {
         .await??;
 
         // blank out comment info if deleted or removed
-        for cv in comments.iter_mut()
-        //.filter(|cv| cv.comment.deleted || cv.comment.removed)
+        for cv in comments
+            .iter_mut()
+            .filter(|cv| cv.comment.deleted || cv.comment.removed)
         {
-            cv.hide_if_removed_or_deleted(user_view.as_ref());
+            cv.hide_if_removed_or_deleted(user.as_ref());
         }
 
         // order into tree
@@ -93,11 +93,10 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let user_view =
-            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if instance is private before listing comments
-        check_private_instance(&user_view, context.pool()).await?;
+        check_private_instance(&user, context.pool()).await?;
 
         // check if post exists
         if blocking(context.pool(), move |conn| {
@@ -123,10 +122,11 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         .await??;
 
         // blank out comment info if deleted or removed
-        for cv in comments.iter_mut()
-        //.filter(|cv| cv.comment.deleted || cv.comment.removed)
+        for cv in comments
+            .iter_mut()
+            .filter(|cv| cv.comment.deleted || cv.comment.removed)
         {
-            cv.hide_if_removed_or_deleted(user_view.as_ref());
+            cv.hide_if_removed_or_deleted(user.as_ref());
         }
 
         let comments = CommentView::into_tree(comments);

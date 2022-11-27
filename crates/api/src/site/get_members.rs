@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetMembers, GetMembersResponse},
-    utils::{blocking, check_private_instance, get_user_view_from_jwt_opt},
+    utils::{blocking, check_private_instance, load_user_opt},
 };
 use tinyboards_db_views::user_view::UserQuery;
 use tinyboards_utils::error::TinyBoardsError;
@@ -23,11 +23,10 @@ impl<'des> Perform<'des> for GetMembers {
         let params: &Self = &self;
 
         // get optional user view (don't need to be logged in)
-        let user_view = 
-            get_user_view_from_jwt_opt(auth, context.pool(), context.master_key()).await?;
+        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if members should be shown or not
-        check_private_instance(&user_view, context.pool()).await?;
+        check_private_instance(&user, context.pool()).await?;
 
         let sort = params.sort.clone();
         let limit = params.limit;

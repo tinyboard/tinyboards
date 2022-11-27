@@ -1,16 +1,17 @@
 use std::collections::HashMap;
 
-use crate::{
-    structs::{CommentView, UserView},
-    DeleteableOrRemoveable,
-};
+use crate::{structs::CommentView, DeleteableOrRemoveable};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board::BoardSafe, board::board_subscriber::BoardSubscriber,
-        board::board_user_ban::BoardUserBan, comment::comment::Comment,
-        comment::comment_saved::CommentSaved, post::post::Post, user::user::UserSafe,
+        board::board::BoardSafe,
+        board::board_subscriber::BoardSubscriber,
+        board::board_user_ban::BoardUserBan,
+        comment::comment::Comment,
+        comment::comment_saved::CommentSaved,
+        post::post::Post,
+        user::user::{User, UserSafe},
         user::user_block::UserBlock,
     },
     schema::{
@@ -309,7 +310,7 @@ impl<'a> CommentQuery<'a> {
             query = query.filter(comment_saved::id.is_not_null());
         }
 
-        if !self.show_deleted_and_removed.unwrap_or(true) {
+        if !self.show_deleted_and_removed.unwrap_or(false) {
             query = query.filter(comment::removed.eq(false));
             query = query.filter(comment::deleted.eq(false));
         }
@@ -344,20 +345,20 @@ impl<'a> CommentQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for CommentView {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&UserView>) {
+    fn hide_if_removed_or_deleted(&mut self, user: Option<&User>) {
         // if the user is admin, nothing is being removed
-        if let Some(user_view) = user_view {
-            if user_view.user.admin {
+        if let Some(user) = user {
+            if user.admin {
                 return;
             }
         }
 
         let blank_out_comment = {
             if self.comment.removed || self.comment.deleted {
-                match user_view {
-                    Some(user_view) => {
+                match user {
+                    Some(user) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.removed && user_view.user.id == self.comment.creator_id)
+                        !(self.comment.removed && user.id == self.comment.creator_id)
                     }
                     None => true,
                 }
@@ -384,10 +385,8 @@ impl DeleteableOrRemoveable for CommentView {
 
         let blank_out_post = {
             if self.post.deleted || self.post.removed {
-                match user_view {
-                    Some(user_view) => {
-                        !(self.post.removed && user_view.user.id == self.post.creator_id)
-                    }
+                match user {
+                    Some(user) => !(self.post.removed && user.id == self.post.creator_id),
                     None => true,
                 }
             } else {
