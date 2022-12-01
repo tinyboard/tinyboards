@@ -370,9 +370,9 @@ impl DeleteableOrRemoveable for CommentView {
         if blank_out_comment {
             let obscure_text: String = {
                 if self.comment.deleted {
-                    "[ deleted ]"
+                    "[ retracted ]"
                 } else {
-                    "[ removed ]"
+                    "[ purged ]"
                 }
             }
             .into();

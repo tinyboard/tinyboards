@@ -355,9 +355,9 @@ impl DeleteableOrRemoveable for PostView {
 
         let obscure_text: String = {
             if self.post.deleted {
-                "[ deleted ]"
+                "[ retracted ]"
             } else {
-                "[ removed ]"
+                "[ purged ]"
             }
         }
         .into();
