@@ -43,3 +43,11 @@ pub struct RemovePost {
     pub reason: Option<String>,
     pub removed: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RemoveComment {
+    pub mod_user_id: i32,
+    pub comment_id: i32,
+    pub reason: Option<String>,
+    pub removed: bool,
+}

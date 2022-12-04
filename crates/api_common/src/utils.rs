@@ -15,7 +15,7 @@ use tinyboards_db::{
     },
     traits::Crud,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, UserView};
+use tinyboards_db_views::structs::{BoardUserBanView, UserView, BoardView};
 use tinyboards_utils::{
     error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::RateLimitSettings,
 };
@@ -443,4 +443,20 @@ pub fn get_rate_limit_config(rate_limit_settings: &RateLimitSettings) -> RateLim
         search: l.search,
         search_per_second: l.search_per_second,
     }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn is_mod_or_admin(
+    pool: &PgPool,
+    user_id: i32,
+    board_id: i32,
+) -> Result<(), TinyBoardsError> {
+    let is_mod_or_admin = blocking(pool, move |conn| {
+        BoardView::is_mod_or_admin(conn, user_id, board_id)
+    })
+    .await?;
+    if !is_mod_or_admin {
+        return Err(TinyBoardsError::from_message("not a mod or admin"));
+    }
+    Ok(())
 }

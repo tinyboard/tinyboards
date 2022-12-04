@@ -37,6 +37,17 @@ impl Comment {
             .get_result::<Self>(conn)
     }
 
+    pub fn update_removed(
+        conn: &mut PgConnection,
+        comment_id: i32,
+        new_removed: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::comment::dsl::*;
+        diesel::update(comment.find(comment_id))
+            .set((removed.eq(new_removed), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
     pub fn get_by_id(conn: &mut PgConnection, cid: i32) -> Result<Option<Self>, TinyBoardsError> {
         use crate::schema::comment::dsl::*;
         comment
