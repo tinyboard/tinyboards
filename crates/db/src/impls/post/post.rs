@@ -47,6 +47,17 @@ impl Post {
             .set((deleted.eq(new_deleted), updated.eq(naive_now())))
             .get_result::<Self>(conn)
     }
+
+    pub fn update_removed(
+        conn: &mut PgConnection,
+        post_id: i32,
+        new_removed: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::post::dsl::*;
+        diesel::update(post.find(post_id))
+            .set((removed.eq(new_removed), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
 }
 
 impl Crud for Post {

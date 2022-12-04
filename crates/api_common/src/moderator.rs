@@ -35,3 +35,11 @@ pub struct BanUser {
     pub expires: Option<Option<NaiveDateTime>>,
     pub reason: String
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RemovePost {
+    pub mod_user_id: i32,
+    pub post_id: i32,
+    pub reason: Option<String>,
+    pub removed: bool,
+}

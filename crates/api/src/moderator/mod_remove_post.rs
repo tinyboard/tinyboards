@@ -2,19 +2,19 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{LockPost, ModActionResponse},
+    moderator::{RemovePost, ModActionResponse},
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
-    models::moderator::mod_actions::{ModLockPost, ModLockPostForm},
+    models::moderator::mod_actions::{ModRemovePost, ModRemovePostForm},
     models::post::post::Post,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for LockPost {
-    type Response = ModActionResponse<ModLockPost>;
+impl<'des> Perform<'des> for RemovePost {
+    type Response = ModActionResponse<ModRemovePost>;
     type Route = ();
 
     #[tracing::instrument(skip(context, auth))]
@@ -24,10 +24,11 @@ impl<'des> Perform<'des> for LockPost {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &LockPost = &self;
+        let data: &RemovePost = &self;
 
         let post_id = data.post_id;
-        let locked = data.locked;
+        let reason = data.reason.clone();
+        let removed = data.removed;
 
         // get the post object
         let orig_post = blocking(context.pool(), move |conn| {
@@ -35,29 +36,30 @@ impl<'des> Perform<'des> for LockPost {
         })
         .await??;
 
-        // require a mod/admin user for this
+        // require a mod/admin for this action
         let user = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_board_mod(orig_post.board_id, context.pool())
             .await
             .unwrap()?;
 
-        // update the post in the database to be locked
+        // update post in the database
         blocking(context.pool(), move |conn| {
-            Post::update_locked(conn, post_id.clone(), locked.clone())
+            Post::update_removed(conn, post_id, removed)
         })
         .await??;
 
-        // form for submitting lock action for mod log
-        let lock_form = ModLockPostForm {
+        // form for submitting remove action to mod log
+        let remove_post_form = ModRemovePostForm {
             mod_user_id: user.id,
             post_id: post_id.clone(),
-            locked: Some(Some(locked.clone())),
+            reason: Some(reason),
+            removed: Some(Some(removed.clone()))
         };
 
-        // enter mod log action
+        // submit mod action to mod log
         let mod_action = blocking(context.pool(), move |conn| {
-            ModLockPost::create(conn, &lock_form)
+            ModRemovePost::create(conn, &remove_post_form)
         })
         .await??;
 
