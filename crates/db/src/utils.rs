@@ -21,7 +21,7 @@ pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
   std::env::var("TINYBOARDS_DATABASE_URL")
 }
 
-const DEFAULT_FETCH_LIMIT: i64 = 20;
+pub const DEFAULT_FETCH_LIMIT: i64 = 20;
 pub const FETCH_LIMIT_MAX: i64 = 50;
 
 pub mod functions {
