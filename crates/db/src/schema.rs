@@ -216,7 +216,6 @@ diesel::table! {
         board_id -> Int4,
         reason -> Nullable<Text>,
         removed -> Nullable<Bool>,
-        expires -> Nullable<Timestamp>,
         when_ -> Timestamp,
     }
 }

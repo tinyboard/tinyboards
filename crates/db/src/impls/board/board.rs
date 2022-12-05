@@ -1,4 +1,5 @@
 use crate::schema::{board::dsl::*, board_moderator, board_user_ban};
+use crate::utils::naive_now;
 use crate::{
     models::board::board::{Board, BoardForm},
     traits::Crud,
@@ -41,6 +42,17 @@ impl Board {
             .optional();
 
         ban_id.map(|opt| opt.is_some())
+    }
+
+    pub fn update_removed(
+        conn: &mut PgConnection,
+        board_id: i32,
+        new_removed: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::board::dsl::*;
+        diesel::update(board.find(board_id))
+            .set((removed.eq(new_removed), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
     }
 }
 

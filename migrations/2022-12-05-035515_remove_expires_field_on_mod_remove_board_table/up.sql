@@ -1,0 +1,1 @@
+alter table mod_remove_board drop column expires cascade;

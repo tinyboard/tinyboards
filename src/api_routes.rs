@@ -54,11 +54,12 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             )
             // Mod & Admin Actions
             .service(
-                web::scope("/mod")
-                    .route("/lock_post", web::post().to(route_post::<LockPost>)) 
+                web::scope("/mod") 
                     .route("/ban", web::post().to(route_post::<BanUser>))
                     .route("/remove_post", web::post().to(route_post::<RemovePost>))
-                    .route("/remove_comment", web::post().to(route_post::<RemoveComment>)),
+                    .route("/remove_comment", web::post().to(route_post::<RemoveComment>))
+                    .route("/remove_board", web::post().to(route_post::<RemoveBoard>))
+                    .route("/lock_post", web::post().to(route_post::<LockPost>))    
             ),
     );
 }

@@ -123,7 +123,6 @@ pub struct ModRemoveBoard {
     pub board_id: i32,
     pub reason: Option<String>,
     pub removed: Option<bool>,
-    pub expires: Option<NaiveDateTime>,
     pub when_: NaiveDateTime,
 }
 
@@ -134,7 +133,6 @@ pub struct ModRemoveBoardForm {
     pub board_id: i32,
     pub reason: Option<Option<String>>,
     pub removed: Option<Option<bool>>,
-    pub expires: Option<Option<NaiveDateTime>>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
