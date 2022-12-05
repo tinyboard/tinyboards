@@ -60,6 +60,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/remove_comment", web::post().to(route_post::<RemoveComment>))
                     .route("/remove_board", web::post().to(route_post::<RemoveBoard>))
                     .route("/lock_post", web::post().to(route_post::<LockPost>))    
+                    .route("/sticky_post", web::post().to(route_post::<StickyPost>))
             ),
     );
 }

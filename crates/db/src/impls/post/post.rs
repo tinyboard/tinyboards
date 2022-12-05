@@ -37,6 +37,17 @@ impl Post {
             .get_result::<Self>(conn)
     }
 
+    pub fn update_stickied(
+        conn: &mut PgConnection,
+        post_id: i32,
+        new_stickied: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::post::dsl::*;
+        diesel::update(post.find(post_id))
+            .set((stickied.eq(new_stickied), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
     pub fn update_deleted(
         conn: &mut PgConnection,
         post_id: i32,

@@ -22,6 +22,12 @@ pub struct ModActionResponse<T> {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct StickyPost {
+    pub post_id: i32,
+    pub stickied: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LockPost {
     pub post_id: i32,
     pub locked: bool,
@@ -38,7 +44,6 @@ pub struct BanUser {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RemovePost {
-    pub mod_user_id: i32,
     pub post_id: i32,
     pub reason: Option<String>,
     pub removed: bool,
@@ -46,7 +51,6 @@ pub struct RemovePost {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RemoveComment {
-    pub mod_user_id: i32,
     pub comment_id: i32,
     pub reason: Option<String>,
     pub removed: bool,
@@ -54,7 +58,6 @@ pub struct RemoveComment {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RemoveBoard {
-    pub mod_user_id: i32,
     pub board_id: i32,
     pub reason: Option<String>,
     pub removed: bool,
