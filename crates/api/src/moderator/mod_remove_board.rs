@@ -10,7 +10,6 @@ use tinyboards_db::{
     models::board::board::Board,
     traits::Crud,
 };
-use tinyboards_db_views::structs::BoardView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
