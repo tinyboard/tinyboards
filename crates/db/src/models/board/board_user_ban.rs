@@ -13,3 +13,12 @@ pub struct BoardUserBan {
     pub published: NaiveDateTime,
     pub expires: Option<NaiveDateTime>,
 }
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = board_user_ban)]
+pub struct BoardUserBanForm {
+    pub board_id: i32,
+    pub user_id: i32,
+    pub expires: Option<NaiveDateTime>,
+}

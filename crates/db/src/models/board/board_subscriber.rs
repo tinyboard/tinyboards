@@ -13,3 +13,12 @@ pub struct BoardSubscriber {
     pub published: NaiveDateTime,
     pub pending: Option<bool>,
 }
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = board_subscriber)]
+pub struct BoardSubscriberForm {
+    pub board_id: i32,
+    pub user_id: i32,
+    pub pending: Option<bool>,
+}

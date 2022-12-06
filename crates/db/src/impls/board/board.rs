@@ -2,9 +2,11 @@ use crate::schema::{board::dsl::*, board_moderator, board_user_ban};
 use crate::utils::naive_now;
 use crate::{
     models::board::board::{Board, BoardForm},
-    traits::Crud,
+    models::board::board_user_ban::{BoardUserBan, BoardUserBanForm},
+    traits::{Crud, Bannable},
 };
 use diesel::{dsl::*, prelude::*, result::Error, PgConnection, QueryDsl, RunQueryDsl};
+use tinyboards_utils::TinyBoardsError;
 
 impl Board {
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin
@@ -110,5 +112,35 @@ impl Crud for Board {
         diesel::update(board.find(board_id))
             .set(form)
             .get_result::<Self>(conn)
+    }
+}
+
+impl Bannable for BoardUserBan {
+    type Form = BoardUserBanForm;
+    
+    fn ban(
+        conn: &mut PgConnection,
+        ban_form: &Self::Form,
+    ) -> Result<Self, Error> {
+        use crate::schema::board_user_ban::dsl::{board_id, board_user_ban, user_id};
+        insert_into(board_user_ban)
+            .values(ban_form)
+            .on_conflict((board_id, user_id))
+            .do_update()
+            .set(ban_form)
+            .get_result::<Self>(conn)
+    }
+
+    fn unban(
+        conn: &mut PgConnection,
+        ban_form: &Self::Form,
+    ) -> Result<usize, Error> {
+        use crate::schema::board_user_ban::dsl::{board_id, board_user_ban, user_id};
+        diesel::delete(
+            board_user_ban
+                .filter(board_id.eq(ban_form.board_id))
+                .filter(user_id.eq(ban_form.user_id)),
+        )
+        .execute(conn)
     }
 }

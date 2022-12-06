@@ -35,11 +35,19 @@ pub struct LockPost {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanUser {
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub target_user_id: i32,
     pub banned: bool,
-    pub expires: Option<Option<NaiveDateTime>>,
-    pub reason: String
+    pub expires: Option<NaiveDateTime>,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BanFromBoard {
+    pub target_user_id: i32,
+    pub board_id: i32,
+    pub banned: bool,
+    pub expires: Option<NaiveDateTime>,
+    pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

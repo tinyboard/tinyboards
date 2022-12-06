@@ -24,10 +24,10 @@ pub trait Crud {
 
 pub trait Subscribeable {
     type Form;
-    fn subscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    fn subscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
 }
@@ -57,12 +57,13 @@ pub trait Voteable {
         Self: Sized;
 }
 
+
 pub trait Bannable {
     type Form;
-    fn ban(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    fn ban(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    fn unban(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError>
+    fn unban(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
 }

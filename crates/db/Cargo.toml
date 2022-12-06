@@ -20,3 +20,4 @@ hmac = "0.12.1"
 sha2 = { version = "0.10.6" }
 strum = "0.24.1"
 strum_macros = "0.24.3"
+async-trait = "0.1.57"

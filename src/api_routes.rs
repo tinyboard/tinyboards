@@ -56,6 +56,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .service(
                 web::scope("/mod") 
                     .route("/ban", web::post().to(route_post::<BanUser>))
+                    .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     .route("/remove_post", web::post().to(route_post::<RemovePost>))
                     .route("/remove_comment", web::post().to(route_post::<RemoveComment>))
                     .route("/remove_board", web::post().to(route_post::<RemoveBoard>))
