@@ -70,3 +70,10 @@ pub struct RemoveBoard {
     pub reason: Option<String>,
     pub removed: bool,
 }
+
+// #[derive(Debug, Serialize, Deserialize, Clone)]
+// pub struct AddBoardMod {
+//     pub target_user_id: i32,
+//     pub board_id: i32,
+//     pub
+// }

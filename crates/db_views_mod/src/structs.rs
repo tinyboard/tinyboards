@@ -4,7 +4,7 @@ use tinyboards_db::{
         board::board::BoardSafe,
         moderator::{
             mod_actions::{
-                ModAdd,
+                ModAddAdmin,
                 ModAddBoard,
                 ModBan,
                 ModBanFromBoard,
@@ -12,7 +12,7 @@ use tinyboards_db::{
                 ModRemoveComment,
                 ModRemoveBoard,
                 ModRemovePost,
-                ModStickyPost,
+                ModStickyPost, ModAddBoardMod,
             },
             admin_actions::{
                 AdminPurgeComment,
@@ -36,8 +36,15 @@ pub struct ModAddBoardView {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ModAddView {
-    pub mod_add: ModAdd,
+pub struct ModAddAdminView {
+    pub mod_add_admin: ModAddAdmin,
+    pub moderator: Option<UserSafe>,
+    pub modded_user: UserSafe,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ModAddBoardModView {
+    pub mod_add_board_mod: ModAddBoardMod,
     pub moderator: Option<UserSafe>,
     pub modded_user: UserSafe,
 }

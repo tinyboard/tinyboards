@@ -27,27 +27,53 @@ impl Crud for ModAddBoard {
     }
 }
 
-impl Crud for ModAdd {
-    type Form = ModAddForm;
+impl Crud for ModAddAdmin {
+    type Form = ModAddAdminForm;
     type IdType = i32;
     fn read(conn: &mut PgConnection, id_: i32) -> Result<Self, Error> {
-        use crate::schema::mod_add::dsl::*;
-        mod_add.find(id_).first::<Self>(conn)
+        use crate::schema::mod_add_admin::dsl::*;
+        mod_add_admin.find(id_).first::<Self>(conn)
     }
     fn delete(conn: &mut PgConnection, id_: i32) -> Result<usize, Error> {
-        use crate::schema::mod_add::dsl::*;
-        diesel::delete(mod_add.find(id_)).execute(conn)
+        use crate::schema::mod_add_admin::dsl::*;
+        diesel::delete(mod_add_admin.find(id_)).execute(conn)
     }
     fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error> {
-        use crate::schema::mod_add::dsl::*;
-        let new = diesel::insert_into(mod_add)
+        use crate::schema::mod_add_admin::dsl::*;
+        let new = diesel::insert_into(mod_add_admin)
             .values(form)
             .get_result::<Self>(conn)?;
         Ok(new)
     }
     fn update(conn: &mut PgConnection, id_: i32, form: &Self::Form) -> Result<Self, Error> {
-        use crate::schema::mod_add::dsl::*;
-        diesel::update(mod_add.find(id_))
+        use crate::schema::mod_add_admin::dsl::*;
+        diesel::update(mod_add_admin.find(id_))
+            .set(form)
+            .get_result::<Self>(conn)
+    }
+}
+
+impl Crud for ModAddBoardMod {
+    type Form = ModAddBoardModForm;
+    type IdType = i32;
+    fn read(conn: &mut PgConnection, id_: i32) -> Result<Self, Error> {
+        use crate::schema::mod_add_board_mod::dsl::*;
+        mod_add_board_mod.find(id_).first::<Self>(conn)
+    }
+    fn delete(conn: &mut PgConnection, id_: i32) -> Result<usize, Error> {
+        use crate::schema::mod_add_board_mod::dsl::*;
+        diesel::delete(mod_add_board_mod.find(id_)).execute(conn)
+    }
+    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error> {
+        use crate::schema::mod_add_board_mod::dsl::*;
+        let new = diesel::insert_into(mod_add_board_mod)
+            .values(form)
+            .get_result::<Self>(conn)?;
+        Ok(new)
+    }
+    fn update(conn: &mut PgConnection, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+        use crate::schema::mod_add_board_mod::dsl::*;
+        diesel::update(mod_add_board_mod.find(id_))
             .set(form)
             .get_result::<Self>(conn)
     }

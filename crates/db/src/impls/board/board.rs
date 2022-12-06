@@ -6,7 +6,6 @@ use crate::{
     traits::{Crud, Bannable},
 };
 use diesel::{dsl::*, prelude::*, result::Error, PgConnection, QueryDsl, RunQueryDsl};
-use tinyboards_utils::TinyBoardsError;
 
 impl Board {
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin

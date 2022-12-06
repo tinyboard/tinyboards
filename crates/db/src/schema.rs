@@ -154,7 +154,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    mod_add (id) {
+    mod_add_admin (id) {
         id -> Int4,
         mod_user_id -> Int4,
         other_user_id -> Int4,
@@ -165,6 +165,17 @@ diesel::table! {
 
 diesel::table! {
     mod_add_board (id) {
+        id -> Int4,
+        mod_user_id -> Int4,
+        other_user_id -> Int4,
+        board_id -> Int4,
+        removed -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
+    mod_add_board_mod (id) {
         id -> Int4,
         mod_user_id -> Int4,
         other_user_id -> Int4,
@@ -470,6 +481,7 @@ diesel::joinable!(comment_saved -> user_ (user_id));
 diesel::joinable!(comment_vote -> comment (comment_id));
 diesel::joinable!(comment_vote -> user_ (user_id));
 diesel::joinable!(mod_add_board -> board (board_id));
+diesel::joinable!(mod_add_board_mod -> board (board_id));
 diesel::joinable!(mod_ban_from_board -> board (board_id));
 diesel::joinable!(mod_lock_post -> post (post_id));
 diesel::joinable!(mod_lock_post -> user_ (mod_user_id));
@@ -512,8 +524,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment_aggregates,
     comment_saved,
     comment_vote,
-    mod_add,
+    mod_add_admin,
     mod_add_board,
+    mod_add_board_mod,
     mod_ban,
     mod_ban_from_board,
     mod_lock_post,

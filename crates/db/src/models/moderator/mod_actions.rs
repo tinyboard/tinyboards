@@ -3,7 +3,8 @@ use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use crate::schema::{
     mod_add_board,
-    mod_add,
+    mod_add_admin,
+    mod_add_board_mod,
     mod_ban_from_board,
     mod_ban,
     mod_lock_post,
@@ -34,8 +35,8 @@ pub struct ModAddBoardForm {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-#[diesel(table_name = mod_add)]
-pub struct ModAdd {
+#[diesel(table_name = mod_add_admin)]
+pub struct ModAddAdmin {
     pub id: i32,
     pub mod_user_id: i32,
     pub other_user_id: i32,
@@ -44,10 +45,30 @@ pub struct ModAdd {
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
-#[diesel(table_name = mod_add)]
-pub struct ModAddForm {
+#[diesel(table_name = mod_add_admin)]
+pub struct ModAddAdminForm {
     pub mod_user_id: i32,
     pub other_user_id: i32,
+    pub removed: Option<Option<bool>>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[diesel(table_name = mod_add_board_mod)]
+pub struct ModAddBoardMod {
+    pub id: i32,
+    pub mod_user_id: i32,
+    pub other_user_id: i32,
+    pub board_id: i32,
+    pub removed: Option<bool>,
+    pub when_: NaiveDateTime,
+}
+
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = mod_add_board_mod)]
+pub struct ModAddBoardModForm {
+    pub mod_user_id: i32,
+    pub other_user_id: i32,
+    pub board_id: i32,
     pub removed: Option<Option<bool>>,
 }
 
