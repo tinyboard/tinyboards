@@ -52,7 +52,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/{comment_id}/vote", web::post().to(route_post::<CreateCommentVote>))
                     .route("/{comment_id}/save", web::post().to(route_post::<SaveComment>))
             )
-            // Mod & Admin Actions
+            // Mod Actions
             .service(
                 web::scope("/mod") 
                     .route("/ban", web::post().to(route_post::<BanUser>))
@@ -63,6 +63,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/lock_post", web::post().to(route_post::<LockPost>))    
                     .route("/sticky_post", web::post().to(route_post::<StickyPost>))
                     .route("/add_admin", web::post().to(route_post::<AddAdmin>))
+                    .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
             ),
     );
 }

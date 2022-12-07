@@ -76,3 +76,10 @@ pub struct AddAdmin {
     pub added: bool,
     pub added_user_id: i32,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddBoardMod {
+    pub added: bool,
+    pub added_user_id: i32,
+    pub added_board_id: i32,
+}

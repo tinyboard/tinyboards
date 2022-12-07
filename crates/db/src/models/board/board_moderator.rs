@@ -12,3 +12,11 @@ pub struct BoardModerator {
     pub user_id: i32,
     pub published: NaiveDateTime,
 }
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = board_moderator)]
+pub struct BoardModeratorForm {
+    pub board_id: i32,
+    pub user_id: i32,
+}
