@@ -6,6 +6,7 @@ use std::collections::BTreeMap;
 use crate::models::user::user::{User, UserForm, UserSafe};
 use crate::schema::user_::dsl::*;
 use crate::traits::Crud;
+use crate::utils::naive_now;
 use diesel::prelude::*;
 use diesel::result::Error;
 use diesel::PgConnection;
@@ -86,9 +87,21 @@ impl User {
     ) -> Result<Self, Error> {
         //use crate::schema::user::dsl::*;
         diesel::update(user_.find(user_id))
-            .set(banned.eq(new_banned))
+            .set((banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
     }
+
+    pub fn update_admin(
+        conn: &mut PgConnection,
+        user_id: i32,
+        new_admin: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::user_::dsl::*;
+        diesel::update(user_.find(user_id))
+            .set((admin.eq(new_admin), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
     pub fn get_by_name(conn: &mut PgConnection, username: &str) -> Result<Self, Error> {
         use crate::schema::user_::dsl::*;
         // sanitization could be better

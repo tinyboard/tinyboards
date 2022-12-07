@@ -71,9 +71,8 @@ pub struct RemoveBoard {
     pub removed: bool,
 }
 
-// #[derive(Debug, Serialize, Deserialize, Clone)]
-// pub struct AddBoardMod {
-//     pub target_user_id: i32,
-//     pub board_id: i32,
-//     pub
-// }
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddAdmin {
+    pub added: bool,
+    pub added_user_id: i32,
+}
