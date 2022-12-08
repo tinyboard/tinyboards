@@ -69,6 +69,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .service(
                 web::scope("/admin")
                     .route("/purge_user", web::post().to(route_post::<PurgeUser>))
+                    .route("/purge_post", web::post().to(route_post::<PurgePost>))
             ),
     );
 }
