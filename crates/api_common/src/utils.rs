@@ -493,3 +493,32 @@ pub async fn purge_image_posts_for_user(
   
     Ok(())
   }
+
+  pub async fn purge_image_posts_for_board(
+    banned_board_id: i32,
+    pool: &PgPool,
+    settings: &Settings,
+    client: &ClientWithMiddleware,
+  ) -> Result<(), TinyBoardsError> {
+    let posts 
+        = blocking(pool, move |conn| {
+            Post::fetch_image_posts_for_board(conn, banned_board_id)
+        })
+        .await??;
+        
+    for post in posts {
+      if let Some(url) = post.url {
+        purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap()).await.ok();
+      }
+      if let Some(thumbnail_url) = post.thumbnail_url {
+        purge_image_from_pictrs(client, settings, &Url::parse(thumbnail_url.as_str()).unwrap()).await.ok();
+      }
+    }
+  
+    blocking(pool, move |conn| {
+        Post::remove_post_images_and_thumbnails_for_board(conn, banned_board_id)
+    })
+    .await??;
+  
+    Ok(())
+  }

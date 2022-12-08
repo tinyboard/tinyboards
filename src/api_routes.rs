@@ -71,7 +71,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_user", web::post().to(route_post::<PurgeUser>))
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
-                    //.route("/purge_board", web::post().to(route_post::<PurgeBoard>))
+                    .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
             ),
     );
 }
