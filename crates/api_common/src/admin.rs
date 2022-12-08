@@ -8,12 +8,14 @@ pub struct PurgePost {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PurgeComment {
-
+    pub comment_id: i32,
+    pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PurgeBoard {
-
+    pub board_id: i32,
+    pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
