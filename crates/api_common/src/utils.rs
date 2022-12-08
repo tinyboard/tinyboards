@@ -1,6 +1,7 @@
 use actix_web::web;
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
+use reqwest_middleware::ClientWithMiddleware;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use tinyboards_db::{
@@ -17,8 +18,11 @@ use tinyboards_db::{
 };
 use tinyboards_db_views::structs::{BoardUserBanView, UserView, BoardView};
 use tinyboards_utils::{
-    error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::RateLimitSettings,
+    error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::{RateLimitSettings, Settings},
 };
+use url::Url;
+
+use crate::request::purge_image_from_pictrs;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -460,3 +464,32 @@ pub async fn is_mod_or_admin(
     }
     Ok(())
 }
+
+pub async fn purge_image_posts_for_user(
+    banned_user_id: i32,
+    pool: &PgPool,
+    settings: &Settings,
+    client: &ClientWithMiddleware,
+  ) -> Result<(), TinyBoardsError> {
+    let posts 
+        = blocking(pool, move |conn| { 
+            Post::fetch_image_posts_for_creator(conn, banned_user_id)
+        })
+        .await??;
+
+    for post in posts {
+      if let Some(url) = post.url {
+        purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap()).await.ok();
+      }
+      if let Some(thumbnail_url) = post.thumbnail_url {
+        purge_image_from_pictrs(client, settings, &Url::parse(thumbnail_url.as_str()).unwrap()).await.ok();
+      }
+    }
+  
+    blocking(pool, move |conn| {
+        Post::remove_post_images_and_thumbnails_for_creator(conn, banned_user_id)
+    })
+    .await??;
+  
+    Ok(())
+  }

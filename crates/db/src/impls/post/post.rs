@@ -16,6 +16,41 @@ impl Post {
         user_id == post_creator_id
     }
 
+
+    pub fn fetch_image_posts_for_creator(
+        conn: &mut PgConnection,
+        for_creator_id: i32,
+      ) -> Result<Vec<Self>, Error> {
+        use crate::schema::post::dsl::*;
+        let pictrs_search = "%pictrs/image%";
+        post
+          .filter(creator_id.eq(for_creator_id))
+          .filter(url.like(pictrs_search))
+          .load::<Self>(conn)
+    }
+
+
+    /// Sets the url and thumbnails fields to None
+    pub fn remove_post_images_and_thumbnails_for_creator(
+        conn: &mut PgConnection,
+        for_creator_id: i32,
+    ) -> Result<Vec<Self>, Error> {
+        use crate::schema::post::dsl::*;
+        let pictrs_search = "%pictrs/image%";
+
+        diesel::update(
+        post
+            .filter(creator_id.eq(for_creator_id))
+            .filter(url.like(pictrs_search)),
+        )
+        .set((
+        url.eq::<Option<String>>(None),
+        thumbnail_url.eq::<Option<String>>(None),
+        ))
+        .get_results::<Self>(conn)
+    }
+
+
     /// Checks if a post with a given id exists. Don't use if you need a whole Post object.
     pub fn check_if_exists(conn: &mut PgConnection, pid: i32) -> Result<Option<i32>, TinyBoardsError> {
         use crate::schema::post::dsl::*;

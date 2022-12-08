@@ -91,4 +91,6 @@
   salt_suffix: "somesalt"
   # Environment where the code is being ran (prod or dev)
   environment: "dev"
+  # Username of the site owner
+  owner_name: "admin"
 }

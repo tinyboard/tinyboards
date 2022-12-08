@@ -1,7 +1,7 @@
 use doku::Document;
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
-use std::net::{IpAddr, Ipv4Addr};
+use std::{net::{IpAddr, Ipv4Addr}};
 use url::Url;
 
 
@@ -55,6 +55,10 @@ pub struct Settings {
   #[default("prod")]
   #[doku(example = "prod")]
   pub environment: String,
+  /// Username of the site owner
+  #[default("admin")]
+  #[doku(example = "admin")]
+  pub owner_name: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]

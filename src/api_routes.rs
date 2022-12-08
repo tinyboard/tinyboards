@@ -2,7 +2,7 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::Perform;
 use tinyboards_api_common::{
-    comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*,
+    comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, admin::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -64,6 +64,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/sticky_post", web::post().to(route_post::<StickyPost>))
                     .route("/add_admin", web::post().to(route_post::<AddAdmin>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
+            )
+            // Admin Actions
+            .service(
+                web::scope("/admin")
+                    .route("/purge_user", web::post().to(route_post::<PurgeUser>))
             ),
     );
 }

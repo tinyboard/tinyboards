@@ -3512,6 +3512,7 @@ dependencies = [
  "tinyboards_db_views_mod",
  "tinyboards_utils",
  "tracing",
+ "url",
 ]
 
 [[package]]
