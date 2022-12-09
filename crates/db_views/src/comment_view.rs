@@ -310,7 +310,7 @@ impl<'a> CommentQuery<'a> {
             query = query.filter(comment_saved::id.is_not_null());
         }
 
-        if !self.show_deleted_and_removed.unwrap_or(false) {
+        if !self.show_deleted_and_removed.unwrap_or(true) {
             query = query.filter(comment::removed.eq(false));
             query = query.filter(comment::deleted.eq(false));
         }
