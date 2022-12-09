@@ -12,7 +12,7 @@ pub struct Comment {
     pub parent_id: Option<i32>,
     pub body: String,
     pub body_html: String,
-    pub removed: bool,
+    pub is_removed: bool,
     pub read: bool,
     pub published: NaiveDateTime,
     pub level: i32,
