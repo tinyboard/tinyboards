@@ -62,12 +62,12 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/remove_board", web::post().to(route_post::<RemoveBoard>))
                     .route("/lock_post", web::post().to(route_post::<LockPost>))    
                     .route("/sticky_post", web::post().to(route_post::<StickyPost>))
-                    .route("/add_admin", web::post().to(route_post::<AddAdmin>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
             )
             // Admin Actions
             .service(
                 web::scope("/admin")
+                    .route("/add_admin", web::post().to(route_post::<AddAdmin>))
                     .route("/purge_user", web::post().to(route_post::<PurgeUser>))
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
