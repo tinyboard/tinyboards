@@ -5,6 +5,7 @@ use tinyboards_api_common::{
     site::{SendInvite, Message},
     utils::{blocking, require_user},
 };
+use tinyboards_db::models::site::site_invite::{SiteInvite, SiteInviteForm};
 use tinyboards_utils::{
     error::TinyBoardsError,
     email::send_email,
@@ -39,7 +40,13 @@ impl<'des> Perform<'des> for SendInvite {
             .unwrap()?;
 
         // create a UUIDv4 for the invite token
-        let invite_token = Uuid::new_v4().to_string();
+        let token = Uuid::new_v4().to_string();
+
+        let form = SiteInviteForm {
+            email,
+            token
+        };
+
 
 
 

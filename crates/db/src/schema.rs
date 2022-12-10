@@ -385,6 +385,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    site_invite (id) {
+        id -> Int4,
+        email -> Text,
+        token -> Text,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
     tag (id) {
         id -> Int4,
         name -> Varchar,
@@ -544,6 +553,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     registration_application,
     secret,
     site,
+    site_invite,
     tag,
     user_,
     user_aggregates,
