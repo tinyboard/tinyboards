@@ -56,7 +56,7 @@ diesel::table! {
         id -> Int4,
         board_id -> Int4,
         user_id -> Int4,
-        added_date -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -65,7 +65,7 @@ diesel::table! {
         id -> Int4,
         board_id -> Int4,
         user_id -> Int4,
-        joined_date -> Timestamp,
+        creation_date -> Timestamp,
         pending -> Nullable<Bool>,
     }
 }
@@ -75,7 +75,7 @@ diesel::table! {
         id -> Int4,
         board_id -> Int4,
         user_id -> Int4,
-        banned_date -> Timestamp,
+        creation_date -> Timestamp,
         expires -> Nullable<Timestamp>,
     }
 }
@@ -132,6 +132,7 @@ diesel::table! {
         level -> Int4,
         edited_date -> Nullable<Timestamp>,
         is_deleted -> Bool,
+        updated -> Nullable<Timestamp>,
     }
 }
 
@@ -145,6 +146,7 @@ diesel::table! {
         read -> Bool,
         creation_date -> Timestamp,
         edited_date -> Nullable<Timestamp>,
+        updated -> Nullable<Timestamp>,
     }
 }
 
@@ -308,7 +310,8 @@ diesel::table! {
         edited_date -> Nullable<Timestamp>,
         is_deleted -> Bool,
         is_nsfw -> Bool,
-        stickied -> Bool,
+        is_stickied -> Bool,
+        updated -> Nullable<Timestamp>,
     }
 }
 
