@@ -3513,6 +3513,7 @@ dependencies = [
  "tinyboards_utils",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]

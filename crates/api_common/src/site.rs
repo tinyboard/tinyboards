@@ -52,6 +52,11 @@ pub struct GetMembersResponse {
     pub members: Vec<UserView>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SendInvite {
+    pub email: String,
+}
+
 #[derive(Serialize)]
 pub struct Message {
     pub code: i32,
