@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     post::{GetPostComments, PostIdPath},
     utils::{blocking, check_private_instance, load_user_opt},
 };
-use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post};
+use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post, CommentSortType, ListingType};
 use tinyboards_db_views::{
     comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable,
 };
@@ -35,8 +35,19 @@ impl<'des> PerformCrud<'des> for ListComments {
             Some(ref user) => Some(user.id),
             None => None,
         };
-        let sort = map_to_comment_sort_type(data.sort.as_deref());
-        let listing_type = map_to_listing_type(data.listing_type.as_deref());
+
+        let sort = match data.sort.as_ref() {
+            Some(sort) => map_to_comment_sort_type(Some(&sort.to_lowercase())),
+            None => CommentSortType::Hot,
+        };
+
+        println!("sort = {}", sort);
+
+        let listing_type = match data.listing_type.as_ref() {
+            Some(listing_type) => map_to_listing_type(Some(&listing_type.to_lowercase())),
+            None => ListingType::All
+        };
+
         let page = data.page;
         let limit = data.limit;
         let board_id = data.board_id;

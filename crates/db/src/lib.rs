@@ -131,10 +131,10 @@ pub fn map_to_user_sort_type(match_string: Option<&str>) -> UserSortType {
 
 pub fn map_to_comment_sort_type(match_string: Option<&str>) -> CommentSortType {
     match match_string {
-      Some("Hot") => CommentSortType::Hot,
-      Some("Top") => CommentSortType::Top,
-      Some("New") => CommentSortType::New,
-      Some("Old") => CommentSortType::Old,
+      Some("hot") => CommentSortType::Hot,
+      Some("top") => CommentSortType::Top,
+      Some("new") => CommentSortType::New,
+      Some("old") => CommentSortType::Old,
       Some(&_) => CommentSortType::Hot,
       None => CommentSortType::Hot,
     }
@@ -142,8 +142,8 @@ pub fn map_to_comment_sort_type(match_string: Option<&str>) -> CommentSortType {
 
 pub fn map_to_listing_type(match_string: Option<&str>) -> ListingType {
     match match_string {
-      Some("All") => ListingType::All,
-      Some("Subscribed") => ListingType::Subscribed,
+      Some("all") => ListingType::All,
+      Some("subscribed") => ListingType::Subscribed,
       Some(&_) => ListingType::All,
       None => ListingType::All,
     }
