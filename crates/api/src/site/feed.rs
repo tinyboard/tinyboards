@@ -48,6 +48,7 @@ impl<'des> Perform<'des> for GetFeed {
         let limit = params.limit;
         let page = params.page;
         let mut nsfw = false;
+        let user_match = user.clone();
 
         // normally we would get if the user has show_nsfw set to true/false when querying posts
         if let Some(ref user) = user {
@@ -66,6 +67,7 @@ impl<'des> Perform<'des> for GetFeed {
                 .sort(Some(sort))
                 .board_id(board_id)
                 .search_term(search_term)
+                .user(user_match.as_ref())
                 .creator_id(creator_id)
                 .saved_only(saved_only)
                 .show_nsfw(Some(nsfw))
