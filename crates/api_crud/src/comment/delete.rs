@@ -40,11 +40,6 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         })
         .await??;
 
-        let orig_post = blocking(context.pool(), move |conn| {
-            Post::read(conn, orig_comment.post_id)
-        })
-        .await??;
-
         if orig_comment.deleted == data.deleted {
             return Err(TinyBoardsError::from_message("couldn't delete comment a second time!"));
         }
