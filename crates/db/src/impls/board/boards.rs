@@ -1,9 +1,9 @@
-use crate::schema::{board::dsl::*, board_moderator, board_user_ban};
+use crate::schema::{board_mods, board_user_bans, boards::dsl::*};
 use crate::utils::naive_now;
 use crate::{
-    models::board::board::{Board, BoardForm},
-    models::board::board_user_ban::{BoardUserBan, BoardUserBanForm},
-    traits::{Crud, Bannable},
+    models::board::board_user_bans::{BoardUserBan, BoardUserBanForm},
+    models::board::boards::{Board, BoardForm},
+    traits::{Bannable, Crud},
 };
 use diesel::{dsl::*, prelude::*, result::Error, PgConnection, QueryDsl, RunQueryDsl};
 
@@ -14,10 +14,10 @@ impl Board {
         board_id: i32,
         user_id: i32,
     ) -> Result<bool, Error> {
-        let mod_id = board_moderator::table
-            .select(board_moderator::id)
-            .filter(board_moderator::board_id.eq(board_id))
-            .filter(board_moderator::user_id.eq(user_id))
+        let mod_id = board_mods::table
+            .select(board_mods::id)
+            .filter(board_mods::board_id.eq(board_id))
+            .filter(board_mods::user_id.eq(user_id))
             .first::<i32>(conn)
             .optional();
 
@@ -30,14 +30,14 @@ impl Board {
         board_id: i32,
         user_id: i32,
     ) -> Result<bool, Error> {
-        let ban_id = board_user_ban::table
-            .select(board_user_ban::id)
-            .filter(board_user_ban::board_id.eq(board_id))
-            .filter(board_user_ban::user_id.eq(user_id))
+        let ban_id = board_user_bans::table
+            .select(board_user_bans::id)
+            .filter(board_user_bans::board_id.eq(board_id))
+            .filter(board_user_bans::user_id.eq(user_id))
             .filter(
-                board_user_ban::expires
+                board_user_bans::expires
                     .is_null()
-                    .or(board_user_ban::expires.gt(now)),
+                    .or(board_user_bans::expires.gt(now)),
             )
             .first::<i32>(conn)
             .optional();
@@ -45,31 +45,31 @@ impl Board {
         ban_id.map(|opt| opt.is_some())
     }
 
-    pub fn update_removed(
+    pub fn update_banned(
         conn: &mut PgConnection,
         board_id: i32,
-        new_removed: bool,
+        new_banned: bool,
     ) -> Result<Self, Error> {
-        use crate::schema::board::dsl::*;
-        diesel::update(board.find(board_id))
-            .set((removed.eq(new_removed), updated.eq(naive_now())))
+        use crate::schema::boards::dsl::*;
+        diesel::update(boards.find(board_id))
+            .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
     }
 }
 
 pub mod safe_type {
-    use crate::{models::board::board::BoardSafe, schema::board::*, traits::ToSafe};
+    use crate::{models::board::boards::BoardSafe, schema::boards::*, traits::ToSafe};
 
     type Columns = (
         id,
         name,
         title,
         description,
-        published,
+        creation_date,
         updated,
-        deleted,
-        nsfw,
-        hidden,
+        is_deleted,
+        //is_nsfw,
+        is_hidden,
     );
 
     impl ToSafe for BoardSafe {
@@ -80,11 +80,11 @@ pub mod safe_type {
                 name,
                 title,
                 description,
-                published,
+                creation_date,
                 updated,
-                deleted,
-                nsfw,
-                hidden,
+                is_deleted,
+                //is_nsfw,
+                is_hidden,
             )
         }
     }
@@ -95,20 +95,20 @@ impl Crud for Board {
     type IdType = i32;
 
     fn read(conn: &mut PgConnection, board_id: i32) -> Result<Self, Error> {
-        board.find(board_id).first::<Self>(conn)
+        boards.find(board_id).first::<Self>(conn)
     }
     fn delete(conn: &mut PgConnection, board_id: i32) -> Result<usize, Error> {
-        diesel::delete(board.find(board_id)).execute(conn)
+        diesel::delete(boards.find(board_id)).execute(conn)
     }
     fn create(conn: &mut PgConnection, form: &BoardForm) -> Result<Self, Error> {
-        let new_board = diesel::insert_into(board)
+        let new_board = diesel::insert_into(boards)
             .values(form)
             .get_result::<Self>(conn)?;
 
         Ok(new_board)
     }
     fn update(conn: &mut PgConnection, board_id: i32, form: &BoardForm) -> Result<Self, Error> {
-        diesel::update(board.find(board_id))
+        diesel::update(boards.find(board_id))
             .set(form)
             .get_result::<Self>(conn)
     }
@@ -116,13 +116,10 @@ impl Crud for Board {
 
 impl Bannable for BoardUserBan {
     type Form = BoardUserBanForm;
-    
-    fn ban(
-        conn: &mut PgConnection,
-        ban_form: &Self::Form,
-    ) -> Result<Self, Error> {
-        use crate::schema::board_user_ban::dsl::{board_id, board_user_ban, user_id};
-        insert_into(board_user_ban)
+
+    fn ban(conn: &mut PgConnection, ban_form: &Self::Form) -> Result<Self, Error> {
+        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
+        insert_into(board_user_bans)
             .values(ban_form)
             .on_conflict((board_id, user_id))
             .do_update()
@@ -130,13 +127,10 @@ impl Bannable for BoardUserBan {
             .get_result::<Self>(conn)
     }
 
-    fn unban(
-        conn: &mut PgConnection,
-        ban_form: &Self::Form,
-    ) -> Result<usize, Error> {
-        use crate::schema::board_user_ban::dsl::{board_id, board_user_ban, user_id};
+    fn unban(conn: &mut PgConnection, ban_form: &Self::Form) -> Result<usize, Error> {
+        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
         diesel::delete(
-            board_user_ban
+            board_user_bans
                 .filter(board_id.eq(ban_form.board_id))
                 .filter(user_id.eq(ban_form.user_id)),
         )

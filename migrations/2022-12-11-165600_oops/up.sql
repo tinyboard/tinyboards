@@ -1,0 +1,1 @@
+alter table posts rename column published to creation_date;

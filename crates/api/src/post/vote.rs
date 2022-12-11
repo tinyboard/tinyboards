@@ -9,8 +9,8 @@ use tinyboards_api_common::{
     },
 };
 use tinyboards_db::{
-    models::post::post_vote::{PostVote, PostVoteForm},
-    models::{board::board::Board, post::post::Post},
+    models::post::post_votes::{PostVote, PostVoteForm},
+    models::{board::boards::Board, post::posts::Post},
     traits::{Crud, Voteable},
 };
 use tinyboards_db_views::structs::PostView;
@@ -37,10 +37,7 @@ impl<'des> Perform<'des> for CreatePostVote {
 
         let post_id = path.post_id;
 
-        let post = blocking(context.pool(), move |conn| {
-            Post::read(conn, post_id)
-        })
-        .await??;
+        let post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
 
         // check if post can be liked (not deleted, removed, or locked)
         check_post_deleted_removed_or_locked(post_id, context.pool()).await?;
@@ -73,8 +70,7 @@ impl<'des> Perform<'des> for CreatePostVote {
             if do_add {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| PostVote::vote(conn, &cloned_form);
-                blocking(context.pool(), like)
-                    .await??;
+                blocking(context.pool(), like).await??;
             } else {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| {
@@ -95,6 +91,5 @@ impl<'des> Perform<'des> for CreatePostVote {
         } else {
             Err(TinyBoardsError::from_message("user is banned on the board"))
         }
-        
     }
 }

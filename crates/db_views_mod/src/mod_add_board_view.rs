@@ -1,26 +1,13 @@
 use crate::structs::{ModAddBoardView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        board,
-        mod_add_board,
-        user_,
-    },
-    models::{
-        board::board::BoardSafe,
-        moderator::mod_actions::ModAddBoard,
-        user::user::UserSafe,
-    },
+    models::{board::boards::BoardSafe, moderator::mod_actions::ModAddBoard, user::user::UserSafe},
+    schema::{board, mod_add_board, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModAddBoardViewTuple = (
-    ModAddBoard,
-    Option<UserSafe>,
-    BoardSafe,
-    UserSafe,
-);
+type ModAddBoardViewTuple = (ModAddBoard, Option<UserSafe>, BoardSafe, UserSafe);
 
 impl ModAddBoardView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -32,13 +19,11 @@ impl ModAddBoardView {
         let mod_names_join = mod_add_board::mod_user_id
             .eq(user_::id)
             .and(show_mod_names_expr.or(user_::id.eq(mod_id_join)));
-        
+
         let mut query = mod_add_board::table
             .left_join(user_::table.on(mod_names_join))
             .inner_join(board::table)
-            .inner_join(
-                user_alias.on(mod_add_board::other_user_id.eq(user_alias.field(user_::id))),
-            )
+            .inner_join(user_alias.on(mod_add_board::other_user_id.eq(user_alias.field(user_::id))))
             .select((
                 mod_add_board::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),
@@ -61,13 +46,12 @@ impl ModAddBoardView {
 
         let (limit, offset) = limit_and_offset(params.page, params.limit)?;
 
-
         let res = query
             .limit(limit)
             .offset(offset)
             .order_by(mod_add_board::when_.desc())
             .load::<ModAddBoardViewTuple>(conn)?;
-        
+
         let results = Self::from_tuple_to_vec(res);
         Ok(results)
     }

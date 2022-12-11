@@ -9,8 +9,8 @@ use tinyboards_api_common::{
     },
 };
 use tinyboards_db::{
-    models::post::post::{Post, PostForm},
-    traits::Crud, 
+    models::post::posts::{Post, PostForm},
+    traits::Crud,
     utils::naive_now,
 };
 use tinyboards_db_views::structs::PostView;

@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{blocking, get_user_view_from_jwt},
 };
 use tinyboards_db::{
-    models::post::post_saved::{PostSaved, PostSavedForm},
+    models::post::user_post_save::{PostSaved, PostSavedForm},
     traits::Saveable,
 };
 use tinyboards_db_views::structs::PostView;
@@ -35,12 +35,10 @@ impl<'des> Perform<'des> for SavePost {
 
         if data.save {
             let save_post = move |conn: &mut _| PostSaved::save(conn, &saved_form);
-            blocking(context.pool(), save_post)
-                .await??;
+            blocking(context.pool(), save_post).await??;
         } else {
             let unsave_post = move |conn: &mut _| PostSaved::unsave(conn, &saved_form);
-            blocking(context.pool(), unsave_post)
-                .await??;
+            blocking(context.pool(), unsave_post).await??;
         }
 
         let post_id = path.post_id;

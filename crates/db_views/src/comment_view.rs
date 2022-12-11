@@ -5,14 +5,14 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board::BoardSafe,
-        board::board_subscriber::BoardSubscriber,
-        board::board_user_ban::BoardUserBan,
-        comment::comment::Comment,
-        comment::comment_saved::CommentSaved,
-        post::post::Post,
+        board::board_subscriptions::BoardSubscriber,
+        board::board_user_bans::BoardUserBan,
+        board::boards::BoardSafe,
+        comment::comments::Comment,
+        comment::user_comment_save::CommentSaved,
+        post::posts::Post,
         user::user::{User, UserSafe},
-        user::user_block::UserBlock,
+        user::user_blocks::UserBlock,
     },
     schema::{
         board, board_block, board_subscriber, board_user_ban, comment, comment_aggregates,

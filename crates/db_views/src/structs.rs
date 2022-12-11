@@ -1,14 +1,17 @@
+use serde::{Deserialize, Serialize};
 use tinyboards_db::{
     aggregates::structs::{BoardAggregates, CommentAggregates, PostAggregates, UserAggregates},
     models::{
-        board::board::BoardSafe,
-        comment::comment::Comment,
-        post::post::Post,
-        user::{user::{UserSafe, UserSettings}, user_mention::UserMention},
+        board::boards::BoardSafe,
+        comment::comments::Comment,
+        post::posts::Post,
+        user::{
+            user::{UserSafe, UserSettings},
+            user_mention::UserMention,
+        },
     },
     SubscribedType,
 };
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserView {

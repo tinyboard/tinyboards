@@ -7,8 +7,8 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::post::{
-        post::{Post, PostForm},
-        post_vote::{PostVote, PostVoteForm},
+        post_votes::{PostVote, PostVoteForm},
+        posts::{Post, PostForm},
     },
     traits::Voteable,
 };
@@ -56,10 +56,8 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             ..PostForm::default()
         };
 
-        let published_post = blocking(context.pool(), move |conn| {
-            Post::submit(conn, post_form)
-        })
-        .await??;
+        let published_post =
+            blocking(context.pool(), move |conn| Post::submit(conn, post_form)).await??;
 
         // auto upvote own post
         let post_vote = PostVoteForm {

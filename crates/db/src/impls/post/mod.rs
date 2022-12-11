@@ -1,3 +1,3 @@
-mod post;
-mod post_vote;
-mod post_saved;
+mod post_votes;
+mod posts;
+mod user_post_save;

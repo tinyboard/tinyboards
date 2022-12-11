@@ -2,12 +2,12 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{RemoveBoard, ModActionResponse},
+    moderator::{ModActionResponse, RemoveBoard},
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
+    models::board::boards::Board,
     models::moderator::mod_actions::{ModRemoveBoard, ModRemoveBoardForm},
-    models::board::board::Board,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -31,7 +31,9 @@ impl<'des> Perform<'des> for RemoveBoard {
         let removed = data.removed;
 
         if board_id == 1 {
-            return Err(TinyBoardsError::from_message("you can't remove the default board"));
+            return Err(TinyBoardsError::from_message(
+                "you can't remove the default board",
+            ));
         }
 
         // require a mod/admin for this action
@@ -40,7 +42,7 @@ impl<'des> Perform<'des> for RemoveBoard {
             .require_board_mod(board_id.clone(), context.pool())
             .await
             .unwrap()?;
-        
+
         // update the board in the database
         blocking(context.pool(), move |conn| {
             Board::update_removed(conn, board_id.clone(), removed)
@@ -63,4 +65,4 @@ impl<'des> Perform<'des> for RemoveBoard {
 
         Ok(ModActionResponse { mod_action })
     }
-} 
+}

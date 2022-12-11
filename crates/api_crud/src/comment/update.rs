@@ -9,8 +9,8 @@ use tinyboards_api_common::{
     },
 };
 use tinyboards_db::{
-    models::comment::comment::{Comment, CommentForm},
-    traits::Crud, 
+    models::comment::comments::{Comment, CommentForm},
+    traits::Crud,
     utils::naive_now,
 };
 use tinyboards_db_views::structs::CommentView;

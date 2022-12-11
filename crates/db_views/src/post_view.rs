@@ -3,16 +3,16 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
-        board::board::BoardSafe,
-        board::board_subscriber::BoardSubscriber,
-        board::board_user_ban::BoardUserBan,
-        post::post::Post,
+        board::board_subscriptions::BoardSubscriber,
+        board::board_user_bans::BoardUserBan,
+        board::boards::BoardSafe,
         post::post_read::PostRead,
-        post::post_saved::PostSaved,
+        post::posts::Post,
+        post::user_post_save::PostSaved,
         //user::user::User,
         user::{
             user::{User, UserSafe},
-            user_block::UserBlock,
+            user_blocks::UserBlock,
         },
     },
     schema::{

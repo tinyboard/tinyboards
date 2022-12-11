@@ -1,26 +1,15 @@
 use crate::structs::{ModBanFromBoardView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_ban_from_board,
-        user_,
-        board,
-    },
     models::{
-        moderator::mod_actions::ModBanFromBoard,
-        user::user::UserSafe,
-        board::board::BoardSafe,
+        board::boards::BoardSafe, moderator::mod_actions::ModBanFromBoard, user::user::UserSafe,
     },
+    schema::{board, mod_ban_from_board, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModBanFromBoardViewTuple = (
-    ModBanFromBoard,
-    Option<UserSafe>,
-    BoardSafe,
-    UserSafe,
-);
+type ModBanFromBoardViewTuple = (ModBanFromBoard, Option<UserSafe>, BoardSafe, UserSafe);
 
 impl ModBanFromBoardView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -47,30 +36,29 @@ impl ModBanFromBoardView {
             ))
             .into_boxed();
 
+        if let Some(mod_user_id) = params.mod_user_id {
+            query = query.filter(mod_ban_from_board::mod_user_id.eq(mod_user_id));
+        };
 
-            if let Some(mod_user_id) = params.mod_user_id {
-                query = query.filter(mod_ban_from_board::mod_user_id.eq(mod_user_id));
-            };
+        if let Some(board_id) = params.board_id {
+            query = query.filter(mod_ban_from_board::board_id.eq(board_id));
+        };
 
-            if let Some(board_id) = params.board_id {
-                query = query.filter(mod_ban_from_board::board_id.eq(board_id));
-            };
-    
-            if let Some(other_user_id) = params.other_user_id {
-                query = query.filter(mod_ban_from_board::other_user_id.eq(other_user_id));
-            };
-    
-            let (limit, offset) = limit_and_offset(params.page, params.limit)?;
-    
-            let res = query
-                .limit(limit)
-                .offset(offset)
-                .order_by(mod_ban_from_board::when_.desc())
-                .load::<ModBanFromBoardViewTuple>(conn)?;
+        if let Some(other_user_id) = params.other_user_id {
+            query = query.filter(mod_ban_from_board::other_user_id.eq(other_user_id));
+        };
 
-            let results = Self::from_tuple_to_vec(res);
+        let (limit, offset) = limit_and_offset(params.page, params.limit)?;
 
-            Ok(results)
+        let res = query
+            .limit(limit)
+            .offset(offset)
+            .order_by(mod_ban_from_board::when_.desc())
+            .load::<ModBanFromBoardViewTuple>(conn)?;
+
+        let results = Self::from_tuple_to_vec(res);
+
+        Ok(results)
     }
 }
 

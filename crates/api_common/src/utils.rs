@@ -7,18 +7,20 @@ use std::collections::BTreeMap;
 use tinyboards_db::{
     database::PgPool,
     models::{
-        board::board::Board,
-        comment::comment::Comment,
-        post::post::Post,
+        board::boards::Board,
+        comment::comments::Comment,
+        post::posts::Post,
         secret::Secret,
-        site::{registration_application::RegistrationApplication, site::Site},
+        site::{registration_applications::RegistrationApplication, site::Site},
         user::user::User,
     },
     traits::Crud,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, UserView, BoardView};
+use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
 use tinyboards_utils::{
-    error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::{RateLimitSettings, Settings},
+    error::TinyBoardsError,
+    rate_limit::RateLimitConfig,
+    settings::structs::{RateLimitSettings, Settings},
 };
 use url::Url;
 
@@ -470,55 +472,69 @@ pub async fn purge_image_posts_for_user(
     pool: &PgPool,
     settings: &Settings,
     client: &ClientWithMiddleware,
-  ) -> Result<(), TinyBoardsError> {
-    let posts 
-        = blocking(pool, move |conn| { 
-            Post::fetch_image_posts_for_creator(conn, banned_user_id)
-        })
-        .await??;
+) -> Result<(), TinyBoardsError> {
+    let posts = blocking(pool, move |conn| {
+        Post::fetch_image_posts_for_creator(conn, banned_user_id)
+    })
+    .await??;
 
     for post in posts {
-      if let Some(url) = post.url {
-        purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap()).await.ok();
-      }
-      if let Some(thumbnail_url) = post.thumbnail_url {
-        purge_image_from_pictrs(client, settings, &Url::parse(thumbnail_url.as_str()).unwrap()).await.ok();
-      }
+        if let Some(url) = post.url {
+            purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap())
+                .await
+                .ok();
+        }
+        if let Some(thumbnail_url) = post.thumbnail_url {
+            purge_image_from_pictrs(
+                client,
+                settings,
+                &Url::parse(thumbnail_url.as_str()).unwrap(),
+            )
+            .await
+            .ok();
+        }
     }
-  
+
     blocking(pool, move |conn| {
         Post::remove_post_images_and_thumbnails_for_creator(conn, banned_user_id)
     })
     .await??;
-  
-    Ok(())
-  }
 
-  pub async fn purge_image_posts_for_board(
+    Ok(())
+}
+
+pub async fn purge_image_posts_for_board(
     banned_board_id: i32,
     pool: &PgPool,
     settings: &Settings,
     client: &ClientWithMiddleware,
-  ) -> Result<(), TinyBoardsError> {
-    let posts 
-        = blocking(pool, move |conn| {
-            Post::fetch_image_posts_for_board(conn, banned_board_id)
-        })
-        .await??;
-        
+) -> Result<(), TinyBoardsError> {
+    let posts = blocking(pool, move |conn| {
+        Post::fetch_image_posts_for_board(conn, banned_board_id)
+    })
+    .await??;
+
     for post in posts {
-      if let Some(url) = post.url {
-        purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap()).await.ok();
-      }
-      if let Some(thumbnail_url) = post.thumbnail_url {
-        purge_image_from_pictrs(client, settings, &Url::parse(thumbnail_url.as_str()).unwrap()).await.ok();
-      }
+        if let Some(url) = post.url {
+            purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap())
+                .await
+                .ok();
+        }
+        if let Some(thumbnail_url) = post.thumbnail_url {
+            purge_image_from_pictrs(
+                client,
+                settings,
+                &Url::parse(thumbnail_url.as_str()).unwrap(),
+            )
+            .await
+            .ok();
+        }
     }
-  
+
     blocking(pool, move |conn| {
         Post::remove_post_images_and_thumbnails_for_board(conn, banned_board_id)
     })
     .await??;
-  
+
     Ok(())
-  }
+}

@@ -1,16 +1,16 @@
-use crate::schema::comment_saved::dsl::*;
+use crate::schema::user_comment_save::dsl::*;
+use crate::{
+    models::comment::user_comment_save::{CommentSaved, CommentSavedForm},
+    traits::Saveable,
+};
 use diesel::prelude::*;
 use tinyboards_utils::TinyBoardsError;
-use crate::{
-    models::comment::comment_saved::{CommentSaved, CommentSavedForm},
-    traits::Saveable,  
-};
 
 impl Saveable for CommentSaved {
     type Form = CommentSavedForm;
-    
+
     fn save(conn: &mut PgConnection, form: &CommentSavedForm) -> Result<Self, TinyBoardsError> {
-        diesel::insert_into(comment_saved)
+        diesel::insert_into(user_comment_save)
             .values(form)
             .on_conflict((comment_id, user_id))
             .do_update()
@@ -21,9 +21,9 @@ impl Saveable for CommentSaved {
 
     fn unsave(conn: &mut PgConnection, form: &CommentSavedForm) -> Result<usize, TinyBoardsError> {
         diesel::delete(
-        comment_saved
+            user_comment_save
                 .filter(comment_id.eq(form.comment_id))
-                .filter(user_id.eq(form.user_id))
+                .filter(user_id.eq(form.user_id)),
         )
         .execute(conn)
         .map_err(|e| TinyBoardsError::from_error_message(e, "could not unsave comment"))

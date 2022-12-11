@@ -1,28 +1,16 @@
-use crate::structs::{ModStickyPostView, ModLogParams};
+use crate::structs::{ModLogParams, ModStickyPostView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_sticky_post,
-        user_,
-        post,
-        board,
-    },
     models::{
-        moderator::mod_actions::ModStickyPost,
+        board::boards::BoardSafe, moderator::mod_actions::ModStickyPost, post::posts::Post,
         user::user::UserSafe,
-        post::post::Post,
-        board::board::BoardSafe,
     },
+    schema::{board, mod_sticky_post, post, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModStickyPostViewTuple = (
-    ModStickyPost,
-    Option<UserSafe>,
-    Post,
-    BoardSafe,
-);
+type ModStickyPostViewTuple = (ModStickyPost, Option<UserSafe>, Post, BoardSafe);
 
 impl ModStickyPostView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -48,29 +36,29 @@ impl ModStickyPostView {
             ))
             .into_boxed();
 
-            if let Some(board_id) = params.board_id {
-                query = query.filter(post::board_id.eq(board_id));
-            };
-    
-            if let Some(mod_user_id) = params.mod_user_id {
-                query = query.filter(mod_sticky_post::mod_user_id.eq(mod_user_id));
-            };
-    
-            if let Some(other_user_id) = params.other_user_id {
-                query = query.filter(user_alias.field(user_::id).eq(other_user_id));
-            };
+        if let Some(board_id) = params.board_id {
+            query = query.filter(post::board_id.eq(board_id));
+        };
 
-            let (limit, offset) = limit_and_offset(params.page, params.limit)?;
+        if let Some(mod_user_id) = params.mod_user_id {
+            query = query.filter(mod_sticky_post::mod_user_id.eq(mod_user_id));
+        };
 
-            let res = query
-                .limit(limit)
-                .offset(offset)
-                .order_by(mod_sticky_post::when_.desc())
-                .load::<ModStickyPostViewTuple>(conn)?;
-    
-            let results = Self::from_tuple_to_vec(res);
-    
-            Ok(results)
+        if let Some(other_user_id) = params.other_user_id {
+            query = query.filter(user_alias.field(user_::id).eq(other_user_id));
+        };
+
+        let (limit, offset) = limit_and_offset(params.page, params.limit)?;
+
+        let res = query
+            .limit(limit)
+            .offset(offset)
+            .order_by(mod_sticky_post::when_.desc())
+            .load::<ModStickyPostViewTuple>(conn)?;
+
+        let results = Self::from_tuple_to_vec(res);
+
+        Ok(results)
     }
 }
 

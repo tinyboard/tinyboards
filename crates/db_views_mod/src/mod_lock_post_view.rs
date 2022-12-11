@@ -1,28 +1,16 @@
 use crate::structs::{ModLockPostView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_lock_post,
-        user_,
-        post,
-        board,
-    },
     models::{
-        moderator::mod_actions::ModLockPost,
+        board::boards::BoardSafe, moderator::mod_actions::ModLockPost, post::posts::Post,
         user::user::UserSafe,
-        post::post::Post,
-        board::board::BoardSafe,
     },
+    schema::{board, mod_lock_post, post, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModLockPostViewTuple = (
-    ModLockPost,
-    Option<UserSafe>,
-    Post,
-    BoardSafe,
-);
+type ModLockPostViewTuple = (ModLockPost, Option<UserSafe>, Post, BoardSafe);
 
 impl ModLockPostView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -48,30 +36,29 @@ impl ModLockPostView {
             ))
             .into_boxed();
 
-            if let Some(mod_user_id) = params.mod_user_id {
-                query = query.filter(mod_lock_post::mod_user_id.eq(mod_user_id));
-            };
+        if let Some(mod_user_id) = params.mod_user_id {
+            query = query.filter(mod_lock_post::mod_user_id.eq(mod_user_id));
+        };
 
-            if let Some(board_id) = params.board_id {
-                query = query.filter(post::board_id.eq(board_id));
-            };
-    
-            if let Some(other_user_id) = params.other_user_id {
-                query = query.filter(user_alias.field(user_::id).eq(other_user_id));
-            };
-    
-            let (limit, offset) = limit_and_offset(params.page, params.limit)?;
+        if let Some(board_id) = params.board_id {
+            query = query.filter(post::board_id.eq(board_id));
+        };
 
+        if let Some(other_user_id) = params.other_user_id {
+            query = query.filter(user_alias.field(user_::id).eq(other_user_id));
+        };
 
-            let res = query
-                .limit(limit)
-                .offset(offset)
-                .order_by(mod_lock_post::when_.desc())
-                .load::<ModLockPostViewTuple>(conn)?;
+        let (limit, offset) = limit_and_offset(params.page, params.limit)?;
 
-            let results = Self::from_tuple_to_vec(res);
+        let res = query
+            .limit(limit)
+            .offset(offset)
+            .order_by(mod_lock_post::when_.desc())
+            .load::<ModLockPostViewTuple>(conn)?;
 
-            Ok(results)
+        let results = Self::from_tuple_to_vec(res);
+
+        Ok(results)
     }
 }
 

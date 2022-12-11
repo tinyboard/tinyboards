@@ -1,46 +1,46 @@
-use crate::schema::board_block::dsl::*;
+use crate::schema::user_blocks::dsl::*;
 use diesel::prelude::*;
 use tinyboards_utils::TinyBoardsError;
 use crate::{
-    models::board::board_block::{BoardBlock, BoardBlockForm},
+    models::user::user_blocks::{UserBlock, UserBlockForm},
     traits::Blockable,  
 };
 
 
-impl BoardBlock {
+impl UserBlock {
     pub fn read(
         conn: &mut PgConnection,
         for_user_id: i32,
-        for_board_id: i32,
+        for_recipient_id: i32,
     ) -> Result<Self, TinyBoardsError> {
-        board_block
+        user_blocks
             .filter(user_id.eq(for_user_id))
-            .filter(board_id.eq(for_board_id))
+            .filter(target_id.eq(for_recipient_id))
             .first::<Self>(conn)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "error reading board block"))
+            .map_err(|_| TinyBoardsError::from_message("error reading user block"))
     }
 }
 
 
-impl Blockable for BoardBlock {
-    type Form = BoardBlockForm;
+impl Blockable for UserBlock {
+    type Form = UserBlockForm;
     fn block(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError> {
-        diesel::insert_into(board_block)
+        diesel::insert_into(user_blocks)
             .values(form)
-            .on_conflict((user_id, board_id))
+            .on_conflict((user_id, target_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not block board"))
+            .map_err(|_| TinyBoardsError::from_message("could not block user"))
     }
 
     fn unblock(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError> {
         diesel::delete(
-            board_block
+            user_blocks
                 .filter(user_id.eq(form.user_id))
-                .filter(board_id.eq(form.board_id)),
+                .filter(target_id.eq(form.target_id)),
         )
         .execute(conn)
-        .map_err(|e| TinyBoardsError::from_error_message(e, "could not unblock board"))
+        .map_err(|_| TinyBoardsError::from_message("could not unblock user"))
     }
 }

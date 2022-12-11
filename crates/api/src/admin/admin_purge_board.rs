@@ -2,20 +2,18 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     admin::PurgeBoard,
-    utils::{blocking, require_user, purge_image_posts_for_board}, 
-    moderator::ModActionResponse, 
     data::TinyBoardsContext,
+    moderator::ModActionResponse,
+    utils::{blocking, purge_image_posts_for_board, require_user},
 };
 use tinyboards_db::{
     models::{
+        board::boards::Board,
         moderator::admin_actions::{AdminPurgeBoard, AdminPurgeBoardForm},
-        board::board::Board,
     },
     traits::Crud,
 };
-use tinyboards_utils::{
-    error::TinyBoardsError,
-};
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for PurgeBoard {
@@ -31,8 +29,7 @@ impl<'des> Perform<'des> for PurgeBoard {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &PurgeBoard = &self;
 
-        let user
-            = require_user(context.pool(), context.master_key(), auth)
+        let user = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -47,7 +44,6 @@ impl<'des> Perform<'des> for PurgeBoard {
 
         // TODO - add in purging of board banner/icon
 
-        
         // purge image posts for board
         purge_image_posts_for_board(
             target_board_id,
@@ -56,7 +52,6 @@ impl<'des> Perform<'des> for PurgeBoard {
             context.client(),
         )
         .await?;
-
 
         // delete board
         blocking(context.pool(), move |conn| {

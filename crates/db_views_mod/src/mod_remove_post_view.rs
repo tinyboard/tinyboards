@@ -1,28 +1,16 @@
-use crate::structs::{ModRemovePostView, ModLogParams};
+use crate::structs::{ModLogParams, ModRemovePostView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_remove_post,
-        user_,
-        post,
-        board,
-    },
     models::{
-        moderator::mod_actions::ModRemovePost,
+        board::boards::BoardSafe, moderator::mod_actions::ModRemovePost, post::posts::Post,
         user::user::UserSafe,
-        post::post::Post,
-        board::board::BoardSafe,
     },
+    schema::{board, mod_remove_post, post, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModRemovePostViewTuple = (
-    ModRemovePost,
-    Option<UserSafe>,
-    Post,
-    BoardSafe,
-);
+type ModRemovePostViewTuple = (ModRemovePost, Option<UserSafe>, Post, BoardSafe);
 
 impl ModRemovePostView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {

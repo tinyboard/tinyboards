@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     site::Message,
     utils::{blocking, check_board_deleted_or_removed, require_user},
 };
-use tinyboards_db::{models::post::post::Post, traits::Crud};
+use tinyboards_db::{models::post::posts::Post, traits::Crud};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -27,13 +27,12 @@ impl<'des> PerformCrud<'des> for DeletePost {
             .unwrap()?;
 
         let post_id = path.post_id;
-        let orig_post = blocking(context.pool(), move |conn| {
-            Post::read(conn, post_id)
-        })
-        .await??;
+        let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
 
         if orig_post.deleted == data.deleted {
-            return Err(TinyBoardsError::from_message("couldn't delete post a second time!"));
+            return Err(TinyBoardsError::from_message(
+                "couldn't delete post a second time!",
+            ));
         }
 
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;

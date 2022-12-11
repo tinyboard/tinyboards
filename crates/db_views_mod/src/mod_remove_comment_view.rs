@@ -1,20 +1,11 @@
-use crate::structs::{ModRemoveCommentView, ModLogParams};
+use crate::structs::{ModLogParams, ModRemoveCommentView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_remove_comment,
-        user_,
-        post,
-        board,
-        comment,
-    },
     models::{
-        moderator::mod_actions::ModRemoveComment,
-        user::user::UserSafe,
-        post::post::Post,
-        comment::comment::Comment,
-        board::board::BoardSafe,
+        board::boards::BoardSafe, comment::comments::Comment,
+        moderator::mod_actions::ModRemoveComment, post::posts::Post, user::user::UserSafe,
     },
+    schema::{board, comment, mod_remove_comment, post, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };

@@ -1,25 +1,15 @@
-use crate::structs::{ModRemoveBoardView, ModLogParams};
+use crate::structs::{ModLogParams, ModRemoveBoardView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_remove_board,
-        user_,
-        board,
-    },
     models::{
-        user::user::UserSafe,
-        moderator::mod_actions::ModRemoveBoard,
-        board::board::BoardSafe,
+        board::boards::BoardSafe, moderator::mod_actions::ModRemoveBoard, user::user::UserSafe,
     },
+    schema::{board, mod_remove_board, user_},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModRemoveBoardViewTuple = (
-    ModRemoveBoard,
-    Option<UserSafe>,
-    BoardSafe,
-);
+type ModRemoveBoardViewTuple = (ModRemoveBoard, Option<UserSafe>, BoardSafe);
 
 impl ModRemoveBoardView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -29,7 +19,7 @@ impl ModRemoveBoardView {
 
         let mod_names_join = mod_remove_board::mod_user_id
             .eq(user_::id)
-            .and(show_mod_names_expr.or(user_::id.eq(mod_id_join))); 
+            .and(show_mod_names_expr.or(user_::id.eq(mod_id_join)));
 
         let mut query = mod_remove_board::table
             .left_join(user_::table.on(mod_names_join))

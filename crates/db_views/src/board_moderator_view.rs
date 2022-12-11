@@ -1,28 +1,15 @@
 use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        board,
-        board_moderator,
-        user_,
-    },
-    models::{
-        board::board::BoardSafe,
-        user::user::UserSafe,
-    },
+    models::{board::boards::BoardSafe, user::user::UserSafe},
+    schema::{board, board_moderator, user_},
     traits::{ToSafe, ViewToVec},
 };
 
-type BoardModeratorViewTuple = (
-    BoardSafe,
-    UserSafe
-);
+type BoardModeratorViewTuple = (BoardSafe, UserSafe);
 
 impl BoardModeratorView {
-    pub fn for_board(
-        conn: &mut PgConnection,
-        board_id: i32,
-    ) -> Result<Vec<Self>, Error> {
+    pub fn for_board(conn: &mut PgConnection, board_id: i32) -> Result<Vec<Self>, Error> {
         let res = board_moderator::table
             .inner_join(board::table)
             .inner_join(user_::table)
@@ -34,13 +21,10 @@ impl BoardModeratorView {
             .order_by(board_moderator::published)
             .load::<BoardModeratorViewTuple>(conn)?;
 
-            Ok(Self::from_tuple_to_vec(res))
+        Ok(Self::from_tuple_to_vec(res))
     }
 
-    pub fn for_user(
-        conn: &mut PgConnection,
-        user_id: i32,
-    ) -> Result<Vec<Self>, Error> {
+    pub fn for_user(conn: &mut PgConnection, user_id: i32) -> Result<Vec<Self>, Error> {
         let res = board_moderator::table
             .inner_join(board::table)
             .inner_join(user_::table)
@@ -54,7 +38,7 @@ impl BoardModeratorView {
             .order_by(board_moderator::published)
             .load::<BoardModeratorViewTuple>(conn)?;
 
-            Ok(Self::from_tuple_to_vec(res))
+        Ok(Self::from_tuple_to_vec(res))
     }
 }
 

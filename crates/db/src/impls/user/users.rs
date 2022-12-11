@@ -4,7 +4,7 @@ use sha2::Sha384;
 use std::collections::BTreeMap;
 
 use crate::models::user::user::{User, UserForm, UserSafe};
-use crate::schema::user_::dsl::*;
+use crate::schema::users::dsl::*;
 use crate::traits::Crud;
 use crate::utils::naive_now;
 use diesel::prelude::*;
@@ -18,16 +18,16 @@ impl User {
         username: &str,
         emailaddr: &Option<String>,
     ) -> Result<(), TinyBoardsError> {
-        use crate::schema::user_::dsl::*;
+        use crate::schema::users::dsl::*;
 
         let user = if let Some(emailaddr) = emailaddr {
-            user_
+            users
                 .select(id)
                 .filter(name.ilike(username))
                 .or_filter(email.ilike(emailaddr))
                 .first::<i32>(conn)
         } else {
-            user_
+            users
                 .select(id)
                 .filter(name.ilike(username))
                 .first::<i32>(conn)
@@ -35,7 +35,9 @@ impl User {
         .optional()?;
 
         if user.is_some() {
-            return Err(TinyBoardsError::from_message("username or email was already taken"));
+            return Err(TinyBoardsError::from_message(
+                "username or email was already taken",
+            ));
         }
 
         Ok(())
@@ -66,15 +68,14 @@ impl User {
         token: String,
         master_key: String,
     ) -> Result<Option<Self>, TinyBoardsError> {
-        use crate::schema::user_::dsl::*;
+        use crate::schema::users::dsl::*;
 
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
         let claims: BTreeMap<String, String> = token.verify_with_key(&key)?;
 
-        let uid = claims["uid"]
-            .parse::<i32>()?;
+        let uid = claims["uid"].parse::<i32>()?;
 
-        user_
+        users
             .filter(id.eq(uid))
             .first::<Self>(conn)
             .optional()
@@ -86,8 +87,8 @@ impl User {
         new_banned: bool,
     ) -> Result<Self, Error> {
         //use crate::schema::user::dsl::*;
-        diesel::update(user_.find(user_id))
-            .set((banned.eq(new_banned), updated.eq(naive_now())))
+        diesel::update(users.find(user_id))
+            .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
     }
 
@@ -96,16 +97,16 @@ impl User {
         user_id: i32,
         new_admin: bool,
     ) -> Result<Self, Error> {
-        use crate::schema::user_::dsl::*;
-        diesel::update(user_.find(user_id))
-            .set((admin.eq(new_admin), updated.eq(naive_now())))
+        use crate::schema::users::dsl::*;
+        diesel::update(users.find(user_id))
+            .set((is_admin.eq(new_admin), updated.eq(naive_now())))
             .get_result::<Self>(conn)
     }
 
     pub fn get_by_name(conn: &mut PgConnection, username: &str) -> Result<Self, Error> {
-        use crate::schema::user_::dsl::*;
+        use crate::schema::users::dsl::*;
         // sanitization could be better
-        user_
+        users
             .filter(
                 name.ilike(
                     username
@@ -118,8 +119,8 @@ impl User {
     }
 
     pub fn get_by_email(conn: &mut PgConnection, email_addr: &str) -> Result<Self, Error> {
-        use crate::schema::user_::dsl::*;
-        user_
+        use crate::schema::users::dsl::*;
+        users
             .filter(
                 email.ilike(
                     email_addr
@@ -140,14 +141,15 @@ impl User {
             ..form
         };
 
-        Self::create(conn, &form).map_err(|e| TinyBoardsError::from_error_message(e, "could not create user"))
+        Self::create(conn, &form)
+            .map_err(|e| TinyBoardsError::from_error_message(e, "could not create user"))
     }
 
     pub fn has_active_ban(&self) -> bool {
-        if let Some(expires_) = self.expires {
-            self.banned && expires_.gt(&chrono::prelude::Utc::now().naive_utc())
+        if let Some(expires_) = self.unban_date {
+            self.is_banned && expires_.gt(&chrono::prelude::Utc::now().naive_utc())
         } else {
-            self.banned
+            self.is_banned
         }
     }
 
@@ -156,9 +158,9 @@ impl User {
             id: self.id,
             name: self.name,
             preferred_name: self.preferred_name,
-            admin: self.admin,
-            banned: self.banned,
-            published: self.published,
+            is_admin: self.is_admin,
+            is_banned: self.is_banned,
+            creation_date: self.creation_date,
             updated: self.updated,
             theme: self.theme,
             default_sort_type: self.default_sort_type,
@@ -167,11 +169,11 @@ impl User {
             email: self.email,
             email_notifications_enabled: self.email_notifications_enabled,
             show_nsfw: self.show_nsfw,
-            deleted: self.deleted,
-            expires: self.expires,
+            is_deleted: self.is_deleted,
+            unban_date: self.unban_date,
             banner: self.banner,
             bio: self.bio,
-            application_accepted: self.application_accepted,
+            is_application_accepted: self.is_application_accepted,
         }
     }
 }
@@ -181,20 +183,20 @@ impl Crud for User {
     type IdType = i32;
 
     fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, Error> {
-        user_.find(user_id).first::<Self>(conn)
+        users.find(user_id).first::<Self>(conn)
     }
     fn delete(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
-        diesel::delete(user_.find(user_id)).execute(conn)
+        diesel::delete(users.find(user_id)).execute(conn)
     }
     fn create(conn: &mut PgConnection, form: &UserForm) -> Result<Self, Error> {
-        let local_user = diesel::insert_into(user_)
+        let local_user = diesel::insert_into(users)
             .values(form)
             .get_result::<Self>(conn)?;
 
         Ok(local_user)
     }
     fn update(conn: &mut PgConnection, user_id: i32, form: &UserForm) -> Result<Self, Error> {
-        diesel::update(user_.find(user_id))
+        diesel::update(users.find(user_id))
             .set(form)
             .get_result::<Self>(conn)
     }
@@ -203,7 +205,7 @@ impl Crud for User {
 pub mod safe_type {
     use crate::{
         models::user::user::{UserSafe, UserSettings},
-        schema::user_::*,
+        schema::users::*,
         traits::ToSafe,
     };
 
@@ -211,9 +213,9 @@ pub mod safe_type {
         id,
         name,
         preferred_name,
-        admin,
-        banned,
-        published,
+        is_admin,
+        is_banned,
+        creation_date,
         updated,
         theme,
         default_sort_type,
@@ -222,11 +224,11 @@ pub mod safe_type {
         email,
         email_notifications_enabled,
         show_nsfw,
-        deleted,
-        expires,
+        is_deleted,
+        unban_date,
         banner,
         bio,
-        application_accepted,
+        is_application_accepted,
     );
 
     type SettingColumns = (
@@ -250,9 +252,9 @@ pub mod safe_type {
                 id,
                 name,
                 preferred_name,
-                admin,
-                banned,
-                published,
+                is_admin,
+                is_banned,
+                creation_date,
                 updated,
                 theme,
                 default_sort_type,
@@ -261,11 +263,11 @@ pub mod safe_type {
                 email,
                 email_notifications_enabled,
                 show_nsfw,
-                deleted,
-                expires,
+                is_deleted,
+                unban_date,
                 banner,
                 bio,
-                application_accepted,
+                is_application_accepted,
             )
         }
     }

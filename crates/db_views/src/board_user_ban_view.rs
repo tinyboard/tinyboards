@@ -1,26 +1,14 @@
 use crate::structs::BoardUserBanView;
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
-    schema::{
-        board,
-        board_user_ban,
-        user_,
-    },
-    models::{
-        board::board::{BoardSafe},
-        user::user::{UserSafe},
-    },
+    models::{board::boards::BoardSafe, user::user::UserSafe},
+    schema::{board, board_user_ban, user_},
     traits::ToSafe,
 };
 
-type BoardUserBanViewTuple = (
-    BoardSafe,
-    UserSafe,
-);
-
+type BoardUserBanViewTuple = (BoardSafe, UserSafe);
 
 impl BoardUserBanView {
-
     pub fn get(
         conn: &mut PgConnection,
         from_user_id: i32,
@@ -43,6 +31,6 @@ impl BoardUserBanView {
             .order_by(board_user_ban::published)
             .first::<BoardUserBanViewTuple>(conn)?;
 
-            Ok( BoardUserBanView { board, user } )
+        Ok(BoardUserBanView { board, user })
     }
 }

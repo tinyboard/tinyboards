@@ -2,20 +2,18 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     admin::PurgeComment,
-    utils::{blocking, require_user}, 
-    moderator::ModActionResponse, 
-    data::TinyBoardsContext, 
+    data::TinyBoardsContext,
+    moderator::ModActionResponse,
+    utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::{
+        comment::comments::Comment,
         moderator::admin_actions::{AdminPurgeComment, AdminPurgeCommentForm},
-        comment::comment::Comment,
     },
     traits::Crud,
 };
-use tinyboards_utils::{
-    error::TinyBoardsError,
-};
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for PurgeComment {
@@ -31,8 +29,7 @@ impl<'des> Perform<'des> for PurgeComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &PurgeComment = &self;
 
-        let user
-            = require_user(context.pool(), context.master_key(), auth)
+        let user = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;

@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     post::{GetPostComments, PostIdPath},
     utils::{blocking, check_private_instance, load_user_opt},
 };
-use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post};
+use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post};
 use tinyboards_db_views::{
     comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable,
 };

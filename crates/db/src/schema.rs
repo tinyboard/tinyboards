@@ -306,7 +306,7 @@ diesel::table! {
         board_id -> Int4,
         is_removed -> Bool,
         is_locked -> Bool,
-        published -> Timestamp,
+        creation_date -> Timestamp,
         edited_date -> Nullable<Timestamp>,
         is_deleted -> Bool,
         is_nsfw -> Bool,

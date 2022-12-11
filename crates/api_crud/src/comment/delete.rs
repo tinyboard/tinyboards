@@ -10,7 +10,7 @@ use tinyboards_api_common::{
     },
 };
 use tinyboards_db::{
-    models::{comment::comment::Comment, post::post::Post},
+    models::{comment::comments::Comment, post::posts::Post},
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -35,10 +35,8 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         let comment_id = path.comment_id;
 
-        let orig_comment = blocking(context.pool(), move |conn| {
-            Comment::read(conn, comment_id)
-        })
-        .await??;
+        let orig_comment =
+            blocking(context.pool(), move |conn| Comment::read(conn, comment_id)).await??;
 
         let orig_post = blocking(context.pool(), move |conn| {
             Post::read(conn, orig_comment.post_id)
@@ -46,7 +44,9 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         .await??;
 
         if orig_comment.deleted == data.deleted {
-            return Err(TinyBoardsError::from_message("couldn't delete comment a second time!"));
+            return Err(TinyBoardsError::from_message(
+                "couldn't delete comment a second time!",
+            ));
         }
 
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;

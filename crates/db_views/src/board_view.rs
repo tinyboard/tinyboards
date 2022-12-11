@@ -3,8 +3,8 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
-        board::board::BoardSafe, board::board_block::BoardBlock,
-        board::board_subscriber::BoardSubscriber, user::user::User,
+        board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
+        board::user_board_blocks::BoardBlock, user::user::User,
     },
     schema::{board, board_aggregates, board_block, board_subscriber, user_},
     traits::{ToSafe, ViewToVec},
