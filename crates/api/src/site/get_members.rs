@@ -7,6 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db_views::user_view::UserQuery;
 use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_db::{UserSortType, map_to_user_sort_type};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for GetMembers {
@@ -28,14 +29,18 @@ impl<'des> Perform<'des> for GetMembers {
         // check if members should be shown or not
         check_private_instance(&user, context.pool()).await?;
 
-        let sort = params.sort.clone();
+        let sort = match params.sort.as_ref() {
+            Some(sort) => map_to_user_sort_type(Some(&sort.to_lowercase())),
+            None => UserSortType::MostRep,
+        };
+
         let limit = params.limit;
         let page = params.page;
 
         let members = blocking(context.pool(), move |conn| {
             UserQuery::builder()
                 .conn(conn)
-                .sort(sort)
+                .sort(Some(sort))
                 .limit(limit)
                 .page(page)
                 .build()

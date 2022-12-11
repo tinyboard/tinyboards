@@ -41,8 +41,6 @@ impl<'des> PerformCrud<'des> for ListComments {
             None => CommentSortType::Hot,
         };
 
-        println!("sort = {}", sort);
-
         let listing_type = match data.listing_type.as_ref() {
             Some(listing_type) => map_to_listing_type(Some(&listing_type.to_lowercase())),
             None => ListingType::All

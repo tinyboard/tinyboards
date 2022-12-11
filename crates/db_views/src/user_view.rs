@@ -2,7 +2,6 @@ use crate::structs::{UserSettingsView, UserView};
 use diesel::{result::Error, PgConnection, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
-    map_to_user_sort_type,
     models::user::user::{UserSafe, UserSettings},
     schema::{user_, user_aggregates},
     traits::{ToSafe, ViewToVec},
@@ -157,7 +156,7 @@ impl ViewToVec for UserView {
 pub struct UserQuery<'a> {
     #[builder(!default)]
     conn: &'a mut PgConnection,
-    sort: Option<String>,
+    sort: Option<UserSortType>,
     page: Option<i64>,
     limit: Option<i64>,
     search_term: Option<String>,
@@ -170,12 +169,7 @@ impl<'a> UserQuery<'a> {
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .into_boxed();
 
-        let sort = match self.sort {
-            Some(s) => map_to_user_sort_type(Some(s.to_lowercase().as_str())),
-            None => UserSortType::MostRep,
-        };
-
-        query = match sort {
+        query = match self.sort.unwrap_or(UserSortType::MostRep) {
             UserSortType::New => query.then_order_by(user_::published.asc()),
             UserSortType::Old => query.then_order_by(user_::published.desc()),
             UserSortType::MostRep => query
