@@ -170,8 +170,8 @@ impl<'a> UserQuery<'a> {
             .into_boxed();
 
         query = match self.sort.unwrap_or(UserSortType::MostRep) {
-            UserSortType::New => query.then_order_by(user_::published.asc()),
-            UserSortType::Old => query.then_order_by(user_::published.desc()),
+            UserSortType::New => query.then_order_by(user_::published.desc()),
+            UserSortType::Old => query.then_order_by(user_::published.asc()),
             UserSortType::MostRep => query
                 .then_order_by(user_aggregates::post_score.desc())
                 .then_order_by(user_aggregates::comment_score.desc()),
