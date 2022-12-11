@@ -398,6 +398,22 @@ pub async fn check_board_deleted_or_removed(
 }
 
 #[tracing::instrument(skip_all)]
+pub async fn check_post_deleted_or_removed(
+    post_id: i32,
+    pool: &PgPool,
+) -> Result<(), TinyBoardsError> {
+    let post = blocking(pool, move |conn| Post::read(conn, post_id))
+        .await?
+        .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
+
+    if post.deleted || post.removed {
+        Err(TinyBoardsError::from_message("post deleted or removed"))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
 pub async fn check_post_deleted_removed_or_locked(
     post_id: i32,
     pool: &PgPool,

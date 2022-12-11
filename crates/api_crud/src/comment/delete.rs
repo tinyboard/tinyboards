@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::Message,
     utils::{
-        blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
+        blocking, check_board_deleted_or_removed, check_post_deleted_or_removed,
         require_user,
     },
 };
@@ -51,7 +51,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;
 
-        check_post_deleted_removed_or_locked(orig_post.id, context.pool()).await?;
+        check_post_deleted_or_removed(orig_post.id, context.pool()).await?;
 
         if !Comment::is_comment_creator(user.id, orig_comment.creator_id) {
             return Err(TinyBoardsError::from_message("comment edit not allowed"));
