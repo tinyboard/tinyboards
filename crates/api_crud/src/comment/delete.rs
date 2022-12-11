@@ -10,7 +10,7 @@ use tinyboards_api_common::{
     },
 };
 use tinyboards_db::{
-    models::{comment::comment::Comment, post::post::Post},
+    models::{comment::comment::Comment},
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
