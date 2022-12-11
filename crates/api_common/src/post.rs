@@ -60,6 +60,7 @@ pub struct GetPostComments {}
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ListPostsResponse {
     pub posts: Vec<PostView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

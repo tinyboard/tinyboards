@@ -211,8 +211,14 @@ pub struct CommentQuery<'a> {
     limit: Option<i64>,
 }
 
+#[derive(Default, Clone)]
+pub struct CommentQueryResponse {
+    pub comments: Vec<CommentView>,
+    pub count: i64,
+}
+
 impl<'a> CommentQuery<'a> {
-    pub fn list(self) -> Result<Vec<CommentView>, Error> {
+    pub fn list(self) -> Result<CommentQueryResponse, Error> {
         use diesel::dsl::*;
 
         let user_id_join = self.user_id.unwrap_or(-1);
@@ -268,6 +274,51 @@ impl<'a> CommentQuery<'a> {
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
                 comment_vote::score.nullable(),
+            ))
+            .into_boxed();
+
+            let count_query = comment::table
+            .inner_join(user_::table)
+            .inner_join(post::table)
+            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(comment_aggregates::table)
+            .left_join(
+                board_user_ban::table.on(board::id
+                    .eq(board_user_ban::board_id)
+                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                    .and(
+                        board_user_ban::expires
+                            .is_null()
+                            .or(board_user_ban::expires.gt(now)),
+                    )),
+            )
+            .left_join(
+                board_subscriber::table.on(post::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                comment_saved::table.on(comment::id
+                    .eq(comment_saved::comment_id)
+                    .and(comment_saved::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                user_block::table.on(comment::creator_id
+                    .eq(user_block::target_id)
+                    .and(user_block::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                board_block::table.on(board::id
+                    .eq(board_block::board_id)
+                    .and(board_block::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                comment_vote::table.on(comment::id
+                    .eq(comment_vote::comment_id)
+                    .and(comment_vote::user_id.eq(user_id_join))),
+            )
+            .select((
+                comment::all_columns,
             ))
             .into_boxed();
 
@@ -340,7 +391,10 @@ impl<'a> CommentQuery<'a> {
             .offset(offset)
             .load::<CommentViewTuple>(self.conn)?;
 
-        Ok(CommentView::from_tuple_to_vec(res))
+        let comments = CommentView::from_tuple_to_vec(res);
+        let count = count_query.count().get_result::<i64>(self.conn)?;
+
+        Ok(CommentQueryResponse { comments, count })
     }
 }
 

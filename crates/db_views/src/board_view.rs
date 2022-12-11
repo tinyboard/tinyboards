@@ -99,8 +99,14 @@ pub struct BoardQuery<'a> {
     limit: Option<i64>,
 }
 
+#[derive(Default, Clone)]
+pub struct BoardQueryResponse {
+    pub boards: Vec<BoardView>,
+    pub count: i64,
+}
+
 impl<'a> BoardQuery<'a> {
-    pub fn list(self) -> Result<Vec<BoardView>, Error> {
+    pub fn list(self) -> Result<BoardQueryResponse, Error> {
         let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
         let mut query = board::table
@@ -124,6 +130,24 @@ impl<'a> BoardQuery<'a> {
             ))
             .into_boxed();
 
+        let count_query = board::table
+        .inner_join(board_aggregates::table)
+        .left_join(user_::table.on(user_::id.eq(user_id_join)))
+        .left_join(
+            board_subscriber::table.on(board::id
+                .eq(board_subscriber::board_id)
+                .and(board_subscriber::user_id.eq(user_id_join))),
+        )
+        .left_join(
+            board_block::table.on(board::id
+                .eq(board_block::board_id)
+                .and(board_block::user_id.eq(user_id_join))),
+        )
+        .select((
+            BoardSafe::safe_columns_tuple(),
+        ))
+        .into_boxed();
+        
         if let Some(search_term) = self.search_term {
             let searcher = fuzzy_search(&search_term);
             query = query
@@ -173,7 +197,10 @@ impl<'a> BoardQuery<'a> {
             .filter(board::deleted.eq(false))
             .load::<BoardViewTuple>(self.conn)?;
 
-        Ok(BoardView::from_tuple_to_vec(res))
+        let boards = BoardView::from_tuple_to_vec(res);
+        let count = count_query.count().get_result::<i64>(self.conn)?;
+
+        Ok(BoardQueryResponse { boards, count })
     }
 }
 

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::{UserView, CommentView, PostView, BoardView};
+use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView}};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Search {
@@ -50,6 +50,7 @@ pub struct GetMembers {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetMembersResponse {
     pub members: Vec<UserView>,
+    pub total_count: i64,
 }
 
 #[derive(Serialize)]

@@ -57,6 +57,7 @@ pub struct ListComments {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ListCommentsResponse {
     pub comments: Vec<CommentView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

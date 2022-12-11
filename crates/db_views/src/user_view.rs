@@ -162,8 +162,14 @@ pub struct UserQuery<'a> {
     search_term: Option<String>,
 }
 
+#[derive(Default, Clone)]
+pub struct UserQueryResponse {
+    pub users: Vec<UserView>,
+    pub count: i64,
+}
+
 impl<'a> UserQuery<'a> {
-    pub fn list(self) -> Result<Vec<UserView>, Error> {
+    pub fn list(self) -> Result<UserQueryResponse, Error> {
         let mut query = user_::table
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
@@ -181,6 +187,11 @@ impl<'a> UserQuery<'a> {
             }
         };
 
+        let count_query = user_::table
+        .inner_join(user_aggregates::table)
+        .select(UserSafe::safe_columns_tuple())
+        .into_boxed();
+
         if let Some(search_term) = self.search_term {
             query = query.filter(user_::name.ilike(fuzzy_search(&search_term)));
         };
@@ -195,6 +206,9 @@ impl<'a> UserQuery<'a> {
 
         let res = query.load::<UserViewTuple>(self.conn)?;
 
-        Ok(UserView::from_tuple_to_vec(res))
+        let users = UserView::from_tuple_to_vec(res);
+        let count = count_query.count().get_result::<i64>(self.conn)?;
+
+        Ok(UserQueryResponse { users, count })
     }
 }

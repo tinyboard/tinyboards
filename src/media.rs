@@ -106,10 +106,13 @@ async fn full_res(
 
     if site.private_instance {
         let jwt = req
-            .cookie("jwt")
-            .expect("no auth header for image access");
+            .headers()
+            .get("Authorization")
+            .unwrap()
+            .to_str()
+            .unwrap();
 
-        if get_user_view_from_jwt(Some(jwt.value()), context.pool(), context.master_key())
+        if get_user_view_from_jwt(Some(jwt), context.pool(), context.master_key())
             .await
             .is_err()
         {
@@ -175,10 +178,13 @@ async fn upload(
     context: web::Data<TinyBoardsContext>
 ) -> Result<HttpResponse, Error> {
     let jwt = req
-        .cookie("jwt")
-        .expect("no auth header for image upload");
-    
-    if Claims::decode(jwt.value(), &context.master_key().jwt).is_err() {
+        .headers()
+        .get("Authorization")
+        .unwrap()
+        .to_str()
+        .unwrap();
+
+    if Claims::decode(jwt, &context.master_key().jwt).is_err() {
         return Ok(HttpResponse::Unauthorized().finish())
     };
 

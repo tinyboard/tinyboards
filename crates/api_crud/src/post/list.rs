@@ -35,40 +35,33 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let limit = data.limit;
         let board_id = data.board_id;
         let saved_only = data.saved_only;
+        let user_match = user.clone();
 
-        let posts = blocking(context.pool(), move |conn| {
-            let mut posts = PostQuery::builder()
+        let response = blocking(context.pool(), move |conn| {
+            PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
-                .user(user.as_ref())
+                .user(user_match.as_ref())
                 .saved_only(saved_only)
                 .page(page)
                 .limit(limit)
                 .build()
-                .list();
-
-            if let Ok(ref mut posts) = posts {
-                for pv in posts
-                    .iter_mut()
-                    .filter(|p| p.post.removed || p.post.deleted)
-                {
-                    pv.hide_if_removed_or_deleted(user.as_ref());
-                }
-            }
-
-            posts
+                .list()
         })
         .await??;
 
-        /*for pv in posts
-            .iter_mut()
-            .filter(|p| p.board.deleted)
-        {
-            pv.board = pv.to_owned().board.blank_out_deleted_info();
-        }*/
+        let mut posts = response.posts;
+        let total_count = response.count;
 
-        Ok(ListPostsResponse { posts })
+        for pv in posts
+            .iter_mut()
+            .filter(|p| p.post.removed || p.post.deleted) 
+            {
+                pv.hide_if_removed_or_deleted(user.as_ref());
+            }
+
+        Ok(ListPostsResponse { posts, total_count })
     }
 }

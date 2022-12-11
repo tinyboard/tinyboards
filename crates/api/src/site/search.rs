@@ -67,7 +67,7 @@ impl<'des> Perform<'des> for Search {
 
         match search_type {
             SearchType::Post => {
-                posts = blocking(context.pool(), move |conn| {
+                let response = blocking(context.pool(), move |conn| {
                     PostQuery::builder()
                         .conn(conn)
                         .show_deleted_or_removed(is_admin)
@@ -84,9 +84,12 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 })
                 .await??;
+
+                posts = response.posts
+                
             }
             SearchType::Comment => {
-                comments = blocking(context.pool(), move |conn| {
+                let response = blocking(context.pool(), move |conn| {
                     CommentQuery::builder()
                         .conn(conn)
                         .show_deleted_and_removed(is_admin)
@@ -102,9 +105,11 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 })
                 .await??;
+
+                comments = response.comments
             }
             SearchType::Board => {
-                boards = blocking(context.pool(), move |conn| {
+                let response =  blocking(context.pool(), move |conn| {
                     BoardQuery::builder()
                         .conn(conn)
                         .listing_type(Some(listing_type))
@@ -117,9 +122,11 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 })
                 .await??;
+
+                boards = response.boards
             }
             SearchType::User => {
-                users = blocking(context.pool(), move |conn| {
+                let response = blocking(context.pool(), move |conn| {
                     UserQuery::builder()
                         .conn(conn)
                         .search_term(search_term)
@@ -129,6 +136,8 @@ impl<'des> Perform<'des> for Search {
                         .list()
                 })
                 .await??;
+
+                users = response.users
             }
         };
 

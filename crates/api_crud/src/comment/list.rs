@@ -56,7 +56,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         let saved_only = data.saved_only;
         let show_deleted_and_removed = data.show_deleted_and_removed;
 
-        let mut comments = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             CommentQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
@@ -76,6 +76,9 @@ impl<'des> PerformCrud<'des> for ListComments {
         })
         .await??;
 
+        let mut comments = response.comments;
+        let total_count = response.count;
+
         // blank out comment info if deleted or removed
         for cv in comments
             .iter_mut()
@@ -87,7 +90,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         // order into tree
         let comments = CommentView::into_tree(comments);
 
-        Ok(ListCommentsResponse { comments: comments })
+        Ok(ListCommentsResponse { comments, total_count })
     }
 }
 
@@ -117,7 +120,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
             return Err(TinyBoardsError::from_message("invalid post id"));
         }
 
-        let mut comments = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             CommentQuery::builder()
                 .conn(conn)
                 //.sort(None)
@@ -129,6 +132,8 @@ impl<'des> PerformCrud<'des> for GetPostComments {
                 .list()
         })
         .await??;
+
+        let mut comments = response.comments;
 
         // blank out comment info if deleted or removed
         for cv in comments

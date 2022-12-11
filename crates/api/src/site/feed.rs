@@ -60,7 +60,7 @@ impl<'des> Perform<'des> for GetFeed {
             nsfw = params_nsfw.unwrap();
         }
 
-        let mut posts = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
@@ -78,6 +78,9 @@ impl<'des> Perform<'des> for GetFeed {
         })
         .await??;
 
+        let mut posts = response.posts;
+        let total_count = response.count;
+
         for pv in posts
             .iter_mut()
             .filter(|p| p.post.deleted || p.post.removed)
@@ -85,6 +88,6 @@ impl<'des> Perform<'des> for GetFeed {
             pv.hide_if_removed_or_deleted(user.as_ref());
         }
 
-        Ok(ListPostsResponse { posts })
+        Ok(ListPostsResponse { posts, total_count })
     }
 }

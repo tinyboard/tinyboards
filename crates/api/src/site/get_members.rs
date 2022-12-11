@@ -37,7 +37,7 @@ impl<'des> Perform<'des> for GetMembers {
         let limit = params.limit;
         let page = params.page;
 
-        let members = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             UserQuery::builder()
                 .conn(conn)
                 .sort(Some(sort))
@@ -48,6 +48,9 @@ impl<'des> Perform<'des> for GetMembers {
         })
         .await??;
 
-        Ok(GetMembersResponse { members })
+        let members = response.users;
+        let total_count = response.count;
+
+        Ok(GetMembersResponse { members, total_count })
     }
 }
