@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{DeletePost, PostIdPath},
     site::Message,
-    utils::{blocking, check_board_deleted_or_removed, require_user},
+    utils::{blocking, require_user},
 };
 use tinyboards_db::{models::post::post::Post, traits::Crud};
 use tinyboards_utils::error::TinyBoardsError;
@@ -35,8 +35,6 @@ impl<'des> PerformCrud<'des> for DeletePost {
         if orig_post.deleted == data.deleted {
             return Err(TinyBoardsError::from_message("couldn't delete post a second time!"));
         }
-
-        check_board_deleted_or_removed(orig_post.board_id, context.pool()).await?;
 
         if !Post::is_post_creator(user.id, orig_post.creator_id) {
             return Err(TinyBoardsError::from_message("post edit not allowed"));
