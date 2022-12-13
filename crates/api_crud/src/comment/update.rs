@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::{
         blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
-        check_post_deleted_removed_or_locked, require_user,
+        check_post_deleted_or_removed, require_user,
     },
 };
 use tinyboards_db::{
@@ -42,7 +42,7 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         check_board_deleted_or_removed(orig_comment.board.id, context.pool()).await?;
 
-        check_post_deleted_removed_or_locked(orig_comment.post.id, context.pool()).await?;
+        check_post_deleted_or_removed(orig_comment.post.id, context.pool()).await?;
 
         check_comment_deleted_or_removed(orig_comment.comment.id, context.pool()).await?;
 

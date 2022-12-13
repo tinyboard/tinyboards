@@ -1,0 +1,1 @@
+insert into site (name, creator_id, enable_downvotes, open_registration, enable_nsfw, require_application, private_instance, email_verification_required) values ('tinyboards', 1, true, false, true, false, false, false);
