@@ -7,7 +7,6 @@ use crate::schema::site_invite;
 #[diesel(table_name = site_invite)]
 pub struct SiteInvite {
     pub id: i32,
-    pub user_id: i32,
     pub email: String,
     pub verification_code: String,
     pub published: NaiveDateTime,
@@ -16,7 +15,6 @@ pub struct SiteInvite {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = site_invite)]
 pub struct SiteInviteForm {
-    pub user_id: i32,
     pub email: String,
     pub verification_code: String,
 }

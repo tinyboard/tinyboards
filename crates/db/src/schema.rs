@@ -397,7 +397,6 @@ diesel::table! {
 diesel::table! {
     site_invite (id) {
         id -> Int4,
-        user_id -> Int4,
         email -> Text,
         verification_code -> Text,
         created -> Timestamp,
@@ -526,7 +525,6 @@ diesel::joinable!(post_saved -> user_ (user_id));
 diesel::joinable!(post_vote -> post (post_id));
 diesel::joinable!(post_vote -> user_ (user_id));
 diesel::joinable!(site -> user_ (creator_id));
-diesel::joinable!(site_invite -> user_ (user_id));
 diesel::joinable!(user_aggregates -> user_ (user_id));
 diesel::joinable!(user_ban -> user_ (user_id));
 diesel::joinable!(user_mention -> comment (comment_id));

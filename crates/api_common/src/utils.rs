@@ -11,7 +11,7 @@ use tinyboards_db::{
         comment::comment::Comment,
         post::post::Post,
         secret::Secret,
-        site::{registration_application::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
+        site::{registration_application::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, site_invite::{SiteInviteForm, SiteInvite}},
         user::user::User,
     },
     traits::Crud,
@@ -542,6 +542,44 @@ pub async fn purge_image_posts_for_user(
   
     Ok(())
   }
+
+  /// Send a site invite email
+  pub async fn send_invite_email(
+    invited_email: &str,
+    pool: &PgPool,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+    
+    let form = SiteInviteForm {
+        email: invited_email.to_string(),
+        verification_code: Uuid::new_v4().to_string(),
+    };
+
+    let invite_link = format!(
+        "{}/accept_invite/{}",
+        settings.get_protocol_and_hostname(),
+        &form.verification_code
+    );
+
+    // add record for pending site invite to the database
+    blocking(pool, move |conn| {
+        SiteInvite::create(conn, &form)
+    })
+    .await??;
+
+    let subject = format!("Invitation to join {}", &settings.hostname);
+    let body = format!(
+        "You have been invited to make an account on {}!\n\nTo register and make an account please click the link below:\n\n{}",
+        &settings.hostname,
+        &invite_link
+    );
+
+    // send the email
+    send_email(&subject, &invited_email, &"", &body, settings)?;
+
+    Ok(())
+  }
+
 
   /// Send a verification email
   pub async fn send_verification_email(

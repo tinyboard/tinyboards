@@ -115,3 +115,11 @@ pub struct VerifyEmail {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct VerifyEmailResponse {}
+
+/// Struct for accepting site invite
+pub struct AcceptSiteInvite {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AcceptSiteInviteResponse {}
