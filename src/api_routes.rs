@@ -26,6 +26,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             // User
             .service(web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
+                    .route("/verify_email/{token}", web::post().to(route_post::<VerifyEmail>))
             )
             // Post
             .service(
