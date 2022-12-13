@@ -29,6 +29,7 @@ pub struct User {
     pub banner: Option<String>,
     pub bio: Option<String>,
     pub application_accepted: bool,
+    pub email_verified: bool,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -55,6 +56,7 @@ pub struct UserSafe {
     pub banner: Option<String>,
     pub bio: Option<String>,
     pub application_accepted: bool,
+    pub email_verified: bool,
 }
 
 /// Struct for retrieving setting columns from user table
@@ -97,4 +99,5 @@ pub struct UserForm {
     pub banner: Option<Option<String>>,
     pub bio: Option<Option<String>>,
     pub application_accepted: Option<bool>,
+    pub email_verified: Option<bool>,
 }

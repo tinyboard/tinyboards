@@ -5,3 +5,5 @@ create table email_verification (
     verification_code text not null,
     created timestamp not null default now()
 );
+
+alter table user_ add column email_verified boolean not null default false;

@@ -106,3 +106,12 @@ pub struct ChangePassword {
     pub new_password_verify: Option<String>,
     pub old_password: Option<String>,
 }
+
+/// Struct for verifying email
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct VerifyEmail {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VerifyEmailResponse {}

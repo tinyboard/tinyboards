@@ -434,6 +434,7 @@ diesel::table! {
         banner -> Nullable<Text>,
         bio -> Nullable<Text>,
         application_accepted -> Bool,
+        email_verified -> Bool,
     }
 }
 

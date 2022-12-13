@@ -11,16 +11,20 @@ use tinyboards_db::{
         comment::comment::Comment,
         post::post::Post,
         secret::Secret,
-        site::{registration_application::RegistrationApplication, site::Site},
+        site::{registration_application::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
         user::user::User,
     },
     traits::Crud,
 };
 use tinyboards_db_views::structs::{BoardUserBanView, UserView, BoardView};
 use tinyboards_utils::{
-    error::TinyBoardsError, rate_limit::RateLimitConfig, settings::structs::{RateLimitSettings, Settings},
+    error::TinyBoardsError, 
+    rate_limit::RateLimitConfig, 
+    settings::structs::{RateLimitSettings, Settings},
+    email::send_email,
 };
 use url::Url;
+use uuid::Uuid;
 
 use crate::request::purge_image_from_pictrs;
 
@@ -538,3 +542,59 @@ pub async fn purge_image_posts_for_user(
   
     Ok(())
   }
+
+  /// Send a verification email
+  pub async fn send_verification_email(
+    user: &User,
+    new_email: &str,
+    pool: &PgPool,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+
+    let form = EmailVerificationForm {
+        user_id: user.id,
+        email: new_email.to_string(),
+        verification_code: Uuid::new_v4().to_string(),
+    };
+
+    // link for verification
+    let verify_link = format!(
+        "{}/verify_email/{}",
+        settings.get_protocol_and_hostname(),
+        &form.verification_code
+    );
+
+    // add record for pending email verification to the database
+    blocking(pool, move |conn| {
+        EmailVerification::create(conn, &form)
+    })
+    .await??;
+
+    let subject = format!("Email Verification for your {} Account", &settings.hostname);
+    let body = format!(
+        "Thank you {} for registering for an account at {}. Please click the link below in order to verify your email: \n\n {}", 
+        &user.name, 
+        &settings.hostname,
+        &verify_link
+    );
+
+    // send email
+    send_email(&subject, new_email, &user.name, &body, settings)?;
+
+    Ok(())
+  }
+
+
+  /// Send a verification success email
+  pub fn send_email_verification_success(
+    user: &User,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+    let email = &user.email.clone().expect("email");
+    let subject = format!("Email Verification Succeeded for your {} Account", &settings.hostname);
+    let body = format!("Your email for your new {} account was successful!", &settings.hostname);
+    send_email(&subject, &email, &user.name, &body, settings)?;
+    Ok(())
+  }
+
+

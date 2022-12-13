@@ -1,7 +1,15 @@
 
 use crate::{models::site::email_verification::*, traits::Crud};
 use diesel::{result::Error, *};
+use crate::schema::email_verification::dsl::*;
 
+impl EmailVerification {
+    pub fn read_for_token(conn: &mut PgConnection, token: &str) -> Result<Self, Error> {
+        email_verification
+            .filter(verification_code.eq(token))
+            .first::<Self>(conn)
+    }
+}
 
 impl Crud for EmailVerification {
     type Form = EmailVerificationForm;

@@ -172,6 +172,7 @@ impl User {
             banner: self.banner,
             bio: self.bio,
             application_accepted: self.application_accepted,
+            email_verified: self.email_verified,
         }
     }
 }
@@ -227,6 +228,7 @@ pub mod safe_type {
         banner,
         bio,
         application_accepted,
+        email_verified,
     );
 
     type SettingColumns = (
@@ -266,6 +268,7 @@ pub mod safe_type {
                 banner,
                 bio,
                 application_accepted,
+                email_verified,
             )
         }
     }
