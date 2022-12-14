@@ -3,7 +3,7 @@ use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
-use crate::models::user::user::{User, UserForm, UserSafe};
+use crate::models::user::user::{User, UserForm, UserSafe, UserUpdateForm};
 use crate::schema::user_::dsl::*;
 use crate::traits::Crud;
 use crate::utils::naive_now;
@@ -149,6 +149,12 @@ impl User {
         } else {
             self.banned
         }
+    }
+
+    pub fn update_settings(conn: &mut PgConnection, user_id: i32, form: &UserUpdateForm) -> Result<Self, Error> {
+        diesel::update(user_.find(user_id))
+            .set(form)
+            .get_result::<Self>(conn)
     }
 
     pub fn into_safe(self) -> UserSafe {

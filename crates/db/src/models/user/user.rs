@@ -101,3 +101,27 @@ pub struct UserForm {
     pub application_accepted: Option<bool>,
     pub email_verified: Option<bool>,
 }
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default)]
+#[derive(Insertable, AsChangeset)]
+#[diesel(table_name = user_)]
+pub struct UserUpdateForm {
+    pub preferred_name: Option<Option<String>>,
+    pub email: Option<Option<String>>,
+    pub admin: Option<bool>,
+    pub banned: Option<bool>,
+    pub updated: Option<NaiveDateTime>,
+    pub theme: Option<String>,
+    pub default_sort_type: Option<i16>,
+    pub default_listing_type: Option<i16>,
+    pub avatar: Option<Option<String>>,
+    pub email_notifications_enabled: Option<bool>,
+    pub show_nsfw: Option<bool>,
+    pub accepted_application: Option<bool>,
+    pub deleted: Option<bool>,
+    pub expires: Option<Option<NaiveDateTime>>,
+    pub banner: Option<Option<String>>,
+    pub bio: Option<Option<String>>,
+    pub application_accepted: Option<bool>,
+    pub email_verified: Option<bool>,
+}
