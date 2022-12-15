@@ -391,6 +391,7 @@ diesel::table! {
         application_question -> Nullable<Text>,
         private_instance -> Bool,
         email_verification_required -> Bool,
+        invite_only -> Bool,
     }
 }
 

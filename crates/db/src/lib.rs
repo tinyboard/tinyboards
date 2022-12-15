@@ -70,23 +70,42 @@ pub enum SubscribedType {
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
-pub enum ModlogActionType {
+pub enum ModLogActionType {
   All,
   ModRemovePost,
   ModLockPost,
   ModStickyPost,
   ModRemoveComment,
-  ModRemoveCommunity,
-  ModBanFromCommunity,
-  ModAddCommunity,
-  ModTransferCommunity,
-  ModAdd,
+  ModRemoveBoard,
+  ModBanFromBoard,
+  ModAddBoardMod,
+  ModAddAdmin,
   ModBan,
-  ModHideCommunity,
-  AdminPurgePerson,
-  AdminPurgeCommunity,
+  AdminPurgeUser,
+  AdminPurgeBoard,
   AdminPurgePost,
   AdminPurgeComment,
+}
+
+pub fn map_to_modlog_type(match_string: Option<&str>) -> ModLogActionType {
+  match match_string {
+    Some("all") => ModLogActionType::All,
+    Some("modremovepost") => ModLogActionType::ModRemovePost,
+    Some("modlockpost") => ModLogActionType::ModLockPost,
+    Some("modstickypost") => ModLogActionType::ModStickyPost,
+    Some("modremovecomment") => ModLogActionType::ModRemoveComment,
+    Some("modremoveboard") => ModLogActionType::ModRemoveBoard,
+    Some("modbanfromboard") => ModLogActionType::ModBanFromBoard,
+    Some("modaddboardmod") => ModLogActionType::ModAddBoardMod,
+    Some("modaddadmin") => ModLogActionType::ModAddAdmin,
+    Some("modban") => ModLogActionType::ModBan,
+    Some("adminpurgeboard") => ModLogActionType::AdminPurgeBoard,
+    Some("adminpurgecomment") => ModLogActionType::AdminPurgeComment,
+    Some("adminpurgepost") => ModLogActionType::AdminPurgePost,
+    Some("adminpurgeuser") => ModLogActionType::AdminPurgeUser,
+    Some(&_) => ModLogActionType::All,
+    None => ModLogActionType::All,
+  }
 }
 
 pub fn map_to_search_type(match_string: Option<&str>) -> SearchType {
