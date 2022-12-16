@@ -2,14 +2,14 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     site::{SaveSiteSettings, GetSiteSettingsResponse},
-    utils::{require_user, blocking,},
+    utils::{require_user, blocking, get_current_site_mode},
     data::TinyBoardsContext,
 };
 use tinyboards_db::{
     models::site::site::{Site, SiteForm},
     utils::{
         naive_now,
-    }, traits::Crud,
+    }, traits::Crud, SiteMode,
 };
 use tinyboards_utils::{
     error::TinyBoardsError,
@@ -43,14 +43,12 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         
         let name = data.name.clone();
         let description = data.description.clone();
+        let site_mode = data.site_mode;
         let enable_downvotes = data.enable_downvotes;
-        let open_registration = data.open_registration;
         let enable_nsfw = data.enable_nsfw;
-        let require_application = data.require_application;
         let application_question = data.application_question.clone();
         let private_instance = data.private_instance;
         let email_verification_required = data.email_verification_required;
-        let invite_only = data.invite_only;
             
         if let Some(description) = &description {
             if description.chars().count() > 500 {
@@ -64,31 +62,26 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             }
         }
 
-        // ensure that only one mode is active at a time
-        if open_registration.is_some() 
-        && require_application.is_some() 
-        && invite_only.is_some() {
+        let open_registration = match site_mode {
+            Some(SiteMode::OpenMode) => Some(true),
+            Some(SiteMode::ApplicationMode) => Some(false),
+            Some(SiteMode::InviteMode) => Some(false),
+            None => Some(site.open_registration),
+        };
 
-            let open_r = open_registration.unwrap();
-            let require_a = require_application.unwrap();
-            let invite_o = invite_only.unwrap();
+        let require_application = match site_mode {
+            Some(SiteMode::OpenMode) => Some(false),
+            Some(SiteMode::ApplicationMode) => Some(true),
+            Some(SiteMode::InviteMode) => Some(false),
+            None => Some(site.require_application),
+        };
 
-            if require_a && invite_o && !open_r {
-                return Err(TinyBoardsError::from_message("site cannot be invite only mode and application mode at the same time"));
-            }
-
-            if open_r && require_a {
-                return Err(TinyBoardsError::from_message("site cannot be open registration and application mode at the same time"));
-            }
-
-            if open_r && invite_o {
-                return Err(TinyBoardsError::from_message("site cannot be open registration and invite only mode at thee same time"));
-            }
-
-            if require_a && invite_o && open_r {
-                return Err(TinyBoardsError::from_message("site cannot be open registration and invite only mode and application mode at the same time"));
-            } 
-        }
+        let invite_only = match site_mode {
+            Some(SiteMode::OpenMode) => Some(false),
+            Some(SiteMode::ApplicationMode) => Some(false),
+            Some(SiteMode::InviteMode) => Some(true),
+            None => Some(site.invite_only), 
+        };
 
         let form = SiteForm {
             name,
@@ -115,14 +108,12 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         Ok(GetSiteSettingsResponse {
             name: updated_site.name,
             description: updated_site.description.unwrap_or_default(),
+            site_mode: get_current_site_mode(&site, &site_mode),
             enable_downvotes: updated_site.enable_downvotes,
-            open_registration: updated_site.open_registration,
             enable_nsfw: updated_site.enable_nsfw,
-            require_application: updated_site.require_application,
             application_question: updated_site.application_question.unwrap_or_default(),
             private_instance: updated_site.private_instance,
             email_verification_required: updated_site.email_verification_required,
-            invite_only: updated_site.invite_only,            
         })
     }
 }

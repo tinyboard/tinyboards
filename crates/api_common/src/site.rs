@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tinyboards_db::SiteMode;
 use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView}};
 use tinyboards_db_views_mod::structs::{ModRemovePostView, ModLockPostView, ModRemoveCommentView, ModRemoveBoardView, ModBanFromBoardView, ModBanView, ModAddBoardModView, ModAddAdminView, ModStickyPostView, AdminPurgeUserView, AdminPurgeBoardView, AdminPurgePostView, AdminPurgeCommentView};
 
@@ -101,30 +102,26 @@ pub struct GetModLogResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetSiteSettings {}
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetSiteSettingsResponse {
     pub name: String,
     pub description: String,
+    pub site_mode: SiteMode,
     pub enable_downvotes: bool,
-    pub open_registration: bool,
     pub enable_nsfw: bool,
-    pub require_application: bool,
     pub application_question: String,
     pub private_instance:  bool,
     pub email_verification_required: bool,
-    pub invite_only: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SaveSiteSettings {
     pub name: Option<String>,
     pub description: Option<String>,
+    pub site_mode: Option<SiteMode>,
     pub enable_downvotes: Option<bool>,
-    pub open_registration: Option<bool>,
     pub enable_nsfw: Option<bool>,
-    pub require_application: Option<bool>,
     pub application_question: Option<String>,
     pub private_instance:  Option<bool>,
     pub email_verification_required: Option<bool>,
-    pub invite_only: Option<bool>,
 }

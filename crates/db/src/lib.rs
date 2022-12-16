@@ -16,6 +16,13 @@ pub use database::Database;
 use serde::{Serialize, Deserialize};
 use strum_macros::{Display, EnumString};
 
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum SiteMode {
+  OpenMode,
+  ApplicationMode,
+  InviteMode,
+}
+
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SortType {
     Active,

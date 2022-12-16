@@ -14,7 +14,7 @@ use tinyboards_db::{
         site::{registration_application::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, site_invite::{SiteInviteForm, SiteInvite}},
         user::user::User,
     },
-    traits::Crud,
+    traits::Crud, SiteMode,
 };
 use tinyboards_db_views::structs::{BoardUserBanView, UserView, BoardView};
 use tinyboards_utils::{
@@ -636,3 +636,26 @@ pub async fn purge_image_posts_for_user(
   }
 
 
+  /// gets current site mode
+  pub fn get_current_site_mode(site: &Site, site_mode: &Option<SiteMode>) -> SiteMode {
+    let mut current_mode = match site_mode {
+        Some(SiteMode::OpenMode) => SiteMode::OpenMode,
+        Some(SiteMode::ApplicationMode) => SiteMode::ApplicationMode,
+        Some(SiteMode::InviteMode) => SiteMode::InviteMode,
+        None => SiteMode::OpenMode, 
+    };
+
+    if site_mode.is_none() {
+        if site.open_registration {
+            current_mode = SiteMode::OpenMode;
+        }
+        if site.require_application {
+            current_mode = SiteMode::ApplicationMode;
+        }
+        if site.invite_only {
+            current_mode = SiteMode::InviteMode;
+        }
+    }
+
+    current_mode
+  }
