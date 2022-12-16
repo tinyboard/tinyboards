@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::SiteMode;
+use tinyboards_db::{SiteMode, models::site::site_invite::SiteInvite};
 use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView}};
 use tinyboards_db_views_mod::structs::{ModRemovePostView, ModLockPostView, ModRemoveCommentView, ModRemoveBoardView, ModBanFromBoardView, ModBanView, ModAddBoardModView, ModAddAdminView, ModStickyPostView, AdminPurgeUserView, AdminPurgeBoardView, AdminPurgePostView, AdminPurgeCommentView};
 
@@ -124,4 +124,27 @@ pub struct SaveSiteSettings {
     pub application_question: Option<String>,
     pub private_instance:  Option<bool>,
     pub email_verification_required: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CreateSiteInvite {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CreateSiteInviteResponse {
+    pub invite_url: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetSiteInvites {
+    pub invites: Vec<SiteInvite>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeleteSiteInvite {
+    pub invite_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ValidateSiteInvite {
+    pub invite_token: String,
 }

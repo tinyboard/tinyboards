@@ -6,6 +6,7 @@ use serde::Deserialize;
 pub mod comment;
 pub mod post;
 pub mod user;
+pub mod invite;
 
 #[async_trait::async_trait(?Send)]
 pub trait PerformCrud<'des> {

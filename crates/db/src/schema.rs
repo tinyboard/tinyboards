@@ -398,9 +398,9 @@ diesel::table! {
 diesel::table! {
     site_invite (id) {
         id -> Int4,
-        email -> Text,
         verification_code -> Text,
         created -> Timestamp,
+        validated -> Bool,
     }
 }
 

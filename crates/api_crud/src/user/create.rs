@@ -5,9 +5,14 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Register, SignupResponse},
-    utils::blocking,
+    utils::{blocking, send_verification_email},
 };
-use tinyboards_db::models::user::user::{User, UserForm};
+use tinyboards_db::{
+    models::{
+        user::user::{User, UserForm},
+        site::site::Site,
+    },
+};
 use tinyboards_utils::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -23,9 +28,17 @@ impl<'des> PerformCrud<'des> for Register {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: Register = self;
 
+        let site= blocking(context.pool(), move |conn| {
+            Site::read_local(conn)
+        })
+        .await??;
+
         // some email verification logic here?
 
         // make sure site has open registration first here
+        if !site.open_registration && data.invite_token.is_none() {
+            return Err(TinyBoardsError::from_message("site is not in open registration mode"))
+        }
 
         // USERNAME CHECK
         let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
@@ -39,7 +52,9 @@ impl<'des> PerformCrud<'des> for Register {
             return Err(TinyBoardsError::from_message("Your password must be between 8 and 60 characters long."));
         }
 
-        // error messages here if email verification is on and no email provided, same for applicaction not being filled out
+        if site.email_verification_required && data.email.is_none() {
+            return Err(TinyBoardsError::from_message("email verification is required, please provide an email"));
+        }
 
         /*if data.password != data.password_verify {
             return Err(TinyBoardsError::new(
@@ -61,6 +76,13 @@ impl<'des> PerformCrud<'des> for Register {
 
         let inserted_user =
             blocking(context.pool(), move |conn| User::register(conn, user_form)).await??;
+
+        let email = inserted_user.email.clone().unwrap();
+
+        // send a verification email if email verification is required
+        if site.email_verification_required {
+            send_verification_email(&inserted_user, &email, context.pool(), context.settings()).await?;
+        }
 
         // logic about emailing the admins of the site if application submitted and email notification for user etc
 
