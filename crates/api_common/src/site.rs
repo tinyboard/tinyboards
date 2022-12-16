@@ -135,7 +135,7 @@ pub struct CreateSiteInviteResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GetSiteInvites {
+pub struct ListSiteInvites {
     pub invites: Vec<SiteInvite>,
 }
 
