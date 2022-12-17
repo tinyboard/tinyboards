@@ -9,12 +9,6 @@ impl SiteInvite {
             .filter(verification_code.eq(token))
             .first::<Self>(conn)
     }
-
-    // pub fn list(conn: &mut PgConnection) -> Result<Vec<Self>, Error> {
-    //     site_invite
-    //         .filter(validated.eq(false))
-    //         .load::<Self>(conn)
-    // }
 }
 
 impl Crud for SiteInvite {
