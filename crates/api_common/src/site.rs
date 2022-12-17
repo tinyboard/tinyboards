@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{SiteMode, models::site::site_invite::SiteInvite};
+use tinyboards_db::SiteMode;
 use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView, SiteInviteView}};
 use tinyboards_db_views_mod::structs::{ModRemovePostView, ModLockPostView, ModRemoveCommentView, ModRemoveBoardView, ModBanFromBoardView, ModBanView, ModAddBoardModView, ModAddAdminView, ModStickyPostView, AdminPurgeUserView, AdminPurgeBoardView, AdminPurgePostView, AdminPurgeCommentView};
 

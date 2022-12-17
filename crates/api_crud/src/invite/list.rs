@@ -5,11 +5,6 @@ use tinyboards_api_common::{
     site::{ListSiteInvites, ListSiteInvitesResponse},
     utils::{require_user, blocking},
 };
-use tinyboards_db::{
-    models::{
-        site::site_invite::{SiteInvite},
-    }, 
-};
 use tinyboards_utils::error::TinyBoardsError;
 use tinyboards_db_views::site_invite_view::InviteQuery;
 
