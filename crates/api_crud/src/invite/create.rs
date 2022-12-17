@@ -43,12 +43,8 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
             return Err(TinyBoardsError::from_message("can't create an invite outside of invite mode"));
         }
 
-        let verification_code = Some(Uuid::new_v4().to_string());
-        let validated = Some(false);
-
         let form = SiteInviteForm {
-            verification_code,
-            validated,
+            verification_code: Uuid::new_v4().to_string(),
         };
 
         // create record in db

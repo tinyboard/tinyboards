@@ -400,7 +400,6 @@ diesel::table! {
         id -> Int4,
         verification_code -> Text,
         created -> Timestamp,
-        validated -> Bool,
     }
 }
 

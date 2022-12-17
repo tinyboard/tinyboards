@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::{SiteMode, models::site::site_invite::SiteInvite};
-use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView}};
+use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView, SiteInviteView}};
 use tinyboards_db_views_mod::structs::{ModRemovePostView, ModLockPostView, ModRemoveCommentView, ModRemoveBoardView, ModBanFromBoardView, ModBanView, ModAddBoardModView, ModAddAdminView, ModStickyPostView, AdminPurgeUserView, AdminPurgeBoardView, AdminPurgePostView, AdminPurgeCommentView};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -136,7 +136,14 @@ pub struct CreateSiteInviteResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ListSiteInvites {
-    pub invites: Vec<SiteInvite>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ListSiteInvitesResponse {
+    pub invites: Vec<SiteInviteView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

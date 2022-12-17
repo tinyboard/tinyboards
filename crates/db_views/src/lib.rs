@@ -6,6 +6,7 @@ pub mod post_view;
 pub mod structs;
 pub mod user_mention_view;
 pub mod user_view;
+pub mod site_invite_view;
 
 pub use comment_view::CommentQuery;
 

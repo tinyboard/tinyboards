@@ -4,7 +4,7 @@ use tinyboards_db::{
         board::board::BoardSafe,
         comment::comment::Comment,
         post::post::Post,
-        user::{user::{UserSafe, UserSettings}, user_mention::UserMention},
+        user::{user::{UserSafe, UserSettings}, user_mention::UserMention}, site::site_invite::SiteInvite,
     },
     SubscribedType,
 };
@@ -103,6 +103,11 @@ pub struct UserMentionView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to UserBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SiteInviteView {
+    pub invite: SiteInvite,
 }
 
 /*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
