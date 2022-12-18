@@ -5,7 +5,6 @@ use tinyboards_api_common::{
     site::{GetSiteSettings, GetSiteSettingsResponse},
     utils::{
         blocking,
-        require_user,
     }
 };
 use tinyboards_db::{
@@ -18,19 +17,13 @@ impl<'des> Perform<'des> for GetSiteSettings {
     type Response = GetSiteSettingsResponse;
     type Route = ();
 
-    #[tracing::instrument(skip(context, auth))]
+    #[tracing::instrument(skip(context))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
         _: Self::Route,
-        auth: Option<&str>,
+        _: Option<&str>,
     ) -> Result<GetSiteSettingsResponse, TinyBoardsError> {
-
-        // only an admin should be able to view site settings
-        require_user(context.pool(), context.master_key(), auth)
-            .await
-            .require_admin()
-            .unwrap()?;
 
         let site =
             blocking(context.pool(), move |conn| {
