@@ -76,7 +76,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
                     .route("/site_settings", web::get().to(route_get::<GetSiteSettings>))
                     .route("/site_settings", web::put().to(route_post::<SaveSiteSettings>))
-                    .route("/create_invite", web::get().to(route_get_crud::<CreateSiteInvite>))
+                    .route("/invite", web::post().to(route_post_crud::<CreateSiteInvite>))
                     .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
                     .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
             ),
