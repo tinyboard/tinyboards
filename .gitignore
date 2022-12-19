@@ -1,3 +1,4 @@
 .env
 target/
 config.hjson
+docker/volumes/*
