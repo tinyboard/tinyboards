@@ -11,10 +11,10 @@ use actix_web::{
     HttpResponse,
 };
 use futures::stream::{Stream, StreamExt};
-use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking};
+use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user};
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db::models::site::site::Site;
-use tinyboards_utils::{claims::Claims, rate_limit::RateLimitCell, REQWEST_TIMEOUT};
+use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest::Body;
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ pub fn config(
     .service(
         web::resource("/pictrs/image")
         .wrap(rate_limit.image())
-        .route(web::get().to(upload)),
+        .route(web::post().to(upload)),
     )
     .service(
         web::resource("/pictrs/image/{filename}")
@@ -124,13 +124,13 @@ async fn full_res(
 
     let pictrs_conf = context.settings().pictrs_config()?;
     let url = if params.format.is_none() && params.thumbnail.is_none() {
-        format!("{}image/original/{}", pictrs_conf.url, name,)
+        format!("{}/image/original/{}", pictrs_conf.url, name,)
     } else {
         let format = params
             .format
             .unwrap_or_else(|| name.split('.').last().unwrap_or("jpg").to_string());
         
-        let mut url = format!("{}image/process.{}?src={}", pictrs_conf.url, format, name,);
+        let mut url = format!("{}/image/process.{}?src={}", pictrs_conf.url, format, name,);
 
         if let Some(size) = params.thumbnail {
             url = format!("{}&thumbnail={}", url, size);
@@ -177,16 +177,17 @@ async fn upload(
     client: web::Data<ClientWithMiddleware>,
     context: web::Data<TinyBoardsContext>
 ) -> Result<HttpResponse, Error> {
-    let jwt = req
+    
+    let auth = req
         .headers()
         .get("Authorization")
         .unwrap()
         .to_str()
         .unwrap();
 
-    if Claims::decode(jwt, &context.master_key().jwt).is_err() {
-        return Ok(HttpResponse::Unauthorized().finish())
-    };
+    require_user(context.pool(), context.master_key(), Some(auth))
+    .await
+    .unwrap()?;
 
     let pictrs_conf = context.settings().pictrs_config()?;
 
@@ -203,7 +204,7 @@ async fn upload(
         .send()
         .await
         .map_err(ErrorBadRequest)?;
-    
+
     let status = res.status();
     let images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
 
@@ -219,7 +220,7 @@ async fn delete(
     let (token, file) = components.into_inner();
   
     let pictrs_conf = context.settings().pictrs_config()?;
-    let url = format!("{}image/delete/{}/{}", pictrs_conf.url, &token, &file);
+    let url = format!("{}/image/delete/{}/{}", pictrs_conf.url, &token, &file);
   
     let mut client_req = adapt_request(&req, &client, url);
   
