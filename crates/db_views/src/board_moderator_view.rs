@@ -2,7 +2,7 @@ use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{board::boards::BoardSafe, user::user::UserSafe},
-    schema::{board_moderator, boards, users},
+    schema::{board_mods, boards, users},
     traits::{ToSafe, ViewToVec},
 };
 
@@ -10,32 +10,32 @@ type BoardModeratorViewTuple = (BoardSafe, UserSafe);
 
 impl BoardModeratorView {
     pub fn for_board(conn: &mut PgConnection, board_id: i32) -> Result<Vec<Self>, Error> {
-        let res = board_moderator::table
+        let res = board_mods::table
             .inner_join(boards::table)
             .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
-            .filter(board_moderator::board_id.eq(board_id))
-            .order_by(board_moderator::published)
+            .filter(board_mods::board_id.eq(board_id))
+            .order_by(board_mods::published)
             .load::<BoardModeratorViewTuple>(conn)?;
 
         Ok(Self::from_tuple_to_vec(res))
     }
 
     pub fn for_user(conn: &mut PgConnection, user_id: i32) -> Result<Vec<Self>, Error> {
-        let res = board_moderator::table
+        let res = board_mods::table
             .inner_join(boards::table)
             .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
-            .filter(board_moderator::user_id.eq(user_id))
+            .filter(board_mods::user_id.eq(user_id))
             .filter(boards::deleted.eq(false))
             .filter(boards::removed.eq(false))
-            .order_by(board_moderator::published)
+            .order_by(board_mods::published)
             .load::<BoardModeratorViewTuple>(conn)?;
 
         Ok(Self::from_tuple_to_vec(res))

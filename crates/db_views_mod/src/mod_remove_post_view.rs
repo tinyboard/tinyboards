@@ -25,9 +25,9 @@ impl ModRemovePostView {
 
         let mut query = mod_remove_post::table
             .left_join(users::table.on(mod_names_join))
-            .inner_join(post::table)
-            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
-            .inner_join(user_alias.on(post::creator_id.eq(user_alias.field(users::id))))
+            .inner_join(posts::table)
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
+            .inner_join(user_alias.on(posts::creator_id.eq(user_alias.field(users::id))))
             .select((
                 mod_remove_post::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),
@@ -37,7 +37,7 @@ impl ModRemovePostView {
             .into_boxed();
 
         if let Some(board_id) = params.board_id {
-            query = query.filter(post::board_id.eq(board_id));
+            query = query.filter(posts::board_id.eq(board_id));
         };
 
         if let Some(mod_user_id) = params.mod_user_id {

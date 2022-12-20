@@ -6,8 +6,8 @@ use tinyboards_db::{
         board::board_subscriptions::BoardSubscriber,
         board::board_user_bans::BoardUserBan,
         board::boards::BoardSafe,
-        post::post_read::PostRead,
         post::posts::Post,
+        post::user_post_read::PostRead,
         post::user_post_save::PostSaved,
         //user::user::User,
         user::{
@@ -16,9 +16,8 @@ use tinyboards_db::{
         },
     },
     schema::{
-        board::{self},
-        board_subscriptions, board_user_bans, post, post_aggregates, post_read, post_saved,
-        post_vote, user_block, user_board_blocks, users,
+        board_subscriptions, board_user_bans, boards, post, post_aggregates, post_votes,
+        user_blocks, user_board_blocks, user_post_read, user_post_save, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
@@ -58,15 +57,15 @@ impl PostView {
             saved,
             read,
             creator_blocked,
-            post_vote,
+            post_votes,
         ) = post::table
             .find(post_id)
             .inner_join(users::table)
             .inner_join(boards::table)
             .left_join(
-                board_user_bans::table.on(post::board_id
+                board_user_bans::table.on(posts::board_id
                     .eq(board_user_bans::board_id)
-                    .and(board_user_bans::user_id.eq(post::creator_id))
+                    .and(board_user_bans::user_id.eq(posts::creator_id))
                     .and(
                         board_user_bans::expires
                             .is_null()
@@ -75,29 +74,29 @@ impl PostView {
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(post::board_id
+                board_subscriptions::table.on(posts::board_id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_saved::table.on(post::id
-                    .eq(post_saved::post_id)
-                    .and(post_saved::user_id.eq(user_id_join))),
+                user_post_save::table.on(posts::id
+                    .eq(user_post_save::post_id)
+                    .and(user_post_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_read::table.on(post::id
-                    .eq(post_read::post_id)
-                    .and(post_read::user_id.eq(user_id_join))),
+                user_post_read::table.on(posts::id
+                    .eq(user_post_read::post_id)
+                    .and(user_post_read::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(post::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(posts::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_vote::table.on(post::id
-                    .eq(post_vote::post_id)
-                    .and(post_vote::user_id.eq(user_id_join))),
+                post_votes::table.on(posts::id
+                    .eq(post_votes::post_id)
+                    .and(post_votes::user_id.eq(user_id_join))),
             )
             .select((
                 post::all_columns,
@@ -106,17 +105,17 @@ impl PostView {
                 board_user_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
                 board_subscriptions::all_columns.nullable(),
-                post_saved::all_columns.nullable(),
-                post_read::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                post_vote::score.nullable(),
+                user_post_save::all_columns.nullable(),
+                user_post_read::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                post_votes::score.nullable(),
             ))
             .first::<PostViewTuple>(conn)?;
 
         let my_vote = if my_user_id.is_some() && post_vote.is_none() {
             Some(0)
         } else {
-            post_vote
+            post_votes
         };
 
         Ok(PostView {
@@ -166,9 +165,9 @@ impl<'a> PostQuery<'a> {
             .inner_join(users::table)
             .inner_join(boards::table)
             .left_join(
-                board_user_bans::table.on(post::board_id
+                board_user_bans::table.on(posts::board_id
                     .eq(board_user_bans::board_id)
-                    .and(board_user_bans::user_id.eq(post::creator_id))
+                    .and(board_user_bans::user_id.eq(posts::creator_id))
                     .and(
                         board_user_bans::expires
                             .is_null()
@@ -177,24 +176,24 @@ impl<'a> PostQuery<'a> {
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(post::board_id
+                board_subscriptions::table.on(posts::board_id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_saved::table.on(post::id
-                    .eq(post_saved::post_id)
-                    .and(post_saved::user_id.eq(user_id_join))),
+                user_post_save::table.on(posts::id
+                    .eq(user_post_save::post_id)
+                    .and(user_post_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_read::table.on(post::id
-                    .eq(post_read::post_id)
-                    .and(post_read::user_id.eq(user_id_join))),
+                user_post_read::table.on(posts::id
+                    .eq(user_post_read::post_id)
+                    .and(user_post_read::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(post::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(posts::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
                 user_board_blocks::table.on(boards::id
@@ -202,9 +201,9 @@ impl<'a> PostQuery<'a> {
                     .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_vote::table.on(post::id
-                    .eq(post_vote::post_id)
-                    .and(post_vote::user_id.eq(user_id_join))),
+                post_votes::table.on(posts::id
+                    .eq(post_votes::post_id)
+                    .and(post_votes::user_id.eq(user_id_join))),
             )
             .select((
                 post::all_columns,
@@ -213,10 +212,10 @@ impl<'a> PostQuery<'a> {
                 board_user_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
                 board_subscriptions::all_columns.nullable(),
-                post_saved::all_columns.nullable(),
-                post_read::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                post_vote::score.nullable(),
+                user_post_save::all_columns.nullable(),
+                user_post_read::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                post_votes::score.nullable(),
             ))
             .into_boxed();
 
@@ -227,7 +226,7 @@ impl<'a> PostQuery<'a> {
                 }
                 ListingType::All => {
                     query = query.filter(
-                        board::hidden
+                        boards::hidden
                             .eq(false)
                             .or(board_subscriptions::user_id.eq(user_id_join)),
                     )
@@ -237,19 +236,19 @@ impl<'a> PostQuery<'a> {
 
         if !self.show_deleted_or_removed.unwrap_or(false) {
             query = query
-                .filter(post::removed.eq(false))
-                .filter(post::deleted.eq(false));
+                .filter(posts::removed.eq(false))
+                .filter(posts::deleted.eq(false));
         }
 
         if let Some(board_id) = self.board_id {
             query = query
-                .filter(post::board_id.eq(board_id))
+                .filter(posts::board_id.eq(board_id))
                 .then_order_by(post_aggregates::stickied.desc());
         }
 
         if let Some(url_search) = self.url_search {
             let url_searcher = fuzzy_search(&url_search);
-            query = query.filter(post::url.ilike(url_searcher.to_owned()));
+            query = query.filter(posts::url.ilike(url_searcher.to_owned()));
         }
 
         if let Some(search_term) = self.search_term {
@@ -257,28 +256,28 @@ impl<'a> PostQuery<'a> {
             query = query.filter(
                 post::title
                     .ilike(searcher.to_owned())
-                    .or(post::body.ilike(searcher)),
+                    .or(posts::body.ilike(searcher)),
             );
         }
 
         // If query is for specific person show the removed/deleted
         if let Some(creator_id) = self.creator_id {
-            query = query.filter(post::creator_id.eq(creator_id));
+            query = query.filter(posts::creator_id.eq(creator_id));
         }
 
         if self.saved_only.unwrap_or(false) {
-            query = query.filter(post_saved::id.is_not_null());
+            query = query.filter(user_post_save::id.is_not_null());
         }
 
         // if show_nsfw is NOT TRUE, then we filter nsfw posts from query
         if !self.show_nsfw.unwrap_or(false) {
-            query = query.filter(post::nsfw.eq(false));
+            query = query.filter(posts::nsfw.eq(false));
         }
 
         // filter posts from blocked boards and users
         if self.user.is_some() {
             query = query.filter(user_board_blocks::user_id.is_null());
-            query = query.filter(user_block::user_id.is_null());
+            query = query.filter(user_blocks::user_id.is_null());
         }
 
         query = match self.sort.unwrap_or(SortType::Hot) {
@@ -324,8 +323,8 @@ impl<'a> PostQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(post::removed.eq(false))
-            .filter(post::deleted.eq(false))
+            .filter(posts::removed.eq(false))
+            .filter(posts::deleted.eq(false))
             .filter(boards::removed.eq(false))
             .filter(boards::deleted.eq(false));
 
@@ -404,8 +403,8 @@ impl ViewToVec for PostView {
 //             board::user_board_blocks::{BoardBlock, BoardBlockForm},
 //             site::site::{Site, SiteForm},
 //             user::user::{User, UserForm},
-//             user::user_block::{UserBlock, UserBlockForm},
-//             post::post::*,
+//             user::user_blocks::{UserBlock, UserBlockForm},
+//             post::posts::*,
 //         },
 //         traits::{Blockable, Crud, Voteable}, SortType,
 //     };

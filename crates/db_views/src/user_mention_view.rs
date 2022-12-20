@@ -10,8 +10,8 @@ use tinyboards_db::{
         user::user_blocks::UserBlock, user::user_mention::UserMention,
     },
     schema::{
-        board_subscriptions, board_user_bans, boards, comment, comment_aggregates, comment_saved,
-        comment_vote, post, user_block, user_mention, users,
+        board_subscriptions, board_user_bans, boards, comment, comment_aggregates, comment_votes,
+        post, user_blocks, user_comment_save, user_mentions, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, limit_and_offset},
@@ -57,12 +57,12 @@ impl UserMentionView {
             saved,
             creator_blocked,
             my_vote,
-        ) = user_mention::table
+        ) = user_mentions::table
             .find(user_mention_id)
             .inner_join(comment::table)
             .inner_join(users::table.on(comment::creator_id.eq(users::id)))
-            .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
+            .inner_join(posts::table.on(comment::post_id.eq(posts::id)))
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(user_alias)
             .inner_join(
                 comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)),
@@ -78,27 +78,27 @@ impl UserMentionView {
                     )),
             )
             .left_join(
-                board_subscriptions::table.on(post::board_id
+                board_subscriptions::table.on(posts::board_id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_saved::table.on(comment::id
-                    .eq(comment_saved::comment_id)
-                    .and(comment_saved::user_id.eq(user_id_join))),
+                user_comment_save::table.on(comment::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(comment::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(comment::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(comment::id
-                    .eq(comment_vote::comment_id)
-                    .and(comment_vote::user_id.eq(user_id_join))),
+                comment_votes::table.on(comment::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                user_mention::all_columns,
+                user_mentions::all_columns,
                 comment::all_columns,
                 UserSafe::safe_columns_tuple(),
                 post::all_columns,
@@ -107,9 +107,9 @@ impl UserMentionView {
                 comment_aggregates::all_columns,
                 board_user_bans::all_columns.nullable(),
                 board_subscriptions::all_columns.nullable(),
-                comment_saved::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                comment_vote::score.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .first::<UserMentionViewTuple>(conn)?;
 
@@ -133,13 +133,13 @@ impl UserMentionView {
     pub fn get_unread_mentions(conn: &mut PgConnection, user_id: i32) -> Result<i64, Error> {
         use diesel::dsl::*;
 
-        user_mention::table
+        user_mentions::table
             .inner_join(comment::table)
-            .filter(user_mention::recipient_id.eq(user_id))
-            .filter(user_mention::read.eq(false))
+            .filter(user_mentions::recipient_id.eq(user_id))
+            .filter(user_mentions::read.eq(false))
             .filter(comment::deleted.eq(false))
             .filter(comment::removed.eq(false))
-            .select(count(user_mention::id))
+            .select(count(user_mentions::id))
             .first::<i64>(conn)
     }
 }
@@ -165,11 +165,11 @@ impl<'a> UserMentionQuery<'a> {
 
         let user_id_join = self.user_id.unwrap_or(-1);
 
-        let mut query = user_mention::table
+        let mut query = user_mentions::table
             .inner_join(comment::table)
             .inner_join(users::table.on(comment::creator_id.eq(users::id)))
-            .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
+            .inner_join(posts::table.on(comment::post_id.eq(posts::id)))
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(user_alias)
             .inner_join(
                 comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)),
@@ -185,27 +185,27 @@ impl<'a> UserMentionQuery<'a> {
                     )),
             )
             .left_join(
-                board_subscriptions::table.on(post::board_id
+                board_subscriptions::table.on(posts::board_id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_saved::table.on(comment::id
-                    .eq(comment_saved::comment_id)
-                    .and(comment_saved::user_id.eq(user_id_join))),
+                user_comment_save::table.on(comment::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(comment::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(comment::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(comment::id
-                    .eq(comment_vote::comment_id)
-                    .and(comment_vote::user_id.eq(user_id_join))),
+                comment_votes::table.on(comment::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                user_mention::all_columns,
+                user_mentions::all_columns,
                 comment::all_columns,
                 UserSafe::safe_columns_tuple(),
                 post::all_columns,
@@ -214,18 +214,18 @@ impl<'a> UserMentionQuery<'a> {
                 comment_aggregates::all_columns,
                 board_user_bans::all_columns.nullable(),
                 board_subscriptions::all_columns.nullable(),
-                comment_saved::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                comment_vote::score.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .into_boxed();
 
         if let Some(recipient_id) = self.recipient_id {
-            query = query.filter(user_mention::recipient_id.eq(recipient_id));
+            query = query.filter(user_mentions::recipient_id.eq(recipient_id));
         }
 
         if self.unread_only.unwrap_or(false) {
-            query = query.filter(user_mention::read.eq(false));
+            query = query.filter(user_mentions::read.eq(false));
         }
 
         let sort = map_to_comment_sort_type(self.sort.as_deref());

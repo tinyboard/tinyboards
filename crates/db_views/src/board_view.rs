@@ -28,7 +28,7 @@ impl BoardView {
     ) -> Result<Self, Error> {
         let user_id_join = user_id.unwrap_or(-1);
 
-        let (board, counts, subscriber, blocked) = board::table
+        let (board, counts, subscriber, blocked) = boards::table
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
