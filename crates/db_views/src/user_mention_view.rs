@@ -10,8 +10,8 @@ use tinyboards_db::{
         user::user_blocks::UserBlock, user::user_mention::UserMention,
     },
     schema::{
-        board, board_subscriber, board_user_ban, comment, comment_aggregates, comment_saved,
-        comment_vote, post, user_, user_block, user_mention,
+        board, board_subscriptions, board_user_bans, comment, comment_aggregates, comment_saved,
+        comment_vote, post, user_block, user_mention, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, limit_and_offset},
@@ -40,7 +40,7 @@ impl UserMentionView {
         user_mention_id: i32,
         user_id: Option<i32>,
     ) -> Result<Self, Error> {
-        let user_alias = diesel::alias!(user_ as user_1);
+        let user_alias = diesel::alias!(users as user_1);
 
         let user_id_join = user_id.unwrap_or(-1);
 
@@ -60,7 +60,7 @@ impl UserMentionView {
         ) = user_mention::table
             .find(user_mention_id)
             .inner_join(comment::table)
-            .inner_join(user_::table.on(comment::creator_id.eq(user_::id)))
+            .inner_join(users::table.on(comment::creator_id.eq(users::id)))
             .inner_join(post::table.on(comment::post_id.eq(post::id)))
             .inner_join(board::table.on(post::board_id.eq(board::id)))
             .inner_join(user_alias)
@@ -68,19 +68,19 @@ impl UserMentionView {
                 comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(board::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(post::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comment::id
@@ -105,8 +105,8 @@ impl UserMentionView {
                 BoardSafe::safe_columns_tuple(),
                 user_alias.fields(UserSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
                 comment_vote::score.nullable(),
@@ -161,13 +161,13 @@ impl<'a> UserMentionQuery<'a> {
     pub fn list(self) -> Result<Vec<UserMentionView>, Error> {
         use diesel::dsl::*;
 
-        let user_alias = diesel::alias!(user_ as user_1);
+        let user_alias = diesel::alias!(users as user_1);
 
         let user_id_join = self.user_id.unwrap_or(-1);
 
         let mut query = user_mention::table
             .inner_join(comment::table)
-            .inner_join(user_::table.on(comment::creator_id.eq(user_::id)))
+            .inner_join(users::table.on(comment::creator_id.eq(users::id)))
             .inner_join(post::table.on(comment::post_id.eq(post::id)))
             .inner_join(board::table.on(post::board_id.eq(board::id)))
             .inner_join(user_alias)
@@ -175,19 +175,19 @@ impl<'a> UserMentionQuery<'a> {
                 comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(board::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(post::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comment::id
@@ -212,8 +212,8 @@ impl<'a> UserMentionQuery<'a> {
                 BoardSafe::safe_columns_tuple(),
                 user_alias.fields(UserSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
                 comment_vote::score.nullable(),
