@@ -16,7 +16,7 @@ use tinyboards_db::{
     },
     schema::{
         board_subscriptions, board_user_bans, boards, comment, comment_aggregates, comment_votes,
-        post, user_blocks, user_board_blocks, user_comment_save, users,
+        posts, user_blocks, user_board_blocks, user_comment_save, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
@@ -159,7 +159,7 @@ impl CommentView {
             .select((
                 comment::all_columns,
                 UserSafe::safe_columns_tuple(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 comment_aggregates::all_columns,
                 board_user_bans::all_columns.nullable(),
@@ -260,7 +260,7 @@ impl<'a> CommentQuery<'a> {
             .select((
                 comment::all_columns,
                 UserSafe::safe_columns_tuple(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 comment_aggregates::all_columns,
                 board_user_bans::all_columns.nullable(),

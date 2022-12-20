@@ -5,7 +5,7 @@ use tinyboards_db::{
         board::boards::BoardSafe, moderator::mod_actions::ModLockPost, post::posts::Post,
         user::user::UserSafe,
     },
-    schema::{boards, mod_lock_post, post, users},
+    schema::{boards, mod_lock_post, posts, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -31,7 +31,7 @@ impl ModLockPostView {
             .select((
                 mod_lock_post::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
             ))
             .into_boxed();

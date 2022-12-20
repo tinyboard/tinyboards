@@ -5,7 +5,7 @@ use tinyboards_db::{
         board::boards::BoardSafe, comment::comments::Comment,
         moderator::mod_actions::ModRemoveComment, post::posts::Post, user::user::UserSafe,
     },
-    schema::{boards, comment, mod_remove_comment, post, users},
+    schema::{boards, comment, mod_remove_comment, posts, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -41,7 +41,7 @@ impl ModRemoveCommentView {
                 UserSafe::safe_columns_tuple().nullable(),
                 comment::all_columns,
                 user_alias.fields(UserSafe::safe_columns_tuple()),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
             ))
             .into_boxed();

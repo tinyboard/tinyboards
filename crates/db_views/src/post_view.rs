@@ -16,7 +16,7 @@ use tinyboards_db::{
         },
     },
     schema::{
-        board_subscriptions, board_user_bans, boards, post, post_aggregates, post_votes,
+        board_subscriptions, board_user_bans, boards, post_aggregates, post_votes, posts,
         user_blocks, user_board_blocks, user_post_read, user_post_save, users,
     },
     traits::{ToSafe, ViewToVec},
@@ -58,7 +58,7 @@ impl PostView {
             read,
             creator_blocked,
             post_votes,
-        ) = post::table
+        ) = posts::table
             .find(post_id)
             .inner_join(users::table)
             .inner_join(boards::table)
@@ -99,7 +99,7 @@ impl PostView {
                     .and(post_votes::user_id.eq(user_id_join))),
             )
             .select((
-                post::all_columns,
+                posts::all_columns,
                 UserSafe::safe_columns_tuple(),
                 BoardSafe::safe_columns_tuple(),
                 board_user_bans::all_columns.nullable(),
@@ -161,7 +161,7 @@ impl<'a> PostQuery<'a> {
             None => -1,
         };
 
-        let mut query = post::table
+        let mut query = posts::table
             .inner_join(users::table)
             .inner_join(boards::table)
             .left_join(
@@ -206,7 +206,7 @@ impl<'a> PostQuery<'a> {
                     .and(post_votes::user_id.eq(user_id_join))),
             )
             .select((
-                post::all_columns,
+                posts::all_columns,
                 UserSafe::safe_columns_tuple(),
                 BoardSafe::safe_columns_tuple(),
                 board_user_bans::all_columns.nullable(),
@@ -254,7 +254,7 @@ impl<'a> PostQuery<'a> {
         if let Some(search_term) = self.search_term {
             let searcher = fuzzy_search(&search_term);
             query = query.filter(
-                post::title
+                posts::title
                     .ilike(searcher.to_owned())
                     .or(posts::body.ilike(searcher)),
             );
