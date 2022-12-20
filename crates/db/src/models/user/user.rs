@@ -48,7 +48,6 @@ pub struct UserSafe {
     pub default_sort_type: i16,
     pub default_listing_type: i16,
     pub avatar: Option<String>,
-    pub email: Option<String>,
     pub email_notifications_enabled: bool,
     pub show_nsfw: bool,
     pub deleted: bool,
