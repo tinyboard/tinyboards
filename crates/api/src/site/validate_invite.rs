@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::{blocking},
-    site::{ValidateSiteInvite},
+    site::{ValidateSiteInvite, InviteToken},
 };
 use tinyboards_db::models::site::{site_invite::SiteInvite, site::Site};
 use tinyboards_utils::error::TinyBoardsError;
@@ -11,17 +11,17 @@ use tinyboards_utils::error::TinyBoardsError;
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for ValidateSiteInvite {
     type Response = ();
-    type Route = ();
+    type Route = InviteToken;
 
     #[tracing::instrument(skip(context))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        _: Self::Route,
+        path: Self::Route,
         _: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
 
-        let token = self.invite_token.clone();
+        let token = path.invite_token.clone();
 
         let site = blocking(context.pool(), move |conn| {
             Site::read_local(conn)
@@ -37,7 +37,7 @@ impl<'des> Perform<'des> for ValidateSiteInvite {
         })
         .await??;
 
-        if self.invite_token == invite.verification_code {
+        if path.invite_token.clone() == invite.verification_code {
             Ok(())
         } else {
             Err(TinyBoardsError::from_message("invite validation failed"))

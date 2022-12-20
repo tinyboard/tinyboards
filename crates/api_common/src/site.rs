@@ -152,6 +152,9 @@ pub struct DeleteSiteInvite {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ValidateSiteInvite {
+pub struct ValidateSiteInvite {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InviteToken {
     pub invite_token: String,
 }
