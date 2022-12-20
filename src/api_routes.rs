@@ -16,7 +16,6 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            .route("/validate_invite/{invite_token}", web::post().to(route_post::<ValidateSiteInvite>))
             // Authenticate
             .service(
                 web::scope("/auth")
@@ -66,6 +65,13 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/sticky_post", web::post().to(route_post::<StickyPost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
             )
+            .service(
+                web::scope("/invite")
+                    .route("", web::post().to(route_post_crud::<CreateSiteInvite>))
+                    .route("", web::get().to(route_get_crud::<ListSiteInvites>))
+                    .route("/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
+                    .route("/{invite_token}", web::post().to(route_post::<ValidateSiteInvite>))
+            )
             // Admin Actions
             .service(
                 web::scope("/admin")
@@ -76,9 +82,6 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
                     .route("/site_settings", web::get().to(route_get::<GetSiteSettings>))
                     .route("/site_settings", web::put().to(route_post::<SaveSiteSettings>))
-                    .route("/invite", web::post().to(route_post_crud::<CreateSiteInvite>))
-                    .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
-                    .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
             ),
     );
 }
