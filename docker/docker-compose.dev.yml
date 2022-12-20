@@ -1,34 +1,25 @@
 version: '3.3'
 
-networks:
-  # bridge to web & clients
-  tinyboardsext:
-  # internal comms
-  tinyboards:
-    driver: bridge
-    internal: true
-
-
 services:
   nginx:
     image: nginx:1-alpine
+    ports:
+      - "1236:1236"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./certbot:/var/www/certbot
       - ./letsencrypt:/etc/letsencrypt/live
     networks:
-      - tinyboards
-      - tinyboardsext
-    ports:
-      - 80:80
-      - 443:443
+      tinyboards:
+        aliases:
+          - tinyboards.test
     restart: always
     depends_on:
+      - tinyboards
       - tinyboards-fe
-      - pictrs
 
-  tinyboards-be:
-    image: kronusdev/tinyboards-be:latest
+  tinyboards:
+    image: tinyboards
     ports:
       - "8536:8536"
       - "6669:6669"
@@ -51,16 +42,21 @@ services:
       - pictrs
 
   tinyboards-fe:
-    image: kronusdev/tinyboards-fe:latest
+    image: tinyboards-fe
     ports:
       - "3000:3000"
+    restart: always
+    build:
+      context: ../../tinyboards-fe
+      dockerfile: Dockerfile
+    volumes:
+      - ../../tinyboards-fe/package.json:/usr/src/app/package.json
     networks:
       tinyboards:
         aliases:
           - tinyboards-fe
     depends_on:
-      - tinyboards-be
-    restart: always
+      - tinyboards
 
   pictrs:
     image: asonix/pictrs:0.4.0-beta.7
@@ -86,7 +82,7 @@ services:
       - "5433:5432"
     environment:
       - POSTGRES_USER=tinyboards
-      - POSTGRES_PASSWORD=password
+      - POSTGRES_PASSWORD=tinyboards
       - POSTGRES_DB=tinyboards
     volumes:
       - ./volumes/postgres:/var/lib/postgresql/data
@@ -96,3 +92,5 @@ services:
           - postgres
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
+networks:
+  tinyboards: {}
