@@ -124,20 +124,20 @@ async fn full_res(
 
     let pictrs_conf = context.settings().pictrs_config()?;
     let url = if params.format.is_none() && params.thumbnail.is_none() {
-        format!("{}/image/original/{}", pictrs_conf.url, name,)
+        format!("{}image/original/{}", pictrs_conf.url, name,)
     } else {
         let format = params
             .format
             .unwrap_or_else(|| name.split('.').last().unwrap_or("jpg").to_string());
         
-        let mut url = format!("{}/image/process.{}?src={}", pictrs_conf.url, format, name,);
+        let mut url = format!("{}image/process.{}?src={}", pictrs_conf.url, format, name,);
 
         if let Some(size) = params.thumbnail {
             url = format!("{}&thumbnail={}", url, size);
         }
         url
     };
-
+    
     image(url, req, client).await
 }
 
@@ -220,7 +220,7 @@ async fn delete(
     let (token, file) = components.into_inner();
   
     let pictrs_conf = context.settings().pictrs_config()?;
-    let url = format!("{}/image/delete/{}/{}", pictrs_conf.url, &token, &file);
+    let url = format!("{}image/delete/{}/{}", pictrs_conf.url, &token, &file);
   
     let mut client_req = adapt_request(&req, &client, url);
   
