@@ -29,7 +29,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         let post_id = path.post_id;
         let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
 
-        if orig_post.deleted == data.deleted {
+        if orig_post.is_deleted == data.deleted {
             return Err(TinyBoardsError::from_message(
                 "couldn't delete post a second time!",
             ));

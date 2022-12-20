@@ -43,7 +43,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         })
         .await??;
 
-        if orig_comment.deleted == data.deleted {
+        if orig_comment.is_deleted == data.deleted {
             return Err(TinyBoardsError::from_message(
                 "couldn't delete comment a second time!",
             ));

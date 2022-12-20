@@ -96,7 +96,7 @@ impl<'des> Perform<'des> for Profile {
         let posts_score = view.counts.post_score;
         let comments_count = view.counts.comment_count;
         let comments_score = view.counts.comment_score;
-        let created_at = user.published;
+        let created_at = user.creation_date;
         let updated_at = user.updated;
         let is_banned = user.banned;
         let is_deleted = user.deleted;

@@ -137,8 +137,8 @@ impl UserMentionView {
             .inner_join(comments::table)
             .filter(user_mentions::recipient_id.eq(user_id))
             .filter(user_mentions::read.eq(false))
-            .filter(comments::deleted.eq(false))
-            .filter(comments::removed.eq(false))
+            .filter(comments::is_deleted.eq(false))
+            .filter(comments::is_removed.eq(false))
             .select(count(user_mentions::id))
             .first::<i64>(conn)
     }
@@ -233,11 +233,11 @@ impl<'a> UserMentionQuery<'a> {
         query = match sort {
             CommentSortType::Hot => query
                 .then_order_by(
-                    hot_rank(comment_aggregates::score, comment_aggregates::published).desc(),
+                    hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
                 )
-                .then_order_by(comment_aggregates::published.desc()),
-            CommentSortType::New => query.then_order_by(comments::published.desc()),
-            CommentSortType::Old => query.then_order_by(comments::published.asc()),
+                .then_order_by(comment_aggregates::creation_date.desc()),
+            CommentSortType::New => query.then_order_by(comments::creation_date.desc()),
+            CommentSortType::Old => query.then_order_by(comments::creation_date.asc()),
             CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
         };
 

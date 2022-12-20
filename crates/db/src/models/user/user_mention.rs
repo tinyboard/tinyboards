@@ -10,5 +10,5 @@ pub struct UserMention {
     pub recipient_id: i32,
     pub comment_id: i32,
     pub read: bool,
-    pub published: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
 }

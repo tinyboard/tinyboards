@@ -18,7 +18,7 @@ impl BoardModeratorView {
                 UserSafe::safe_columns_tuple(),
             ))
             .filter(board_mods::board_id.eq(board_id))
-            .order_by(board_mods::published)
+            .order_by(board_mods::creation_date)
             .load::<BoardModeratorViewTuple>(conn)?;
 
         Ok(Self::from_tuple_to_vec(res))
@@ -33,9 +33,9 @@ impl BoardModeratorView {
                 UserSafe::safe_columns_tuple(),
             ))
             .filter(board_mods::user_id.eq(user_id))
-            .filter(boards::deleted.eq(false))
-            .filter(boards::removed.eq(false))
-            .order_by(board_mods::published)
+            .filter(boards::is_deleted.eq(false))
+            .filter(boards::is_banned.eq(false))
+            .order_by(board_mods::creation_date)
             .load::<BoardModeratorViewTuple>(conn)?;
 
         Ok(Self::from_tuple_to_vec(res))

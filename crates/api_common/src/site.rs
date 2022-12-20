@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::{UserView, CommentView, PostView, BoardView};
+use tinyboards_db_views::structs::{BoardView, CommentView, PostView, UserView};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Search {
@@ -35,7 +35,7 @@ pub struct GetFeed {
     pub user_id: Option<i32>,
     pub search: Option<String>,
     pub saved_only: Option<bool>,
-    pub nsfw: Option<bool>,
+    pub is_nsfw: Option<bool>,
     pub limit: Option<i64>,
     pub page: Option<i64>,
 }

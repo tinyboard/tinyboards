@@ -52,7 +52,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             body_html: body_html,
             creator_id: user.id,
             board_id,
-            nsfw: Some(data.nsfw),
+            is_nsfw: Some(data.is_nsfw),
             ..PostForm::default()
         };
 

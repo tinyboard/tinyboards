@@ -78,7 +78,7 @@ impl<'des> Perform<'des> for GetFeed {
 
         for pv in posts
             .iter_mut()
-            .filter(|p| p.post.deleted || p.post.removed)
+            .filter(|p| p.post.is_deleted || p.post.is_removed)
         {
             pv.hide_if_removed_or_deleted(user.as_ref());
         }

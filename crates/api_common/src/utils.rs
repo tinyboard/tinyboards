@@ -392,7 +392,7 @@ pub async fn check_board_deleted_or_removed(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find board"))?;
 
-    if board.deleted || board.removed {
+    if board.is_deleted || board.is_banned {
         Err(TinyBoardsError::from_message("board deleted or removed"))
     } else {
         Ok(())
@@ -410,7 +410,7 @@ pub async fn check_post_deleted_removed_or_locked(
 
     if post.locked {
         Err(TinyBoardsError::from_message("post locked"))
-    } else if post.deleted || post.removed {
+    } else if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message("post deleted or removed"))
     } else {
         Ok(())
@@ -426,7 +426,7 @@ pub async fn check_comment_deleted_or_removed(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find comment"))?;
 
-    if comment.deleted || comment.removed {
+    if comment.is_deleted || comment.is_removed {
         Err(TinyBoardsError::from_message("comment deleted or removed"))
     } else {
         Ok(())

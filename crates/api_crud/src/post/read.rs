@@ -43,7 +43,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         })
         .await??;
 
-        if post_view.post.removed || post_view.post.deleted {
+        if post_view.post.is_removed || post_view.post.is_deleted {
             post_view.hide_if_removed_or_deleted(user.as_ref());
         }
 

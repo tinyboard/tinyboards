@@ -226,7 +226,7 @@ impl<'a> PostQuery<'a> {
                 }
                 ListingType::All => {
                     query = query.filter(
-                        boards::hidden
+                        boards::is_hidden
                             .eq(false)
                             .or(board_subscriptions::user_id.eq(user_id_join)),
                     )
@@ -236,8 +236,8 @@ impl<'a> PostQuery<'a> {
 
         if !self.show_deleted_or_removed.unwrap_or(false) {
             query = query
-                .filter(posts::removed.eq(false))
-                .filter(posts::deleted.eq(false));
+                .filter(posts::is_removed.eq(false))
+                .filter(posts::is_deleted.eq(false));
         }
 
         if let Some(board_id) = self.board_id {
@@ -269,9 +269,9 @@ impl<'a> PostQuery<'a> {
             query = query.filter(user_post_save::id.is_not_null());
         }
 
-        // if show_nsfw is NOT TRUE, then we filter nsfw posts from query
+        // if show_nsfw is NOT TRUE, then we filter is_nsfw posts from query
         if !self.show_nsfw.unwrap_or(false) {
-            query = query.filter(posts::nsfw.eq(false));
+            query = query.filter(posts::is_nsfw.eq(false));
         }
 
         // filter posts from blocked boards and users
@@ -287,35 +287,37 @@ impl<'a> PostQuery<'a> {
                 )
                 .then_order_by(post_aggregates::newest_comment_time.desc()),
             SortType::Hot => query
-                .then_order_by(hot_rank(post_aggregates::score, post_aggregates::published).desc())
-                .then_order_by(post_aggregates::published.desc()),
-            SortType::New => query.then_order_by(post_aggregates::published.desc()),
-            SortType::Old => query.then_order_by(post_aggregates::published.asc()),
+                .then_order_by(
+                    hot_rank(post_aggregates::score, post_aggregates::creation_date).desc(),
+                )
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::New => query.then_order_by(post_aggregates::creation_date.desc()),
+            SortType::Old => query.then_order_by(post_aggregates::creation_date.asc()),
             SortType::NewComments => {
                 query.then_order_by(post_aggregates::newest_comment_time.desc())
             }
             SortType::MostComments => query
                 .then_order_by(post_aggregates::comments.desc())
-                .then_order_by(post_aggregates::published.desc()),
+                .then_order_by(post_aggregates::creation_date.desc()),
             SortType::TopAll => query
                 .then_order_by(post_aggregates::score.desc())
-                .then_order_by(post_aggregates::published.desc()),
+                .then_order_by(post_aggregates::creation_date.desc()),
             SortType::TopYear => query
-                .filter(post_aggregates::published.gt(now - 1.years()))
+                .filter(post_aggregates::creation_date.gt(now - 1.years()))
                 .then_order_by(post_aggregates::score.desc())
-                .then_order_by(post_aggregates::published.desc()),
+                .then_order_by(post_aggregates::creation_date.desc()),
             SortType::TopMonth => query
-                .filter(post_aggregates::published.gt(now - 1.months()))
+                .filter(post_aggregates::creation_date.gt(now - 1.months()))
                 .then_order_by(post_aggregates::score.desc())
-                .then_order_by(post_aggregates::published.desc()),
+                .then_order_by(post_aggregates::creation_date.desc()),
             SortType::TopWeek => query
-                .filter(post_aggregates::published.gt(now - 1.weeks()))
+                .filter(post_aggregates::creation_date.gt(now - 1.weeks()))
                 .then_order_by(post_aggregates::score.desc())
-                .then_order_by(post_aggregates::published.desc()),
+                .then_order_by(post_aggregates::creation_date.desc()),
             SortType::TopDay => query
-                .filter(post_aggregates::published.gt(now - 1.days()))
+                .filter(post_aggregates::creation_date.gt(now - 1.days()))
                 .then_order_by(post_aggregates::score.desc())
-                .then_order_by(post_aggregates::published.desc()),
+                .then_order_by(post_aggregates::creation_date.desc()),
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -323,10 +325,10 @@ impl<'a> PostQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(posts::removed.eq(false))
-            .filter(posts::deleted.eq(false))
-            .filter(boards::removed.eq(false))
-            .filter(boards::deleted.eq(false));
+            .filter(posts::is_removed.eq(false))
+            .filter(posts::is_deleted.eq(false))
+            .filter(boards::is_banned.eq(false))
+            .filter(boards::is_deleted.eq(false));
 
         let res = query.load::<PostViewTuple>(self.conn)?;
 
@@ -336,7 +338,7 @@ impl<'a> PostQuery<'a> {
 
 impl DeleteableOrRemoveable for PostView {
     fn hide_if_removed_or_deleted(&mut self, user: Option<&User>) {
-        /*if !(self.post.deleted || self.post.removed) {
+        /*if !(self.post.is_deleted || self.post.is_removed) {
             return self;
         }*/
 
@@ -347,13 +349,13 @@ impl DeleteableOrRemoveable for PostView {
             }
 
             // users can see their own removed content
-            if self.post.removed && user.id == self.post.creator_id {
+            if self.post.is_removed && user.id == self.post.creator_id {
                 return;
             }
         }
 
         let obscure_text: String = {
-            if self.post.deleted {
+            if self.post.is_deleted {
                 "[ retracted ]"
             } else {
                 "[ purged ]"

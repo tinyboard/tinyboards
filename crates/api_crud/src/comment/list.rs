@@ -70,7 +70,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         // blank out comment info if deleted or removed
         for cv in comments
             .iter_mut()
-            .filter(|cv| cv.comment.deleted || cv.comment.removed)
+            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
             cv.hide_if_removed_or_deleted(user.as_ref());
         }
@@ -124,7 +124,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         // blank out comment info if deleted or removed
         for cv in comments
             .iter_mut()
-            .filter(|cv| cv.comment.deleted || cv.comment.removed)
+            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
             cv.hide_if_removed_or_deleted(user.as_ref());
         }

@@ -14,7 +14,7 @@ pub struct CommentAggregates {
     pub score: i64,
     pub upvotes: i64,
     pub downvotes: i64,
-    pub published: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
 }
 
 #[derive(
@@ -28,7 +28,7 @@ pub struct BoardAggregates {
     pub subscribers: i64,
     pub posts: i64,
     pub comments: i64,
-    pub published: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
 }
 
 #[derive(
@@ -44,7 +44,7 @@ pub struct PostAggregates {
     pub upvotes: i64,
     pub downvotes: i64,
     pub stickied: bool,
-    pub published: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub newest_comment_time: NaiveDateTime,
 }
 

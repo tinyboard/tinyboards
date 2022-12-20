@@ -294,7 +294,7 @@ impl<'a> CommentQuery<'a> {
                 }
                 ListingType::All => {
                     query = query.filter(
-                        boards::hidden
+                        boards::is_hidden
                             .eq(false)
                             .or(board_subscriptions::user_id.eq(user_id_join)),
                     )
@@ -311,8 +311,8 @@ impl<'a> CommentQuery<'a> {
         }
 
         if !self.show_deleted_and_removed.unwrap_or(false) {
-            query = query.filter(comments::removed.eq(false));
-            query = query.filter(comments::deleted.eq(false));
+            query = query.filter(comments::is_removed.eq(false));
+            query = query.filter(comments::is_deleted.eq(false));
         }
 
         if self.user_id.is_some() {
@@ -327,11 +327,11 @@ impl<'a> CommentQuery<'a> {
         query = match self.sort.unwrap_or(CommentSortType::Hot) {
             CommentSortType::Hot => query
                 .then_order_by(
-                    hot_rank(comment_aggregates::score, comment_aggregates::published).desc(),
+                    hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
                 )
-                .then_order_by(comment_aggregates::published.desc()),
-            CommentSortType::New => query.then_order_by(comments::published.desc()),
-            CommentSortType::Old => query.then_order_by(comments::published.asc()),
+                .then_order_by(comment_aggregates::creation_date.desc()),
+            CommentSortType::New => query.then_order_by(comments::creation_date.desc()),
+            CommentSortType::Old => query.then_order_by(comments::creation_date.asc()),
             CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
         };
 
@@ -354,11 +354,11 @@ impl DeleteableOrRemoveable for CommentView {
         }
 
         let blank_out_comment = {
-            if self.comment.removed || self.comment.deleted {
+            if self.comment.is_removed || self.comment.is_deleted {
                 match user {
                     Some(user) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.removed && user.id == self.comment.creator_id)
+                        !(self.comment.is_removed && user.id == self.comment.creator_id)
                     }
                     None => true,
                 }
@@ -369,7 +369,7 @@ impl DeleteableOrRemoveable for CommentView {
 
         if blank_out_comment {
             let obscure_text: String = {
-                if self.comment.deleted {
+                if self.comment.is_deleted {
                     "[ retracted ]"
                 } else {
                     "[ purged ]"
@@ -384,9 +384,9 @@ impl DeleteableOrRemoveable for CommentView {
         }
 
         let blank_out_post = {
-            if self.post.deleted || self.post.removed {
+            if self.post.is_deleted || self.post.is_removed {
                 match user {
-                    Some(user) => !(self.post.removed && user.id == self.post.creator_id),
+                    Some(user) => !(self.post.is_removed && user.id == self.post.creator_id),
                     None => true,
                 }
             } else {
@@ -397,7 +397,7 @@ impl DeleteableOrRemoveable for CommentView {
         // also blank out post
         if blank_out_post {
             let obscure_text: String = {
-                if self.post.deleted {
+                if self.post.is_deleted {
                     "[ deleted ]"
                 } else {
                     "[ removed ]"

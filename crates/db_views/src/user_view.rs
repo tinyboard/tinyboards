@@ -103,7 +103,7 @@ impl UserView {
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .filter(users::admin.eq(true))
             .filter(users::deleted.eq(false))
-            .order_by(users::published)
+            .order_by(users::creation_date)
             .load::<UserViewTuple>(conn)?;
 
         Ok(Self::from_tuple_to_vec(admins))
@@ -177,8 +177,8 @@ impl<'a> UserQuery<'a> {
         };
 
         query = match sort {
-            UserSortType::New => query.then_order_by(users::published.asc()),
-            UserSortType::Old => query.then_order_by(users::published.desc()),
+            UserSortType::New => query.then_order_by(users::creation_date.asc()),
+            UserSortType::Old => query.then_order_by(users::creation_date.desc()),
             UserSortType::MostRep => query
                 .then_order_by(user_aggregates::post_score.desc())
                 .then_order_by(user_aggregates::comment_score.desc()),

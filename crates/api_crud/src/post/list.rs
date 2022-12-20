@@ -52,7 +52,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
             if let Ok(ref mut posts) = posts {
                 for pv in posts
                     .iter_mut()
-                    .filter(|p| p.post.removed || p.post.deleted)
+                    .filter(|p| p.post.is_removed || p.post.is_deleted)
                 {
                     pv.hide_if_removed_or_deleted(user.as_ref());
                 }
@@ -64,7 +64,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
 
         /*for pv in posts
             .iter_mut()
-            .filter(|p| p.board.deleted)
+            .filter(|p| p.board.is_deleted)
         {
             pv.board = pv.to_owned().board.blank_out_deleted_info();
         }*/

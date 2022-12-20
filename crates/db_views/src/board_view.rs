@@ -132,21 +132,29 @@ impl<'a> BoardQuery<'a> {
         }
 
         match self.sort.unwrap_or(SortType::Hot) {
-            SortType::New => query = query.order_by(boards::published.desc()),
+            SortType::New => query = query.order_by(boards::creation_date.desc()),
             SortType::TopAll => query = query.order_by(board_aggregates::subscribers.desc()),
             SortType::Hot => {
                 query = query
                     .order_by(
-                        hot_rank(board_aggregates::subscribers, board_aggregates::published).desc(),
+                        hot_rank(
+                            board_aggregates::subscribers,
+                            board_aggregates::creation_date,
+                        )
+                        .desc(),
                     )
-                    .then_order_by(board_aggregates::published.desc());
+                    .then_order_by(board_aggregates::creation_date.desc());
             }
             _ => {
                 query = query
                     .order_by(
-                        hot_rank(board_aggregates::subscribers, board_aggregates::published).desc(),
+                        hot_rank(
+                            board_aggregates::subscribers,
+                            board_aggregates::creation_date,
+                        )
+                        .desc(),
                     )
-                    .then_order_by(board_aggregates::published.desc())
+                    .then_order_by(board_aggregates::creation_date.desc())
             }
         };
 
@@ -159,9 +167,9 @@ impl<'a> BoardQuery<'a> {
 
         if self.user.is_some() {
             query = query.filter(user_board_blocks::user_id.is_null());
-            query = query.filter(boards::nsfw.eq(false).or(users::show_nsfw.eq(true)));
+            query = query.filter(boards::is_nsfw.eq(false).or(users::show_nsfw.eq(true)));
         } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
-            query = query.filter(boards::nsfw.eq(false));
+            query = query.filter(boards::is_nsfw.eq(false));
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -169,8 +177,8 @@ impl<'a> BoardQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .filter(boards::removed.eq(false))
-            .filter(boards::deleted.eq(false))
+            .filter(boards::is_banned.eq(false))
+            .filter(boards::is_deleted.eq(false))
             .load::<BoardViewTuple>(self.conn)?;
 
         Ok(BoardView::from_tuple_to_vec(res))

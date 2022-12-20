@@ -1,10 +1,10 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct PasswordResetRequest {
     id: i32,
     user_id: i32,
     token_encrypted: String,
-    published: chrono::NaiveDateTime,
+    creation_date: chrono::NaiveDateTime,
 }

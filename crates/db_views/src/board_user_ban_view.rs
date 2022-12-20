@@ -28,7 +28,7 @@ impl BoardUserBanView {
                     .is_null()
                     .or(board_user_bans::expires.gt(now)),
             )
-            .order_by(board_user_bans::published)
+            .order_by(board_user_bans::creation_date)
             .first::<BoardUserBanViewTuple>(conn)?;
 
         Ok(BoardUserBanView { board, user })
