@@ -17,8 +17,8 @@ use tinyboards_db::{
     },
     schema::{
         board::{self},
-        board_block, board_subscriber, board_user_ban, post, post_aggregates, post_read,
-        post_saved, post_vote, user_, user_block,
+        board_subscriptions, board_user_bans, post, post_aggregates, post_read, post_saved,
+        post_vote, user_block, user_board_blocks, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
@@ -61,23 +61,23 @@ impl PostView {
             post_vote,
         ) = post::table
             .find(post_id)
-            .inner_join(user_::table)
+            .inner_join(users::table)
             .inner_join(board::table)
             .left_join(
-                board_user_ban::table.on(post::board_id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(post::creator_id))
+                board_user_bans::table.on(post::board_id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(post::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(post::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
                 post_saved::table.on(post::id
@@ -103,9 +103,9 @@ impl PostView {
                 post::all_columns,
                 UserSafe::safe_columns_tuple(),
                 BoardSafe::safe_columns_tuple(),
-                board_user_ban::all_columns.nullable(),
+                board_user_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
-                board_subscriber::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 user_block::all_columns.nullable(),
@@ -163,23 +163,23 @@ impl<'a> PostQuery<'a> {
         };
 
         let mut query = post::table
-            .inner_join(user_::table)
+            .inner_join(users::table)
             .inner_join(board::table)
             .left_join(
-                board_user_ban::table.on(post::board_id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(post::creator_id))
+                board_user_bans::table.on(post::board_id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(post::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(post::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
                 post_saved::table.on(post::id
@@ -197,9 +197,9 @@ impl<'a> PostQuery<'a> {
                     .and(user_block::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(board::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
                 post_vote::table.on(post::id
@@ -210,9 +210,9 @@ impl<'a> PostQuery<'a> {
                 post::all_columns,
                 UserSafe::safe_columns_tuple(),
                 BoardSafe::safe_columns_tuple(),
-                board_user_ban::all_columns.nullable(),
+                board_user_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
-                board_subscriber::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 user_block::all_columns.nullable(),
@@ -223,13 +223,13 @@ impl<'a> PostQuery<'a> {
         if let Some(listing_type) = self.listing_type {
             match listing_type {
                 ListingType::Subscribed => {
-                    query = query.filter(board_subscriber::user_id.is_not_null())
+                    query = query.filter(board_subscriptions::user_id.is_not_null())
                 }
                 ListingType::All => {
                     query = query.filter(
                         board::hidden
                             .eq(false)
-                            .or(board_subscriber::user_id.eq(user_id_join)),
+                            .or(board_subscriptions::user_id.eq(user_id_join)),
                     )
                 }
             }
@@ -277,7 +277,7 @@ impl<'a> PostQuery<'a> {
 
         // filter posts from blocked boards and users
         if self.user.is_some() {
-            query = query.filter(board_block::user_id.is_null());
+            query = query.filter(user_board_blocks::user_id.is_null());
             query = query.filter(user_block::user_id.is_null());
         }
 
@@ -401,7 +401,7 @@ impl ViewToVec for PostView {
 //         utils::establish_unpooled_connection,
 //         models::{
 //             board::board::*,
-//             board::board_block::{BoardBlock, BoardBlockForm},
+//             board::user_board_blocks::{BoardBlock, BoardBlockForm},
 //             site::site::{Site, SiteForm},
 //             user::user::{User, UserForm},
 //             user::user_block::{UserBlock, UserBlockForm},

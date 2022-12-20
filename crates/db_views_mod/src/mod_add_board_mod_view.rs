@@ -1,39 +1,29 @@
 use crate::structs::{ModAddBoardModView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        user_, 
-        mod_add_board_mod,
-    },
-    models::{
-        user::user::UserSafe,
-        moderator::mod_actions::ModAddBoardMod,
-    },
+    models::{moderator::mod_actions::ModAddBoardMod, user::user::UserSafe},
+    schema::{mod_add_board_mod, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type ModAddBoardModViewTuple = (
-    ModAddBoardMod,
-    Option<UserSafe>,
-    UserSafe,
-);
+type ModAddBoardModViewTuple = (ModAddBoardMod, Option<UserSafe>, UserSafe);
 
 impl ModAddBoardModView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
-        let user_alias = diesel::alias!(user_ as user_1);
+        let user_alias = diesel::alias!(users as user_1);
         let mod_id_join = params.mod_user_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
         let mod_names_join = mod_add_board_mod::mod_user_id
-            .eq(user_::id)
-            .and(show_mod_names_expr.or(user_::id.eq(mod_id_join)));
-        
+            .eq(users::id)
+            .and(show_mod_names_expr.or(users::id.eq(mod_id_join)));
+
         let mut query = mod_add_board_mod::table
-            .left_join(user_::table.on(mod_names_join))
+            .left_join(users::table.on(mod_names_join))
             .inner_join(
-                user_alias.on(mod_add_board_mod::other_user_id.eq(user_alias.field(user_::id))),
+                user_alias.on(mod_add_board_mod::other_user_id.eq(user_alias.field(users::id))),
             )
             .select((
                 mod_add_board_mod::all_columns,
@@ -41,7 +31,7 @@ impl ModAddBoardModView {
                 user_alias.fields(UserSafe::safe_columns_tuple()),
             ))
             .into_boxed();
-        
+
         if let Some(mod_user_id) = params.mod_user_id {
             query = query.filter(mod_add_board_mod::mod_user_id.eq(mod_user_id));
         };

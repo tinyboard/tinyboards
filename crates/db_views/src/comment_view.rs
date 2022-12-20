@@ -15,8 +15,8 @@ use tinyboards_db::{
         user::user_blocks::UserBlock,
     },
     schema::{
-        board, board_block, board_subscriber, board_user_ban, comment, comment_aggregates,
-        comment_saved, comment_vote, post, user_, user_block,
+        board, board_subscriptions, board_user_bans, comment, comment_aggregates, comment_saved,
+        comment_vote, post, user_block, user_board_blocks, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
@@ -122,24 +122,24 @@ impl CommentView {
             comment_vote,
         ) = comment::table
             .find(comment_id)
-            .inner_join(user_::table)
+            .inner_join(users::table)
             .inner_join(post::table)
             .inner_join(board::table.on(post::board_id.eq(board::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(board::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(post::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comment::id
@@ -162,8 +162,8 @@ impl CommentView {
                 post::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
                 comment_vote::score.nullable(),
@@ -218,24 +218,24 @@ impl<'a> CommentQuery<'a> {
         let user_id_join = self.user_id.unwrap_or(-1);
 
         let mut query = comment::table
-            .inner_join(user_::table)
+            .inner_join(users::table)
             .inner_join(post::table)
             .inner_join(board::table.on(post::board_id.eq(board::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(board::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(post::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comment::id
@@ -248,9 +248,9 @@ impl<'a> CommentQuery<'a> {
                     .and(user_block::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(board::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
                 comment_vote::table.on(comment::id
@@ -263,8 +263,8 @@ impl<'a> CommentQuery<'a> {
                 post::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 user_block::all_columns.nullable(),
                 comment_vote::score.nullable(),
@@ -290,13 +290,13 @@ impl<'a> CommentQuery<'a> {
         if let Some(listing_type) = self.listing_type {
             match listing_type {
                 ListingType::Subscribed => {
-                    query = query.filter(board_subscriber::user_id.is_not_null())
+                    query = query.filter(board_subscriptions::user_id.is_not_null())
                 }
                 ListingType::All => {
                     query = query.filter(
                         board::hidden
                             .eq(false)
-                            .or(board_subscriber::user_id.eq(user_id_join)),
+                            .or(board_subscriptions::user_id.eq(user_id_join)),
                     )
                 }
             }
@@ -316,7 +316,7 @@ impl<'a> CommentQuery<'a> {
         }
 
         if self.user_id.is_some() {
-            query = query.filter(board_block::user_id.is_null());
+            query = query.filter(user_board_blocks::user_id.is_null());
             query = query.filter(user_block::user_id.is_null());
         }
 

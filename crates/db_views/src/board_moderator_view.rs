@@ -2,7 +2,7 @@ use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{board::boards::BoardSafe, user::user::UserSafe},
-    schema::{board, board_moderator, user_},
+    schema::{board, board_moderator, users},
     traits::{ToSafe, ViewToVec},
 };
 
@@ -12,7 +12,7 @@ impl BoardModeratorView {
     pub fn for_board(conn: &mut PgConnection, board_id: i32) -> Result<Vec<Self>, Error> {
         let res = board_moderator::table
             .inner_join(board::table)
-            .inner_join(user_::table)
+            .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
@@ -27,7 +27,7 @@ impl BoardModeratorView {
     pub fn for_user(conn: &mut PgConnection, user_id: i32) -> Result<Vec<Self>, Error> {
         let res = board_moderator::table
             .inner_join(board::table)
-            .inner_join(user_::table)
+            .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),

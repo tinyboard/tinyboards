@@ -6,7 +6,7 @@ use tinyboards_db::{
         board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
         board::user_board_blocks::BoardBlock, user::user::User,
     },
-    schema::{board, board_aggregates, board_block, board_subscriber, user_},
+    schema::{board, board_aggregates, board_subscriptions, user_board_blocks, users},
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
     ListingType, SortType,
@@ -32,20 +32,20 @@ impl BoardView {
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
-                board_subscriber::table.on(board::id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(board::id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(board::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
-                board_subscriber::all_columns.nullable(),
-                board_block::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_board_blocks::all_columns.nullable(),
             ))
             .first::<BoardViewTuple>(conn)?;
 
@@ -105,22 +105,22 @@ impl<'a> BoardQuery<'a> {
 
         let mut query = board::table
             .inner_join(board_aggregates::table)
-            .left_join(user_::table.on(user_::id.eq(user_id_join)))
+            .left_join(users::table.on(users::id.eq(user_id_join)))
             .left_join(
-                board_subscriber::table.on(board::id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(board::id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(board::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
-                board_subscriber::all_columns.nullable(),
-                board_block::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_board_blocks::all_columns.nullable(),
             ))
             .into_boxed();
 
@@ -152,14 +152,14 @@ impl<'a> BoardQuery<'a> {
 
         if let Some(listing_type) = self.listing_type {
             query = match listing_type {
-                ListingType::Subscribed => query.filter(board_subscriber::user_id.is_not_null()),
+                ListingType::Subscribed => query.filter(board_subscriptions::user_id.is_not_null()),
                 ListingType::All => query,
             };
         }
 
         if self.user.is_some() {
-            query = query.filter(board_block::user_id.is_null());
-            query = query.filter(board::nsfw.eq(false).or(user_::show_nsfw.eq(true)));
+            query = query.filter(user_board_blocks::user_id.is_null());
+            query = query.filter(board::nsfw.eq(false).or(users::show_nsfw.eq(true)));
         } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
             query = query.filter(board::nsfw.eq(false));
         }
