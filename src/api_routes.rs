@@ -70,7 +70,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::post().to(route_post_crud::<CreateSiteInvite>))
                     .route("", web::get().to(route_get_crud::<ListSiteInvites>))
                     .route("/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
-                    .route("/{invite_token}", web::post().to(route_post::<ValidateSiteInvite>))
+                    .route("/validate/{invite_token}", web::post().to(route_post::<ValidateSiteInvite>))
             )
             // Admin Actions
             .service(
