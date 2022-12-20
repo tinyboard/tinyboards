@@ -147,9 +147,13 @@ pub struct ListSiteInvitesResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeleteSiteInvite {
+pub struct DeleteSiteInvite {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InviteId {
     pub invite_id: i32,
 }
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ValidateSiteInvite {}

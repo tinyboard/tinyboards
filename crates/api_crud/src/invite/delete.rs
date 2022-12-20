@@ -2,7 +2,7 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    site::{DeleteSiteInvite},
+    site::{DeleteSiteInvite, InviteId},
     utils::{require_user, blocking},
 };
 use tinyboards_db::{
@@ -15,21 +15,20 @@ use tinyboards_utils::error::TinyBoardsError;
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeleteSiteInvite {
     type Response = ();
-    type Route = ();
+    type Route = InviteId;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
 
-        let data: &DeleteSiteInvite = &self;
-        let id = data.invite_id;
+        let id = path.invite_id.clone();
 
         // only admins should be able to delete invites
-        let _user = require_user(context.pool(), context.master_key(), auth)
+        require_user(context.pool(), context.master_key(), auth)
         .await
         .require_admin()
         .unwrap()?;
