@@ -15,7 +15,7 @@ use tinyboards_db::{
         user::user_blocks::UserBlock,
     },
     schema::{
-        board_subscriptions, board_user_bans, boards, comment, comment_aggregates, comment_votes,
+        board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,
         posts, user_blocks, user_board_blocks, user_comment_save, users,
     },
     traits::{ToSafe, ViewToVec},
@@ -120,7 +120,7 @@ impl CommentView {
             saved,
             creator_blocked,
             comment_votes,
-        ) = comment::table
+        ) = comments::table
             .find(comment_id)
             .inner_join(users::table)
             .inner_join(posts::table)
@@ -129,7 +129,7 @@ impl CommentView {
             .left_join(
                 board_user_bans::table.on(boards::id
                     .eq(board_user_bans::board_id)
-                    .and(board_user_bans::user_id.eq(comment::creator_id))
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
                     .and(
                         board_user_bans::expires
                             .is_null()
@@ -142,22 +142,22 @@ impl CommentView {
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_comment_save::table.on(comment::id
+                user_comment_save::table.on(comments::id
                     .eq(user_comment_save::comment_id)
                     .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_blocks::table.on(comment::creator_id
+                user_blocks::table.on(comments::creator_id
                     .eq(user_blocks::target_id)
                     .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_votes::table.on(comment::id
+                comment_votes::table.on(comments::id
                     .eq(comment_votes::comment_id)
                     .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                comment::all_columns,
+                comments::all_columns,
                 UserSafe::safe_columns_tuple(),
                 posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
@@ -217,7 +217,7 @@ impl<'a> CommentQuery<'a> {
 
         let user_id_join = self.user_id.unwrap_or(-1);
 
-        let mut query = comment::table
+        let mut query = comments::table
             .inner_join(users::table)
             .inner_join(posts::table)
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
@@ -225,7 +225,7 @@ impl<'a> CommentQuery<'a> {
             .left_join(
                 board_user_bans::table.on(boards::id
                     .eq(board_user_bans::board_id)
-                    .and(board_user_bans::user_id.eq(comment::creator_id))
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
                     .and(
                         board_user_bans::expires
                             .is_null()
@@ -238,12 +238,12 @@ impl<'a> CommentQuery<'a> {
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_comment_save::table.on(comment::id
+                user_comment_save::table.on(comments::id
                     .eq(user_comment_save::comment_id)
                     .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_blocks::table.on(comment::creator_id
+                user_blocks::table.on(comments::creator_id
                     .eq(user_blocks::target_id)
                     .and(user_blocks::user_id.eq(user_id_join))),
             )
@@ -253,12 +253,12 @@ impl<'a> CommentQuery<'a> {
                     .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_votes::table.on(comment::id
+                comment_votes::table.on(comments::id
                     .eq(comment_votes::comment_id)
                     .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                comment::all_columns,
+                comments::all_columns,
                 UserSafe::safe_columns_tuple(),
                 posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
@@ -272,19 +272,19 @@ impl<'a> CommentQuery<'a> {
             .into_boxed();
 
         if let Some(creator_id) = self.creator_id {
-            query = query.filter(comment::creator_id.eq(creator_id));
+            query = query.filter(comments::creator_id.eq(creator_id));
         };
 
         if let Some(post_id) = self.post_id {
-            query = query.filter(comment::post_id.eq(post_id));
+            query = query.filter(comments::post_id.eq(post_id));
         };
 
         if let Some(parent_id) = self.parent_id {
-            query = query.filter(comment::parent_id.eq(parent_id));
+            query = query.filter(comments::parent_id.eq(parent_id));
         };
 
         if let Some(search_term) = self.search_term {
-            query = query.filter(comment::body.ilike(fuzzy_search(&search_term)));
+            query = query.filter(comments::body.ilike(fuzzy_search(&search_term)));
         };
 
         if let Some(listing_type) = self.listing_type {
@@ -311,8 +311,8 @@ impl<'a> CommentQuery<'a> {
         }
 
         if !self.show_deleted_and_removed.unwrap_or(false) {
-            query = query.filter(comment::removed.eq(false));
-            query = query.filter(comment::deleted.eq(false));
+            query = query.filter(comments::removed.eq(false));
+            query = query.filter(comments::deleted.eq(false));
         }
 
         if self.user_id.is_some() {
@@ -330,8 +330,8 @@ impl<'a> CommentQuery<'a> {
                     hot_rank(comment_aggregates::score, comment_aggregates::published).desc(),
                 )
                 .then_order_by(comment_aggregates::published.desc()),
-            CommentSortType::New => query.then_order_by(comment::published.desc()),
-            CommentSortType::Old => query.then_order_by(comment::published.asc()),
+            CommentSortType::New => query.then_order_by(comments::published.desc()),
+            CommentSortType::Old => query.then_order_by(comments::published.asc()),
             CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
         };
 
