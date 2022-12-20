@@ -40,7 +40,7 @@ impl<'des> PerformCrud<'des> for Register {
         // some email verification logic here?
 
         // make sure site has open registration first here
-        if !site.open_registration  {
+        if !site.open_registration && data.invite_token.is_none()  {
             return Err(TinyBoardsError::from_message("site is not in open registration mode"))
         }
 
@@ -101,7 +101,7 @@ impl<'des> PerformCrud<'des> for Register {
                 .await??;
         }
 
-        let email = inserted_user.email.clone().unwrap();
+        let email = inserted_user.email.clone().unwrap_or_default();
 
         // send a verification email if email verification is required
         if site.email_verification_required {
