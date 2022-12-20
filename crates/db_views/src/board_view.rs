@@ -6,7 +6,7 @@ use tinyboards_db::{
         board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
         board::user_board_blocks::BoardBlock, user::user::User,
     },
-    schema::{board, board_aggregates, board_subscriptions, user_board_blocks, users},
+    schema::{board_aggregates, board_subscriptions, boards, user_board_blocks, users},
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
     ListingType, SortType,
@@ -32,12 +32,12 @@ impl BoardView {
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(board::id
+                board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(board::id
+                user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
                     .and(user_board_blocks::user_id.eq(user_id_join))),
             )
@@ -103,16 +103,16 @@ impl<'a> BoardQuery<'a> {
     pub fn list(self) -> Result<Vec<BoardView>, Error> {
         let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
-        let mut query = board::table
+        let mut query = boards::table
             .inner_join(board_aggregates::table)
             .left_join(users::table.on(users::id.eq(user_id_join)))
             .left_join(
-                board_subscriptions::table.on(board::id
+                board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(board::id
+                user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
                     .and(user_board_blocks::user_id.eq(user_id_join))),
             )
@@ -127,12 +127,12 @@ impl<'a> BoardQuery<'a> {
         if let Some(search_term) = self.search_term {
             let searcher = fuzzy_search(&search_term);
             query = query
-                .filter(board::name.ilike(searcher.to_owned()))
-                .or_filter(board::title.ilike(searcher));
+                .filter(boards::name.ilike(searcher.to_owned()))
+                .or_filter(boards::title.ilike(searcher));
         }
 
         match self.sort.unwrap_or(SortType::Hot) {
-            SortType::New => query = query.order_by(board::published.desc()),
+            SortType::New => query = query.order_by(boards::published.desc()),
             SortType::TopAll => query = query.order_by(board_aggregates::subscribers.desc()),
             SortType::Hot => {
                 query = query
@@ -159,9 +159,9 @@ impl<'a> BoardQuery<'a> {
 
         if self.user.is_some() {
             query = query.filter(user_board_blocks::user_id.is_null());
-            query = query.filter(board::nsfw.eq(false).or(users::show_nsfw.eq(true)));
+            query = query.filter(boards::nsfw.eq(false).or(users::show_nsfw.eq(true)));
         } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
-            query = query.filter(board::nsfw.eq(false));
+            query = query.filter(boards::nsfw.eq(false));
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -169,8 +169,8 @@ impl<'a> BoardQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .filter(board::removed.eq(false))
-            .filter(board::deleted.eq(false))
+            .filter(boards::removed.eq(false))
+            .filter(boards::deleted.eq(false))
             .load::<BoardViewTuple>(self.conn)?;
 
         Ok(BoardView::from_tuple_to_vec(res))

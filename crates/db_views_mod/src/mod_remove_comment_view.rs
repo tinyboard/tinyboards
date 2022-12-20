@@ -5,7 +5,7 @@ use tinyboards_db::{
         board::boards::BoardSafe, comment::comments::Comment,
         moderator::mod_actions::ModRemoveComment, post::posts::Post, user::user::UserSafe,
     },
-    schema::{board, comment, mod_remove_comment, post, users},
+    schema::{boards, comment, mod_remove_comment, post, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -35,7 +35,7 @@ impl ModRemoveCommentView {
             .inner_join(comment::table)
             .inner_join(user_alias.on(comment::creator_id.eq(user_alias.field(users::id))))
             .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
             .select((
                 mod_remove_comment::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),

@@ -15,7 +15,7 @@ use tinyboards_db::{
         user::user_blocks::UserBlock,
     },
     schema::{
-        board, board_subscriptions, board_user_bans, comment, comment_aggregates, comment_saved,
+        board_subscriptions, board_user_bans, boards, comment, comment_aggregates, comment_saved,
         comment_vote, post, user_block, user_board_blocks, users,
     },
     traits::{ToSafe, ViewToVec},
@@ -124,10 +124,10 @@ impl CommentView {
             .find(comment_id)
             .inner_join(users::table)
             .inner_join(post::table)
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_bans::table.on(board::id
+                board_user_bans::table.on(boards::id
                     .eq(board_user_bans::board_id)
                     .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
@@ -220,10 +220,10 @@ impl<'a> CommentQuery<'a> {
         let mut query = comment::table
             .inner_join(users::table)
             .inner_join(post::table)
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_bans::table.on(board::id
+                board_user_bans::table.on(boards::id
                     .eq(board_user_bans::board_id)
                     .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
@@ -248,7 +248,7 @@ impl<'a> CommentQuery<'a> {
                     .and(user_block::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(board::id
+                user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
                     .and(user_board_blocks::user_id.eq(user_id_join))),
             )
@@ -294,7 +294,7 @@ impl<'a> CommentQuery<'a> {
                 }
                 ListingType::All => {
                     query = query.filter(
-                        board::hidden
+                        boards::hidden
                             .eq(false)
                             .or(board_subscriptions::user_id.eq(user_id_join)),
                     )

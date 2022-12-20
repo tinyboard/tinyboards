@@ -5,7 +5,7 @@ use tinyboards_db::{
         board::boards::BoardSafe, moderator::mod_actions::ModRemovePost, post::posts::Post,
         user::user::UserSafe,
     },
-    schema::{board, mod_remove_post, post, users},
+    schema::{boards, mod_remove_post, post, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -26,7 +26,7 @@ impl ModRemovePostView {
         let mut query = mod_remove_post::table
             .left_join(users::table.on(mod_names_join))
             .inner_join(post::table)
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
             .inner_join(user_alias.on(post::creator_id.eq(user_alias.field(users::id))))
             .select((
                 mod_remove_post::all_columns,

@@ -10,7 +10,7 @@ use tinyboards_db::{
         user::user_blocks::UserBlock, user::user_mention::UserMention,
     },
     schema::{
-        board, board_subscriptions, board_user_bans, comment, comment_aggregates, comment_saved,
+        board_subscriptions, board_user_bans, boards, comment, comment_aggregates, comment_saved,
         comment_vote, post, user_block, user_mention, users,
     },
     traits::{ToSafe, ViewToVec},
@@ -62,13 +62,13 @@ impl UserMentionView {
             .inner_join(comment::table)
             .inner_join(users::table.on(comment::creator_id.eq(users::id)))
             .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
             .inner_join(user_alias)
             .inner_join(
                 comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_user_bans::table.on(board::id
+                board_user_bans::table.on(boards::id
                     .eq(board_user_bans::board_id)
                     .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(
@@ -169,13 +169,13 @@ impl<'a> UserMentionQuery<'a> {
             .inner_join(comment::table)
             .inner_join(users::table.on(comment::creator_id.eq(users::id)))
             .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(post::board_id.eq(boards::id)))
             .inner_join(user_alias)
             .inner_join(
                 comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_user_bans::table.on(board::id
+                board_user_bans::table.on(boards::id
                     .eq(board_user_bans::board_id)
                     .and(board_user_bans::user_id.eq(comment::creator_id))
                     .and(

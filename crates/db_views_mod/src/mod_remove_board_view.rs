@@ -4,7 +4,7 @@ use tinyboards_db::{
     models::{
         board::boards::BoardSafe, moderator::mod_actions::ModRemoveBoard, user::user::UserSafe,
     },
-    schema::{board, mod_remove_board, users},
+    schema::{boards, mod_remove_board, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -23,7 +23,7 @@ impl ModRemoveBoardView {
 
         let mut query = mod_remove_board::table
             .left_join(users::table.on(mod_names_join))
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .select((
                 mod_remove_board::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),

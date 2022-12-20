@@ -62,7 +62,7 @@ impl PostView {
         ) = post::table
             .find(post_id)
             .inner_join(users::table)
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .left_join(
                 board_user_bans::table.on(post::board_id
                     .eq(board_user_bans::board_id)
@@ -164,7 +164,7 @@ impl<'a> PostQuery<'a> {
 
         let mut query = post::table
             .inner_join(users::table)
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .left_join(
                 board_user_bans::table.on(post::board_id
                     .eq(board_user_bans::board_id)
@@ -197,7 +197,7 @@ impl<'a> PostQuery<'a> {
                     .and(user_block::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(board::id
+                user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
                     .and(user_board_blocks::user_id.eq(user_id_join))),
             )
@@ -326,8 +326,8 @@ impl<'a> PostQuery<'a> {
             .offset(offset)
             .filter(post::removed.eq(false))
             .filter(post::deleted.eq(false))
-            .filter(board::removed.eq(false))
-            .filter(board::deleted.eq(false));
+            .filter(boards::removed.eq(false))
+            .filter(boards::deleted.eq(false));
 
         let res = query.load::<PostViewTuple>(self.conn)?;
 
@@ -400,7 +400,7 @@ impl ViewToVec for PostView {
 //         aggregates::structs::PostAggregates,
 //         utils::establish_unpooled_connection,
 //         models::{
-//             board::board::*,
+//             board::boards::*,
 //             board::user_board_blocks::{BoardBlock, BoardBlockForm},
 //             site::site::{Site, SiteForm},
 //             user::user::{User, UserForm},

@@ -2,7 +2,7 @@ use crate::structs::BoardUserBanView;
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     models::{board::boards::BoardSafe, user::user::UserSafe},
-    schema::{board, board_user_bans, users},
+    schema::{board_user_bans, boards, users},
     traits::ToSafe,
 };
 
@@ -15,7 +15,7 @@ impl BoardUserBanView {
         from_board_id: i32,
     ) -> Result<Self, Error> {
         let (board, user) = board_user_bans::table
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),

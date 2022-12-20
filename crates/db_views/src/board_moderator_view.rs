@@ -2,7 +2,7 @@ use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{board::boards::BoardSafe, user::user::UserSafe},
-    schema::{board, board_moderator, users},
+    schema::{board_moderator, boards, users},
     traits::{ToSafe, ViewToVec},
 };
 
@@ -11,7 +11,7 @@ type BoardModeratorViewTuple = (BoardSafe, UserSafe);
 impl BoardModeratorView {
     pub fn for_board(conn: &mut PgConnection, board_id: i32) -> Result<Vec<Self>, Error> {
         let res = board_moderator::table
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
@@ -26,15 +26,15 @@ impl BoardModeratorView {
 
     pub fn for_user(conn: &mut PgConnection, user_id: i32) -> Result<Vec<Self>, Error> {
         let res = board_moderator::table
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
             .filter(board_moderator::user_id.eq(user_id))
-            .filter(board::deleted.eq(false))
-            .filter(board::removed.eq(false))
+            .filter(boards::deleted.eq(false))
+            .filter(boards::removed.eq(false))
             .order_by(board_moderator::published)
             .load::<BoardModeratorViewTuple>(conn)?;
 

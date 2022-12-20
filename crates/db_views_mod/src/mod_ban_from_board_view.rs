@@ -4,7 +4,7 @@ use tinyboards_db::{
     models::{
         board::boards::BoardSafe, moderator::mod_actions::ModBanFromBoard, user::user::UserSafe,
     },
-    schema::{board, mod_ban_from_board, users},
+    schema::{boards, mod_ban_from_board, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -24,7 +24,7 @@ impl ModBanFromBoardView {
 
         let mut query = mod_ban_from_board::table
             .left_join(users::table.on(mod_names_join))
-            .inner_join(board::table)
+            .inner_join(boards::table)
             .inner_join(
                 user_alias.on(mod_ban_from_board::other_user_id.eq(user_alias.field(users::id))),
             )
