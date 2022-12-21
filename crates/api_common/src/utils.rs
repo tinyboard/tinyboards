@@ -12,7 +12,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, site::Site},
-        user::user::User,
+        user::users::User,
     },
     traits::Crud,
 };

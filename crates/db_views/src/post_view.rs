@@ -11,8 +11,8 @@ use tinyboards_db::{
         post::user_post_save::PostSaved,
         //user::user::User,
         user::{
-            user::{User, UserSafe},
             user_blocks::UserBlock,
+            users::{User, UserSafe},
         },
     },
     schema::{

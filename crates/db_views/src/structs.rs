@@ -6,8 +6,8 @@ use tinyboards_db::{
         comment::comments::Comment,
         post::posts::Post,
         user::{
-            user::{UserSafe, UserSettings},
             user_mention::UserMention,
+            users::{UserSafe, UserSettings},
         },
     },
     SubscribedType,

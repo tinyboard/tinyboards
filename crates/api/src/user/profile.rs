@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::{blocking, require_user},
 };
-use tinyboards_db::models::user::user::{User, UserSafe};
+use tinyboards_db::models::user::users::{User, UserSafe};
 use tinyboards_db_views::structs::UserView;
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 

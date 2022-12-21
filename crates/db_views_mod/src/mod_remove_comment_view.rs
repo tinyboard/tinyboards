@@ -3,7 +3,7 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
         board::boards::BoardSafe, comment::comments::Comment,
-        moderator::mod_actions::ModRemoveComment, post::posts::Post, user::user::UserSafe,
+        moderator::mod_actions::ModRemoveComment, post::posts::Post, user::users::UserSafe,
     },
     schema::{boards, comments, mod_remove_comment, posts, users},
     traits::{ToSafe, ViewToVec},

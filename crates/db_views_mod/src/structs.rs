@@ -10,7 +10,7 @@ use tinyboards_db::models::{
         },
     },
     post::posts::Post,
-    user::user::UserSafe,
+    user::users::UserSafe,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

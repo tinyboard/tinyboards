@@ -7,7 +7,7 @@ use tinyboards_api_common::{
     user::{Register, SignupResponse},
     utils::blocking,
 };
-use tinyboards_db::models::user::user::{User, UserForm};
+use tinyboards_db::models::user::users::{User, UserForm};
 use tinyboards_utils::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -36,7 +36,9 @@ impl<'des> PerformCrud<'des> for Register {
         // PASSWORD CHECK
         // password_length_check(&data.password)?;
         if !(8..60).contains(&data.password.len()) {
-            return Err(TinyBoardsError::from_message("Your password must be between 8 and 60 characters long."));
+            return Err(TinyBoardsError::from_message(
+                "Your password must be between 8 and 60 characters long.",
+            ));
         }
 
         // error messages here if email verification is on and no email provided, same for applicaction not being filled out

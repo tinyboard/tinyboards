@@ -52,7 +52,7 @@ pub struct PostAggregates {
     PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
 )]
 #[diesel(table_name = user_aggregates)]
-#[diesel(belongs_to(crate::models::user::user::User))]
+#[diesel(belongs_to(crate::models::user::users::User))]
 pub struct UserAggregates {
     pub id: i32,
     pub user_id: i32,

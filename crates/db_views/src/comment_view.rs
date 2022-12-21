@@ -11,8 +11,8 @@ use tinyboards_db::{
         comment::comments::Comment,
         comment::user_comment_save::CommentSaved,
         post::posts::Post,
-        user::user::{User, UserSafe},
         user::user_blocks::UserBlock,
+        user::users::{User, UserSafe},
     },
     schema::{
         board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,

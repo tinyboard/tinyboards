@@ -9,7 +9,7 @@ pub mod user_view;
 
 pub use comment_view::CommentQuery;
 
-use tinyboards_db::models::user::user::User;
+use tinyboards_db::models::user::users::User;
 pub trait DeleteableOrRemoveable {
     fn hide_if_removed_or_deleted(&mut self, user_view: Option<&User>);
 }

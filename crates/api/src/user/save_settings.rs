@@ -1,23 +1,18 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
+    data::TinyBoardsContext,
+    sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
-    utils::{get_user_view_from_jwt, blocking},
-    data::TinyBoardsContext, sensitive::Sensitive
+    utils::{blocking, get_user_view_from_jwt},
 };
 use tinyboards_db::{
-    models::user::user::{User, UserForm},
     models::site::site::Site,
+    models::user::users::{User, UserForm},
     traits::Crud,
-    utils::{
-        diesel_option_overwrite, 
-        naive_now,
-    },
+    utils::{diesel_option_overwrite, naive_now},
 };
-use tinyboards_utils::{
-    error::TinyBoardsError,
-    claims::Claims,
-};
+use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveUserSettings {
@@ -29,28 +24,20 @@ impl<'des> Perform<'des> for SaveUserSettings {
         self,
         context: &Data<TinyBoardsContext>,
         _: Self::Route,
-        auth: Option<&str>
+        auth: Option<&str>,
     ) -> Result<LoginResponse, TinyBoardsError> {
-
         let data: &SaveUserSettings = &self;
 
-        let user_view =
-            get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
-        let site =
-            blocking(context.pool(), move |conn| {
-                Site::read_local(conn)
-            })
-            .await??;
-            
+        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
 
         let avatar = diesel_option_overwrite(&data.avatar);
         let banner = diesel_option_overwrite(&data.banner);
         let bio = diesel_option_overwrite(&data.bio);
         let email = data.email.as_deref().map(str::to_lowercase);
 
-
-        // UNCOMMENT THIS WHEN WE HAVE NOTIFICATION EMAIL LOGIC DONE (and send email notification to the user if email is changed) 
+        // UNCOMMENT THIS WHEN WE HAVE NOTIFICATION EMAIL LOGIC DONE (and send email notification to the user if email is changed)
 
         // if let Some(Some(email)) = &email {
         //     let previous_email = user_view.user.email.unwrap_or_default();
@@ -60,11 +47,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
         //     }
         // }
 
-        
         if email.is_none() && site.email_verification_required {
             return Err(TinyBoardsError::from_message("email required"));
         }
-        
+
         if let Some(Some(bio)) = &bio {
             // seems sort of arbitrary? do we want a setting for this length somewhere?
             if bio.chars().count() > 300 {
@@ -97,19 +83,19 @@ impl<'des> Perform<'des> for SaveUserSettings {
         })
         .await??;
 
-        let updated_user_view = 
+        let updated_user_view =
             get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         let new_jwt = Claims::jwt(
-                updated_user_view.user.id,
-                &context.master_key().jwt,
-                &context.settings().hostname,
-            )?;
+            updated_user_view.user.id,
+            &context.master_key().jwt,
+            &context.settings().hostname,
+        )?;
 
         // return the jwt
         Ok(LoginResponse {
-            jwt: Sensitive::new(new_jwt), 
-            user: updated_user_view 
+            jwt: Sensitive::new(new_jwt),
+            user: updated_user_view,
         })
     }
 }

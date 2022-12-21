@@ -2,7 +2,7 @@ use crate::structs::{ModLogParams, ModRemoveBoardView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
-        board::boards::BoardSafe, moderator::mod_actions::ModRemoveBoard, user::user::UserSafe,
+        board::boards::BoardSafe, moderator::mod_actions::ModRemoveBoard, user::users::UserSafe,
     },
     schema::{boards, mod_remove_board, users},
     traits::{ToSafe, ViewToVec},
