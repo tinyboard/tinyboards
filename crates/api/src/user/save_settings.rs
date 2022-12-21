@@ -51,7 +51,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // send a new verification email if email gets changed and email verification is required
         if site.email_verification_required {
             if let Some(ref email) = email {
-                let previous_email = &user.email.unwrap_or_default();
+                let previous_email = match user.email {
+                    Some(ref email) => String::from(email),
+                    None => String::from(""),
+                };
                 if previous_email.ne(email) {
                     send_verification_email(&user, email, context.pool(), context.settings())
                         .await?;

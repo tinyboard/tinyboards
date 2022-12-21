@@ -153,6 +153,16 @@ impl User {
         }
     }
 
+    pub fn update_settings(
+        conn: &mut PgConnection,
+        user_id: i32,
+        form: &UserForm,
+    ) -> Result<Self, Error> {
+        diesel::update(users.find(user_id))
+            .set(form)
+            .get_result::<Self>(conn)
+    }
+
     pub fn into_safe(self) -> UserSafe {
         UserSafe {
             id: self.id,

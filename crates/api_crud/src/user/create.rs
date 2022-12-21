@@ -7,12 +7,9 @@ use tinyboards_api_common::{
     user::{Register, SignupResponse},
     utils::{blocking, send_verification_email},
 };
+use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::models::user::users::{User, UserForm};
-use tinyboards_db::models::{
-    site::site::Site,
-    user::user::{User, UserForm},
-};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
 

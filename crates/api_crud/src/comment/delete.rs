@@ -35,7 +35,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
         let orig_comment =
             blocking(context.pool(), move |conn| Comment::read(conn, comment_id)).await??;
 
-        let orig_post = blocking(context.pool(), move |conn| {
+        blocking(context.pool(), move |conn| {
             Post::read(conn, orig_comment.post_id)
         })
         .await??;

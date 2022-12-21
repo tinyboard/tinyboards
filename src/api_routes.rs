@@ -2,7 +2,7 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::Perform;
 use tinyboards_api_common::{
-    comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, admin::*,
+    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -16,7 +16,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            .route("/validate_invite/{invite_token}", web::post().to(route_post::<ValidateSiteInvite>))
+            .route(
+                "/validate_invite/{invite_token}",
+                web::post().to(route_post::<ValidateSiteInvite>),
+            )
             // Authenticate
             .service(
                 web::scope("/auth")
@@ -25,9 +28,13 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
             // User
-            .service(web::scope("/user")
+            .service(
+                web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
-                    .route("/verify_email/{token}", web::post().to(route_post::<VerifyEmail>))
+                    .route(
+                        "/verify_email/{token}",
+                        web::post().to(route_post::<VerifyEmail>),
+                    ),
             )
             // Post
             .service(
@@ -36,11 +43,20 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("", web::get().to(route_get_crud::<ListPosts>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
-                    .route("/{post_id}", web::delete().to(route_post_crud::<DeletePost>))
+                    .route(
+                        "/{post_id}",
+                        web::delete().to(route_post_crud::<DeletePost>),
+                    )
                     .route("/{post_id}", web::put().to(route_post_crud::<EditPost>))
-                    .route("/{post_id}/vote", web::post().to(route_post::<CreatePostVote>))
+                    .route(
+                        "/{post_id}/vote",
+                        web::post().to(route_post::<CreatePostVote>),
+                    )
                     .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
-                    .route("/{post_id}/comments", web::get().to(route_get_crud::<GetPostComments>))
+                    .route(
+                        "/{post_id}/comments",
+                        web::get().to(route_get_crud::<GetPostComments>),
+                    ),
             )
             // Comment
             .service(
@@ -49,22 +65,37 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
-                    .route("/{comment_id}", web::delete().to(route_post_crud::<DeleteComment>))
-                    .route("/{comment_id}", web::put().to(route_post_crud::<EditComment>))
-                    .route("/{comment_id}/vote", web::post().to(route_post::<CreateCommentVote>))
-                    .route("/{comment_id}/save", web::post().to(route_post::<SaveComment>))
+                    .route(
+                        "/{comment_id}",
+                        web::delete().to(route_post_crud::<DeleteComment>),
+                    )
+                    .route(
+                        "/{comment_id}",
+                        web::put().to(route_post_crud::<EditComment>),
+                    )
+                    .route(
+                        "/{comment_id}/vote",
+                        web::post().to(route_post::<CreateCommentVote>),
+                    )
+                    .route(
+                        "/{comment_id}/save",
+                        web::post().to(route_post::<SaveComment>),
+                    ),
             )
             // Mod Actions
             .service(
-                web::scope("/mod") 
+                web::scope("/mod")
                     .route("/ban", web::post().to(route_post::<BanUser>))
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     .route("/remove_post", web::post().to(route_post::<RemovePost>))
-                    .route("/remove_comment", web::post().to(route_post::<RemoveComment>))
-                    .route("/remove_board", web::post().to(route_post::<RemoveBoard>))
-                    .route("/lock_post", web::post().to(route_post::<LockPost>))    
+                    .route(
+                        "/remove_comment",
+                        web::post().to(route_post::<RemoveComment>),
+                    )
+                    .route("/ban_board", web::post().to(route_post::<BanBoard>))
+                    .route("/lock_post", web::post().to(route_post::<LockPost>))
                     .route("/sticky_post", web::post().to(route_post::<StickyPost>))
-                    .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
+                    .route("/add_moderator", web::post().to(route_post::<AddBoardMod>)),
             )
             // Admin Actions
             .service(
@@ -74,11 +105,23 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
-                    .route("/site_settings", web::get().to(route_get::<GetSiteSettings>))
-                    .route("/site_settings", web::put().to(route_post::<SaveSiteSettings>))
-                    .route("/invite", web::post().to(route_post_crud::<CreateSiteInvite>))
+                    .route(
+                        "/site_settings",
+                        web::get().to(route_get::<GetSiteSettings>),
+                    )
+                    .route(
+                        "/site_settings",
+                        web::put().to(route_post::<SaveSiteSettings>),
+                    )
+                    .route(
+                        "/invite",
+                        web::post().to(route_post_crud::<CreateSiteInvite>),
+                    )
                     .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
-                    .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
+                    .route(
+                        "/invite/{invite_id}",
+                        web::delete().to(route_post_crud::<DeleteSiteInvite>),
+                    ),
             ),
     );
 }

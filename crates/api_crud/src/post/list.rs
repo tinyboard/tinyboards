@@ -38,7 +38,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let user_match = user.clone();
 
         let response = blocking(context.pool(), move |conn| {
-            PostQuery::builder()
+            let mut post_query = PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
@@ -50,8 +50,9 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 .build()
                 .list();
 
-            if let Ok(ref mut posts) = posts {
-                for pv in posts
+            if let Ok(ref mut post_query) = post_query {
+                for pv in post_query
+                    .posts
                     .iter_mut()
                     .filter(|p| p.post.is_removed || p.post.is_deleted)
                 {
@@ -59,11 +60,11 @@ impl<'des> PerformCrud<'des> for ListPosts {
                 }
             }
 
-            posts
+            post_query
         })
         .await??;
 
-        let mut posts = response.posts;
+        let posts = response.posts;
         let total_count = response.count;
 
         /*for pv in posts
