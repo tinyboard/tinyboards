@@ -47,7 +47,7 @@ diesel::table! {
         subscribers -> Int8,
         posts -> Int8,
         comments -> Int8,
-        published -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -92,7 +92,7 @@ diesel::table! {
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
         is_deleted -> Bool,
-        nsfw -> Bool,
+        is_nsfw -> Bool,
         is_hidden -> Bool,
     }
 }
@@ -104,7 +104,7 @@ diesel::table! {
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
-        published -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -278,7 +278,7 @@ diesel::table! {
         upvotes -> Int8,
         downvotes -> Int8,
         stickied -> Bool,
-        published -> Timestamp,
+        creation_date -> Timestamp,
         newest_comment_time -> Timestamp,
     }
 }

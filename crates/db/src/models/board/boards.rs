@@ -31,7 +31,7 @@ pub struct BoardForm {
     pub is_banned: Option<bool>,
     pub updated: Option<Option<NaiveDateTime>>,
     pub is_deleted: Option<bool>,
-    //pub is_nsfw: Option<bool>,
+    pub is_nsfw: Option<bool>,
     pub is_hidden: Option<bool>,
 }
 

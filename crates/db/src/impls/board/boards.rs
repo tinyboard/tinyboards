@@ -68,7 +68,7 @@ pub mod safe_type {
         creation_date,
         updated,
         is_deleted,
-        //is_nsfw,
+        is_nsfw,
         is_hidden,
     );
 
@@ -83,7 +83,7 @@ pub mod safe_type {
                 creation_date,
                 updated,
                 is_deleted,
-                //is_nsfw,
+                is_nsfw,
                 is_hidden,
             )
         }
