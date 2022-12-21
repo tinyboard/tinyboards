@@ -2,7 +2,7 @@ use crate::structs::{UserSettingsView, UserView};
 use diesel::{result::Error, PgConnection, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
-    map_to_user_sort_type,
+    //map_to_user_sort_type,
     models::user::users::{UserSafe, UserSettings},
     schema::{user_aggregates, users},
     traits::{ToSafe, ViewToVec},
@@ -101,8 +101,8 @@ impl UserView {
         let admins = users::table
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .filter(users::admin.eq(true))
-            .filter(users::deleted.eq(false))
+            .filter(users::is_admin.eq(true))
+            .filter(users::is_deleted.eq(false))
             .order_by(users::creation_date)
             .load::<UserViewTuple>(conn)?;
 
@@ -189,7 +189,7 @@ impl<'a> UserQuery<'a> {
             }
         };
 
-        let count_query = user_::table
+        let count_query = users::table
             .inner_join(user_aggregates::table)
             .select(UserSafe::safe_columns_tuple())
             .into_boxed();
@@ -203,8 +203,8 @@ impl<'a> UserQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(users::deleted.eq(false))
-            .filter(users::banned.eq(false));
+            .filter(users::is_deleted.eq(false))
+            .filter(users::is_banned.eq(false));
 
         let res = query.load::<UserViewTuple>(self.conn)?;
 

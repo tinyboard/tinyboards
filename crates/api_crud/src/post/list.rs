@@ -66,7 +66,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let mut posts = response.posts;
         let total_count = response.count;
 
-        for pv in posts
+        /*for pv in posts
             .iter_mut()
             .filter(|p| p.board.is_deleted)
         {

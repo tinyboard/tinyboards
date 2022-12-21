@@ -130,24 +130,22 @@ impl<'a> BoardQuery<'a> {
             ))
             .into_boxed();
 
-        let count_query = board::table
-        .inner_join(board_aggregates::table)
-        .left_join(user_::table.on(user_::id.eq(user_id_join)))
-        .left_join(
-            board_subscriber::table.on(board::id
-                .eq(board_subscriber::board_id)
-                .and(board_subscriber::user_id.eq(user_id_join))),
-        )
-        .left_join(
-            board_block::table.on(board::id
-                .eq(board_block::board_id)
-                .and(board_block::user_id.eq(user_id_join))),
-        )
-        .select((
-            BoardSafe::safe_columns_tuple(),
-        ))
-        .into_boxed();
-        
+        let count_query = boards::table
+            .inner_join(board_aggregates::table)
+            .left_join(users::table.on(users::id.eq(user_id_join)))
+            .left_join(
+                board_subscriptions::table.on(boards::id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
+            )
+            .select((BoardSafe::safe_columns_tuple(),))
+            .into_boxed();
+
         if let Some(search_term) = self.search_term {
             let searcher = fuzzy_search(&search_term);
             query = query

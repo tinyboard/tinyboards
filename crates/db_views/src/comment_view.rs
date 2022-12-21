@@ -277,10 +277,10 @@ impl<'a> CommentQuery<'a> {
             ))
             .into_boxed();
 
-        let count_query = comment::table
+        let count_query = comments::table
             .inner_join(users::table)
             .inner_join(posts::table)
-            .inner_join(boards::table.on(post::board_id.eq(board::id)))
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
                 board_user_bans::table.on(boards::id
@@ -411,7 +411,7 @@ impl DeleteableOrRemoveable for CommentView {
     fn hide_if_removed_or_deleted(&mut self, user: Option<&User>) {
         // if the user is admin, nothing is being removed
         if let Some(user) = user {
-            if user.admin {
+            if user.is_admin {
                 return;
             }
         }

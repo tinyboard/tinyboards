@@ -113,8 +113,18 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         comment_id -> Int4,
-        score -> Int2,
+        score -> Int4,
         creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
+    email_verification (id) {
+        id -> Int4,
+        user_id -> Int4,
+        email -> Text,
+        verification_code -> Text,
+        created -> Timestamp,
     }
 }
 
@@ -147,16 +157,6 @@ diesel::table! {
         creation_date -> Timestamp,
         edited_date -> Nullable<Timestamp>,
         updated -> Nullable<Timestamp>,
-    }
-}
-
-diesel::table! {
-    email_verification (id) {
-        id -> Int4,
-        user_id -> Int4,
-        email -> Text,
-        verification_code -> Text,
-        created -> Timestamp,
     }
 }
 
@@ -475,7 +475,6 @@ diesel::table! {
         banner -> Nullable<Text>,
         bio -> Nullable<Text>,
         is_application_accepted -> Bool,
-        email_verified -> Bool,
     }
 }
 
@@ -499,7 +498,6 @@ diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> users (user_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(comments -> users (creator_id));
-diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(mod_add_board -> boards (board_id));
 diesel::joinable!(mod_add_board_mod -> boards (board_id));
 diesel::joinable!(mod_ban_from_board -> boards (board_id));

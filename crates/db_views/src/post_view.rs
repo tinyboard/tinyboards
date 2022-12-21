@@ -57,7 +57,7 @@ impl PostView {
             saved,
             read,
             creator_blocked,
-            post_votes,
+            post_vote,
         ) = posts::table
             .find(post_id)
             .inner_join(users::table)
@@ -115,7 +115,7 @@ impl PostView {
         let my_vote = if my_user_id.is_some() && post_vote.is_none() {
             Some(0)
         } else {
-            post_votes
+            post_vote
         };
 
         Ok(PostView {
@@ -225,53 +225,51 @@ impl<'a> PostQuery<'a> {
             ))
             .into_boxed();
 
-            let count_query = post::table
-            .inner_join(user_::table)
-            .inner_join(board::table)
+        let count_query = posts::table
+            .inner_join(users::table)
+            .inner_join(boards::table)
             .left_join(
-                board_user_ban::table.on(post::board_id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(post::creator_id))
+                board_user_bans::table.on(posts::board_id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(posts::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(posts::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_saved::table.on(post::id
-                    .eq(post_saved::post_id)
-                    .and(post_saved::user_id.eq(user_id_join))),
+                user_post_save::table.on(posts::id
+                    .eq(user_post_save::post_id)
+                    .and(user_post_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_read::table.on(post::id
-                    .eq(post_read::post_id)
-                    .and(post_read::user_id.eq(user_id_join))),
+                user_post_read::table.on(posts::id
+                    .eq(user_post_read::post_id)
+                    .and(user_post_read::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(post::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(posts::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                post_vote::table.on(post::id
-                    .eq(post_vote::post_id)
-                    .and(post_vote::user_id.eq(user_id_join))),
+                post_votes::table.on(posts::id
+                    .eq(post_votes::post_id)
+                    .and(post_votes::user_id.eq(user_id_join))),
             )
-            .select((
-                post::all_columns,
-            ))
+            .select((posts::all_columns,))
             .into_boxed();
 
         if let Some(listing_type) = self.listing_type {
@@ -388,7 +386,7 @@ impl<'a> PostQuery<'a> {
         let res = query.load::<PostViewTuple>(self.conn)?;
 
         let posts = PostView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;  
+        let count = count_query.count().get_result::<i64>(self.conn)?;
 
         Ok(PostQueryResponse { posts, count })
     }
@@ -402,7 +400,7 @@ impl DeleteableOrRemoveable for PostView {
 
         if let Some(user) = user {
             // admins see everything
-            if user.admin {
+            if user.is_admin {
                 return;
             }
 
