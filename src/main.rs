@@ -66,10 +66,6 @@ async fn main() -> Result<(), TinyBoardsError> {
         .build(manager)
         .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
 
-
-    // run advanced migrations
-    run_advanced_migrations(&pool, &settings).await?;
-
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
 
     blocking(&pool, move |conn| {
@@ -79,6 +75,9 @@ async fn main() -> Result<(), TinyBoardsError> {
         Ok(()) as Result<(), TinyBoardsError>
     })
     .await??;
+
+    // run advanced migrations
+    run_advanced_migrations(&pool, &settings).await?;
 
     let task_pool = pool.clone();
     thread::spawn(move || {
