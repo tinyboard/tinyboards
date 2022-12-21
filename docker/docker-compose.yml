@@ -18,7 +18,7 @@ services:
     restart: always
 
   tinyboards:
-    image: tinyboards
+    image: kronusdev/tinyboards-be:latest
     ports:
       - "8536:8536"
       - "6669:6669"
@@ -41,7 +41,7 @@ services:
       - pictrs
 
   tinyboards-fe:
-    image: tinyboards-fe-dev
+    image: kronusdev/tinyboards-fe:latest
     ports:
       - "3000:3000"
     restart: always
