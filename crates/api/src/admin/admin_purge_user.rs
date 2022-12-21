@@ -48,7 +48,7 @@ impl<'des> Perform<'des> for PurgeUser {
             .name
             .to_lowercase()
             .contains(settings.owner_name.to_lowercase().as_str())
-            || target_user.admin
+            || target_user.is_admin
         {
             return Err(TinyBoardsError::from_message(
                 "can't purge a site admin or the owner",

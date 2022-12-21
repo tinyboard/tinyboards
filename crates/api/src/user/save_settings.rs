@@ -8,7 +8,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::site::site::Site,
-    models::user::user::{User, UserUpdateForm},
+    models::user::users::{User, UserForm},
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
@@ -37,12 +37,21 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let banner = diesel_option_overwrite(&data.banner);
         let bio = diesel_option_overwrite(&data.bio);
         let email_deref = data.email.as_deref().map(str::to_lowercase);
-        let email = diesel_option_overwrite(&email_deref);
+        let email = match email_deref {
+            Some(email) => {
+                if email.is_empty() {
+                    None
+                } else {
+                    Some(email)
+                }
+            }
+            None => None,
+        };
 
         // send a new verification email if email gets changed and email verification is required
         if site.email_verification_required {
-            if let Some(Some(email)) = &email {
-                let previous_email = user.email.clone().unwrap_or_default();
+            if let Some(ref email) = email {
+                let previous_email = &user.email.unwrap_or_default();
                 if previous_email.ne(email) {
                     send_verification_email(&user, email, context.pool(), context.settings())
                         .await?;
@@ -66,7 +75,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // grabbing the current timestamp for the update
         let updated = Some(naive_now());
 
-        let update_form = UserUpdateForm {
+        let update_form = UserForm {
             bio,
             email,
             show_nsfw: data.show_nsfw,
@@ -76,7 +85,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             default_listing_type,
             default_sort_type,
             updated,
-            ..UserUpdateForm::default()
+            ..UserForm::default()
         };
 
         // perform settings update

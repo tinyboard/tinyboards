@@ -133,7 +133,7 @@ impl From<UResultOpt> for UserResult {
         let u_res = match r {
             Ok(u) => match u {
                 Some(u) => {
-                    if u.deleted {
+                    if u.is_deleted {
                         Err(TinyBoardsError::from_message(
                             "you need to be logged in to do this",
                         ))
@@ -156,7 +156,7 @@ impl From<UResult> for UserResult {
     fn from(r: UResult) -> Self {
         Self(match r {
             Ok(u) => {
-                if u.deleted {
+                if u.is_deleted {
                     Err(TinyBoardsError::from_message(
                         "you need to be logged in to do this",
                     ))
@@ -193,7 +193,7 @@ impl UserResult {
     pub fn require_admin(self) -> Self {
         Self(match self.0 {
             Ok(u) => {
-                if u.admin {
+                if u.is_admin {
                     Ok(u)
                 } else {
                     Err(TinyBoardsError::from_message(
@@ -209,7 +209,7 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // skip this check for admins :))))
-                if u.admin {
+                if u.is_admin {
                     return Self(Ok(u));
                 }
 
@@ -241,7 +241,7 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // admins can do everything
-                if u.admin {
+                if u.is_admin {
                     return Self(Ok(u));
                 }
 
@@ -332,7 +332,7 @@ pub async fn check_registration_application(
     user_view: &UserView,
     pool: &PgPool,
 ) -> Result<(), TinyBoardsError> {
-    if site.require_application && !user_view.user.admin && !user_view.user.application_accepted {
+    if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
         let user_id = user_view.user.id;
         let registration = blocking(pool, move |conn| {
             RegistrationApplication::find_by_user_id(conn, user_id)
@@ -410,7 +410,7 @@ pub async fn check_post_deleted_or_removed(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
 
-    if post.deleted || post.removed {
+    if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message("post deleted or removed"))
     } else {
         Ok(())
@@ -426,7 +426,7 @@ pub async fn check_post_deleted_removed_or_locked(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
 
-    if post.locked {
+    if post.is_locked {
         Err(TinyBoardsError::from_message("post locked"))
     } else if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message("post deleted or removed"))

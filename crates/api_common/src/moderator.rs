@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use chrono::NaiveDateTime;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModActionResponse<T> {
@@ -50,10 +50,10 @@ pub struct RemoveComment {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RemoveBoard {
+pub struct BanBoard {
     pub board_id: i32,
     pub reason: Option<String>,
-    pub removed: bool,
+    pub banned: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

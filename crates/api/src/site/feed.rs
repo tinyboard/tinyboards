@@ -40,7 +40,7 @@ impl<'des> Perform<'des> for GetFeed {
             None => SortType::Hot,
         };
 
-        let params_nsfw = params.nsfw;
+        let params_nsfw = params.is_nsfw;
         let board_id = params.board_id;
         let creator_id = params.creator_id;
         let search_term = params.search.clone();

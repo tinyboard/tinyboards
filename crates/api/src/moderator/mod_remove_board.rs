@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{ModActionResponse, RemoveBoard},
+    moderator::{BanBoard, ModActionResponse},
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
@@ -13,7 +13,7 @@ use tinyboards_db::{
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for RemoveBoard {
+impl<'des> Perform<'des> for BanBoard {
     type Response = ModActionResponse<ModRemoveBoard>;
     type Route = ();
 
@@ -24,15 +24,15 @@ impl<'des> Perform<'des> for RemoveBoard {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &RemoveBoard = &self;
+        let data: &BanBoard = &self;
 
         let board_id = data.board_id;
         let reason = data.reason.clone();
-        let removed = data.removed;
+        let banned = data.banned;
 
         if board_id == 1 {
             return Err(TinyBoardsError::from_message(
-                "you can't remove the default board",
+                "you can't ban the default board",
             ));
         }
 
@@ -45,7 +45,7 @@ impl<'des> Perform<'des> for RemoveBoard {
 
         // update the board in the database
         blocking(context.pool(), move |conn| {
-            Board::update_removed(conn, board_id.clone(), removed)
+            Board::update_banned(conn, board_id.clone(), banned)
         })
         .await??;
 
@@ -54,7 +54,7 @@ impl<'des> Perform<'des> for RemoveBoard {
             mod_user_id: user.id,
             board_id: board_id.clone(),
             reason: Some(reason),
-            removed: Some(Some(removed)),
+            removed: Some(Some(banned)),
         };
 
         // submit mod action to the mod log
