@@ -25,7 +25,5 @@ create table user_ban (
   unique (user_id)
 );
 
-insert into user_ (name, passhash) values ('admin', 'tinyboards');
-
 create unique index idx_user_name_lower on user_ (lower(name));
 create unique index idx_user_email_lower on user_ (lower(email));

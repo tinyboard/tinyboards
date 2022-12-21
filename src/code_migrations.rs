@@ -47,7 +47,6 @@ async fn initialize_local_site_and_admin_user(
         let user_form = UserForm {
             name: setup.admin_username.clone(),
             passhash: hash_password(setup.admin_password.clone()),
-            email: setup.admin_email.clone(),
             admin: Some(true),
             ..UserForm::default()
         };
