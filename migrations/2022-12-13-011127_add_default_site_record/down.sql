@@ -1,1 +1,0 @@
-delete from site where name = 'tinyboards';
