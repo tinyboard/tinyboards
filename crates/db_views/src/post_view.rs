@@ -152,8 +152,14 @@ pub struct PostQuery<'a> {
     limit: Option<i64>,
 }
 
+#[derive(Default, Clone)]
+pub struct PostQueryResponse {
+    pub posts: Vec<PostView>,
+    pub count: i64,
+}
+
 impl<'a> PostQuery<'a> {
-    pub fn list(self) -> Result<Vec<PostView>, Error> {
+    pub fn list(self) -> Result<PostQueryResponse, Error> {
         use diesel::dsl::*;
 
         let user_id_join = match self.user {
@@ -216,6 +222,55 @@ impl<'a> PostQuery<'a> {
                 user_post_read::all_columns.nullable(),
                 user_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
+            ))
+            .into_boxed();
+
+            let count_query = post::table
+            .inner_join(user_::table)
+            .inner_join(board::table)
+            .left_join(
+                board_user_ban::table.on(post::board_id
+                    .eq(board_user_ban::board_id)
+                    .and(board_user_ban::user_id.eq(post::creator_id))
+                    .and(
+                        board_user_ban::expires
+                            .is_null()
+                            .or(board_user_ban::expires.gt(now)),
+                    )),
+            )
+            .inner_join(post_aggregates::table)
+            .left_join(
+                board_subscriber::table.on(post::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                post_saved::table.on(post::id
+                    .eq(post_saved::post_id)
+                    .and(post_saved::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                post_read::table.on(post::id
+                    .eq(post_read::post_id)
+                    .and(post_read::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                user_block::table.on(post::creator_id
+                    .eq(user_block::target_id)
+                    .and(user_block::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                board_block::table.on(board::id
+                    .eq(board_block::board_id)
+                    .and(board_block::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                post_vote::table.on(post::id
+                    .eq(post_vote::post_id)
+                    .and(post_vote::user_id.eq(user_id_join))),
+            )
+            .select((
+                post::all_columns,
             ))
             .into_boxed();
 
@@ -332,7 +387,10 @@ impl<'a> PostQuery<'a> {
 
         let res = query.load::<PostViewTuple>(self.conn)?;
 
-        Ok(PostView::from_tuple_to_vec(res))
+        let posts = PostView::from_tuple_to_vec(res);
+        let count = count_query.count().get_result::<i64>(self.conn)?;  
+
+        Ok(PostQueryResponse { posts, count })
     }
 }
 

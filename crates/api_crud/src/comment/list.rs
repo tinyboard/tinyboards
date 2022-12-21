@@ -6,7 +6,10 @@ use tinyboards_api_common::{
     post::{GetPostComments, PostIdPath},
     utils::{blocking, check_private_instance, load_user_opt},
 };
-use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post};
+use tinyboards_db::{
+    map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post, CommentSortType,
+    ListingType,
+};
 use tinyboards_db_views::{
     comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable,
 };
@@ -35,8 +38,17 @@ impl<'des> PerformCrud<'des> for ListComments {
             Some(ref user) => Some(user.id),
             None => None,
         };
-        let sort = map_to_comment_sort_type(data.sort.as_deref());
-        let listing_type = map_to_listing_type(data.listing_type.as_deref());
+
+        let sort = match data.sort.as_ref() {
+            Some(sort) => map_to_comment_sort_type(Some(&sort.to_lowercase())),
+            None => CommentSortType::Hot,
+        };
+
+        let listing_type = match data.listing_type.as_ref() {
+            Some(listing_type) => map_to_listing_type(Some(&listing_type.to_lowercase())),
+            None => ListingType::All,
+        };
+
         let page = data.page;
         let limit = data.limit;
         let board_id = data.board_id;
@@ -47,7 +59,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         let saved_only = data.saved_only;
         let show_deleted_and_removed = data.show_deleted_and_removed;
 
-        let mut comments = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             CommentQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
@@ -67,6 +79,9 @@ impl<'des> PerformCrud<'des> for ListComments {
         })
         .await??;
 
+        let mut comments = response.comments;
+        let total_count = response.count;
+
         // blank out comment info if deleted or removed
         for cv in comments
             .iter_mut()
@@ -78,7 +93,10 @@ impl<'des> PerformCrud<'des> for ListComments {
         // order into tree
         let comments = CommentView::into_tree(comments);
 
-        Ok(ListCommentsResponse { comments: comments })
+        Ok(ListCommentsResponse {
+            comments,
+            total_count,
+        })
     }
 }
 
@@ -108,7 +126,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
             return Err(TinyBoardsError::from_message("invalid post id"));
         }
 
-        let mut comments = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             CommentQuery::builder()
                 .conn(conn)
                 //.sort(None)
@@ -120,6 +138,8 @@ impl<'des> PerformCrud<'des> for GetPostComments {
                 .list()
         })
         .await??;
+
+        let mut comments = response.comments;
 
         // blank out comment info if deleted or removed
         for cv in comments

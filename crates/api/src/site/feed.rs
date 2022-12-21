@@ -48,6 +48,7 @@ impl<'des> Perform<'des> for GetFeed {
         let limit = params.limit;
         let page = params.page;
         let mut nsfw = false;
+        let user_match = user.clone();
 
         // normally we would get if the user has show_nsfw set to true/false when querying posts
         if let Some(ref user) = user {
@@ -59,13 +60,14 @@ impl<'des> Perform<'des> for GetFeed {
             nsfw = params_nsfw.unwrap();
         }
 
-        let mut posts = blocking(context.pool(), move |conn| {
+        let response = blocking(context.pool(), move |conn| {
             PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
                 .search_term(search_term)
+                .user(user_match.as_ref())
                 .creator_id(creator_id)
                 .saved_only(saved_only)
                 .show_nsfw(Some(nsfw))
@@ -76,6 +78,9 @@ impl<'des> Perform<'des> for GetFeed {
         })
         .await??;
 
+        let mut posts = response.posts;
+        let total_count = response.count;
+
         for pv in posts
             .iter_mut()
             .filter(|p| p.post.is_deleted || p.post.is_removed)
@@ -83,6 +88,6 @@ impl<'des> Perform<'des> for GetFeed {
             pv.hide_if_removed_or_deleted(user.as_ref());
         }
 
-        Ok(ListPostsResponse { posts })
+        Ok(ListPostsResponse { posts, total_count })
     }
 }

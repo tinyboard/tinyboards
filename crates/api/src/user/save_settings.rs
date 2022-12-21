@@ -4,12 +4,11 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
-    utils::{blocking, get_user_view_from_jwt},
+    utils::{blocking, get_user_view_from_jwt, require_user, send_verification_email},
 };
 use tinyboards_db::{
     models::site::site::Site,
-    models::user::users::{User, UserForm},
-    traits::Crud,
+    models::user::user::{User, UserUpdateForm},
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
@@ -28,24 +27,28 @@ impl<'des> Perform<'des> for SaveUserSettings {
     ) -> Result<LoginResponse, TinyBoardsError> {
         let data: &SaveUserSettings = &self;
 
-        let user_view = get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
 
         let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
 
         let avatar = diesel_option_overwrite(&data.avatar);
         let banner = diesel_option_overwrite(&data.banner);
         let bio = diesel_option_overwrite(&data.bio);
-        let email = data.email.as_deref().map(str::to_lowercase);
+        let email_deref = data.email.as_deref().map(str::to_lowercase);
+        let email = diesel_option_overwrite(&email_deref);
 
-        // UNCOMMENT THIS WHEN WE HAVE NOTIFICATION EMAIL LOGIC DONE (and send email notification to the user if email is changed)
-
-        // if let Some(Some(email)) = &email {
-        //     let previous_email = user_view.user.email.unwrap_or_default();
-        //     // send email notification if email was changed
-        //     if previous_email.ne(email) {
-        //         // do notification email logic here
-        //     }
-        // }
+        // send a new verification email if email gets changed and email verification is required
+        if site.email_verification_required {
+            if let Some(Some(email)) = &email {
+                let previous_email = user.email.clone().unwrap_or_default();
+                if previous_email.ne(email) {
+                    send_verification_email(&user, email, context.pool(), context.settings())
+                        .await?;
+                }
+            }
+        }
 
         if email.is_none() && site.email_verification_required {
             return Err(TinyBoardsError::from_message("email required"));
@@ -63,7 +66,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // grabbing the current timestamp for the update
         let updated = Some(naive_now());
 
-        let user_form = UserForm {
+        let update_form = UserUpdateForm {
             bio,
             email,
             show_nsfw: data.show_nsfw,
@@ -73,12 +76,12 @@ impl<'des> Perform<'des> for SaveUserSettings {
             default_listing_type,
             default_sort_type,
             updated,
-            ..UserForm::default()
+            ..UserUpdateForm::default()
         };
 
         // perform settings update
         blocking(context.pool(), move |conn| {
-            User::update(conn, user_view.user.id, &user_form)
+            User::update_settings(conn, user.id, &update_form)
                 .map_err(|_| TinyBoardsError::from_message("could not update user settings"))
         })
         .await??;

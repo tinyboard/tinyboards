@@ -19,3 +19,4 @@ url = { version = "2.3.1", features = ["serde"] }
 async-trait = "0.1.57"
 webmention = "0.4.0"
 regex = { version = "1.6.0" }
+uuid = "1.2.2"

@@ -11,18 +11,20 @@ use tinyboards_db::{
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
-        site::{registration_applications::RegistrationApplication, site::Site},
+        site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
         user::users::User,
     },
-    traits::Crud,
+    traits::Crud, SiteMode,
 };
 use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
 use tinyboards_utils::{
-    error::TinyBoardsError,
-    rate_limit::RateLimitConfig,
+    error::TinyBoardsError, 
+    rate_limit::RateLimitConfig, 
     settings::structs::{RateLimitSettings, Settings},
+    email::send_email,
 };
 use url::Url;
+use uuid::Uuid;
 
 use crate::request::purge_image_from_pictrs;
 
@@ -400,6 +402,22 @@ pub async fn check_board_deleted_or_removed(
 }
 
 #[tracing::instrument(skip_all)]
+pub async fn check_post_deleted_or_removed(
+    post_id: i32,
+    pool: &PgPool,
+) -> Result<(), TinyBoardsError> {
+    let post = blocking(pool, move |conn| Post::read(conn, post_id))
+        .await?
+        .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
+
+    if post.deleted || post.removed {
+        Err(TinyBoardsError::from_message("post deleted or removed"))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
 pub async fn check_post_deleted_removed_or_locked(
     post_id: i32,
     pool: &PgPool,
@@ -537,4 +555,83 @@ pub async fn purge_image_posts_for_board(
     .await??;
 
     Ok(())
-}
+  }
+
+  /// Send a verification email
+  pub async fn send_verification_email(
+    user: &User,
+    new_email: &str,
+    pool: &PgPool,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+
+    let form = EmailVerificationForm {
+        user_id: user.id,
+        email: new_email.to_string(),
+        verification_code: Uuid::new_v4().to_string(),
+    };
+
+    // link for verification
+    let verify_link = format!(
+        "{}/verify_email/{}",
+        settings.get_protocol_and_hostname(),
+        &form.verification_code
+    );
+
+    // add record for pending email verification to the database
+    blocking(pool, move |conn| {
+        EmailVerification::create(conn, &form)
+    })
+    .await??;
+
+    let subject = format!("Email Verification for your {} Account", &settings.hostname);
+    let body = format!(
+        "Thank you {} for registering for an account at {}. Please click the link below in order to verify your email: \n\n {}", 
+        &user.name, 
+        &settings.hostname,
+        &verify_link
+    );
+
+    // send email
+    send_email(&subject, new_email, &user.name, &body, settings)?;
+
+    Ok(())
+  }
+
+
+  /// Send a verification success email
+  pub fn send_email_verification_success(
+    user: &User,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+    let email = &user.email.clone().expect("email");
+    let subject = format!("Email Verification Succeeded for your {} Account", &settings.hostname);
+    let body = format!("Your email for your new {} account was successful!", &settings.hostname);
+    send_email(&subject, &email, &user.name, &body, settings)?;
+    Ok(())
+  }
+
+
+  /// gets current site mode
+  pub fn get_current_site_mode(site: &Site, site_mode: &Option<SiteMode>) -> SiteMode {
+    let mut current_mode = match site_mode {
+        Some(SiteMode::OpenMode) => SiteMode::OpenMode,
+        Some(SiteMode::ApplicationMode) => SiteMode::ApplicationMode,
+        Some(SiteMode::InviteMode) => SiteMode::InviteMode,
+        None => SiteMode::OpenMode, 
+    };
+
+    if site_mode.is_none() {
+        if site.open_registration {
+            current_mode = SiteMode::OpenMode;
+        }
+        if site.require_application {
+            current_mode = SiteMode::ApplicationMode;
+        }
+        if site.invite_only {
+            current_mode = SiteMode::InviteMode;
+        }
+    }
+
+    current_mode
+  }

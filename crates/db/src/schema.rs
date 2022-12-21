@@ -113,26 +113,18 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         comment_id -> Int4,
-        score -> Int2,
-        creation_date -> Timestamp,
+        user_id -> Int4,
+        published -> Timestamp,
     }
 }
 
 diesel::table! {
-    comments (id) {
+    email_verification (id) {
         id -> Int4,
-        creator_id -> Int4,
-        post_id -> Int4,
-        parent_id -> Nullable<Int4>,
-        body -> Text,
-        body_html -> Text,
-        is_removed -> Bool,
-        read -> Bool,
-        creation_date -> Timestamp,
-        level -> Int4,
-        edited_date -> Nullable<Timestamp>,
-        is_deleted -> Bool,
-        updated -> Nullable<Timestamp>,
+        user_id -> Int4,
+        email -> Text,
+        verification_code -> Text,
+        created -> Timestamp,
     }
 }
 
@@ -348,6 +340,15 @@ diesel::table! {
         application_question -> Nullable<Text>,
         private_instance -> Bool,
         email_verification_required -> Bool,
+        invite_only -> Bool,
+    }
+}
+
+diesel::table! {
+    site_invite (id) {
+        id -> Int4,
+        verification_code -> Text,
+        created -> Timestamp,
     }
 }
 
@@ -526,6 +527,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment_votes,
     comments,
     dms,
+    email_verification,
     mod_add_admin,
     mod_add_board,
     mod_add_board_mod,
@@ -543,6 +545,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     registration_applications,
     secret,
     site,
+    site_invite,
     tag,
     user_aggregates,
     user_ban,

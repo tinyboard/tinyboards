@@ -5,6 +5,7 @@ use tinyboards_db::{
         board::boards::BoardSafe,
         comment::comments::Comment,
         post::posts::Post,
+        site::site_invite::SiteInvite,
         user::{
             user_mention::UserMention,
             users::{UserSafe, UserSettings},
@@ -106,6 +107,11 @@ pub struct UserMentionView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to UserBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SiteInviteView {
+    pub invite: SiteInvite,
 }
 
 /*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]

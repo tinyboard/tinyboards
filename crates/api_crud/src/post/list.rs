@@ -35,14 +35,15 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let limit = data.limit;
         let board_id = data.board_id;
         let saved_only = data.saved_only;
+        let user_match = user.clone();
 
-        let posts = blocking(context.pool(), move |conn| {
-            let mut posts = PostQuery::builder()
+        let response = blocking(context.pool(), move |conn| {
+            PostQuery::builder()
                 .conn(conn)
                 .listing_type(Some(listing_type))
                 .sort(Some(sort))
                 .board_id(board_id)
-                .user(user.as_ref())
+                .user(user_match.as_ref())
                 .saved_only(saved_only)
                 .page(page)
                 .limit(limit)
@@ -62,13 +63,16 @@ impl<'des> PerformCrud<'des> for ListPosts {
         })
         .await??;
 
-        /*for pv in posts
+        let mut posts = response.posts;
+        let total_count = response.count;
+
+        for pv in posts
             .iter_mut()
             .filter(|p| p.board.is_deleted)
         {
             pv.board = pv.to_owned().board.blank_out_deleted_info();
         }*/
 
-        Ok(ListPostsResponse { posts })
+        Ok(ListPostsResponse { posts, total_count })
     }
 }

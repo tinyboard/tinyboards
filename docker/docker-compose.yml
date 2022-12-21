@@ -2,19 +2,23 @@ version: '3.3'
 
 services:
   nginx:
-    image: nginx:1-alpine
+    image: jonasal/nginx-certbot:latest
+    env_file:
+      - ./nginx/prod/nginx-certbot.env
     ports:
-      - "1236:1236"
+      - 80:80
+      - 443:443
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - nginx_secrets:/etc/letsencrypt
+      - ./nginx/prod/conf:/etc/nginx/user_conf.d
     networks:
       tinyboards:
         aliases:
-          - tinyboards.test
+          - tinyboards.lol
     restart: always
 
   tinyboards:
-    image: tinyboards-dev
+    image: kronusdev/tinyboards-be:latest
     ports:
       - "8536:8536"
       - "6669:6669"
@@ -37,7 +41,7 @@ services:
       - pictrs
 
   tinyboards-fe:
-    image: tinyboards-fe-dev
+    image: kronusdev/tinyboards-fe:latest
     ports:
       - "3000:3000"
     restart: always
@@ -58,18 +62,18 @@ services:
     # needs to match the pictrs url in the config hjson
     hostname: pictrs
     ports:
-      - "127.0.0.1:8080:8080"
+      - "0.0.0.0:8080:8080"
     networks:
       tinyboards:
         aliases:
           - pictrs
     environment:
-      - PICTRS__API_KEY=API_KEY 
-    user: "991:991"
+      - PICTRS__API_KEY=API_KEY
+    user: root
     volumes:
-      - ./volumes/pictrs:/tmp
+      - ./volumes/pictrs:/mnt
     restart: always
-  
+
   postgres:
     image: postgres:14-alpine
     ports:
@@ -87,5 +91,9 @@ services:
           - postgres
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
+
+volumes:
+  nginx_secrets:
+
 networks:
   tinyboards: {}

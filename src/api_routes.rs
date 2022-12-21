@@ -16,6 +16,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
+            .route("/validate_invite/{invite_token}", web::post().to(route_post::<ValidateSiteInvite>))
             // Authenticate
             .service(
                 web::scope("/auth")
@@ -26,6 +27,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             // User
             .service(web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
+                    .route("/verify_email/{token}", web::post().to(route_post::<VerifyEmail>))
             )
             // Post
             .service(
@@ -72,6 +74,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
+                    .route("/site_settings", web::get().to(route_get::<GetSiteSettings>))
+                    .route("/site_settings", web::put().to(route_post::<SaveSiteSettings>))
+                    .route("/invite", web::post().to(route_post_crud::<CreateSiteInvite>))
+                    .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
+                    .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
             ),
     );
 }

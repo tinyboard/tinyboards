@@ -11,10 +11,10 @@ use actix_web::{
     HttpResponse,
 };
 use futures::stream::{Stream, StreamExt};
-use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking};
+use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user};
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db::models::site::site::Site;
-use tinyboards_utils::{claims::Claims, rate_limit::RateLimitCell, REQWEST_TIMEOUT};
+use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest::Body;
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -29,7 +29,7 @@ pub fn config(
     .service(
         web::resource("/pictrs/image")
         .wrap(rate_limit.image())
-        .route(web::get().to(upload)),
+        .route(web::post().to(upload)),
     )
     .service(
         web::resource("/pictrs/image/{filename}")
@@ -106,10 +106,13 @@ async fn full_res(
 
     if site.private_instance {
         let jwt = req
-            .cookie("jwt")
-            .expect("no auth header for image access");
+            .headers()
+            .get("Authorization")
+            .unwrap()
+            .to_str()
+            .unwrap();
 
-        if get_user_view_from_jwt(Some(jwt.value()), context.pool(), context.master_key())
+        if get_user_view_from_jwt(Some(jwt), context.pool(), context.master_key())
             .await
             .is_err()
         {
@@ -134,7 +137,7 @@ async fn full_res(
         }
         url
     };
-
+    
     image(url, req, client).await
 }
 
@@ -174,13 +177,17 @@ async fn upload(
     client: web::Data<ClientWithMiddleware>,
     context: web::Data<TinyBoardsContext>
 ) -> Result<HttpResponse, Error> {
-    let jwt = req
-        .cookie("jwt")
-        .expect("no auth header for image upload");
     
-    if Claims::decode(jwt.value(), &context.master_key().jwt).is_err() {
-        return Ok(HttpResponse::Unauthorized().finish())
-    };
+    let auth = req
+        .headers()
+        .get("Authorization")
+        .unwrap()
+        .to_str()
+        .unwrap();
+
+    require_user(context.pool(), context.master_key(), Some(auth))
+    .await
+    .unwrap()?;
 
     let pictrs_conf = context.settings().pictrs_config()?;
 
@@ -197,7 +204,7 @@ async fn upload(
         .send()
         .await
         .map_err(ErrorBadRequest)?;
-    
+
     let status = res.status();
     let images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
 

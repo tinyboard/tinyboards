@@ -26,8 +26,8 @@ pub struct LoginResponse {
 pub struct Register {
     pub username: String,
     pub password: Sensitive<String>,
+    pub invite_token: Option<String>,
     // pub password_verify: Sensitive<String>,
-    // pub show_nsfw: bool,
     // email = mandatory if email verification enabled on server
     pub email: Option<String>,
     pub captcha_uuid: Option<String>,
@@ -106,3 +106,20 @@ pub struct ChangePassword {
     pub new_password_verify: Option<String>,
     pub old_password: Option<String>,
 }
+
+/// Struct for verifying email
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct VerifyEmail {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VerifyEmailResponse {}
+
+/// Struct for accepting site invite
+pub struct AcceptSiteInvite {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AcceptSiteInviteResponse {}
