@@ -18,6 +18,8 @@ create table user_ (
   unique(name)
 );
 
+insert into user_ (name, passhash) values ('admin', 'tinyboards');
+
 create table user_ban (
   id serial primary key,
   user_id int references user_ on update cascade on delete cascade not null,
