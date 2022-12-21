@@ -6,9 +6,7 @@ services:
     ports:
       - "1236:1236"
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./certbot:/var/www/certbot
-      - ./letsencrypt:/etc/letsencrypt/live
+      - ./nginx/dev/:/etc/nginx/conf.d
     networks:
       tinyboards:
         aliases:
@@ -63,18 +61,18 @@ services:
     # needs to match the pictrs url in the config hjson
     hostname: pictrs
     ports:
-      - "0.0.0.0:8081:8080"
+      - "0.0.0.0:8080:8080"
     networks:
       tinyboards:
         aliases:
           - pictrs
     environment:
-      - PICTRS__API_KEY=API_KEY 
-    user: 991:991
+      - PICTRS__API_KEY=API_KEY
+    user: root
     volumes:
       - ./volumes/pictrs:/mnt
     restart: always
-  
+
   postgres:
     image: postgres:14-alpine
     ports:

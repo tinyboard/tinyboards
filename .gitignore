@@ -2,3 +2,5 @@
 target/
 config.hjson
 docker/volumes/*
+.idea
+docker/nginx/prod/nginx-certbot.env
