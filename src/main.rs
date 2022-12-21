@@ -24,7 +24,12 @@ use tinyboards_api_common::{data::TinyBoardsContext, request::build_user_agent, 
 use tinyboards_db::models::secret::Secret;
 use tinyboards_db::utils::get_database_url_from_env;
 use tinyboards_server::{
-    api_routes, init_logging, root_span_builder::QuieterRootSpanBuilder, scheduled_tasks, media
+    api_routes, 
+    init_logging, 
+    root_span_builder::QuieterRootSpanBuilder, 
+    scheduled_tasks, 
+    media,
+    code_migrations::run_advanced_migrations,
 };
 use tinyboards_utils::{
     error::TinyBoardsError,
@@ -34,6 +39,8 @@ use tinyboards_utils::{
 use tracing_actix_web::TracingLogger;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
+
+
 
 // max timeout for http requests
 pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
@@ -58,6 +65,10 @@ async fn main() -> Result<(), TinyBoardsError> {
         .min_idle(Some(1))
         .build(manager)
         .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
+
+
+    // run advanced migrations
+    run_advanced_migrations(&pool, &settings).await?;
 
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
 

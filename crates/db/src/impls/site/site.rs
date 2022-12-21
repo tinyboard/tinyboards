@@ -4,6 +4,15 @@ use crate::{
 };
 use diesel::{dsl::*, result::Error, *};
 
+impl Site {
+    pub fn exists(
+        conn: &mut PgConnection
+    ) -> Result<Self, Error> {
+        use crate::schema::site::dsl::*;
+        site.first::<Self>(conn)
+    }
+}
+
 impl Crud for Site {
     type Form = SiteForm;
     type IdType = i32;

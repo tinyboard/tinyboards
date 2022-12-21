@@ -3,6 +3,7 @@ pub mod api_routes;
 pub mod root_span_builder;
 pub mod scheduled_tasks;
 pub mod media;
+pub mod code_migrations;
 #[cfg(feature = "console")]
 pub mod telemetry;
 
