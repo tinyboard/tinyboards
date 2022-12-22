@@ -50,7 +50,7 @@ fn reindex_table(conn: &mut PgConnection, table_name: &str, concurrently: bool) 
 fn update_banned_when_expired(conn: &mut PgConnection) {
     info!("Updating banned column if it expires ...");
     let update_ban_expires_stmt =
-        "update users set banned = false where banned = true and expires < now()";
+        "update users set is_banned = false where is_banned = true and unban_date < now()";
     sql_query(update_ban_expires_stmt)
         .execute(conn)
         .expect("update banned when expires");

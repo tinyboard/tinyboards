@@ -134,3 +134,4 @@ create trigger board_aggregates_subscriber_count
 after insert or delete on board_subscriber
 for each row
 execute procedure board_aggregates_subscriber_count();
+
