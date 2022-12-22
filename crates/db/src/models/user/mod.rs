@@ -1,6 +1,6 @@
-pub mod user;
+pub mod dms;
+pub mod password_reset_requests;
 pub mod user_ban;
+pub mod user_blocks;
 pub mod user_mention;
-pub mod user_block;
-pub mod password_reset_request;
-pub mod private_message;
+pub mod users;

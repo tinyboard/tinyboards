@@ -11,10 +11,10 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{
         comment::{
-            comment::{Comment, CommentForm},
-            comment_vote::{CommentVote, CommentVoteForm},
+            comment_votes::{CommentVote, CommentVoteForm},
+            comments::{Comment, CommentForm},
         },
-        post::post::Post,
+        post::posts::Post,
     },
     traits::{Crud, Voteable},
 };
@@ -34,10 +34,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data = self;
 
-        let post = blocking(context.pool(), move |conn| {
-            Post::read(conn, data.post_id)
-        })
-        .await??;
+        let post = blocking(context.pool(), move |conn| Post::read(conn, data.post_id)).await??;
 
         let user = require_user(context.pool(), context.master_key(), auth)
             .await

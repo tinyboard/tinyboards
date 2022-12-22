@@ -2,12 +2,12 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{RemoveComment, ModActionResponse},
+    moderator::{ModActionResponse, RemoveComment},
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
+    models::comment::comments::Comment,
     models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
-    models::comment::comment::Comment,
     traits::Crud,
 };
 use tinyboards_db_views::structs::CommentView;
@@ -55,7 +55,7 @@ impl<'des> Perform<'des> for RemoveComment {
             mod_user_id: user.id,
             comment_id: comment_id.clone(),
             reason: Some(reason),
-            removed: Some(Some(removed.clone()))
+            removed: Some(Some(removed.clone())),
         };
 
         // submit mod action to the mod log

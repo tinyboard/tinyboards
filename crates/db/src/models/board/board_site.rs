@@ -1,5 +1,5 @@
 use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Queryable, Serialize, Deserialize)]
 pub struct BoardSite {
@@ -7,7 +7,7 @@ pub struct BoardSite {
     pub name: String,
     pub description: Option<String>,
     pub creator_id: i32,
-    pub published: chrono::NaiveDateTime,
+    pub creation_date: chrono::NaiveDateTime,
     pub updated: chrono::NaiveDateTime,
     pub enable_downvotes: bool,
     pub open_registration: bool,

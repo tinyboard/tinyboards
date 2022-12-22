@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModLockPost, ModLockPostForm},
-    models::post::post::Post,
+    models::post::posts::Post,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;

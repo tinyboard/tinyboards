@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::{blocking, require_user},
 };
-use tinyboards_db::models::user::user::{User, UserSafe};
+use tinyboards_db::models::user::users::{User, UserSafe};
 use tinyboards_db_views::structs::UserView;
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 
@@ -78,12 +78,12 @@ impl<'des> Perform<'des> for Profile {
             name = &user.name
         );
         let mut _user_type = String::new();
-        if user.admin {
+        if user.is_admin {
             _user_type = String::from("Admin");
         } else {
             _user_type = String::from("User");
         }
-        let is_admin = user.admin;
+        let is_admin = user.is_admin;
         let display_name = user.preferred_name.unwrap_or(user.name);
 
         let rcopy2 = route.clone();
@@ -96,10 +96,10 @@ impl<'des> Perform<'des> for Profile {
         let posts_score = view.counts.post_score;
         let comments_count = view.counts.comment_count;
         let comments_score = view.counts.comment_score;
-        let created_at = user.published;
+        let created_at = user.creation_date;
         let updated_at = user.updated;
-        let is_banned = user.banned;
-        let is_deleted = user.deleted;
+        let is_banned = user.is_banned;
+        let is_deleted = user.is_deleted;
         let username = route.clone().username;
 
         Ok(ProfileResponse {

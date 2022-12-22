@@ -3,10 +3,10 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
-        board::board::BoardSafe, board::board_block::BoardBlock,
-        board::board_subscriber::BoardSubscriber, user::user::User,
+        board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
+        board::user_board_blocks::BoardBlock, user::users::User,
     },
-    schema::{board, board_aggregates, board_block, board_subscriber, user_},
+    schema::{board_aggregates, board_subscriptions, boards, user_board_blocks, users},
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
     ListingType, SortType,
@@ -28,24 +28,24 @@ impl BoardView {
     ) -> Result<Self, Error> {
         let user_id_join = user_id.unwrap_or(-1);
 
-        let (board, counts, subscriber, blocked) = board::table
+        let (board, counts, subscriber, blocked) = boards::table
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
-                board_subscriber::table.on(board::id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(boards::id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
-                board_subscriber::all_columns.nullable(),
-                board_block::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_board_blocks::all_columns.nullable(),
             ))
             .first::<BoardViewTuple>(conn)?;
 
@@ -109,83 +109,89 @@ impl<'a> BoardQuery<'a> {
     pub fn list(self) -> Result<BoardQueryResponse, Error> {
         let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
-        let mut query = board::table
+        let mut query = boards::table
             .inner_join(board_aggregates::table)
-            .left_join(user_::table.on(user_::id.eq(user_id_join)))
+            .left_join(users::table.on(users::id.eq(user_id_join)))
             .left_join(
-                board_subscriber::table.on(board::id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(boards::id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
-                board_subscriber::all_columns.nullable(),
-                board_block::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_board_blocks::all_columns.nullable(),
             ))
             .into_boxed();
 
-        let count_query = board::table
-        .inner_join(board_aggregates::table)
-        .left_join(user_::table.on(user_::id.eq(user_id_join)))
-        .left_join(
-            board_subscriber::table.on(board::id
-                .eq(board_subscriber::board_id)
-                .and(board_subscriber::user_id.eq(user_id_join))),
-        )
-        .left_join(
-            board_block::table.on(board::id
-                .eq(board_block::board_id)
-                .and(board_block::user_id.eq(user_id_join))),
-        )
-        .select((
-            BoardSafe::safe_columns_tuple(),
-        ))
-        .into_boxed();
-        
+        let count_query = boards::table
+            .inner_join(board_aggregates::table)
+            .left_join(users::table.on(users::id.eq(user_id_join)))
+            .left_join(
+                board_subscriptions::table.on(boards::id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
+            )
+            .select((BoardSafe::safe_columns_tuple(),))
+            .into_boxed();
+
         if let Some(search_term) = self.search_term {
             let searcher = fuzzy_search(&search_term);
             query = query
-                .filter(board::name.ilike(searcher.to_owned()))
-                .or_filter(board::title.ilike(searcher));
+                .filter(boards::name.ilike(searcher.to_owned()))
+                .or_filter(boards::title.ilike(searcher));
         }
 
         match self.sort.unwrap_or(SortType::Hot) {
-            SortType::New => query = query.order_by(board::published.desc()),
+            SortType::New => query = query.order_by(boards::creation_date.desc()),
             SortType::TopAll => query = query.order_by(board_aggregates::subscribers.desc()),
             SortType::Hot => {
                 query = query
                     .order_by(
-                        hot_rank(board_aggregates::subscribers, board_aggregates::published).desc(),
+                        hot_rank(
+                            board_aggregates::subscribers,
+                            board_aggregates::creation_date,
+                        )
+                        .desc(),
                     )
-                    .then_order_by(board_aggregates::published.desc());
+                    .then_order_by(board_aggregates::creation_date.desc());
             }
             _ => {
                 query = query
                     .order_by(
-                        hot_rank(board_aggregates::subscribers, board_aggregates::published).desc(),
+                        hot_rank(
+                            board_aggregates::subscribers,
+                            board_aggregates::creation_date,
+                        )
+                        .desc(),
                     )
-                    .then_order_by(board_aggregates::published.desc())
+                    .then_order_by(board_aggregates::creation_date.desc())
             }
         };
 
         if let Some(listing_type) = self.listing_type {
             query = match listing_type {
-                ListingType::Subscribed => query.filter(board_subscriber::user_id.is_not_null()),
+                ListingType::Subscribed => query.filter(board_subscriptions::user_id.is_not_null()),
                 ListingType::All => query,
             };
         }
 
         if self.user.is_some() {
-            query = query.filter(board_block::user_id.is_null());
-            query = query.filter(board::nsfw.eq(false).or(user_::show_nsfw.eq(true)));
+            query = query.filter(user_board_blocks::user_id.is_null());
+            query = query.filter(boards::is_nsfw.eq(false).or(users::show_nsfw.eq(true)));
         } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
-            query = query.filter(board::nsfw.eq(false));
+            query = query.filter(boards::is_nsfw.eq(false));
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -193,8 +199,8 @@ impl<'a> BoardQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .filter(board::removed.eq(false))
-            .filter(board::deleted.eq(false))
+            .filter(boards::is_banned.eq(false))
+            .filter(boards::is_deleted.eq(false))
             .load::<BoardViewTuple>(self.conn)?;
 
         let boards = BoardView::from_tuple_to_vec(res);

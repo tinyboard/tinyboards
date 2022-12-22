@@ -7,8 +7,8 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        moderator::mod_actions::{ModAddBoardMod, ModAddBoardModForm}, 
-        board::board_moderator::{BoardModerator, BoardModeratorForm},
+        board::board_mods::{BoardModerator, BoardModeratorForm},
+        moderator::mod_actions::{ModAddBoardMod, ModAddBoardModForm},
     },
     traits::Crud,
 };
@@ -37,7 +37,7 @@ impl<'des> Perform<'des> for AddBoardMod {
         let added = data.added;
         let added_user_id = data.added_user_id;
         let added_board_id = data.added_board_id;
-        
+
         // board moderator form (for adding or removing mod status)
         let form = BoardModeratorForm {
             board_id: added_board_id.clone(),

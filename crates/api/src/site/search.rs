@@ -38,7 +38,7 @@ impl<'des> Perform<'des> for Search {
         let search_type = map_to_search_type(params.kind.as_deref());
 
         let user_id = user.as_ref().map(|u| u.id);
-        let is_admin = user.as_ref().map(|u| u.admin);
+        let is_admin = user.as_ref().map(|u| u.is_admin);
 
         let mut posts = Vec::new();
         let mut comments = Vec::new();
@@ -86,7 +86,6 @@ impl<'des> Perform<'des> for Search {
                 .await??;
 
                 posts = response.posts
-                
             }
             SearchType::Comment => {
                 let response = blocking(context.pool(), move |conn| {
@@ -109,7 +108,7 @@ impl<'des> Perform<'des> for Search {
                 comments = response.comments
             }
             SearchType::Board => {
-                let response =  blocking(context.pool(), move |conn| {
+                let response = blocking(context.pool(), move |conn| {
                     BoardQuery::builder()
                         .conn(conn)
                         .listing_type(Some(listing_type))

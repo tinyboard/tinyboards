@@ -1,7 +1,11 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::SiteMode;
-use tinyboards_db_views::{structs::{UserView, CommentView, PostView, BoardView, SiteInviteView}};
-use tinyboards_db_views_mod::structs::{ModRemovePostView, ModLockPostView, ModRemoveCommentView, ModRemoveBoardView, ModBanFromBoardView, ModBanView, ModAddBoardModView, ModAddAdminView, ModStickyPostView, AdminPurgeUserView, AdminPurgeBoardView, AdminPurgePostView, AdminPurgeCommentView};
+use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, UserView};
+use tinyboards_db_views_mod::structs::{
+    AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
+    ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
+    ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModStickyPostView,
+};
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct Search {
@@ -37,7 +41,7 @@ pub struct GetFeed {
     pub user_id: Option<i32>,
     pub search: Option<String>,
     pub saved_only: Option<bool>,
-    pub nsfw: Option<bool>,
+    pub is_nsfw: Option<bool>,
     pub limit: Option<i64>,
     pub page: Option<i64>,
 }
@@ -96,7 +100,7 @@ pub struct GetModLogResponse {
     pub admin_purged_users: Vec<AdminPurgeUserView>,
     pub admin_purged_boards: Vec<AdminPurgeBoardView>,
     pub admin_purged_posts: Vec<AdminPurgePostView>,
-    pub admin_purged_comments: Vec<AdminPurgeCommentView>,   
+    pub admin_purged_comments: Vec<AdminPurgeCommentView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -110,7 +114,7 @@ pub struct GetSiteSettingsResponse {
     pub enable_downvotes: bool,
     pub enable_nsfw: bool,
     pub application_question: String,
-    pub private_instance:  bool,
+    pub private_instance: bool,
     pub email_verification_required: bool,
 }
 
@@ -122,7 +126,7 @@ pub struct SaveSiteSettings {
     pub enable_downvotes: Option<bool>,
     pub enable_nsfw: Option<bool>,
     pub application_question: Option<String>,
-    pub private_instance:  Option<bool>,
+    pub private_instance: Option<bool>,
     pub email_verification_required: Option<bool>,
 }
 
@@ -153,7 +157,6 @@ pub struct DeleteSiteInvite {}
 pub struct InviteId {
     pub invite_id: i32,
 }
-
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ValidateSiteInvite {}

@@ -5,18 +5,18 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board::BoardSafe,
-        board::board_subscriber::BoardSubscriber,
-        board::board_user_ban::BoardUserBan,
-        comment::comment::Comment,
-        comment::comment_saved::CommentSaved,
-        post::post::Post,
-        user::user::{User, UserSafe},
-        user::user_block::UserBlock,
+        board::board_subscriptions::BoardSubscriber,
+        board::board_user_bans::BoardUserBan,
+        board::boards::BoardSafe,
+        comment::comments::Comment,
+        comment::user_comment_save::CommentSaved,
+        post::posts::Post,
+        user::user_blocks::UserBlock,
+        user::users::{User, UserSafe},
     },
     schema::{
-        board, board_block, board_subscriber, board_user_ban, comment, comment_aggregates,
-        comment_saved, comment_vote, post, user_, user_block,
+        board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,
+        posts, user_blocks, user_board_blocks, user_comment_save, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
@@ -119,61 +119,61 @@ impl CommentView {
             subscriber,
             saved,
             creator_blocked,
-            comment_vote,
-        ) = comment::table
+            comment_votes,
+        ) = comments::table
             .find(comment_id)
-            .inner_join(user_::table)
-            .inner_join(post::table)
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(users::table)
+            .inner_join(posts::table)
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(boards::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(posts::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_saved::table.on(comment::id
-                    .eq(comment_saved::comment_id)
-                    .and(comment_saved::user_id.eq(user_id_join))),
+                user_comment_save::table.on(comments::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(comment::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(comments::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(comment::id
-                    .eq(comment_vote::comment_id)
-                    .and(comment_vote::user_id.eq(user_id_join))),
+                comment_votes::table.on(comments::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                comment::all_columns,
+                comments::all_columns,
                 UserSafe::safe_columns_tuple(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
-                comment_saved::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                comment_vote::score.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .first::<CommentViewTuple>(conn)?;
 
-        let my_vote = if my_user_id.is_some() && comment_vote.is_none() {
+        let my_vote = if my_user_id.is_some() && comment_votes.is_none() {
             Some(0)
         } else {
-            comment_vote
+            comment_votes
         };
 
         Ok(CommentView {
@@ -223,152 +223,161 @@ impl<'a> CommentQuery<'a> {
 
         let user_id_join = self.user_id.unwrap_or(-1);
 
-        let mut query = comment::table
-            .inner_join(user_::table)
-            .inner_join(post::table)
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+        let mut query = comments::table
+            .inner_join(users::table)
+            .inner_join(posts::table)
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(boards::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(posts::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_saved::table.on(comment::id
-                    .eq(comment_saved::comment_id)
-                    .and(comment_saved::user_id.eq(user_id_join))),
+                user_comment_save::table.on(comments::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(comment::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(comments::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(comment::id
-                    .eq(comment_vote::comment_id)
-                    .and(comment_vote::user_id.eq(user_id_join))),
+                comment_votes::table.on(comments::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                comment::all_columns,
+                comments::all_columns,
                 UserSafe::safe_columns_tuple(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
-                comment_saved::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                comment_vote::score.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .into_boxed();
 
-            let count_query = comment::table
-            .inner_join(user_::table)
-            .inner_join(post::table)
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+        let count_query = comments::table
+            .inner_join(users::table)
+            .inner_join(posts::table)
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(comment_aggregates::table)
             .left_join(
-                board_user_ban::table.on(board::id
-                    .eq(board_user_ban::board_id)
-                    .and(board_user_ban::user_id.eq(comment::creator_id))
+                board_user_bans::table.on(boards::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
                     .and(
-                        board_user_ban::expires
+                        board_user_bans::expires
                             .is_null()
-                            .or(board_user_ban::expires.gt(now)),
+                            .or(board_user_bans::expires.gt(now)),
                     )),
             )
             .left_join(
-                board_subscriber::table.on(post::board_id
-                    .eq(board_subscriber::board_id)
-                    .and(board_subscriber::user_id.eq(user_id_join))),
+                board_subscriptions::table.on(posts::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_saved::table.on(comment::id
-                    .eq(comment_saved::comment_id)
-                    .and(comment_saved::user_id.eq(user_id_join))),
+                user_comment_save::table.on(comments::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(comment::creator_id
-                    .eq(user_block::target_id)
-                    .and(user_block::user_id.eq(user_id_join))),
+                user_blocks::table.on(comments::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                board_block::table.on(board::id
-                    .eq(board_block::board_id)
-                    .and(board_block::user_id.eq(user_id_join))),
+                user_board_blocks::table.on(boards::id
+                    .eq(user_board_blocks::board_id)
+                    .and(user_board_blocks::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(comment::id
-                    .eq(comment_vote::comment_id)
-                    .and(comment_vote::user_id.eq(user_id_join))),
+                comment_votes::table.on(comments::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                comment::all_columns,
+                comments::all_columns,
+                UserSafe::safe_columns_tuple(),
+                posts::all_columns,
+                BoardSafe::safe_columns_tuple(),
+                comment_aggregates::all_columns,
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .into_boxed();
 
         if let Some(creator_id) = self.creator_id {
-            query = query.filter(comment::creator_id.eq(creator_id));
+            query = query.filter(comments::creator_id.eq(creator_id));
         };
 
         if let Some(post_id) = self.post_id {
-            query = query.filter(comment::post_id.eq(post_id));
+            query = query.filter(comments::post_id.eq(post_id));
         };
 
         if let Some(parent_id) = self.parent_id {
-            query = query.filter(comment::parent_id.eq(parent_id));
+            query = query.filter(comments::parent_id.eq(parent_id));
         };
 
         if let Some(search_term) = self.search_term {
-            query = query.filter(comment::body.ilike(fuzzy_search(&search_term)));
+            query = query.filter(comments::body.ilike(fuzzy_search(&search_term)));
         };
 
         if let Some(listing_type) = self.listing_type {
             match listing_type {
                 ListingType::Subscribed => {
-                    query = query.filter(board_subscriber::user_id.is_not_null())
+                    query = query.filter(board_subscriptions::user_id.is_not_null())
                 }
                 ListingType::All => {
                     query = query.filter(
-                        board::hidden
+                        boards::is_hidden
                             .eq(false)
-                            .or(board_subscriber::user_id.eq(user_id_join)),
+                            .or(board_subscriptions::user_id.eq(user_id_join)),
                     )
                 }
             }
         };
 
         if let Some(board_id) = self.board_id {
-            query = query.filter(post::board_id.eq(board_id));
+            query = query.filter(posts::board_id.eq(board_id));
         }
 
         if self.saved_only.unwrap_or(false) {
-            query = query.filter(comment_saved::id.is_not_null());
+            query = query.filter(user_comment_save::id.is_not_null());
         }
 
-        if !self.show_deleted_and_removed.unwrap_or(true) {
-            query = query.filter(comment::removed.eq(false));
-            query = query.filter(comment::deleted.eq(false));
+        if !self.show_deleted_and_removed.unwrap_or(false) {
+            query = query.filter(comments::is_removed.eq(false));
+            query = query.filter(comments::is_deleted.eq(false));
         }
 
         if self.user_id.is_some() {
-            query = query.filter(board_block::user_id.is_null());
-            query = query.filter(user_block::user_id.is_null());
+            query = query.filter(user_board_blocks::user_id.is_null());
+            query = query.filter(user_blocks::user_id.is_null());
         }
 
         let (limit, offset) = limit_and_offset_unlimited(self.page, self.limit);
@@ -378,11 +387,11 @@ impl<'a> CommentQuery<'a> {
         query = match self.sort.unwrap_or(CommentSortType::Hot) {
             CommentSortType::Hot => query
                 .then_order_by(
-                    hot_rank(comment_aggregates::score, comment_aggregates::published).desc(),
+                    hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
                 )
-                .then_order_by(comment_aggregates::published.desc()),
-            CommentSortType::New => query.then_order_by(comment::published.desc()),
-            CommentSortType::Old => query.then_order_by(comment::published.asc()),
+                .then_order_by(comment_aggregates::creation_date.desc()),
+            CommentSortType::New => query.then_order_by(comments::creation_date.desc()),
+            CommentSortType::Old => query.then_order_by(comments::creation_date.asc()),
             CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
         };
 
@@ -402,17 +411,17 @@ impl DeleteableOrRemoveable for CommentView {
     fn hide_if_removed_or_deleted(&mut self, user: Option<&User>) {
         // if the user is admin, nothing is being removed
         if let Some(user) = user {
-            if user.admin {
+            if user.is_admin {
                 return;
             }
         }
 
         let blank_out_comment = {
-            if self.comment.removed || self.comment.deleted {
+            if self.comment.is_removed || self.comment.is_deleted {
                 match user {
                     Some(user) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.removed && user.id == self.comment.creator_id)
+                        !(self.comment.is_removed && user.id == self.comment.creator_id)
                     }
                     None => true,
                 }
@@ -423,7 +432,7 @@ impl DeleteableOrRemoveable for CommentView {
 
         if blank_out_comment {
             let obscure_text: String = {
-                if self.comment.deleted {
+                if self.comment.is_deleted {
                     "[ retracted ]"
                 } else {
                     "[ purged ]"
@@ -438,9 +447,9 @@ impl DeleteableOrRemoveable for CommentView {
         }
 
         let blank_out_post = {
-            if self.post.deleted || self.post.removed {
+            if self.post.is_deleted || self.post.is_removed {
                 match user {
-                    Some(user) => !(self.post.removed && user.id == self.post.creator_id),
+                    Some(user) => !(self.post.is_removed && user.id == self.post.creator_id),
                     None => true,
                 }
             } else {
@@ -451,7 +460,7 @@ impl DeleteableOrRemoveable for CommentView {
         // also blank out post
         if blank_out_post {
             let obscure_text: String = {
-                if self.post.deleted {
+                if self.post.is_deleted {
                     "[ deleted ]"
                 } else {
                     "[ removed ]"

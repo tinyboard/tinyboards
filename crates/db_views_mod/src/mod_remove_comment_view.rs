@@ -1,20 +1,11 @@
-use crate::structs::{ModRemoveCommentView, ModLogParams};
+use crate::structs::{ModLogParams, ModRemoveCommentView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        mod_remove_comment,
-        user_,
-        post,
-        board,
-        comment,
-    },
     models::{
-        moderator::mod_actions::ModRemoveComment,
-        user::user::UserSafe,
-        post::post::Post,
-        comment::comment::Comment,
-        board::board::BoardSafe,
+        board::boards::BoardSafe, comment::comments::Comment,
+        moderator::mod_actions::ModRemoveComment, post::posts::Post, user::users::UserSafe,
     },
+    schema::{boards, comments, mod_remove_comment, posts, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
@@ -30,33 +21,33 @@ type ModRemoveCommentViewTuple = (
 
 impl ModRemoveCommentView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
-        let user_alias = diesel::alias!(user_ as user_1);
+        let user_alias = diesel::alias!(users as user_1);
         let mod_id_join = params.mod_user_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
         let mod_names_join = mod_remove_comment::mod_user_id
-            .eq(user_::id)
-            .and(show_mod_names_expr.or(user_::id.eq(mod_id_join)));
+            .eq(users::id)
+            .and(show_mod_names_expr.or(users::id.eq(mod_id_join)));
 
         let mut query = mod_remove_comment::table
-            .left_join(user_::table.on(mod_names_join))
-            .inner_join(comment::table)
-            .inner_join(user_alias.on(comment::creator_id.eq(user_alias.field(user_::id))))
-            .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .left_join(users::table.on(mod_names_join))
+            .inner_join(comments::table)
+            .inner_join(user_alias.on(comments::creator_id.eq(user_alias.field(users::id))))
+            .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .select((
                 mod_remove_comment::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),
-                comment::all_columns,
+                comments::all_columns,
                 user_alias.fields(UserSafe::safe_columns_tuple()),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
             ))
             .into_boxed();
 
         if let Some(board_id) = params.board_id {
-            query = query.filter(post::board_id.eq(board_id));
+            query = query.filter(posts::board_id.eq(board_id));
         };
 
         if let Some(mod_user_id) = params.mod_user_id {
@@ -64,7 +55,7 @@ impl ModRemoveCommentView {
         };
 
         if let Some(other_person_id) = params.other_user_id {
-            query = query.filter(user_alias.field(user_::id).eq(other_person_id));
+            query = query.filter(user_alias.field(users::id).eq(other_person_id));
         };
 
         let (limit, offset) = limit_and_offset(params.page, params.limit)?;

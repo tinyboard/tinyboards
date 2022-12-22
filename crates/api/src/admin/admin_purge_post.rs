@@ -2,21 +2,19 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     admin::PurgePost,
-    utils::{blocking, require_user}, 
-    moderator::ModActionResponse, 
-    data::TinyBoardsContext, 
+    data::TinyBoardsContext,
+    moderator::ModActionResponse,
     request::purge_image_from_pictrs,
+    utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::{
         moderator::admin_actions::{AdminPurgePost, AdminPurgePostForm},
-        post::post::Post,
+        post::posts::Post,
     },
     traits::Crud,
 };
-use tinyboards_utils::{
-    error::TinyBoardsError,
-};
+use tinyboards_utils::error::TinyBoardsError;
 use url::Url;
 
 #[async_trait::async_trait(?Send)]
@@ -33,8 +31,7 @@ impl<'des> Perform<'des> for PurgePost {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &PurgePost = &self;
 
-        let user
-            = require_user(context.pool(), context.master_key(), auth)
+        let user = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -42,25 +39,22 @@ impl<'des> Perform<'des> for PurgePost {
         let target_post_id = data.post_id;
         let reason = data.reason.clone();
 
-        let post = blocking(context.pool(), move |conn| {
-            Post::read(conn, target_post_id)
-        })
-        .await??;
+        let post = blocking(context.pool(), move |conn| Post::read(conn, target_post_id)).await??;
 
         // purge image
         if let Some(url) = post.url {
             let parsed_url = Url::parse(url.as_str()).unwrap();
             purge_image_from_pictrs(context.client(), context.settings(), &parsed_url)
-            .await
-            .ok();
+                .await
+                .ok();
         }
 
         // purge thumbnail
         if let Some(url) = post.thumbnail_url {
             let parsed_url = Url::parse(url.as_str()).unwrap();
             purge_image_from_pictrs(context.client(), context.settings(), &parsed_url)
-            .await
-            .ok();
+                .await
+                .ok();
         }
 
         // delete post

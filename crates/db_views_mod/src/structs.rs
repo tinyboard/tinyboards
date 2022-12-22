@@ -1,31 +1,17 @@
-use tinyboards_db::{
-    models::{
-        comment::comment::Comment,
-        board::board::BoardSafe,
-        moderator::{
-            mod_actions::{
-                ModAddAdmin,
-                ModAddBoard,
-                ModBan,
-                ModBanFromBoard,
-                ModLockPost,
-                ModRemoveComment,
-                ModRemoveBoard,
-                ModRemovePost,
-                ModStickyPost, ModAddBoardMod,
-            },
-            admin_actions::{
-                AdminPurgeComment,
-                AdminPurgeBoard,
-                AdminPurgeUser,
-                AdminPurgePost,
-            },
+use serde::{Deserialize, Serialize};
+use tinyboards_db::models::{
+    board::boards::BoardSafe,
+    comment::comments::Comment,
+    moderator::{
+        admin_actions::{AdminPurgeBoard, AdminPurgeComment, AdminPurgePost, AdminPurgeUser},
+        mod_actions::{
+            ModAddAdmin, ModAddBoard, ModAddBoardMod, ModBan, ModBanFromBoard, ModLockPost,
+            ModRemoveBoard, ModRemoveComment, ModRemovePost, ModStickyPost,
         },
-        user::user::UserSafe,
-        post::post::Post,
     },
+    post::posts::Post,
+    user::users::UserSafe,
 };
-use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModAddBoardView {

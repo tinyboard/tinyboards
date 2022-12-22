@@ -1,2 +1,2 @@
-pub mod user;
-pub mod user_block;
+pub mod user_blocks;
+pub mod users;

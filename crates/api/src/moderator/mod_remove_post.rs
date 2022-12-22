@@ -2,12 +2,12 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{RemovePost, ModActionResponse},
+    moderator::{ModActionResponse, RemovePost},
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModRemovePost, ModRemovePostForm},
-    models::post::post::Post,
+    models::post::posts::Post,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -54,7 +54,7 @@ impl<'des> Perform<'des> for RemovePost {
             mod_user_id: user.id,
             post_id: post_id.clone(),
             reason: Some(reason),
-            removed: Some(Some(removed.clone()))
+            removed: Some(Some(removed.clone())),
         };
 
         // submit mod action to mod log

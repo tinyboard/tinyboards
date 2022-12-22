@@ -1,10 +1,6 @@
-use tinyboards_db::{
-    models::{
-        user::user::User,
-    }
-};
-use tinyboards_db_views::structs::CommentView;
 use serde::{Deserialize, Serialize};
+use tinyboards_db::models::user::users::User;
+use tinyboards_db_views::structs::CommentView;
 
 #[derive(Deserialize, Serialize)]
 pub struct CreateComment {
@@ -62,9 +58,8 @@ pub struct ListCommentsResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommentResponse {
-    pub comment_view: CommentView
+    pub comment_view: CommentView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetComment {}
-

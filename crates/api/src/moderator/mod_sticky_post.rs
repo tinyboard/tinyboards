@@ -2,12 +2,12 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{StickyPost, ModActionResponse},
+    moderator::{ModActionResponse, StickyPost},
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModStickyPost, ModStickyPostForm},
-    models::post::post::Post,
+    models::post::posts::Post,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -25,7 +25,7 @@ impl<'des> Perform<'des> for StickyPost {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &StickyPost = &self;
-        
+
         let post_id = data.post_id;
         let stickied = data.stickied;
 
@@ -41,7 +41,7 @@ impl<'des> Perform<'des> for StickyPost {
             .require_board_mod(orig_post.board_id, context.pool())
             .await
             .unwrap()?;
-        
+
         // update the post in the database to be stickied (or un-stickied)
         blocking(context.pool(), move |conn| {
             Post::update_stickied(conn, post_id.clone(), stickied.clone())
@@ -63,5 +63,4 @@ impl<'des> Perform<'des> for StickyPost {
 
         Ok(ModActionResponse { mod_action })
     }
-
 }

@@ -1,7 +1,7 @@
-use diesel::prelude::*;
-use serde::{Serialize, Deserialize};
-use chrono::NaiveDateTime;
 use crate::schema::site;
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = site)]
@@ -10,7 +10,7 @@ pub struct Site {
     pub name: String,
     pub description: Option<String>,
     pub creator_id: i32,
-    pub published: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub enable_downvotes: bool,
     pub open_registration: bool,

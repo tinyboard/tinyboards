@@ -1,7 +1,7 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    comment::{CommentIdPath, CreateCommentVote, CommentResponse},
+    comment::{CommentIdPath, CommentResponse, CreateCommentVote},
     data::TinyBoardsContext,
     utils::{
         blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
@@ -10,8 +10,8 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        board::board::Board,
-        comment::comment_vote::{CommentVote, CommentVoteForm},
+        board::boards::Board,
+        comment::comment_votes::{CommentVote, CommentVoteForm},
     },
     traits::Voteable,
 };
@@ -74,8 +74,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
             if do_add {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| CommentVote::vote(conn, &cloned_form);
-                blocking(context.pool(), like)
-                    .await??;
+                blocking(context.pool(), like).await??;
             } else {
                 let cloned_form = vote_form.clone();
                 let like = move |conn: &mut _| {

@@ -7,16 +7,16 @@ use std::collections::BTreeMap;
 use tinyboards_db::{
     database::PgPool,
     models::{
-        board::board::Board,
-        comment::comment::Comment,
-        post::post::Post,
+        board::boards::Board,
+        comment::comments::Comment,
+        post::posts::Post,
         secret::Secret,
-        site::{registration_application::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
-        user::user::User,
+        site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
+        user::users::User,
     },
     traits::Crud, SiteMode,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, UserView, BoardView};
+use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
@@ -133,7 +133,7 @@ impl From<UResultOpt> for UserResult {
         let u_res = match r {
             Ok(u) => match u {
                 Some(u) => {
-                    if u.deleted {
+                    if u.is_deleted {
                         Err(TinyBoardsError::from_message(
                             "you need to be logged in to do this",
                         ))
@@ -156,7 +156,7 @@ impl From<UResult> for UserResult {
     fn from(r: UResult) -> Self {
         Self(match r {
             Ok(u) => {
-                if u.deleted {
+                if u.is_deleted {
                     Err(TinyBoardsError::from_message(
                         "you need to be logged in to do this",
                     ))
@@ -193,7 +193,7 @@ impl UserResult {
     pub fn require_admin(self) -> Self {
         Self(match self.0 {
             Ok(u) => {
-                if u.admin {
+                if u.is_admin {
                     Ok(u)
                 } else {
                     Err(TinyBoardsError::from_message(
@@ -209,7 +209,7 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // skip this check for admins :))))
-                if u.admin {
+                if u.is_admin {
                     return Self(Ok(u));
                 }
 
@@ -241,7 +241,7 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // admins can do everything
-                if u.admin {
+                if u.is_admin {
                     return Self(Ok(u));
                 }
 
@@ -332,7 +332,7 @@ pub async fn check_registration_application(
     user_view: &UserView,
     pool: &PgPool,
 ) -> Result<(), TinyBoardsError> {
-    if site.require_application && !user_view.user.admin && !user_view.user.application_accepted {
+    if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
         let user_id = user_view.user.id;
         let registration = blocking(pool, move |conn| {
             RegistrationApplication::find_by_user_id(conn, user_id)
@@ -394,7 +394,7 @@ pub async fn check_board_deleted_or_removed(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find board"))?;
 
-    if board.deleted || board.removed {
+    if board.is_deleted || board.is_banned {
         Err(TinyBoardsError::from_message("board deleted or removed"))
     } else {
         Ok(())
@@ -410,7 +410,7 @@ pub async fn check_post_deleted_or_removed(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
 
-    if post.deleted || post.removed {
+    if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message("post deleted or removed"))
     } else {
         Ok(())
@@ -426,9 +426,9 @@ pub async fn check_post_deleted_removed_or_locked(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
 
-    if post.locked {
+    if post.is_locked {
         Err(TinyBoardsError::from_message("post locked"))
-    } else if post.deleted || post.removed {
+    } else if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message("post deleted or removed"))
     } else {
         Ok(())
@@ -444,7 +444,7 @@ pub async fn check_comment_deleted_or_removed(
         .await?
         .map_err(|_e| TinyBoardsError::from_message("couldn't find comment"))?;
 
-    if comment.deleted || comment.removed {
+    if comment.is_deleted || comment.is_removed {
         Err(TinyBoardsError::from_message("comment deleted or removed"))
     } else {
         Ok(())
@@ -490,56 +490,70 @@ pub async fn purge_image_posts_for_user(
     pool: &PgPool,
     settings: &Settings,
     client: &ClientWithMiddleware,
-  ) -> Result<(), TinyBoardsError> {
-    let posts 
-        = blocking(pool, move |conn| { 
-            Post::fetch_image_posts_for_creator(conn, banned_user_id)
-        })
-        .await??;
+) -> Result<(), TinyBoardsError> {
+    let posts = blocking(pool, move |conn| {
+        Post::fetch_image_posts_for_creator(conn, banned_user_id)
+    })
+    .await??;
 
     for post in posts {
-      if let Some(url) = post.url {
-        purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap()).await.ok();
-      }
-      if let Some(thumbnail_url) = post.thumbnail_url {
-        purge_image_from_pictrs(client, settings, &Url::parse(thumbnail_url.as_str()).unwrap()).await.ok();
-      }
+        if let Some(url) = post.url {
+            purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap())
+                .await
+                .ok();
+        }
+        if let Some(thumbnail_url) = post.thumbnail_url {
+            purge_image_from_pictrs(
+                client,
+                settings,
+                &Url::parse(thumbnail_url.as_str()).unwrap(),
+            )
+            .await
+            .ok();
+        }
     }
-  
+
     blocking(pool, move |conn| {
         Post::remove_post_images_and_thumbnails_for_creator(conn, banned_user_id)
     })
     .await??;
-  
-    Ok(())
-  }
 
-  pub async fn purge_image_posts_for_board(
+    Ok(())
+}
+
+pub async fn purge_image_posts_for_board(
     banned_board_id: i32,
     pool: &PgPool,
     settings: &Settings,
     client: &ClientWithMiddleware,
-  ) -> Result<(), TinyBoardsError> {
-    let posts 
-        = blocking(pool, move |conn| {
-            Post::fetch_image_posts_for_board(conn, banned_board_id)
-        })
-        .await??;
-        
+) -> Result<(), TinyBoardsError> {
+    let posts = blocking(pool, move |conn| {
+        Post::fetch_image_posts_for_board(conn, banned_board_id)
+    })
+    .await??;
+
     for post in posts {
-      if let Some(url) = post.url {
-        purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap()).await.ok();
-      }
-      if let Some(thumbnail_url) = post.thumbnail_url {
-        purge_image_from_pictrs(client, settings, &Url::parse(thumbnail_url.as_str()).unwrap()).await.ok();
-      }
+        if let Some(url) = post.url {
+            purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap())
+                .await
+                .ok();
+        }
+        if let Some(thumbnail_url) = post.thumbnail_url {
+            purge_image_from_pictrs(
+                client,
+                settings,
+                &Url::parse(thumbnail_url.as_str()).unwrap(),
+            )
+            .await
+            .ok();
+        }
     }
-  
+
     blocking(pool, move |conn| {
         Post::remove_post_images_and_thumbnails_for_board(conn, banned_board_id)
     })
     .await??;
-  
+
     Ok(())
   }
 

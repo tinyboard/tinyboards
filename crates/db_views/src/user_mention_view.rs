@@ -2,37 +2,22 @@ use crate::structs::UserMentionView;
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
-    schema::{
-        comment,
-        comment_aggregates,
-        comment_vote,
-        comment_saved,
-        board,
-        board_subscriber,
-        board_user_ban,
-        user_,
-        user_block,
-        user_mention,
-        post,
-    },
+    map_to_comment_sort_type,
     models::{
-        comment::comment::Comment,
-        comment::comment_saved::CommentSaved,
-        board::board::BoardSafe,
-        board::board_user_ban::BoardUserBan,
-        board::board_subscriber::BoardSubscriber,
-        user::user::UserSafe,
-        user::user_block::UserBlock,
-        user::user_mention::UserMention,
-        post::post::Post,
+        board::board_subscriptions::BoardSubscriber, board::board_user_bans::BoardUserBan,
+        board::boards::BoardSafe, comment::comments::Comment,
+        comment::user_comment_save::CommentSaved, post::posts::Post, user::user_blocks::UserBlock,
+        user::user_mention::UserMention, user::users::UserSafe,
+    },
+    schema::{
+        board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,
+        posts, user_blocks, user_comment_save, user_mentions, users,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, limit_and_offset},
     CommentSortType,
-    map_to_comment_sort_type,
 };
 use typed_builder::TypedBuilder;
-
 
 type UserMentionViewTuple = (
     UserMention,
@@ -55,7 +40,7 @@ impl UserMentionView {
         user_mention_id: i32,
         user_id: Option<i32>,
     ) -> Result<Self, Error> {
-        let user_alias = diesel::alias!(user_ as user_1);
+        let user_alias = diesel::alias!(users as user_1);
 
         let user_id_join = user_id.unwrap_or(-1);
 
@@ -72,76 +57,63 @@ impl UserMentionView {
             saved,
             creator_blocked,
             my_vote,
-        ) = user_mention::table
+        ) = user_mentions::table
             .find(user_mention_id)
-            .inner_join(comment::table)
-            .inner_join(user_::table.on(comment::creator_id.eq(user_::id)))
-            .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+            .inner_join(comments::table)
+            .inner_join(users::table.on(comments::creator_id.eq(users::id)))
+            .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(user_alias)
-            .inner_join(comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)))
-            .left_join(
-                board_user_ban::table.on(
-                    board::id
-                        .eq(board_user_ban::board_id)
-                        .and(board_user_ban::user_id.eq(comment::creator_id))
-                        .and(
-                            board_user_ban::expires.is_null()
-                            .or(
-                                board_user_ban::expires.gt(now)
-                        ),
-                    ),
-                ),
+            .inner_join(
+                comment_aggregates::table.on(comments::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_subscriber::table.on(
-                    post::board_id
-                        .eq(board_subscriber::board_id)
-                        .and(board_subscriber::user_id.eq(user_id_join)
-                    ),
-                ),
+                board_user_bans::table.on(boards::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
+                    .and(
+                        board_user_bans::expires
+                            .is_null()
+                            .or(board_user_bans::expires.gt(now)),
+                    )),
             )
             .left_join(
-                comment_saved::table.on(
-                    comment::id
-                        .eq(comment_saved::comment_id)
-                        .and(comment_saved::user_id.eq(user_id_join)
-                    ),
-                ),
+                board_subscriptions::table.on(posts::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(
-                    comment::creator_id
-                        .eq(user_block::target_id)
-                        .and(user_block::user_id.eq(user_id_join)
-                    ),
-                ),
+                user_comment_save::table.on(comments::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(
-                    comment::id
-                        .eq(comment_vote::comment_id)
-                        .and(comment_vote::user_id.eq(user_id_join)
-                    ),
-                ),
+                user_blocks::table.on(comments::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                comment_votes::table.on(comments::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                user_mention::all_columns,
-                comment::all_columns,
+                user_mentions::all_columns,
+                comments::all_columns,
                 UserSafe::safe_columns_tuple(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 user_alias.fields(UserSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
-                comment_saved::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                comment_vote::score.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .first::<UserMentionViewTuple>(conn)?;
-        
-        Ok( UserMentionView {
+
+        Ok(UserMentionView {
             user_mention,
             comment,
             creator,
@@ -158,19 +130,16 @@ impl UserMentionView {
     }
 
     /// Gets count of unread mentions
-    pub fn get_unread_mentions(
-        conn: &mut PgConnection,
-        user_id: i32,
-    ) -> Result<i64, Error> {
+    pub fn get_unread_mentions(conn: &mut PgConnection, user_id: i32) -> Result<i64, Error> {
         use diesel::dsl::*;
 
-        user_mention::table
-            .inner_join(comment::table)
-            .filter(user_mention::recipient_id.eq(user_id))
-            .filter(user_mention::read.eq(false))
-            .filter(comment::deleted.eq(false))
-            .filter(comment::removed.eq(false))
-            .select(count(user_mention::id))
+        user_mentions::table
+            .inner_join(comments::table)
+            .filter(user_mentions::recipient_id.eq(user_id))
+            .filter(user_mentions::read.eq(false))
+            .filter(comments::is_deleted.eq(false))
+            .filter(comments::is_removed.eq(false))
+            .select(count(user_mentions::id))
             .first::<i64>(conn)
     }
 }
@@ -192,95 +161,83 @@ impl<'a> UserMentionQuery<'a> {
     pub fn list(self) -> Result<Vec<UserMentionView>, Error> {
         use diesel::dsl::*;
 
-        let user_alias = diesel::alias!(user_ as user_1);
+        let user_alias = diesel::alias!(users as user_1);
 
         let user_id_join = self.user_id.unwrap_or(-1);
 
-        let mut query = user_mention::table
-            .inner_join(comment::table)
-            .inner_join(user_::table.on(comment::creator_id.eq(user_::id)))
-            .inner_join(post::table.on(comment::post_id.eq(post::id)))
-            .inner_join(board::table.on(post::board_id.eq(board::id)))
+        let mut query = user_mentions::table
+            .inner_join(comments::table)
+            .inner_join(users::table.on(comments::creator_id.eq(users::id)))
+            .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
+            .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(user_alias)
-            .inner_join(comment_aggregates::table.on(comment::id.eq(comment_aggregates::comment_id)))
-            .left_join(
-                board_user_ban::table.on(
-                    board::id
-                        .eq(board_user_ban::board_id)
-                        .and(board_user_ban::user_id.eq(comment::creator_id))
-                        .and(
-                            board_user_ban::expires.is_null()
-                            .or(
-                                board_user_ban::expires.gt(now)
-                        ),
-                    ),
-                ),
+            .inner_join(
+                comment_aggregates::table.on(comments::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_subscriber::table.on(
-                    post::board_id
-                        .eq(board_subscriber::board_id)
-                        .and(board_subscriber::user_id.eq(user_id_join)
-                    ),
-                ),
+                board_user_bans::table.on(boards::id
+                    .eq(board_user_bans::board_id)
+                    .and(board_user_bans::user_id.eq(comments::creator_id))
+                    .and(
+                        board_user_bans::expires
+                            .is_null()
+                            .or(board_user_bans::expires.gt(now)),
+                    )),
             )
             .left_join(
-                comment_saved::table.on(
-                    comment::id
-                        .eq(comment_saved::comment_id)
-                        .and(comment_saved::user_id.eq(user_id_join)
-                    ),
-                ),
+                board_subscriptions::table.on(posts::board_id
+                    .eq(board_subscriptions::board_id)
+                    .and(board_subscriptions::user_id.eq(user_id_join))),
             )
             .left_join(
-                user_block::table.on(
-                    comment::creator_id
-                        .eq(user_block::target_id)
-                        .and(user_block::user_id.eq(user_id_join)
-                    ),
-                ),
+                user_comment_save::table.on(comments::id
+                    .eq(user_comment_save::comment_id)
+                    .and(user_comment_save::user_id.eq(user_id_join))),
             )
             .left_join(
-                comment_vote::table.on(
-                    comment::id
-                        .eq(comment_vote::comment_id)
-                        .and(comment_vote::user_id.eq(user_id_join)
-                    ),
-                ),
+                user_blocks::table.on(comments::creator_id
+                    .eq(user_blocks::target_id)
+                    .and(user_blocks::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                comment_votes::table.on(comments::id
+                    .eq(comment_votes::comment_id)
+                    .and(comment_votes::user_id.eq(user_id_join))),
             )
             .select((
-                user_mention::all_columns,
-                comment::all_columns,
+                user_mentions::all_columns,
+                comments::all_columns,
                 UserSafe::safe_columns_tuple(),
-                post::all_columns,
+                posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 user_alias.fields(UserSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
-                board_user_ban::all_columns.nullable(),
-                board_subscriber::all_columns.nullable(),
-                comment_saved::all_columns.nullable(),
-                user_block::all_columns.nullable(),
-                comment_vote::score.nullable(),
+                board_user_bans::all_columns.nullable(),
+                board_subscriptions::all_columns.nullable(),
+                user_comment_save::all_columns.nullable(),
+                user_blocks::all_columns.nullable(),
+                comment_votes::score.nullable(),
             ))
             .into_boxed();
-        
+
         if let Some(recipient_id) = self.recipient_id {
-            query = query.filter(user_mention::recipient_id.eq(recipient_id));
+            query = query.filter(user_mentions::recipient_id.eq(recipient_id));
         }
 
         if self.unread_only.unwrap_or(false) {
-            query = query.filter(user_mention::read.eq(false));
+            query = query.filter(user_mentions::read.eq(false));
         }
-
 
         let sort = map_to_comment_sort_type(self.sort.as_deref());
 
         query = match sort {
             CommentSortType::Hot => query
-                .then_order_by(hot_rank(comment_aggregates::score, comment_aggregates::published).desc())
-                .then_order_by(comment_aggregates::published.desc()),
-            CommentSortType::New => query.then_order_by(comment::published.desc()),
-            CommentSortType::Old => query.then_order_by(comment::published.asc()),
+                .then_order_by(
+                    hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
+                )
+                .then_order_by(comment_aggregates::creation_date.desc()),
+            CommentSortType::New => query.then_order_by(comments::creation_date.desc()),
+            CommentSortType::Old => query.then_order_by(comments::creation_date.asc()),
             CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
         };
 
@@ -290,7 +247,7 @@ impl<'a> UserMentionQuery<'a> {
             .limit(limit)
             .offset(offset)
             .load::<UserMentionViewTuple>(self.conn)?;
-        
+
         Ok(UserMentionView::from_tuple_to_vec(res))
     }
 }

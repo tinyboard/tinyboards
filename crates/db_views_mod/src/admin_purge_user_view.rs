@@ -1,22 +1,13 @@
 use crate::structs::{AdminPurgeUserView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        admin_purge_user,
-        user_,
-    },
-    models::{
-        moderator::admin_actions::AdminPurgeUser,
-        user::user::UserSafe,
-    },
+    models::{moderator::admin_actions::AdminPurgeUser, user::users::UserSafe},
+    schema::{admin_purge_user, users},
     traits::{ToSafe, ViewToVec},
     utils::limit_and_offset,
 };
 
-type AdminPurgeUserViewTuple = (
-    AdminPurgeUser,
-    Option<UserSafe>,
-);
+type AdminPurgeUserViewTuple = (AdminPurgeUser, Option<UserSafe>);
 
 impl AdminPurgeUserView {
     pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -25,17 +16,17 @@ impl AdminPurgeUserView {
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
         let admin_names_join = admin_purge_user::admin_id
-          .eq(user_::id)
-          .and(show_mod_names_expr.or(user_::id.eq(admin_user_id_join)));
+            .eq(users::id)
+            .and(show_mod_names_expr.or(users::id.eq(admin_user_id_join)));
 
         let mut query = admin_purge_user::table
-            .left_join(user_::table.on(admin_names_join))
+            .left_join(users::table.on(admin_names_join))
             .select((
                 admin_purge_user::all_columns,
                 UserSafe::safe_columns_tuple().nullable(),
             ))
             .into_boxed();
-        
+
         if let Some(admin_user_id) = params.mod_user_id {
             query = query.filter(admin_purge_user::admin_id.eq(admin_user_id));
         };

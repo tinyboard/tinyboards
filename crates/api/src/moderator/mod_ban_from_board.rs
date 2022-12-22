@@ -6,14 +6,12 @@ use tinyboards_api_common::{
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
-    models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
-    models::{
-        board::{
-            board_user_ban::{BoardUserBan, BoardUserBanForm}, 
-            board_subscriber::{BoardSubscriberForm, BoardSubscriber}
-        }
+    models::board::{
+        board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
+        board_user_bans::{BoardUserBan, BoardUserBanForm},
     },
-    traits::{Crud, Bannable, Subscribeable},
+    models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
+    traits::{Bannable, Crud, Subscribeable},
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -50,7 +48,6 @@ impl<'des> Perform<'des> for BanFromBoard {
             expires: expires.clone(),
         };
 
-        
         if banned {
             // ban user from board
             blocking(context.pool(), move |conn| {
@@ -69,7 +66,6 @@ impl<'des> Perform<'des> for BanFromBoard {
                 BoardSubscriber::unsubscribe(conn, &sub_form)
             })
             .await??;
-
         } else {
             // unban user from board
             blocking(context.pool(), move |conn| {

@@ -2,10 +2,11 @@ use crate::structs::{UserSettingsView, UserView};
 use diesel::{result::Error, PgConnection, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
-    models::user::user::{UserSafe, UserSettings},
-    schema::{user_, user_aggregates},
+    //map_to_user_sort_type,
+    models::user::users::{UserSafe, UserSettings},
+    schema::{user_aggregates, users},
     traits::{ToSafe, ViewToVec},
-    utils::{functions::lower, limit_and_offset, fuzzy_search},
+    utils::{functions::lower, fuzzy_search, limit_and_offset},
     UserSortType,
 };
 use tinyboards_utils::TinyBoardsError;
@@ -23,7 +24,7 @@ impl UserView {
         conn: &mut PgConnection,
         user_id: i32,
     ) -> Result<Option<Self>, TinyBoardsError> {
-        let user_view_tuple = user_::table
+        let user_view_tuple = users::table
             .find(user_id)
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
@@ -50,17 +51,18 @@ impl UserView {
         master_key: String,
     ) -> Result<Option<Self>, TinyBoardsError> {
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
-        let claims: BTreeMap<String, String> = token.verify_with_key(&key).map_err(|e| TinyBoardsError::from_error_message(e, ""))?;
+        let claims: BTreeMap<String, String> = token
+            .verify_with_key(&key)
+            .map_err(|e| TinyBoardsError::from_error_message(e, ""))?;
 
-        let uid = claims["uid"]
-            .parse::<i32>()?;
+        let uid = claims["uid"].parse::<i32>()?;
 
         Self::read_opt(conn, uid)
     }
 
     pub fn read_from_name(conn: &mut PgConnection, name: &str) -> Result<Self, Error> {
-        let (user, counts) = user_::table
-            .filter(user_::name.eq(name))
+        let (user, counts) = users::table
+            .filter(users::name.eq(name))
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .first::<UserViewTuple>(conn)?;
@@ -72,12 +74,12 @@ impl UserView {
         conn: &mut PgConnection,
         name_or_email: &str,
     ) -> Result<Self, Error> {
-        let (user, counts) = user_::table
+        let (user, counts) = users::table
             .inner_join(user_aggregates::table)
             .filter(
-                lower(user_::name)
+                lower(users::name)
                     .eq(lower(name_or_email))
-                    .or(user_::email.eq(name_or_email)),
+                    .or(users::email.eq(name_or_email)),
             )
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .first::<UserViewTuple>(conn)?;
@@ -86,9 +88,9 @@ impl UserView {
     }
 
     pub fn find_by_email(conn: &mut PgConnection, from_email: &str) -> Result<Self, Error> {
-        let (user, counts) = user_::table
+        let (user, counts) = users::table
             .inner_join(user_aggregates::table)
-            .filter(user_::email.eq(from_email))
+            .filter(users::email.eq(from_email))
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .first::<UserViewTuple>(conn)?;
 
@@ -96,12 +98,12 @@ impl UserView {
     }
 
     pub fn admins(conn: &mut PgConnection) -> Result<Vec<Self>, Error> {
-        let admins = user_::table
+        let admins = users::table
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .filter(user_::admin.eq(true))
-            .filter(user_::deleted.eq(false))
-            .order_by(user_::published)
+            .filter(users::is_admin.eq(true))
+            .filter(users::is_deleted.eq(false))
+            .order_by(users::creation_date)
             .load::<UserViewTuple>(conn)?;
 
         Ok(Self::from_tuple_to_vec(admins))
@@ -112,7 +114,7 @@ type UserSettingsViewTuple = (UserSettings, UserAggregates);
 
 impl UserSettingsView {
     pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, Error> {
-        let (settings, counts) = user_::table
+        let (settings, counts) = users::table
             .find(user_id)
             .inner_join(user_aggregates::table)
             .select((
@@ -170,14 +172,14 @@ pub struct UserQueryResponse {
 
 impl<'a> UserQuery<'a> {
     pub fn list(self) -> Result<UserQueryResponse, Error> {
-        let mut query = user_::table
+        let mut query = users::table
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .into_boxed();
 
         query = match self.sort.unwrap_or(UserSortType::MostRep) {
-            UserSortType::New => query.then_order_by(user_::published.desc()),
-            UserSortType::Old => query.then_order_by(user_::published.asc()),
+            UserSortType::New => query.then_order_by(users::creation_date.desc()),
+            UserSortType::Old => query.then_order_by(users::creation_date.asc()),
             UserSortType::MostRep => query
                 .then_order_by(user_aggregates::post_score.desc())
                 .then_order_by(user_aggregates::comment_score.desc()),
@@ -187,13 +189,13 @@ impl<'a> UserQuery<'a> {
             }
         };
 
-        let count_query = user_::table
-        .inner_join(user_aggregates::table)
-        .select(UserSafe::safe_columns_tuple())
-        .into_boxed();
+        let count_query = users::table
+            .inner_join(user_aggregates::table)
+            .select(UserSafe::safe_columns_tuple())
+            .into_boxed();
 
         if let Some(search_term) = self.search_term {
-            query = query.filter(user_::name.ilike(fuzzy_search(&search_term)));
+            query = query.filter(users::name.ilike(fuzzy_search(&search_term)));
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -201,8 +203,8 @@ impl<'a> UserQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(user_::deleted.eq(false))
-            .filter(user_::banned.eq(false));
+            .filter(users::is_deleted.eq(false))
+            .filter(users::is_banned.eq(false));
 
         let res = query.load::<UserViewTuple>(self.conn)?;
 

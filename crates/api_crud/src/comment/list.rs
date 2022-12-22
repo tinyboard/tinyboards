@@ -6,7 +6,10 @@ use tinyboards_api_common::{
     post::{GetPostComments, PostIdPath},
     utils::{blocking, check_private_instance, load_user_opt},
 };
-use tinyboards_db::{map_to_comment_sort_type, map_to_listing_type, models::post::post::Post, CommentSortType, ListingType};
+use tinyboards_db::{
+    map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post, CommentSortType,
+    ListingType,
+};
 use tinyboards_db_views::{
     comment_view::CommentQuery, structs::CommentView, DeleteableOrRemoveable,
 };
@@ -43,7 +46,7 @@ impl<'des> PerformCrud<'des> for ListComments {
 
         let listing_type = match data.listing_type.as_ref() {
             Some(listing_type) => map_to_listing_type(Some(&listing_type.to_lowercase())),
-            None => ListingType::All
+            None => ListingType::All,
         };
 
         let page = data.page;
@@ -82,7 +85,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         // blank out comment info if deleted or removed
         for cv in comments
             .iter_mut()
-            .filter(|cv| cv.comment.deleted || cv.comment.removed)
+            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
             cv.hide_if_removed_or_deleted(user.as_ref());
         }
@@ -90,7 +93,10 @@ impl<'des> PerformCrud<'des> for ListComments {
         // order into tree
         let comments = CommentView::into_tree(comments);
 
-        Ok(ListCommentsResponse { comments, total_count })
+        Ok(ListCommentsResponse {
+            comments,
+            total_count,
+        })
     }
 }
 
@@ -138,7 +144,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         // blank out comment info if deleted or removed
         for cv in comments
             .iter_mut()
-            .filter(|cv| cv.comment.deleted || cv.comment.removed)
+            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
             cv.hide_if_removed_or_deleted(user.as_ref());
         }

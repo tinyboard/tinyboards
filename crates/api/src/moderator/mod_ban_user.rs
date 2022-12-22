@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
-    models::user::user::User,
+    models::user::users::User,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -51,10 +51,8 @@ impl<'des> Perform<'des> for BanUser {
         };
 
         // enter mod log action
-        let mod_action = blocking(context.pool(), move |conn| {
-            ModBan::create(conn, &ban_form)
-        })
-        .await??;
+        let mod_action =
+            blocking(context.pool(), move |conn| ModBan::create(conn, &ban_form)).await??;
 
         Ok(ModActionResponse { mod_action })
     }

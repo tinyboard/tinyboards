@@ -6,7 +6,10 @@ use tinyboards_api_common::{
     utils::{blocking, require_user},
 };
 use tinyboards_db::{
-    models::{moderator::mod_actions::{ModAddAdmin, ModAddAdminForm}, user::user::User},
+    models::{
+        moderator::mod_actions::{ModAddAdmin, ModAddAdminForm},
+        user::users::User,
+    },
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -25,7 +28,7 @@ impl<'des> Perform<'des> for AddAdmin {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &AddAdmin = &self;
 
-        // require admin to add new admin 
+        // require admin to add new admin
         // TODO - reconfigure this logic to only allow site owner to add new admin
         let user = require_user(context.pool(), context.master_key(), auth)
             .await
@@ -34,7 +37,7 @@ impl<'des> Perform<'des> for AddAdmin {
 
         let added = data.added;
         let added_user_id = data.added_user_id;
-        
+
         // update added user to be an admin
         blocking(context.pool(), move |conn| {
             User::update_admin(conn, added_user_id.clone(), added.clone())
@@ -45,7 +48,7 @@ impl<'des> Perform<'des> for AddAdmin {
         let mod_add_admin_form = ModAddAdminForm {
             mod_user_id: user.id,
             other_user_id: added_user_id.clone(),
-            removed: Some(Some(!added.clone()))
+            removed: Some(Some(!added.clone())),
         };
 
         // submit to the mod log

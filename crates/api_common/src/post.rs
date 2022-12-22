@@ -1,6 +1,6 @@
 use crate::sensitive::Sensitive;
-use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
 use serde::{Deserialize, Serialize};
+use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PostResponse {
@@ -19,7 +19,7 @@ pub struct SubmitPost {
     pub url: Option<String>,
     pub body: Option<String>,
     pub board_id: Option<i32>,
-    pub nsfw: bool,
+    pub is_nsfw: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

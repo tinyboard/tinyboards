@@ -1,60 +1,44 @@
 use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    schema::{
-        board,
-        board_moderator,
-        user_,
-    },
-    models::{
-        board::board::BoardSafe,
-        user::user::UserSafe,
-    },
+    models::{board::boards::BoardSafe, user::users::UserSafe},
+    schema::{board_mods, boards, users},
     traits::{ToSafe, ViewToVec},
 };
 
-type BoardModeratorViewTuple = (
-    BoardSafe,
-    UserSafe
-);
+type BoardModeratorViewTuple = (BoardSafe, UserSafe);
 
 impl BoardModeratorView {
-    pub fn for_board(
-        conn: &mut PgConnection,
-        board_id: i32,
-    ) -> Result<Vec<Self>, Error> {
-        let res = board_moderator::table
-            .inner_join(board::table)
-            .inner_join(user_::table)
+    pub fn for_board(conn: &mut PgConnection, board_id: i32) -> Result<Vec<Self>, Error> {
+        let res = board_mods::table
+            .inner_join(boards::table)
+            .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
-            .filter(board_moderator::board_id.eq(board_id))
-            .order_by(board_moderator::published)
+            .filter(board_mods::board_id.eq(board_id))
+            .order_by(board_mods::creation_date)
             .load::<BoardModeratorViewTuple>(conn)?;
 
-            Ok(Self::from_tuple_to_vec(res))
+        Ok(Self::from_tuple_to_vec(res))
     }
 
-    pub fn for_user(
-        conn: &mut PgConnection,
-        user_id: i32,
-    ) -> Result<Vec<Self>, Error> {
-        let res = board_moderator::table
-            .inner_join(board::table)
-            .inner_join(user_::table)
+    pub fn for_user(conn: &mut PgConnection, user_id: i32) -> Result<Vec<Self>, Error> {
+        let res = board_mods::table
+            .inner_join(boards::table)
+            .inner_join(users::table)
             .select((
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
-            .filter(board_moderator::user_id.eq(user_id))
-            .filter(board::deleted.eq(false))
-            .filter(board::removed.eq(false))
-            .order_by(board_moderator::published)
+            .filter(board_mods::user_id.eq(user_id))
+            .filter(boards::is_deleted.eq(false))
+            .filter(boards::is_banned.eq(false))
+            .order_by(board_mods::creation_date)
             .load::<BoardModeratorViewTuple>(conn)?;
 
-            Ok(Self::from_tuple_to_vec(res))
+        Ok(Self::from_tuple_to_vec(res))
     }
 }
 

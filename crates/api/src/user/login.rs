@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     user::{Login, LoginResponse},
     utils::blocking,
 };
-use tinyboards_db::models::user::user::User;
+use tinyboards_db::models::user::users::User;
 use tinyboards_db_views::structs::UserView;
 use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
@@ -29,8 +29,7 @@ impl<'des> Perform<'des> for Login {
                 User::get_by_name(conn, &self.username_or_email)
             }?;
 
-            let user_view: UserView =
-                UserView::read(conn, user.id)?;
+            let user_view: UserView = UserView::read(conn, user.id)?;
 
             Ok::<(User, UserView), TinyBoardsError>((user, user_view))
         })

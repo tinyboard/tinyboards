@@ -14,7 +14,7 @@ pub struct CommentReply {
     pub recipient_id: UserId,
     pub comment_id: CommentId,
     pub read: bool,
-    pub published: chrono::NaiveDateTime,
+    pub creation_date: chrono::NaiveDateTime,
 }
 
 #[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
