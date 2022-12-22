@@ -16,6 +16,9 @@ services:
         aliases:
           - tinyboards.lol
     restart: always
+    depends_on:
+      - tinyboards-fe
+      - pictrs
 
   tinyboards:
     image: kronusdev/tinyboards-be:latest
@@ -25,9 +28,6 @@ services:
     restart: always
     environment:
       - RUST_LOG="info"
-    build:
-      context: ../
-      dockerfile: ./docker/Dockerfile
     links:
       - postgres
     volumes:
@@ -45,11 +45,6 @@ services:
     ports:
       - "3000:3000"
     restart: always
-    build:
-      context: ../../tinyboards-fe
-      dockerfile: Dockerfile
-    volumes:
-      - ../../tinyboards-fe/package.json:/usr/src/app/package.json
     networks:
       tinyboards:
         aliases:
