@@ -45,13 +45,13 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         };
 
         let post_form = PostForm {
-            title: data.title,
+            title: Some(data.title),
             type_: data.type_,
             url: data.url,
             body: data.body,
             body_html: body_html,
-            creator_id: user.id,
-            board_id,
+            creator_id: Some(user.id),
+            board_id: Some(board_id),
             is_nsfw: Some(data.is_nsfw),
             ..PostForm::default()
         };

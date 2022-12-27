@@ -29,15 +29,15 @@ pub struct Post {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = posts)]
 pub struct PostForm {
-    pub title: String,
+    pub title: Option<String>,
     pub type_: Option<String>,
     pub url: Option<String>,
     pub thumbnail_url: Option<String>,
     pub permalink: Option<Option<String>>,
     pub body: Option<String>,
     pub body_html: Option<String>,
-    pub creator_id: i32,
-    pub board_id: i32,
+    pub creator_id: Option<i32>,
+    pub board_id: Option<i32>,
     pub is_removed: Option<bool>,
     pub is_locked: Option<bool>,
     pub updated: Option<NaiveDateTime>,

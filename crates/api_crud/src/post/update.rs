@@ -56,7 +56,6 @@ impl<'des> PerformCrud<'des> for EditPost {
         let updated = Some(naive_now());
 
         let form = PostForm {
-            creator_id: orig_post.post.creator_id,
             body,
             body_html,
             updated,
