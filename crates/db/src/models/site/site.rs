@@ -20,6 +20,7 @@ pub struct Site {
     pub private_instance: bool,
     pub email_verification_required: bool,
     pub invite_only: bool,
+    pub default_avatar: Option<String>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -37,4 +38,5 @@ pub struct SiteForm {
     pub private_instance: Option<bool>,
     pub email_verification_required: Option<bool>,
     pub invite_only: Option<bool>,
+    pub default_avatar: Option<Option<String>>,
 }

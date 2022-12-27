@@ -1,0 +1,1 @@
+alter table site add column default_avatar text;

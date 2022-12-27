@@ -116,6 +116,7 @@ pub struct GetSiteSettingsResponse {
     pub application_question: String,
     pub private_instance: bool,
     pub email_verification_required: bool,
+    pub default_avatar: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -128,6 +129,7 @@ pub struct SaveSiteSettings {
     pub application_question: Option<String>,
     pub private_instance: Option<bool>,
     pub email_verification_required: Option<bool>,
+    pub default_avatar: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -50,7 +50,8 @@ impl<'des> Perform<'des> for GetSiteSettings {
             enable_nsfw: site.enable_nsfw,
             application_question: site.application_question.unwrap_or_default(),
             private_instance: site.private_instance,
-            email_verification_required: site.email_verification_required,            
+            email_verification_required: site.email_verification_required,
+            default_avatar: site.default_avatar.unwrap_or_default(),            
         })
     }
 }

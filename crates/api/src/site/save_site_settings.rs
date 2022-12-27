@@ -49,6 +49,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let application_question = data.application_question.clone();
         let private_instance = data.private_instance;
         let email_verification_required = data.email_verification_required;
+        let default_avatar = data.default_avatar.clone();
             
         if let Some(description) = &description {
             if description.chars().count() > 500 {
@@ -94,6 +95,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             private_instance,
             email_verification_required,
             invite_only,
+            default_avatar: Some(default_avatar),
             updated: Some(Some(naive_now())),
             ..SiteForm::default()
         };
@@ -114,6 +116,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             application_question: updated_site.application_question.unwrap_or_default(),
             private_instance: updated_site.private_instance,
             email_verification_required: updated_site.email_verification_required,
+            default_avatar: updated_site.default_avatar.unwrap_or_default(),
         })
     }
 }

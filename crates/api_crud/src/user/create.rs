@@ -80,6 +80,7 @@ impl<'des> PerformCrud<'des> for Register {
             name: data.username.clone(),
             email: data.email,
             passhash: data.password.unpack(),
+            avatar: Some(site.default_avatar),
             ..UserForm::default()
         };
 
