@@ -39,16 +39,14 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         // check to see if board is removed or deleted
         check_board_deleted_or_removed(data.board_id.unwrap_or(1), context.pool()).await?;
 
-        let body_html = match data.body {
-            Some(ref body) => parse_markdown(body),
-            None => None,
-        };
+        let body = data.body.unwrap_or_default();
+        let body_html = parse_markdown(&body.as_str());
 
         let post_form = PostForm {
             title: Some(data.title),
             type_: data.type_,
             url: data.url,
-            body: data.body,
+            body: Some(body), // lol
             body_html: body_html,
             creator_id: Some(user.id),
             board_id: Some(board_id),
