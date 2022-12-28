@@ -67,8 +67,6 @@ create table board_user_ban (
     unique (board_id, user_id)
 );
 
-insert into board (name, title, tag_id, creator_id) values ('main', 'The Default Board', 1, 1);
-
 create table site (
     id serial primary key,
     name varchar(20) not null unique,

@@ -75,7 +75,7 @@ pub struct UserSettings {
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
 #[diesel(table_name = users)]
 pub struct UserForm {
-    pub name: String,
+    pub name: Option<String>,
     pub preferred_name: Option<Option<String>>,
     pub passhash: String,
     pub email: Option<String>,

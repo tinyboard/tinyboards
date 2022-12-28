@@ -3,7 +3,7 @@ use tinyboards_db::{
     database::PgPool,
     models::{
         site::site::{Site, SiteForm},
-        user::users::{User, UserForm},
+        user::users::{User, UserForm}, board::boards::{BoardForm, Board},
     },
     traits::Crud,
     utils::naive_now,
@@ -47,13 +47,29 @@ async fn initialize_local_site_and_admin_user(
 
     if let Some(setup) = &settings.setup {
         let user_form = UserForm {
-            name: setup.admin_username.clone(),
+            name: Some(setup.admin_username.clone()),
             passhash: hash_password(setup.admin_password.clone()),
             is_admin: Some(true),
             ..UserForm::default()
         };
 
         let inserted_admin = blocking(pool, move |conn| User::create(conn, &user_form)).await??;
+
+
+        let default_name = "main".to_string();
+        let default_title  = "The Default Board".to_string();
+
+
+        let default_board_form = BoardForm {
+            name: Some(default_name),
+            title: Some(default_title),
+            tag_id: Some(1),
+            creator_id: Some(inserted_admin.id.clone()),
+            ..BoardForm::default()
+        };
+
+        // make the default board
+        blocking(pool, move |conn| Board::create(conn, &default_board_form)).await??;
 
         let site_form = SiteForm {
             name: Some(setup.site_name.clone()),
