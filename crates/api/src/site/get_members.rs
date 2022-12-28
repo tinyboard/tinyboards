@@ -36,11 +36,15 @@ impl<'des> Perform<'des> for GetMembers {
 
         let limit = params.limit;
         let page = params.page;
+        let is_admin = params.is_admin;
+        let is_banned = params.is_banned;
 
         let response = blocking(context.pool(), move |conn| {
             UserQuery::builder()
                 .conn(conn)
                 .sort(Some(sort))
+                .is_admin(is_admin)
+                .is_banned(is_banned)
                 .limit(limit)
                 .page(page)
                 .build()

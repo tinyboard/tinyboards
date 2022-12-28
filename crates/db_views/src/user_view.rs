@@ -162,6 +162,8 @@ pub struct UserQuery<'a> {
     page: Option<i64>,
     limit: Option<i64>,
     search_term: Option<String>,
+    is_admin: Option<bool>,
+    is_banned: Option<bool>,
 }
 
 #[derive(Default, Clone)]
@@ -196,6 +198,14 @@ impl<'a> UserQuery<'a> {
 
         if let Some(search_term) = self.search_term {
             query = query.filter(users::name.ilike(fuzzy_search(&search_term)));
+        };
+
+        if let Some(is_banned) = self.is_banned {
+            query = query.filter(users::is_banned.eq(is_banned));
+        };
+
+        if let Some(is_admin) = self.is_admin {
+            query = query.filter(users::is_admin.eq(is_admin));
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

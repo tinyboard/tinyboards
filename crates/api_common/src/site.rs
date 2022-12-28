@@ -51,6 +51,8 @@ pub struct GetMembers {
     pub sort: Option<String>,
     pub limit: Option<i64>,
     pub page: Option<i64>,
+    pub is_admin: Option<bool>,
+    pub is_banned: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
