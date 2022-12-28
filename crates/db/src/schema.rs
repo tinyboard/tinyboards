@@ -287,7 +287,7 @@ diesel::table! {
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
-        stickied -> Bool,
+        is_stickied -> Bool,
         creation_date -> Timestamp,
         newest_comment_time -> Timestamp,
     }
@@ -333,6 +333,17 @@ diesel::table! {
         admin_id -> Nullable<Int4>,
         deny_reason -> Nullable<Text>,
         published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    reports (id) {
+        id -> Int4,
+        user_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+        post_id -> Nullable<Int4>,
+        reason -> Nullable<Text>,
+        creation_date -> Timestamp,
     }
 }
 
@@ -520,6 +531,9 @@ diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> users (creator_id));
+diesel::joinable!(reports -> comments (comment_id));
+diesel::joinable!(reports -> posts (post_id));
+diesel::joinable!(reports -> users (user_id));
 diesel::joinable!(site -> users (creator_id));
 diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_ban -> users (user_id));
@@ -564,6 +578,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_votes,
     posts,
     registration_applications,
+    reports,
     secret,
     site,
     site_invite,

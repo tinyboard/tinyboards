@@ -296,7 +296,7 @@ impl<'a> PostQuery<'a> {
         if let Some(board_id) = self.board_id {
             query = query
                 .filter(posts::board_id.eq(board_id))
-                .then_order_by(post_aggregates::stickied.desc());
+                .then_order_by(post_aggregates::is_stickied.desc());
         }
 
         if let Some(url_search) = self.url_search {
