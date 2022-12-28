@@ -18,7 +18,7 @@ cat > $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
 EOF
 
 # Check if SSL is enabled
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 echo "****SSL IS ENABLED****"
     # Add SSL configuration to the file
     cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
@@ -86,7 +86,7 @@ cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
 EOF
 
 
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
     # Add SSL configuration to the file
     cat > $INSTALL_LOCATION/nginx/nginx-certbot.env <<EOF
 # Required
@@ -412,7 +412,7 @@ EOF
 
 #docker-scripts
 
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 cat > $INSTALL_LOCATION/docker-start.sh <<EOF
 #!/bin/sh
 
@@ -433,7 +433,7 @@ fi
 
 #Override constants.js
 
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 cat > ../../tinyboards-fe/server/constants.js <<EOF
 export const baseURL = "https://$SERVER_NAME/api/v1";
 EOF
@@ -445,7 +445,7 @@ fi
 
 #make scripts executable
 
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 chmod u+x docker-start.sh
 else
 chmod u+x docker-start-dev.sh
