@@ -1,1 +1,1 @@
--- This file should undo anything in `up.sql`
+alter table posts rename column creation_date to published;

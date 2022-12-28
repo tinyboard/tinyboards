@@ -1,1 +1,1 @@
--- This file should undo anything in `up.sql`
+alter table boards rename column is_nsfw to nsfw;
