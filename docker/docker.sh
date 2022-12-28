@@ -2,7 +2,7 @@
 INSTALL_LOCATION="$(pwd)"
 
 # Load variables from environment file
-source .env.example
+source .env
 
 cat > $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
   upstream tinyboards-frontend {
