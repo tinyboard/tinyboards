@@ -18,7 +18,7 @@ create trigger refresh_private_message
 after insert or update or delete or truncate
 on dms
 for each statement
-execute procedure refresh_dm();
+execute procedure refresh_private_message();
 
 -- drop initial user add trigger
 drop trigger user_aggregates_user on users;
