@@ -178,7 +178,6 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 return Self(if u.has_active_ban() {
-                    println!("user is banned!");
                     Err(TinyBoardsError::from_message(
                         "you are banned from the site",
                     ))

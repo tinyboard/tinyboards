@@ -77,7 +77,7 @@ pub struct UserSettings {
 pub struct UserForm {
     pub name: Option<String>,
     pub preferred_name: Option<Option<String>>,
-    pub passhash: String,
+    pub passhash: Option<String>,
     pub email: Option<String>,
     pub login_nonce: Option<Option<i32>>,
     pub is_admin: Option<bool>,

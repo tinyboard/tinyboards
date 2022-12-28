@@ -22,8 +22,6 @@ pub fn hash_password(pwd: String) -> String {
 }
 
 pub fn verify_password(encoded: &str, pwd: &str) -> bool {
-    println!("encoded: {}, pwd: {}", encoded, pwd);
-    println!("pwd.as_bytes(): {:?}", pwd.as_bytes());
     let pwd_matched = argon2::verify_encoded(encoded, pwd.as_bytes()).unwrap();
     pwd_matched
 }

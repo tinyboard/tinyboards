@@ -79,7 +79,7 @@ impl<'des> PerformCrud<'des> for Register {
         let user_form = UserForm {
             name: Some(data.username.clone()),
             email: data.email,
-            passhash: data.password.unpack(),
+            passhash: Some(data.password.unpack()),
             avatar: Some(site.default_avatar),
             ..UserForm::default()
         };

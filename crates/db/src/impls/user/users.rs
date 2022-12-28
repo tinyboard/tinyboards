@@ -135,9 +135,11 @@ impl User {
     pub fn register(conn: &mut PgConnection, form: UserForm) -> Result<Self, TinyBoardsError> {
         Self::check_name_and_email(conn, &form.name.clone().unwrap_or_default(), &form.email)?;
 
+        let unencrypted = form.passhash.unwrap();
+
         // hash the password here
         let form = UserForm {
-            passhash: hash_password(form.passhash),
+            passhash: Some(hash_password(unencrypted)),
             ..form
         };
 
