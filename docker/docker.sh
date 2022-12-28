@@ -202,26 +202,22 @@ cat > $INSTALL_LOCATION/tinyboards.hjson <<EOF
 EOF
 
 #generate docker-compose files
+if [ "$ENVIROMENT" = "prod" ]; then
+  COMPOSE_FILE="docker-compose.yml"
+else
+  COMPOSE_FILE="docker-compose.dev.yml"
+fi
 
 if [ "$ENVIROMENT" = "prod" ]; then
 
-echo "****PROD ENVIROMENT****"
+echo "****${ENVIROMENT} ENVIROMENT****"
 
   # Create a docker-compose.yml file if prod is true
-cat > $INSTALL_LOCATION/docker-compose.yml <<EOF
+cat > $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
 version: '3.3'
 
 services:
 EOF
-else
-echo "****DEV ENVIROMENT****"
-  # Create a docker-compose-dev.yml file if prod is false
-  cat > $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
-version: '3.3'
-
-services:
-EOF
-fi
 
 #nginx service
 if [ "$ENVIROMENT" = "prod" ]; then
@@ -360,51 +356,29 @@ EOF
 fi
 
 #pictrs
+cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
+  pictrs:
+    image: asonix/pictrs:0.4.0-beta.7
+    # needs to match the pictrs url in the config hjson
+    hostname: pictrs
+    ports:
+      - "0.0.0.0:$PICTRS_PORT:8080"
+    networks:
+      tinyboards:
+        aliases:
+          - pictrs
+    environment:
+      - PICTRS__API_KEY=$API_KEY
+    user: root
+    volumes:
+      - ./volumes/pictrs:/mnt
+    restart: always
+EOF
 
-if [ "$ENVIROMENT" = "prod" ]; then
-cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
-  pictrs:
-    image: asonix/pictrs:0.4.0-beta.7
-    # needs to match the pictrs url in the config hjson
-    hostname: pictrs
-    ports:
-      - "0.0.0.0:$PICTRS_PORT:8080"
-    networks:
-      tinyboards:
-        aliases:
-          - pictrs
-    environment:
-      - PICTRS__API_KEY=$API_KEY
-    user: root
-    volumes:
-      - ./volumes/pictrs:/mnt
-    restart: always
-EOF
-else
-  cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
-  pictrs:
-    image: asonix/pictrs:0.4.0-beta.7
-    # needs to match the pictrs url in the config hjson
-    hostname: pictrs
-    ports:
-      - "0.0.0.0:$PICTRS_PORT:8080"
-    networks:
-      tinyboards:
-        aliases:
-          - pictrs
-    environment:
-      - PICTRS__API_KEY=$API_KEY
-    user: root
-    volumes:
-      - ./volumes/pictrs:/mnt
-    restart: always
-EOF
-fi
 
 #Postgres
 
-if [ "$ENVIROMENT" = "prod" ]; then
-cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
+cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
   postgres:
     image: postgres:14-alpine
     ports:
@@ -423,32 +397,11 @@ cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
 EOF
-else
-  cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
-  postgres:
-    image: postgres:14-alpine
-    ports:
-      # use a different port so it doesn't conflict with postgres running on the host
-      - "$POSTGRES_PORT:5432"
-    environment:
-      - POSTGRES_USER=$POSTGRES_USER
-      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
-      - POSTGRES_DB=$POSTGRES_DB
-    volumes:
-      - ./volumes/postgres:/var/lib/postgresql/data
-    networks:
-      tinyboards:
-        aliases:
-          - postgres
-    restart: always
-    command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
-EOF
-fi
 
 #volumes and networks
 
-if [ "$ENVIROMENT" = "prod" ]; then
-cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
+
+cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
 
 volumes:
   nginx_secrets:
@@ -456,14 +409,6 @@ volumes:
 networks:
   tinyboards: {}
 EOF
-else
-  cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
-
-networks:
-  tinyboards: {}
-EOF
-fi
-
 
 #docker-scripts
 
