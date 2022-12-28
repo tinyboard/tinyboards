@@ -194,7 +194,7 @@ cat > $INSTALL_LOCATION/tinyboards.hjson <<EOF
   # The salt suffix used for making password hashes (it still uses a UUID along with this suffix)
   salt_suffix: "$SALT_SUFFIX"
   # Environment where the code is being ran (prod or dev)
-  environment: "$ENVIROMENT"
+  environment: "$ENVIRONMENT"
 
   # pictrs host
   pictrs_url: "http://pictrs:8080"
@@ -202,15 +202,15 @@ cat > $INSTALL_LOCATION/tinyboards.hjson <<EOF
 EOF
 
 #generate docker-compose files
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
   COMPOSE_FILE="docker-compose.yml"
 else
   COMPOSE_FILE="docker-compose.dev.yml"
 fi
 
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 
-echo "****${ENVIROMENT} ENVIROMENT****"
+echo "****${ENVIRONMENT} ENVIRONMENT****"
 
   # Create a docker-compose.yml file if prod is true
 cat > $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
@@ -220,7 +220,7 @@ services:
 EOF
 
 #nginx service
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 
   # use prod nginx-certbot service
 cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
@@ -264,7 +264,7 @@ EOF
 fi
 
 #tinyboards-be
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 echo "****WILL PULL IMAGES FROM DOCKERHUB****"
   # pull prod image from dockerhub
 cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
@@ -316,7 +316,7 @@ else
 EOF
 fi
 #tinyboards-fe
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 echo "****TINYBOARDS-FE PULL FROM DOCKERHUB ****"
   # pull prod image from dockerhub
 cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
