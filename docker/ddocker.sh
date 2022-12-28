@@ -451,8 +451,8 @@ else
 chmod u+x docker-start-dev.sh
 fi
 
-if [ "$ENVIROMENT" = "prod" ]; then
-echo "****PROCESS COMPLETE, RUN "docker-start.sh" TO BUILD PROD ENVIROMENT****"
+if [ "$ENVIRONMENT" = "prod" ]; then
+echo "****PROCESS COMPLETE, RUN "docker-start.sh" TO BUILD PROD ENVIRONMENT****"
 else
-echo "****PROCESS COMPLETE, RUN "docker-start-dev.sh" TO BUILD DEV ENVIROMENT****"
+echo "****PROCESS COMPLETE, RUN "docker-start-dev.sh" TO BUILD DEV ENVIRONMENT****"
 fi
