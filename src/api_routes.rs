@@ -16,6 +16,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
+            .route("/remove", web::post().to(route_post::<RemoveObject>))
+            .route("/approve", web::post().to(route_post::<ApproveObject>))
+            .route("/lock", web::post().to(route_post::<LockObject>))
+            .route("/unlock", web::post().to(route_post::<UnlockObject>))
             .route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),
@@ -87,13 +91,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/mod")
                     .route("/ban", web::post().to(route_post::<BanUser>))
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
-                    .route("/remove_post", web::post().to(route_post::<RemovePost>))
-                    .route(
-                        "/remove_comment",
-                        web::post().to(route_post::<RemoveComment>),
-                    )
                     .route("/ban_board", web::post().to(route_post::<BanBoard>))
-                    .route("/lock_post", web::post().to(route_post::<LockPost>))
                     .route("/sticky_post", web::post().to(route_post::<StickyPost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>)),
             )

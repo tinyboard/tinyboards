@@ -1,7 +1,9 @@
 use crate::schema::comments::dsl::*;
+use crate::traits::Moderateable;
 use crate::utils::naive_now;
 use crate::{
     models::comment::comments::{Comment, CommentForm},
+    models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
     traits::Crud,
 };
 use diesel::{prelude::*, result::Error, PgConnection, QueryDsl, RunQueryDsl};
@@ -54,6 +56,17 @@ impl Comment {
             .get_result::<Self>(conn)
     }
 
+    pub fn update_locked(
+        conn: &mut PgConnection,
+        comment_id: i32,
+        locked: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::comments::dsl::*;
+        diesel::update(comments.find(comment_id))
+            .set((is_locked.eq(locked), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
     pub fn get_by_id(conn: &mut PgConnection, cid: i32) -> Result<Option<Self>, TinyBoardsError> {
         use crate::schema::comments::dsl::*;
         comments
@@ -96,5 +109,82 @@ impl Crud for Comment {
         diesel::update(comments.find(comment_id))
             .set(form)
             .get_result::<Self>(conn)
+    }
+}
+
+impl Moderateable for Comment {
+    fn get_board_id(&self) -> i32 {
+        self.board_id
+    }
+
+    fn remove(
+        &self,
+        admin_id: Option<i32>,
+        reason: Option<String>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError> {
+        Self::update_removed(conn, self.id, true)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to remove comment"))?;
+
+        // create mod log entry
+        let remove_comment_form = ModRemoveCommentForm {
+            mod_user_id: admin_id.unwrap_or(1),
+            comment_id: self.id,
+            reason: Some(reason),
+            removed: Some(Some(true)),
+        };
+
+        ModRemoveComment::create(conn, &remove_comment_form)
+            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to remove comment"))?;
+
+        Ok(())
+    }
+
+    fn approve(
+        &self,
+        admin_id: Option<i32>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError> {
+        Self::update_removed(conn, self.id, false)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to approve comment"))?;
+
+        // create mod log entry
+        let remove_comment_form = ModRemoveCommentForm {
+            mod_user_id: admin_id.unwrap_or(1),
+            comment_id: self.id,
+            reason: None,
+            removed: Some(Some(false)),
+        };
+
+        ModRemoveComment::create(conn, &remove_comment_form)
+            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to approve comment"))?;
+
+        Ok(())
+    }
+
+    fn lock(&self, _admin_id: Option<i32>, conn: &mut PgConnection) -> Result<(), TinyBoardsError> {
+        Self::update_locked(conn, self.id, true)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        // TODO: modlog entry for comment lock
+
+        Ok(())
+    }
+
+    fn unlock(
+        &self,
+        _admin_id: Option<i32>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError> {
+        Self::update_locked(conn, self.id, false)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        // TODO: modlog entry for comment unlock
+
+        Ok(())
     }
 }
