@@ -31,7 +31,7 @@ fi
 cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
 
 # media-server
-    location ~^/(pictrs) {
+    location ~^/(image) {
       expires 120d;
       add_header Pragma "public";
       add_header Cache-Control "public";
@@ -207,8 +207,6 @@ if [ "$ENVIRONMENT" = "prod" ]; then
 else
   COMPOSE_FILE="docker-compose.dev.yml"
 fi
-
-if [ "$ENVIRONMENT" = "prod" ]; then
 
 echo "****${ENVIRONMENT} ENVIRONMENT****"
 
