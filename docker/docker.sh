@@ -399,7 +399,7 @@ EOF
 #volumes and networks
 
 
-if [ "$ENVIROMENT" = "prod" ]; then
+if [ "$ENVIRONMENT" = "prod" ]; then
 cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
 
 volumes:
