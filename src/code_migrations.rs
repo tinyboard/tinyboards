@@ -2,8 +2,9 @@ use tinyboards_api_common::utils::blocking;
 use tinyboards_db::{
     database::PgPool,
     models::{
+        board::boards::{Board, BoardForm},
         site::site::{Site, SiteForm},
-        user::users::{User, UserForm}, board::boards::{BoardForm, Board},
+        user::users::{User, UserForm},
     },
     traits::Crud,
     utils::naive_now,
@@ -55,10 +56,8 @@ async fn initialize_local_site_and_admin_user(
 
         let inserted_admin = blocking(pool, move |conn| User::create(conn, &user_form)).await??;
 
-
-        let default_name = "main".to_string();
-        let default_title  = "The Default Board".to_string();
-
+        let default_name = "campfire".to_string();
+        let default_title = "The Default Board".to_string();
 
         let default_board_form = BoardForm {
             name: Some(default_name),
