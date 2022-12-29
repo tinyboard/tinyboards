@@ -399,7 +399,8 @@ EOF
 #volumes and networks
 
 
-cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
+if [ "$ENVIROMENT" = "prod" ]; then
+cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
 
 volumes:
   nginx_secrets:
@@ -407,6 +408,13 @@ volumes:
 networks:
   tinyboards: {}
 EOF
+else
+  cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
+
+networks:
+  tinyboards: {}
+EOF
+fi
 
 #docker-scripts
 
