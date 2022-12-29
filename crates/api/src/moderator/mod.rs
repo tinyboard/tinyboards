@@ -8,6 +8,7 @@ pub mod mod_add_admin;
 pub mod mod_add_board_mod;
 pub mod mod_ban_from_board;
 pub mod mod_ban_user;
+pub mod mod_lock_object;
 pub mod mod_lock_post;
 pub mod mod_remove_board;
 pub mod mod_remove_comment;
@@ -31,6 +32,7 @@ pub(crate) async fn get_moderateable_object(
 ) -> Result<Box<dyn Moderateable + Send>, TinyBoardsError> {
     use IdType::*;
 
+    // we make sure we can safely split the fullname at the index of 3 by aborting if it's too short
     if thing_fullname.len() <= 3 {
         return Err(TinyBoardsError::from_message("invalid fullname"));
     }

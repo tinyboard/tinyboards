@@ -18,6 +18,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
             .route("/remove", web::post().to(route_post::<RemoveObject>))
             .route("/approve", web::post().to(route_post::<ApproveObject>))
+            .route("/lock", web::post().to(route_post::<LockObject>))
+            .route("/unlock", web::post().to(route_post::<UnlockObject>))
             .route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),
