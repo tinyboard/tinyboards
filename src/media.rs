@@ -27,16 +27,16 @@ pub fn config(
     cfg
     .app_data(web::Data::new(client))
     .service(
-        web::resource("/pictrs/image")
+        web::resource("/image")
         .wrap(rate_limit.image())
         .route(web::post().to(upload)),
     )
     .service(
-        web::resource("/pictrs/image/{filename}")
+        web::resource("/image/{filename}")
         .route(web::get().to(full_res)),
     )
     .service(
-        web::resource("/pictrs/image/delete/{token}/{filename}")
+        web::resource("/image/delete/{token}/{filename}")
         .route(web::get().to(delete))
     );
 }
