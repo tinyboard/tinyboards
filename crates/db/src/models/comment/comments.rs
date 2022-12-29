@@ -19,6 +19,7 @@ pub struct Comment {
     pub edited_date: Option<NaiveDateTime>,
     pub is_deleted: bool,
     pub updated: Option<NaiveDateTime>,
+    pub is_locked: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]

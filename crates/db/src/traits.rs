@@ -57,7 +57,6 @@ pub trait Voteable {
         Self: Sized;
 }
 
-
 pub trait Bannable {
     type Form;
     fn ban(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
@@ -130,4 +129,21 @@ pub trait ViewToVec {
     fn from_tuple_to_vec(tuple: Vec<Self::DbTuple>) -> Vec<Self>
     where
         Self: Sized;
+}
+
+pub trait Moderateable {
+    fn remove(
+        &self,
+        admin_id: Option<i32>,
+        reason: Option<String>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError>;
+    fn approve(
+        &self,
+        admin_id: Option<i32>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError>;
+    fn lock(&self, admin_id: Option<i32>, conn: &mut PgConnection) -> Result<(), TinyBoardsError>;
+    fn unlock(&self, admin_id: Option<i32>, conn: &mut PgConnection)
+        -> Result<(), TinyBoardsError>;
 }

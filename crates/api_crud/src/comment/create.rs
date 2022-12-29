@@ -77,6 +77,14 @@ impl<'des> PerformCrud<'des> for CreateComment {
                 return Err(TinyBoardsError::from_message("bad request"));
             }
 
+            if (parent_comment.is_removed || parent_comment.is_deleted || parent_comment.is_locked)
+                && !user.is_admin
+            {
+                return Err(TinyBoardsError::from_message(
+                    "Comment deleted, removed or locked, you can't reply to it anymore.",
+                ));
+            }
+
             level = parent_comment.level + 1;
         }
 
