@@ -13,12 +13,6 @@ pub struct StickyPost {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct LockPost {
-    pub post_id: i32,
-    pub locked: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanUser {
     pub target_user_id: i32,
     pub banned: bool,
@@ -54,20 +48,6 @@ pub struct LockObject {
 #[derive(Debug, Deserialize)]
 pub struct UnlockObject {
     pub target_fullname: String,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RemovePost {
-    pub post_id: i32,
-    pub reason: Option<String>,
-    pub removed: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RemoveComment {
-    pub comment_id: i32,
-    pub reason: Option<String>,
-    pub removed: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
