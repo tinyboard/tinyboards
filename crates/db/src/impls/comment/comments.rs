@@ -113,6 +113,10 @@ impl Crud for Comment {
 }
 
 impl Moderateable for Comment {
+    fn get_board_id(&self) -> i32 {
+        self.board_id
+    }
+
     fn remove(
         &self,
         admin_id: Option<i32>,

@@ -35,6 +35,17 @@ pub struct BanFromBoard {
     pub reason: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RemoveObject {
+    pub target_fullname: String,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ApproveObject {
+    pub target_fullname: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct RemovePost {
     pub post_id: i32,

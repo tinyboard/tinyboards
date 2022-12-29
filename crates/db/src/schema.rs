@@ -134,6 +134,7 @@ diesel::table! {
         is_deleted -> Bool,
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
+        board_id -> Int4,
     }
 }
 

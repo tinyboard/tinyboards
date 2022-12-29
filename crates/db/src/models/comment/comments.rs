@@ -20,6 +20,7 @@ pub struct Comment {
     pub is_deleted: bool,
     pub updated: Option<NaiveDateTime>,
     pub is_locked: bool,
+    pub board_id: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -35,4 +36,5 @@ pub struct CommentForm {
     pub level: Option<i32>,
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: Option<bool>,
+    pub board_id: Option<i32>,
 }

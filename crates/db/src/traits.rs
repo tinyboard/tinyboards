@@ -132,6 +132,7 @@ pub trait ViewToVec {
 }
 
 pub trait Moderateable {
+    fn get_board_id(&self) -> i32;
     fn remove(
         &self,
         admin_id: Option<i32>,
