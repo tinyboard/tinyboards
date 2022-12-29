@@ -1,7 +1,10 @@
 use crate::{
+    models::moderator::mod_actions::{
+        ModLockPost, ModLockPostForm, ModRemovePost, ModRemovePostForm,
+    },
     models::post::posts::{Post, PostForm},
     schema::posts,
-    traits::Crud,
+    traits::{Crud, Moderateable},
     utils::naive_now,
 };
 use diesel::{prelude::*, result::Error, PgConnection};
@@ -163,5 +166,92 @@ impl Crud for Post {
         diesel::update(posts::table.find(post_id))
             .set(form)
             .get_result::<Self>(conn)
+    }
+}
+
+impl Moderateable for Post {
+    fn remove(
+        &self,
+        admin_id: Option<i32>,
+        reason: Option<String>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError> {
+        Self::update_removed(conn, self.id, true)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        // form for submitting remove action to mod log
+        let remove_post_form = ModRemovePostForm {
+            mod_user_id: admin_id.unwrap_or(1),
+            post_id: self.id,
+            reason: Some(reason),
+            removed: Some(Some(true)),
+        };
+
+        // submit mod action to mod log
+        ModRemovePost::create(conn, &remove_post_form).map_err(|e| TinyBoardsError::from(e))?;
+
+        Ok(())
+    }
+
+    fn approve(
+        &self,
+        admin_id: Option<i32>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError> {
+        Self::update_removed(conn, self.id, false)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        // form for submitting remove action to mod log
+        let remove_post_form = ModRemovePostForm {
+            mod_user_id: admin_id.unwrap_or(1),
+            post_id: self.id,
+            reason: None,
+            removed: Some(Some(false)),
+        };
+
+        // submit mod action to mod log
+        ModRemovePost::create(conn, &remove_post_form).map_err(|e| TinyBoardsError::from(e))?;
+
+        Ok(())
+    }
+
+    fn lock(&self, admin_id: Option<i32>, conn: &mut PgConnection) -> Result<(), TinyBoardsError> {
+        Self::update_locked(conn, self.id, true)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        // form for submitting lock action for mod log
+        let lock_form = ModLockPostForm {
+            mod_user_id: admin_id.unwrap_or(1),
+            post_id: self.id,
+            locked: Some(Some(true)),
+        };
+
+        ModLockPost::create(conn, &lock_form).map_err(|e| TinyBoardsError::from(e))?;
+
+        Ok(())
+    }
+
+    fn unlock(
+        &self,
+        admin_id: Option<i32>,
+        conn: &mut PgConnection,
+    ) -> Result<(), TinyBoardsError> {
+        Self::update_locked(conn, self.id, false)
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        // form for submitting lock action for mod log
+        let lock_form = ModLockPostForm {
+            mod_user_id: admin_id.unwrap_or(1),
+            post_id: self.id,
+            locked: Some(Some(false)),
+        };
+
+        ModLockPost::create(conn, &lock_form).map_err(|e| TinyBoardsError::from(e))?;
+
+        Ok(())
     }
 }
