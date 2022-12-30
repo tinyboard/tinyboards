@@ -4,7 +4,7 @@ services:
   nginx:
     image: nginx:1-alpine
     ports:
-      - "1236:1236"
+      - "80:80"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d
     networks:
