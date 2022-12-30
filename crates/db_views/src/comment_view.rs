@@ -58,12 +58,13 @@ impl CommentView {
         }
     }
 
-    /// Order comments into a hierarchical tree structure.
-    pub fn into_tree(dataset: Vec<Self>) -> Vec<Self> {
+    /// Order comments into a hierarchical tree structure. `top_comment_id` is the id of the comment that counts as top level; if not provided, comments with no `parent_id` will be considered top-level.
+    pub fn into_tree(dataset: Vec<Self>, top_comment_id: Option<i32>) -> Vec<Self> {
         // We REALLY don't want to deal with references here! Everything should be OWNED by the object it belongs to.
 
         // comment id -> list of top level replies
         let mut hash_table: HashMap<i32, Vec<Self>> = HashMap::new();
+        let top_comment_id = top_comment_id.unwrap_or(-1);
 
         /*for comment in dataset.iter() {
             if let Some(parent_id) = comment.comment.parent_id {
@@ -76,15 +77,20 @@ impl CommentView {
             let mut filtered_dataset = Vec::new();
 
             for comment in dataset.into_iter() {
-                // if the comment is not top-level, then...
+                // determine if the comment is top-level
                 if let Some(parent_id) = comment.comment.parent_id {
-                    // it will be moved into the hash table, keyed with its parent's id
-                    let entry = hash_table.entry(parent_id).or_insert(Vec::new());
-                    entry.push(comment);
+                    // if the comment is top-level, then it remains in dataset
+                    if comment.comment.id == top_comment_id {
+                        filtered_dataset.push(comment);
+                    } else {
+                        // otherwise it will be moved into the hash table, keyed with its parent's id
+                        let entry = hash_table.entry(parent_id).or_insert(Vec::new());
+                        entry.push(comment);
+                    }
 
-                    continue;
+                    // continue;
                 } else {
-                    // otherwise it remains in dataset
+                    // if parent id is None, it's definitely top level
                     filtered_dataset.push(comment);
                 }
             }
@@ -190,6 +196,84 @@ impl CommentView {
             replies: Vec::with_capacity(0),
         })
     }
+
+    /**
+    Returns a comments with a list of its replies up to level 5, ordered into a tree. You can optionally specify `context` to load a specific amount of parent commments as well.
+    */
+    pub fn get_comment_with_replies(
+        conn: &mut PgConnection,
+        comment_id: i32,
+        sort: Option<CommentSortType>,
+        user: Option<&User>,
+        context: Option<i32>,
+    ) -> Result<CommentQueryResponse, Error> {
+        // max allowed value for context is 4
+        let context = std::cmp::min(context.unwrap_or(0), 4);
+        let user_id = user.as_ref().map(|u| u.id);
+        let top_comment = Self::read(conn, comment_id, user_id)?;
+
+        let mut ids = vec![top_comment.comment.id];
+        let mut top_comment_id = top_comment.comment.id;
+        let parent_comment_id = top_comment.comment.parent_id;
+        let mut comments_vec = vec![top_comment];
+        let mut total_count: i64 = 1;
+
+        // read parent comments equal to context
+        if let Some(mut parent_comment_id) = parent_comment_id {
+            for _ in 0..context {
+                let parent_comment_view = Self::read(conn, parent_comment_id, user_id)?;
+                top_comment_id = parent_comment_view.comment.id;
+                let parent_id = parent_comment_view.comment.parent_id;
+                comments_vec.push(parent_comment_view);
+                total_count += 1;
+
+                match parent_id {
+                    Some(parent_id) => parent_comment_id = parent_id,
+                    None => break,
+                };
+            }
+        }
+
+        // load replies, then replies of replies, and so on and so forth
+        for _ in 0..(5 - context) {
+            let CommentQueryResponse {
+                mut comments,
+                count,
+            } = CommentQuery::builder()
+                .conn(conn)
+                .parent_ids(Some(&ids))
+                .user_id(user_id)
+                .sort(sort)
+                .build()
+                .list()?;
+
+            total_count += count;
+            ids = comments
+                .iter()
+                .map(|comment_view| comment_view.comment.id)
+                .collect();
+
+            // no need for further iterations if there are no more replies present
+            if ids.is_empty() {
+                break;
+            }
+
+            comments_vec.append(&mut comments);
+        }
+
+        // hide deleted/removed info
+        for cv in comments_vec
+            .iter_mut()
+            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
+        {
+            cv.hide_if_removed_or_deleted(user);
+        }
+
+        Ok(CommentQueryResponse {
+            comments: Self::into_tree(comments_vec, Some(top_comment_id)),
+            count: total_count,
+        })
+    }
 }
 
 #[derive(TypedBuilder)]
@@ -202,6 +286,7 @@ pub struct CommentQuery<'a> {
     board_id: Option<i32>,
     post_id: Option<i32>,
     parent_id: Option<i32>,
+    parent_ids: Option<&'a [i32]>,
     creator_id: Option<i32>,
     user_id: Option<i32>,
     search_term: Option<String>,
@@ -277,7 +362,7 @@ impl<'a> CommentQuery<'a> {
             ))
             .into_boxed();
 
-        let count_query = comments::table
+        let mut count_query = comments::table
             .inner_join(users::table)
             .inner_join(posts::table)
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
@@ -333,51 +418,74 @@ impl<'a> CommentQuery<'a> {
 
         if let Some(creator_id) = self.creator_id {
             query = query.filter(comments::creator_id.eq(creator_id));
+            count_query = count_query.filter(comments::creator_id.eq(creator_id));
         };
 
         if let Some(post_id) = self.post_id {
             query = query.filter(comments::post_id.eq(post_id));
+            count_query = count_query.filter(comments::post_id.eq(post_id));
         };
 
         if let Some(parent_id) = self.parent_id {
             query = query.filter(comments::parent_id.eq(parent_id));
+            count_query = count_query.filter(comments::parent_id.eq(parent_id));
         };
+
+        if let Some(parent_ids) = self.parent_ids {
+            query = query.filter(comments::parent_id.eq_any(parent_ids));
+            count_query = count_query.filter(comments::parent_id.eq_any(parent_ids));
+        }
 
         if let Some(search_term) = self.search_term {
             query = query.filter(comments::body.ilike(fuzzy_search(&search_term)));
+            count_query = count_query.filter(comments::body.ilike(fuzzy_search(&search_term)));
         };
 
         if let Some(listing_type) = self.listing_type {
             match listing_type {
                 ListingType::Subscribed => {
-                    query = query.filter(board_subscriptions::user_id.is_not_null())
+                    query = query.filter(board_subscriptions::user_id.is_not_null());
+                    count_query = count_query.filter(board_subscriptions::user_id.is_not_null());
                 }
                 ListingType::All => {
                     query = query.filter(
                         boards::is_hidden
                             .eq(false)
                             .or(board_subscriptions::user_id.eq(user_id_join)),
-                    )
+                    );
+                    count_query = count_query.filter(
+                        boards::is_hidden
+                            .eq(false)
+                            .or(board_subscriptions::user_id.eq(user_id_join)),
+                    );
                 }
             }
         };
 
         if let Some(board_id) = self.board_id {
             query = query.filter(posts::board_id.eq(board_id));
+            count_query = count_query.filter(posts::board_id.eq(board_id));
         }
 
         if self.saved_only.unwrap_or(false) {
             query = query.filter(user_comment_save::id.is_not_null());
+            count_query = count_query.filter(user_comment_save::id.is_not_null());
         }
 
         if !self.show_deleted_and_removed.unwrap_or(false) {
             query = query.filter(comments::is_removed.eq(false));
             query = query.filter(comments::is_deleted.eq(false));
+
+            count_query = count_query.filter(comments::is_removed.eq(false));
+            count_query = count_query.filter(comments::is_deleted.eq(false));
         }
 
         if self.user_id.is_some() {
             query = query.filter(user_board_blocks::user_id.is_null());
             query = query.filter(user_blocks::user_id.is_null());
+
+            count_query = count_query.filter(user_board_blocks::user_id.is_null());
+            count_query = count_query.filter(user_blocks::user_id.is_null());
         }
 
         let (limit, offset) = limit_and_offset_unlimited(self.page, self.limit);
@@ -402,6 +510,7 @@ impl<'a> CommentQuery<'a> {
 
         let comments = CommentView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(self.conn)?;
+        //println!("{:#?}", comments);
 
         Ok(CommentQueryResponse { comments, count })
     }

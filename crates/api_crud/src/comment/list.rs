@@ -15,6 +15,11 @@ use tinyboards_db_views::{
 };
 use tinyboards_utils::error::TinyBoardsError;
 
+enum Format {
+    List,
+    Tree,
+}
+
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for ListComments {
     type Response = ListCommentsResponse;
@@ -49,6 +54,14 @@ impl<'des> PerformCrud<'des> for ListComments {
             None => ListingType::All,
         };
 
+        let format = match data.format {
+            Some(format) => match format.to_lowercase().as_ref() {
+                "list" => Format::List,
+                _ => Format::Tree,
+            },
+            None => Format::Tree,
+        };
+
         let page = data.page;
         let limit = data.limit;
         let board_id = data.board_id;
@@ -80,6 +93,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         .await??;
 
         let mut comments = response.comments;
+        //println!("{:#?}", comments);
         let total_count = response.count;
 
         // blank out comment info if deleted or removed
@@ -90,8 +104,11 @@ impl<'des> PerformCrud<'des> for ListComments {
             cv.hide_if_removed_or_deleted(user.as_ref());
         }
 
-        // order into tree
-        let comments = CommentView::into_tree(comments);
+        if let Format::Tree = format {
+            // order into tree
+            comments = CommentView::into_tree(comments, parent_id);
+            //println!("{:#?}", comments);
+        }
 
         Ok(ListCommentsResponse {
             comments,
@@ -149,7 +166,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
             cv.hide_if_removed_or_deleted(user.as_ref());
         }
 
-        let comments = CommentView::into_tree(comments);
+        let comments = CommentView::into_tree(comments, None);
 
         Ok(comments)
     }

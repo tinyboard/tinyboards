@@ -46,6 +46,7 @@ pub struct ListComments {
     pub search_term: Option<String>,
     pub saved_only: Option<bool>,
     pub show_deleted_and_removed: Option<bool>,
+    pub format: Option<String>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
 }
@@ -62,4 +63,7 @@ pub struct CommentResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct GetComment {}
+pub struct GetComment {
+    pub context: Option<i32>,
+    pub sort: Option<String>,
+}
