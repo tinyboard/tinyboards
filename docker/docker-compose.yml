@@ -4,7 +4,7 @@ services:
   nginx:
     image: jonasal/nginx-certbot:latest
     env_file:
-      - ./nginx/prod/nginx-certbot.env
+      - ./nginx/conf/nginx-certbot.env
     ports:
       - 80:80
       - 443:443
