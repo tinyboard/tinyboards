@@ -10,7 +10,7 @@ services:
       - 443:443
     volumes:
       - nginx_secrets:/etc/letsencrypt
-      - ./nginx/prod/conf:/etc/nginx/user_conf.d
+      - ./nginx/conf:/etc/nginx/user_conf.d
     networks:
       tinyboards:
         aliases:

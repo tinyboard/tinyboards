@@ -6,7 +6,7 @@ services:
     ports:
       - "1236:1236"
     volumes:
-      - ./nginx/dev/:/etc/nginx/conf.d
+      - ./nginx/conf/:/etc/nginx/conf.d
     networks:
       tinyboards:
         aliases:
