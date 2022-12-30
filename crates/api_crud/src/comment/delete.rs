@@ -42,12 +42,16 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         if orig_comment.is_deleted == data.deleted {
             return Err(TinyBoardsError::from_message(
+                400,
                 "couldn't delete comment a second time!",
             ));
         }
 
         if !Comment::is_comment_creator(user.id, orig_comment.creator_id) {
-            return Err(TinyBoardsError::from_message("comment edit not allowed"));
+            return Err(TinyBoardsError::from_message(
+                403,
+                "comment edit not allowed",
+            ));
         }
 
         let deleted = data.deleted;

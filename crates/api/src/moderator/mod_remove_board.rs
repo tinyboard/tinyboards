@@ -32,6 +32,7 @@ impl<'des> Perform<'des> for BanBoard {
 
         if board_id == 1 {
             return Err(TinyBoardsError::from_message(
+                403,
                 "you can't ban the default board",
             ));
         }

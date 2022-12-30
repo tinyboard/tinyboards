@@ -89,7 +89,10 @@ impl<'des> Perform<'des> for CreatePostVote {
 
             Ok(PostResponse { post_view })
         } else {
-            Err(TinyBoardsError::from_message("user is banned on the board"))
+            Err(TinyBoardsError::from_message(
+                403,
+                "you are banned from the board",
+            ))
         }
     }
 }

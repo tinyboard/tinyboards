@@ -37,19 +37,19 @@ impl<'des> Perform<'des> for SaveComment {
             let save_comment = move |conn: &mut _| CommentSaved::save(conn, &saved_form);
             blocking(context.pool(), save_comment)
                 .await?
-                .map_err(|_e| TinyBoardsError::from_message("could not save comment"))?;
+                .map_err(|_e| TinyBoardsError::from_message(500, "could not save comment"))?;
         } else {
             let unsave_comment = move |conn: &mut _| CommentSaved::unsave(conn, &saved_form);
             blocking(context.pool(), unsave_comment)
                 .await?
-                .map_err(|_e| TinyBoardsError::from_message("could not unsave comment"))?;
+                .map_err(|_e| TinyBoardsError::from_message(500, "could not unsave comment"))?;
         }
 
         let comment_id = path.comment_id;
         let user_id = user_view.user.id;
         let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, Some(user_id))
-                .map_err(|_e| TinyBoardsError::from_message("could not find comment"))
+                .map_err(|_e| TinyBoardsError::from_message(404, "could not find comment"))
         })
         .await??;
 

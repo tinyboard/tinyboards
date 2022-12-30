@@ -36,7 +36,7 @@ impl<'des> Perform<'des> for Login {
         .await??;
 
         if !verify_password(&user.passhash, &self.password) {
-            return Err(TinyBoardsError::from_message("login failed"));
+            return Err(TinyBoardsError::from_message(400, "login failed"));
         }
 
         Ok(LoginResponse {

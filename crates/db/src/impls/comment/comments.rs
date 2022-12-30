@@ -12,7 +12,7 @@ use tinyboards_utils::TinyBoardsError;
 impl Comment {
     pub fn submit(conn: &mut PgConnection, form: CommentForm) -> Result<Self, TinyBoardsError> {
         Self::create(conn, &form)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not submit comment"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit comment"))
     }
     /// Checks if a comment with a given id exists. Don't use if you need a whole Comment object.
     pub fn check_if_exists(
@@ -26,7 +26,11 @@ impl Comment {
             .first::<i32>(conn)
             .optional()
             .map_err(|e| {
-                TinyBoardsError::from_error_message(e, "error while checking existence of comment")
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "error while checking existence of comment",
+                )
             })
     }
 
@@ -73,7 +77,7 @@ impl Comment {
             .filter(id.eq(cid))
             .first::<Self>(conn)
             .optional()
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not get comment by id"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not get comment by id"))
     }
 
     /// Loads list of comments replying to the specified post.
@@ -85,7 +89,9 @@ impl Comment {
         comments
             .filter(post_id.eq(pid))
             .load::<Self>(conn)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not get replies to post"))
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "could not get replies to post")
+            })
     }
 }
 
@@ -125,7 +131,7 @@ impl Moderateable for Comment {
     ) -> Result<(), TinyBoardsError> {
         Self::update_removed(conn, self.id, true)
             .map(|_| ())
-            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to remove comment"))?;
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to remove comment"))?;
 
         // create mod log entry
         let remove_comment_form = ModRemoveCommentForm {
@@ -136,7 +142,7 @@ impl Moderateable for Comment {
         };
 
         ModRemoveComment::create(conn, &remove_comment_form)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to remove comment"))?;
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to remove comment"))?;
 
         Ok(())
     }
@@ -148,7 +154,9 @@ impl Moderateable for Comment {
     ) -> Result<(), TinyBoardsError> {
         Self::update_removed(conn, self.id, false)
             .map(|_| ())
-            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to approve comment"))?;
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to approve comment")
+            })?;
 
         // create mod log entry
         let remove_comment_form = ModRemoveCommentForm {
@@ -158,8 +166,9 @@ impl Moderateable for Comment {
             removed: Some(Some(false)),
         };
 
-        ModRemoveComment::create(conn, &remove_comment_form)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "Failed to approve comment"))?;
+        ModRemoveComment::create(conn, &remove_comment_form).map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Failed to approve comment")
+        })?;
 
         Ok(())
     }

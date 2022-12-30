@@ -1,11 +1,10 @@
 use crate::schema::user_blocks::dsl::*;
-use diesel::prelude::*;
-use tinyboards_utils::TinyBoardsError;
 use crate::{
     models::user::user_blocks::{UserBlock, UserBlockForm},
-    traits::Blockable,  
+    traits::Blockable,
 };
-
+use diesel::prelude::*;
+use tinyboards_utils::TinyBoardsError;
 
 impl UserBlock {
     pub fn read(
@@ -17,10 +16,9 @@ impl UserBlock {
             .filter(user_id.eq(for_user_id))
             .filter(target_id.eq(for_recipient_id))
             .first::<Self>(conn)
-            .map_err(|_| TinyBoardsError::from_message("error reading user block"))
+            .map_err(|_| TinyBoardsError::from_message(500, "error reading user block"))
     }
 }
-
 
 impl Blockable for UserBlock {
     type Form = UserBlockForm;
@@ -31,7 +29,7 @@ impl Blockable for UserBlock {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|_| TinyBoardsError::from_message("could not block user"))
+            .map_err(|_| TinyBoardsError::from_message(500, "could not block user"))
     }
 
     fn unblock(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError> {
@@ -41,6 +39,6 @@ impl Blockable for UserBlock {
                 .filter(target_id.eq(form.target_id)),
         )
         .execute(conn)
-        .map_err(|_| TinyBoardsError::from_message("could not unblock user"))
+        .map_err(|_| TinyBoardsError::from_message(500, "could not unblock user"))
     }
 }

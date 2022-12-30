@@ -67,7 +67,7 @@ where
     })
     .await
     .map_err(|e| {
-        TinyBoardsError::from_error_message(e, "Internal Server Error (Blocking Error)")
+        TinyBoardsError::from_error_message(e, 500, "Internal Server Error (Blocking Error)")
     })?;
 
     res
@@ -76,7 +76,7 @@ where
 /// Checks the password length
 pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
     if !(10..=60).contains(&pass.len()) {
-        Err(TinyBoardsError::from_message("invalid password"))
+        Err(TinyBoardsError::from_message(400, "password length must be between 10-60 characters"))
     } else {
         Ok(())
     }
@@ -99,7 +99,7 @@ pub async fn load_user_opt(pool: &PgPool, master_key: &Secret, auth: Option<&str
     }
 
     if !auth.starts_with("Bearer ") {
-        return Err(TinyBoardsError::from_message("Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
+        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
     }
     // Reference to the string stored in `auth` skipping the `Bearer ` part
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
@@ -120,6 +120,7 @@ pub struct UserResult(UResult);
 pub async fn require_user(pool: &PgPool, master_key: &Secret, auth: Option<&str>) -> UserResult {
     if auth.is_none() {
         let err: UResult = Err(TinyBoardsError::from_message(
+            401,
             "you need to be logged in to do this",
         ));
         return err.into();
@@ -135,6 +136,7 @@ impl From<UResultOpt> for UserResult {
                 Some(u) => {
                     if u.is_deleted {
                         Err(TinyBoardsError::from_message(
+                            401,
                             "you need to be logged in to do this",
                         ))
                     } else {
@@ -142,6 +144,7 @@ impl From<UResultOpt> for UserResult {
                     }
                 }
                 None => Err(TinyBoardsError::from_message(
+                    401,
                     "you need to be logged in to do this",
                 )),
             },
@@ -158,6 +161,7 @@ impl From<UResult> for UserResult {
             Ok(u) => {
                 if u.is_deleted {
                     Err(TinyBoardsError::from_message(
+                        401,
                         "you need to be logged in to do this",
                     ))
                 } else {
@@ -179,6 +183,7 @@ impl UserResult {
             Ok(u) => {
                 return Self(if u.has_active_ban() {
                     Err(TinyBoardsError::from_message(
+                        403,
                         "you are banned from the site",
                     ))
                 } else {
@@ -196,6 +201,7 @@ impl UserResult {
                     Ok(u)
                 } else {
                     Err(TinyBoardsError::from_message(
+                        403,
                         "you need to be an admin to do this",
                     ))
                 }
@@ -221,7 +227,8 @@ impl UserResult {
                     Ok(is_banned) => {
                         if let Ok(board_ban) = is_banned {
                             Err(TinyBoardsError::from_message(
-                                format!("You are banned from {}", board_ban.board.name).as_str(),
+                                403,
+                                format!("You are banned from /b/{}", board_ban.board.name).as_str(),
                             ))
                         } else {
                             Ok(u)
@@ -248,7 +255,7 @@ impl UserResult {
                     blocking(pool, move |conn| Board::board_has_mod(conn, board_id, u.id)).await;
 
                 if is_mod.is_err() {
-                    return Self(Err(TinyBoardsError::from_message("nerd")));
+                    return Self(Err(TinyBoardsError::from_message(403, "nerd")));
                 };
 
                 let is_mod = is_mod.unwrap();
@@ -259,11 +266,12 @@ impl UserResult {
                             Ok(u)
                         } else {
                             Err(TinyBoardsError::from_message(
+                                403,
                                 "You must be a mod to do that!",
                             ))
                         }
                     }
-                    Err(e) => Err(TinyBoardsError::from_error_message(e, "")),
+                    Err(e) => Err(TinyBoardsError::from(e)),
                 };
 
                 Self(inner)
@@ -290,7 +298,7 @@ pub async fn get_user_view_from_jwt_opt(
     }
 
     if !auth.starts_with("Bearer ") {
-        return Err(TinyBoardsError::from_message("Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
+        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
     }
     // Reference to the string stored in `auth` skipping the `Bearer ` part
     // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
@@ -312,6 +320,7 @@ pub async fn get_user_view_from_jwt(
 ) -> Result<UserView, TinyBoardsError> {
     if auth.is_none() {
         return Err(TinyBoardsError::from_message(
+            401,
             "you need to be logged in to do that",
         ));
     }
@@ -320,6 +329,7 @@ pub async fn get_user_view_from_jwt(
     match user_view {
         Some(user_view) => Ok(user_view),
         None => Err(TinyBoardsError::from_message(
+            401,
             "you need to be logged in to do that",
         )),
     }
@@ -335,15 +345,16 @@ pub async fn check_registration_application(
         let user_id = user_view.user.id;
         let registration = blocking(pool, move |conn| {
             RegistrationApplication::find_by_user_id(conn, user_id)
-                .map_err(|_e| TinyBoardsError::from_message("could not find user registration"))
+                .map_err(|_e| TinyBoardsError::from_message(404, "could not find user registration"))
         })
         .await??;
 
         if let Some(deny_reason) = registration.deny_reason {
             let registration_denied_message = &deny_reason;
-            return Err(TinyBoardsError::from_message(registration_denied_message));
+            return Err(TinyBoardsError::from_message(403, registration_denied_message));
         } else {
             return Err(TinyBoardsError::from_message(
+                400,
                 "registration application pending",
             ));
         }
@@ -356,12 +367,12 @@ pub async fn check_downvotes_enabled(score: i16, pool: &PgPool) -> Result<(), Ti
     if score == -1 {
         let site = blocking(pool, move |conn| {
             Site::read_local(conn)
-                .map_err(|_e| TinyBoardsError::from_message("could not read site"))
+                .map_err(|_e| TinyBoardsError::from_message(500, "could not read site"))
         })
         .await??;
 
         if !site.enable_downvotes {
-            return Err(TinyBoardsError::from_message("downvotes are disabled"));
+            return Err(TinyBoardsError::from_message(403, "downvotes are disabled"));
         }
     }
     Ok(())
@@ -377,7 +388,7 @@ pub async fn check_private_instance(
 
         if let Ok(site) = site {
             if site.private_instance {
-                return Err(TinyBoardsError::from_message("instance is private"));
+                return Err(TinyBoardsError::from_message(403, "instance is private"));
             }
         }
     }
@@ -391,10 +402,10 @@ pub async fn check_board_deleted_or_removed(
 ) -> Result<(), TinyBoardsError> {
     let board = blocking(pool, move |conn| Board::read(conn, board_id))
         .await?
-        .map_err(|_e| TinyBoardsError::from_message("couldn't find board"))?;
+        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
 
     if board.is_deleted || board.is_banned {
-        Err(TinyBoardsError::from_message("board deleted or removed"))
+        Err(TinyBoardsError::from_message(404, "board deleted or banned"))
     } else {
         Ok(())
     }
@@ -407,10 +418,10 @@ pub async fn check_post_deleted_or_removed(
 ) -> Result<(), TinyBoardsError> {
     let post = blocking(pool, move |conn| Post::read(conn, post_id))
         .await?
-        .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
+        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
 
     if post.is_deleted || post.is_removed {
-        Err(TinyBoardsError::from_message("post deleted or removed"))
+        Err(TinyBoardsError::from_message(404, "post deleted or removed"))
     } else {
         Ok(())
     }
@@ -423,12 +434,12 @@ pub async fn check_post_deleted_removed_or_locked(
 ) -> Result<(), TinyBoardsError> {
     let post = blocking(pool, move |conn| Post::read(conn, post_id))
         .await?
-        .map_err(|_e| TinyBoardsError::from_message("couldn't find post"))?;
+        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
 
     if post.is_locked {
-        Err(TinyBoardsError::from_message("post locked"))
+        Err(TinyBoardsError::from_message(403, "post locked"))
     } else if post.is_deleted || post.is_removed {
-        Err(TinyBoardsError::from_message("post deleted or removed"))
+        Err(TinyBoardsError::from_message(404, "post deleted or removed"))
     } else {
         Ok(())
     }
@@ -441,10 +452,10 @@ pub async fn check_comment_deleted_or_removed(
 ) -> Result<(), TinyBoardsError> {
     let comment = blocking(pool, move |conn| Comment::read(conn, comment_id))
         .await?
-        .map_err(|_e| TinyBoardsError::from_message("couldn't find comment"))?;
+        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find comment"))?;
 
     if comment.is_deleted || comment.is_removed {
-        Err(TinyBoardsError::from_message("comment deleted or removed"))
+        Err(TinyBoardsError::from_message(404, "comment deleted or removed"))
     } else {
         Ok(())
     }
@@ -479,7 +490,7 @@ pub async fn is_mod_or_admin(
     })
     .await?;
     if !is_mod_or_admin {
-        return Err(TinyBoardsError::from_message("not a mod or admin"));
+        return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
     }
     Ok(())
 }

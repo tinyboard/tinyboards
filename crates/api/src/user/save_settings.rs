@@ -63,13 +63,13 @@ impl<'des> Perform<'des> for SaveUserSettings {
         }
 
         if email.is_none() && site.email_verification_required {
-            return Err(TinyBoardsError::from_message("email required"));
+            return Err(TinyBoardsError::from_message(400, "email required"));
         }
 
         if let Some(Some(bio)) = &bio {
             // seems sort of arbitrary? do we want a setting for this length somewhere?
             if bio.chars().count() > 300 {
-                return Err(TinyBoardsError::from_message("bio too long"));
+                return Err(TinyBoardsError::from_message(400, "bio too long"));
             }
         }
 
@@ -94,7 +94,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // perform settings update
         blocking(context.pool(), move |conn| {
             User::update_settings(conn, user.id, &update_form)
-                .map_err(|_| TinyBoardsError::from_message("could not update user settings"))
+                .map_err(|_| TinyBoardsError::from_message(500, "could not update user settings"))
         })
         .await??;
 

@@ -36,6 +36,7 @@ impl User {
 
         if user.is_some() {
             return Err(TinyBoardsError::from_message(
+                409,
                 "username or email was already taken",
             ));
         }
@@ -79,7 +80,7 @@ impl User {
             .filter(id.eq(uid))
             .first::<Self>(conn)
             .optional()
-            .map_err(|e| TinyBoardsError::from_error_message(e, "error getting user from jwt"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 401, "error getting user from jwt"))
     }
     pub fn update_ban(
         conn: &mut PgConnection,
@@ -144,7 +145,7 @@ impl User {
         };
 
         Self::create(conn, &form)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not create user"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create user"))
     }
 
     pub fn has_active_ban(&self) -> bool {

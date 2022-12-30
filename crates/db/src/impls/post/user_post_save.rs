@@ -15,7 +15,7 @@ impl Saveable for PostSaved {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not save post"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not save post"))
     }
 
     fn unsave(conn: &mut PgConnection, form: &PostSavedForm) -> Result<usize, TinyBoardsError> {
@@ -26,6 +26,6 @@ impl Saveable for PostSaved {
                 .filter(user_id.eq(form.user_id)),
         )
         .execute(conn)
-        .map_err(|e| TinyBoardsError::from_error_message(e, "could not unsave post"))
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not unsave post"))
     }
 }

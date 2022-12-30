@@ -140,7 +140,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         .await??
         .is_none()
         {
-            return Err(TinyBoardsError::from_message("invalid post id"));
+            return Err(TinyBoardsError::from_message(400, "invalid post id"));
         }
 
         let response = blocking(context.pool(), move |conn| {

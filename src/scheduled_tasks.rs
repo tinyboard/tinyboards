@@ -13,7 +13,7 @@ pub fn setup(pool: DbPool) -> Result<(), TinyBoardsError> {
 
     let mut conn = pool
         .get()
-        .map_err(|_| TinyBoardsError::from_message("error getting db pool"))?;
+        .map_err(|_| TinyBoardsError::from_message(500, "error getting db pool"))?;
     update_banned_when_expired(&mut conn);
 
     // On startup, reindex the tables non-concurrently

@@ -30,7 +30,7 @@ impl UserView {
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .first::<UserViewTuple>(conn)
             .optional()
-            .map_err(|_| TinyBoardsError::from_message("could not read user view (opt)"))?;
+            .map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(user_view_tuple.map(|(user, counts)| Self { user, counts }))
     }
@@ -39,7 +39,7 @@ impl UserView {
         match Self::read_opt(conn, user_id) {
             Ok(opt) => match opt {
                 Some(u) => Ok(u),
-                None => Err(TinyBoardsError::from_message("no user view found")),
+                None => Err(TinyBoardsError::from_message(404, "no user view found")),
             },
             Err(e) => Err(e),
         }
@@ -53,7 +53,7 @@ impl UserView {
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
         let claims: BTreeMap<String, String> = token
             .verify_with_key(&key)
-            .map_err(|e| TinyBoardsError::from_error_message(e, ""))?;
+            .map_err(|e| TinyBoardsError::from(e))?;
 
         let uid = claims["uid"].parse::<i32>()?;
 

@@ -51,6 +51,7 @@ impl<'des> Perform<'des> for PurgeUser {
             || target_user.is_admin
         {
             return Err(TinyBoardsError::from_message(
+                403,
                 "can't purge a site admin or the owner",
             ));
         }

@@ -35,12 +35,14 @@ impl<'des> PerformCrud<'des> for Register {
         // make sure site has open registration first here
         if !site.open_registration && data.invite_token.is_none() {
             return Err(TinyBoardsError::from_message(
+                400,
                 "site is not in open registration mode",
             ));
         }
 
         if !site.open_registration && site.invite_only && data.invite_token.is_none() {
             return Err(TinyBoardsError::from_message(
+                403,
                 "invite is required for registration",
             ));
         }
@@ -48,19 +50,21 @@ impl<'des> PerformCrud<'des> for Register {
         // USERNAME CHECK
         let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
         if !re.is_match(&data.username) {
-            return Err(TinyBoardsError::from_message("invalid username"));
+            return Err(TinyBoardsError::from_message(400, "invalid username"));
         }
 
         // PASSWORD CHECK
         // password_length_check(&data.password)?;
         if !(8..60).contains(&data.password.len()) {
             return Err(TinyBoardsError::from_message(
+                400,
                 "Your password must be between 8 and 60 characters long.",
             ));
         }
 
         if site.email_verification_required && data.email.is_none() {
             return Err(TinyBoardsError::from_message(
+                400,
                 "email verification is required, please provide an email",
             ));
         }

@@ -1,19 +1,17 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    site::{SaveSiteSettings, GetSiteSettingsResponse},
-    utils::{require_user, blocking, get_current_site_mode},
     data::TinyBoardsContext,
+    site::{GetSiteSettingsResponse, SaveSiteSettings},
+    utils::{blocking, get_current_site_mode, require_user},
 };
 use tinyboards_db::{
     models::site::site::{Site, SiteForm},
-    utils::{
-        naive_now,
-    }, traits::Crud, SiteMode,
+    traits::Crud,
+    utils::naive_now,
+    SiteMode,
 };
-use tinyboards_utils::{
-    error::TinyBoardsError,
-};
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveSiteSettings {
@@ -35,12 +33,8 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             .require_admin()
             .unwrap()?;
 
-        let site =
-            blocking(context.pool(), move |conn| {
-                Site::read_local(conn)
-            })
-            .await??;
-        
+        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+
         let name = data.name.clone();
         let description = data.description.clone();
         let site_mode = data.site_mode;
@@ -50,16 +44,16 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let private_instance = data.private_instance;
         let email_verification_required = data.email_verification_required;
         let default_avatar = data.default_avatar.clone();
-            
+
         if let Some(description) = &description {
             if description.chars().count() > 500 {
-                return Err(TinyBoardsError::from_message("description too long"));
+                return Err(TinyBoardsError::from_message(400, "description too long"));
             }
         }
 
         if let Some(application_question) = &application_question {
             if application_question.chars().count() > 300 {
-                return Err(TinyBoardsError::from_message("question too long"));
+                return Err(TinyBoardsError::from_message(400, "question too long"));
             }
         }
 
@@ -81,7 +75,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             Some(SiteMode::OpenMode) => Some(false),
             Some(SiteMode::ApplicationMode) => Some(false),
             Some(SiteMode::InviteMode) => Some(true),
-            None => Some(site.invite_only), 
+            None => Some(site.invite_only),
         };
 
         let form = SiteForm {
@@ -101,12 +95,11 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         };
 
         // perform settings update
-        let updated_site = 
-            blocking(context.pool(), move |conn| {
-                Site::update(conn, site.id, &form)
-            })
-            .await??;
-            
+        let updated_site = blocking(context.pool(), move |conn| {
+            Site::update(conn, site.id, &form)
+        })
+        .await??;
+
         Ok(GetSiteSettingsResponse {
             name: updated_site.name,
             description: updated_site.description.unwrap_or_default(),

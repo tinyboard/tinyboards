@@ -28,7 +28,7 @@ impl<'des> Perform<'des> for VerifyEmail {
 
         let verification = blocking(context.pool(), move |conn| {
             EmailVerification::read_for_token(conn, &token.as_str()).map_err(|e| {
-                TinyBoardsError::from_error_message(e, "could not find verification token")
+                TinyBoardsError::from_error_message(e, 404, "could not find verification token")
             })
         })
         .await??;

@@ -31,7 +31,7 @@ pub(crate) async fn get_moderateable_object(
 
     // we make sure we can safely split the fullname at the index of 3 by aborting if it's too short
     if thing_fullname.len() <= 3 {
-        return Err(TinyBoardsError::from_message("invalid fullname"));
+        return Err(TinyBoardsError::from_message(400, "invalid fullname"));
     }
 
     // we split the t{n}_ thing and the id thing...
@@ -39,13 +39,14 @@ pub(crate) async fn get_moderateable_object(
     // ...and try to convert the id from string to int
     let id = id
         .parse::<i32>()
-        .map_err(|e| TinyBoardsError::from_error_message(e, "invalid fullname"))?;
+        .map_err(|e| TinyBoardsError::from_error_message(e, 400, "invalid fullname"))?;
 
     // check if we're getting a comment or a post, disallow other things
     let id = match id_type {
         "t1_" => Ok(CommentId(id)),
         "t3_" => Ok(PostId(id)),
         _ => Err(TinyBoardsError::from_message(
+            400,
             "This endpoint only accepts post and comment objects! Check if `target_fullname` begins with `t1_` or `t3_`.",
         )),
     }?;

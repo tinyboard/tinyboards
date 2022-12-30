@@ -3,13 +3,14 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{CreateSiteInvite, CreateSiteInviteResponse},
-    utils::{require_user, blocking},
+    utils::{blocking, require_user},
 };
 use tinyboards_db::{
     models::{
         site::site::Site,
-        site::site_invite::{SiteInviteForm, SiteInvite},
-    }, traits::Crud,
+        site::site_invite::{SiteInvite, SiteInviteForm},
+    },
+    traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
 use uuid::Uuid;
@@ -26,21 +27,20 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-
         // only admins should be able to create invites
         let _user = require_user(context.pool(), context.master_key(), auth)
-        .await
-        .require_admin()
-        .unwrap()?;
+            .await
+            .require_admin()
+            .unwrap()?;
 
         // we only create invites if site is in invite mode
-        let site = blocking(context.pool(), move |conn| {
-            Site::read_local(conn)
-        })
-        .await??;
+        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
 
         if !site.invite_only {
-            return Err(TinyBoardsError::from_message("can't create an invite outside of invite mode"));
+            return Err(TinyBoardsError::from_message(
+                400,
+                "can't create an invite outside of invite mode",
+            ));
         }
 
         let form = SiteInviteForm {
@@ -48,10 +48,8 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
         };
 
         // create record in db
-        let invite = blocking(context.pool(), move |conn| {
-            SiteInvite::create(conn, &form)
-        })
-        .await??;
+        let invite =
+            blocking(context.pool(), move |conn| SiteInvite::create(conn, &form)).await??;
 
         let invite_url = format!(
             "{}/validate_invite/{}",

@@ -17,7 +17,7 @@ impl Voteable for PostVote {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not create post vote"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create post vote"))
     }
 
     fn remove(
@@ -32,6 +32,6 @@ impl Voteable for PostVote {
                 .filter(dsl::user_id.eq(user_id)),
         )
         .execute(conn)
-        .map_err(|e| TinyBoardsError::from_error_message(e, "could not remove post vote"))
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not remove post vote"))
     }
 }

@@ -57,7 +57,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         .await??
         .is_none()
         {
-            return Err(TinyBoardsError::from_message("invalid post id"));
+            return Err(TinyBoardsError::from_message(400, "invalid post id"));
         }
 
         let mut level = 1;
@@ -67,20 +67,24 @@ impl<'des> PerformCrud<'des> for CreateComment {
             let parent_comment =
                 blocking(context.pool(), move |conn| Comment::get_by_id(conn, cid)).await??;
             if parent_comment.is_none() {
-                return Err(TinyBoardsError::from_message("invalid parent comment id"));
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "invalid parent comment id",
+                ));
             }
 
             // we can unwrap safely, because the above check made sure to abort if the comment is None
             // abort if the comment the user is replying to doesn't belong to the specified post - may be useful later
             let parent_comment = parent_comment.unwrap();
             if parent_comment.post_id != data.post_id {
-                return Err(TinyBoardsError::from_message("bad request"));
+                return Err(TinyBoardsError::from_message(400, "bad request"));
             }
 
             if (parent_comment.is_removed || parent_comment.is_deleted || parent_comment.is_locked)
                 && !user.is_admin
             {
                 return Err(TinyBoardsError::from_message(
+                    403,
                     "Comment deleted, removed or locked, you can't reply to it anymore.",
                 ));
             }

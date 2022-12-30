@@ -31,12 +31,13 @@ impl<'des> PerformCrud<'des> for DeletePost {
 
         if orig_post.is_deleted == data.deleted {
             return Err(TinyBoardsError::from_message(
+                400,
                 "couldn't delete post a second time!",
             ));
         }
 
         if !Post::is_post_creator(user.id, orig_post.creator_id) {
-            return Err(TinyBoardsError::from_message("post edit not allowed"));
+            return Err(TinyBoardsError::from_message(403, "post edit not allowed"));
         }
 
         let post_id = path.post_id;

@@ -16,31 +16,22 @@ use reqwest::Client;
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
-use std::{
-    thread,
-    time::Duration,
+use std::{thread, time::Duration};
+use tinyboards_api_common::{
+    data::TinyBoardsContext,
+    request::build_user_agent,
+    utils::{blocking, get_rate_limit_config},
 };
-use tinyboards_api_common::{data::TinyBoardsContext, request::build_user_agent, utils::{blocking, get_rate_limit_config},};
 use tinyboards_db::models::secret::Secret;
 use tinyboards_db::utils::get_database_url_from_env;
 use tinyboards_server::{
-    api_routes, 
-    init_logging, 
-    root_span_builder::QuieterRootSpanBuilder, 
-    scheduled_tasks, 
-    media,
-    code_migrations::run_advanced_migrations,
+    api_routes, code_migrations::run_advanced_migrations, init_logging, media,
+    root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
 };
-use tinyboards_utils::{
-    error::TinyBoardsError,
-    rate_limit::RateLimitCell,
-    settings::SETTINGS,
-};
+use tinyboards_utils::{error::TinyBoardsError, rate_limit::RateLimitCell, settings::SETTINGS};
 use tracing_actix_web::TracingLogger;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
-
-
 
 // max timeout for http requests
 pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
@@ -52,7 +43,7 @@ async fn main() -> Result<(), TinyBoardsError> {
     let settings = SETTINGS.to_owned();
 
     init_logging(&settings.opentelemetry_url)
-        .map_err(|_| TinyBoardsError::from_message("failed to initialize logger"))?;
+        .map_err(|_| TinyBoardsError::from_message(500, "failed to initialize logger"))?;
 
     let db_url = match get_database_url_from_env() {
         Ok(url) => url,
@@ -71,7 +62,7 @@ async fn main() -> Result<(), TinyBoardsError> {
     blocking(&pool, move |conn| {
         let _ = conn
             .run_pending_migrations(MIGRATIONS)
-            .map_err(|_| TinyBoardsError::from_message("Couldn't run migrations"))?;
+            .map_err(|_| TinyBoardsError::from_message(500, "Couldn't run migrations"))?;
         Ok(()) as Result<(), TinyBoardsError>
     })
     .await??;
@@ -84,15 +75,14 @@ async fn main() -> Result<(), TinyBoardsError> {
         scheduled_tasks::setup(task_pool).expect("Couldn't setup scheduled tasks");
     });
 
-
-    let rate_limit_config =
-        get_rate_limit_config(&settings.rate_limit.to_owned().unwrap());
+    let rate_limit_config = get_rate_limit_config(&settings.rate_limit.to_owned().unwrap());
     let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;
 
     // init the secret
     let conn = &mut pool.get().map_err(|_| {
         TinyBoardsError::from_message(
-            "could not establish connection pool for initializing secrets"
+            500,
+            "could not establish connection pool for initializing secrets",
         )
     })?;
     let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
@@ -106,7 +96,7 @@ async fn main() -> Result<(), TinyBoardsError> {
         .user_agent(build_user_agent(&settings))
         .timeout(REQWEST_TIMEOUT)
         .build()
-        .map_err(|_| TinyBoardsError::from_message("could not build reqwest client"))?;
+        .map_err(|_| TinyBoardsError::from_message(500, "could not build reqwest client"))?;
 
     let retry_policy = ExponentialBackoff {
         max_n_retries: 3,
@@ -144,10 +134,10 @@ async fn main() -> Result<(), TinyBoardsError> {
             .service(fs::Files::new("/assets", "./assets"))
     })
     .bind((settings_bind.bind, settings_bind.port))
-    .map_err(|_| TinyBoardsError::from_message("could not bind to ip"))?
+    .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?
     .run()
     .await
-    .map_err(|_| TinyBoardsError::from_message("could not start web server"))?;
+    .map_err(|_| TinyBoardsError::from_message(500, "could not start web server"))?;
 
     Ok(())
 }

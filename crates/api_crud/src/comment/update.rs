@@ -47,7 +47,10 @@ impl<'des> PerformCrud<'des> for EditComment {
         check_comment_deleted_or_removed(orig_comment.comment.id, context.pool()).await?;
 
         if user.id != orig_comment.comment.creator_id {
-            return Err(TinyBoardsError::from_message("comment edit not allowed"));
+            return Err(TinyBoardsError::from_message(
+                403,
+                "comment edit not allowed",
+            ));
         }
 
         let body = Some(data.body.clone());

@@ -217,6 +217,7 @@ impl CommentView {
         if let Some(parent_post_id) = parent_post_id {
             if top_comment.comment.post_id != parent_post_id {
                 return Err(TinyBoardsError::from_message(
+                    400,
                     "That comment doesn't belong to the specified post!",
                 ));
             }

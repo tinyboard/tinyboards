@@ -13,7 +13,7 @@ use tinyboards_utils::TinyBoardsError;
 impl Post {
     pub fn submit(conn: &mut PgConnection, form: PostForm) -> Result<Self, TinyBoardsError> {
         Self::create(conn, &form)
-            .map_err(|e| TinyBoardsError::from_error_message(e, "could not submit posts"))
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit posts"))
     }
 
     pub fn is_post_creator(user_id: i32, post_creator_id: i32) -> bool {
@@ -96,7 +96,11 @@ impl Post {
             .first::<i32>(conn)
             .optional()
             .map_err(|e| {
-                TinyBoardsError::from_error_message(e, "error while checking existence of posts")
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "error while checking existence of posts",
+                )
             })
     }
 
