@@ -43,6 +43,7 @@ impl<'des> PerformCrud<'des> for GetComment {
                 Some(sort),
                 user.as_ref(),
                 comment_context,
+                data.post,
             )
         })
         .await??;

@@ -66,4 +66,5 @@ pub struct CommentResponse {
 pub struct GetComment {
     pub context: Option<i32>,
     pub sort: Option<String>,
+    pub post: Option<i32>,
 }

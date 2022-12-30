@@ -22,6 +22,7 @@ use tinyboards_db::{
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
     CommentSortType, ListingType,
 };
+use tinyboards_utils::TinyBoardsError;
 use typed_builder::TypedBuilder;
 
 type CommentViewTuple = (
@@ -206,11 +207,20 @@ impl CommentView {
         sort: Option<CommentSortType>,
         user: Option<&User>,
         context: Option<i32>,
-    ) -> Result<CommentQueryResponse, Error> {
+        parent_post_id: Option<i32>,
+    ) -> Result<CommentQueryResponse, TinyBoardsError> {
         // max allowed value for context is 4
         let context = std::cmp::min(context.unwrap_or(0), 4);
         let user_id = user.as_ref().map(|u| u.id);
         let top_comment = Self::read(conn, comment_id, user_id)?;
+
+        if let Some(parent_post_id) = parent_post_id {
+            if top_comment.comment.post_id != parent_post_id {
+                return Err(TinyBoardsError::from_message(
+                    "That comment doesn't belong to the specified post!",
+                ));
+            }
+        }
 
         let mut ids = vec![top_comment.comment.id];
         let mut top_comment_id = top_comment.comment.id;
