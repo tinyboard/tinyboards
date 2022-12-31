@@ -35,6 +35,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let avatar = diesel_option_overwrite(&data.avatar);
         let banner = diesel_option_overwrite(&data.banner);
+        let signature = diesel_option_overwrite(&data.signature);
         let bio = diesel_option_overwrite(&data.bio);
         let email_deref = data.email.as_deref().map(str::to_lowercase);
         let email = match email_deref {
@@ -84,6 +85,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             show_nsfw: data.show_nsfw,
             theme: data.theme.clone(),
             avatar,
+            signature,
             banner,
             default_listing_type,
             default_sort_type,

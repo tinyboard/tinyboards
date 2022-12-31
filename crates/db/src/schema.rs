@@ -491,6 +491,7 @@ diesel::table! {
         bio -> Nullable<Text>,
         is_application_accepted -> Bool,
         email_verified -> Bool,
+        signature -> Nullable<Text>,
     }
 }
 

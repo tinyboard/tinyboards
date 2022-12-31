@@ -94,6 +94,7 @@ pub struct SaveUserSettings {
     pub default_sort_type: Option<i16>,
     pub default_listing_type: Option<i16>,
     pub avatar: Option<String>,
+    pub signature: Option<String>,
     pub banner: Option<String>,
     pub email: Option<String>,
     pub bio: Option<String>,
