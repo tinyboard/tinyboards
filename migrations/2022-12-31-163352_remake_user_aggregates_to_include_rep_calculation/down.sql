@@ -3,9 +3,6 @@ drop table user_aggregates;
 drop trigger user_aggregates_post_score on post_votes;
 drop trigger user_aggregates_comment_score on comment_votes;
 drop function user_aggregates_post_score, user_aggregates_comment_score;
--- drop new triggers
-drop trigger user_aggregates_post_score_rep on post_votes;
-drop trigger user_aggregates_comment_score_rep on comment_votes;
 -- drop new function
 drop function user_aggregates_rep;
 

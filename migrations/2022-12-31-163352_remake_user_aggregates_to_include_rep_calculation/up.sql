@@ -104,18 +104,6 @@ begin
     return null;
 end $$;
 
--- update rep on post vote
-create trigger user_aggregates_post_score_rep
-after insert or delete on post_votes
-for each row
-execute procedure user_aggregates_rep();
-
--- update rep on comment vote
-create trigger user_aggregates_comment_score_rep
-after insert or delete on comment_votes
-for each row
-execute procedure user_aggregates_rep();
-
 -- post score
 create function user_aggregates_post_score()
 returns trigger language plpgsql
