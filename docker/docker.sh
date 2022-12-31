@@ -215,7 +215,6 @@ EOF
       - tinyboards
       - tinyboards-fe
 EOF
-fi
 
 #tinyboards-be
 if [ "$ENVIRONMENT" = "prod" ]; then
@@ -354,18 +353,7 @@ EOF
 
 #volumes and networks
 
-
-if [ "$ENVIRONMENT" = "prod" ]; then
-cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
-
-volumes:
-  nginx_secrets:
-
-networks:
-  tinyboards: {}
-EOF
-else
-  cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
+cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
 
 networks:
   tinyboards: {}

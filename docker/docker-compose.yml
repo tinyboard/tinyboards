@@ -85,8 +85,5 @@ services:
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
 
-volumes:
-  nginx_secrets:
-
 networks:
   tinyboards: {}

@@ -15,7 +15,6 @@ services:
     depends_on:
       - tinyboards
       - tinyboards-fe
-
   tinyboards:
     image: tinyboards
     ports:
@@ -35,10 +34,9 @@ services:
       tinyboards:
         aliases:
           - tinyboards-be
-      depends_on:
+    depends_on:
       - postgres
       - pictrs
-
   tinyboards-fe:
     image: tinyboards-fe
     ports:
@@ -55,7 +53,6 @@ services:
           - tinyboards-fe
     depends_on:
       - tinyboards
-
   pictrs:
     image: asonix/pictrs:0.4.0-beta.7
     # needs to match the pictrs url in the config hjson
@@ -72,7 +69,6 @@ services:
     volumes:
       - ./volumes/pictrs:/mnt
     restart: always
-
   postgres:
     image: postgres:14-alpine
     ports:
@@ -90,5 +86,6 @@ services:
           - postgres
     restart: always
     command: ["postgres", "-c", "session_preload_libraries=auto_explain", "-c", "auto_explain.log_min_duration=5ms", "-c", "auto_explain.log_analyze=true"]
+
 networks:
   tinyboards: {}
