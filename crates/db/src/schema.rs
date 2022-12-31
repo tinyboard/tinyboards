@@ -339,6 +339,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    reports (id) {
+        id -> Int4,
+        user_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+        post_id -> Nullable<Int4>,
+        reason -> Nullable<Text>,
+        creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
     secret (id) {
         id -> Int4,
         jwt_secret -> Varchar,
@@ -388,6 +399,7 @@ diesel::table! {
         post_score -> Int8,
         comment_count -> Int8,
         comment_score -> Int8,
+        rep -> Int8,
     }
 }
 
@@ -522,6 +534,9 @@ diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> users (creator_id));
+diesel::joinable!(reports -> comments (comment_id));
+diesel::joinable!(reports -> posts (post_id));
+diesel::joinable!(reports -> users (user_id));
 diesel::joinable!(site -> users (creator_id));
 diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_ban -> users (user_id));
@@ -566,6 +581,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_votes,
     posts,
     registration_applications,
+    reports,
     secret,
     site,
     site_invite,
