@@ -5,6 +5,7 @@ use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
     utils::{blocking, get_user_view_from_jwt, require_user, send_verification_email},
+    request::purge_image_from_pictrs,
 };
 use tinyboards_db::{
     models::site::site::Site,
@@ -12,6 +13,7 @@ use tinyboards_db::{
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
+use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveUserSettings {
@@ -47,6 +49,29 @@ impl<'des> Perform<'des> for SaveUserSettings {
                 }
             }
             None => None,
+        };
+
+        // delete old images if new images applied
+        let current_avatar = user.avatar.clone().unwrap_or_default();
+        let current_banner = user.banner.clone().unwrap_or_default();
+        let current_signature = user.signature.clone().unwrap_or_default();
+
+        if let Some(Some(avatar)) = avatar.clone() {
+            if avatar != current_avatar && !avatar.is_empty() && !current_avatar.is_empty() {
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(avatar.as_str()).unwrap()).await?;
+            }
+        };
+
+        if let Some(Some(banner)) = banner.clone() {
+            if banner != current_banner && !banner.is_empty() && !current_banner.is_empty() {
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(banner.as_str()).unwrap()).await?;
+            }
+        };
+
+        if let Some(Some(signature)) = signature.clone() {
+            if signature != current_signature && !signature.is_empty() && !current_signature.is_empty() {
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(signature.as_str()).unwrap()).await?;
+            }
         };
 
         // send a new verification email if email gets changed and email verification is required
