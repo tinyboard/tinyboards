@@ -23,8 +23,8 @@ echo "****SSL IS ENABLED****"
     # Add SSL configuration to the file
     cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
     listen 443 ssl;
-    ssl_certificate_key /etc/letsencrypt/live/nginx/privkey.pem;
-    ssl_certificate /etc/letsencrypt/live/nginx/fullchain.pem;
+    ssl_certificate_key /etc/ssl/key.pem;
+    ssl_certificate /etc/ssl/cert.pem;
 EOF
 fi
 
@@ -84,29 +84,6 @@ cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
     }
 }
 EOF
-
-
-if [ "$ENVIRONMENT" = "prod" ]; then
-    # Add SSL configuration to the file
-    cat > $INSTALL_LOCATION/nginx/nginx-certbot.env <<EOF
-# Required
-CERTBOT_EMAIL=$CERTBOT_EMAIL
-
-# Optional (Defaults)
-DHPARAM_SIZE=2048
-ELLIPTIC_CURVE=secp256r1
-RENEWAL_INTERVAL=8d
-RSA_KEY_SIZE=2048
-STAGING=0
-USE_ECDSA=1
-
-# Advanced (Defaults)
-CERTBOT_AUTHENTICATOR=webroot
-CERTBOT_DNS_PROPAGATION_SECONDS=""
-DEBUG=1
-USE_LOCAL_CA=0
-EOF
-fi
 
 #generate tinyboards.hjson
 
@@ -218,38 +195,17 @@ services:
 EOF
 
 #nginx service
-if [ "$ENVIRONMENT" = "prod" ]; then
 
-  # use prod nginx-certbot service
-cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
-  nginx:
-    image: jonasal/nginx-certbot:latest
-    env_file:
-      - ./nginx/nginx-certbot.env
-    ports:
-      - "$HTTP_PORT:80"
-      - "$HTTPS_PORT:443"
-    volumes:
-      - nginx_secrets:/etc/letsencrypt
-      - ./nginx/conf:/etc/nginx/user_conf.d
-    networks:
-      tinyboards:
-        aliases:
-          - $SERVER_NAME
-    restart: always
-    depends_on:
-      - tinyboards-fe
-      - pictrs
-EOF
-else
   # use dev nginx service
-  cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
+  cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
   nginx:
     image: nginx:1-alpine
     ports:
       - "$HTTP_PORT:80"
+      - "$HTTPS_PORT:443"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d
+      - /etc/ssl:/etc/ssl/
     networks:
       tinyboards:
         aliases:
