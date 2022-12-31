@@ -2,15 +2,13 @@ version: '3.3'
 
 services:
   nginx:
-    image: jonasal/nginx-certbot:latest
-    env_file:
-      - ./nginx/nginx-certbot.env
+    image: nginx:1-alpine
     ports:
       - 80:80
       - 443:443
     volumes:
-      - nginx_secrets:/etc/letsencrypt
-      - ./nginx/conf:/etc/nginx/user_conf.d
+      - ./nginx/conf/:/etc/nginx/conf.d
+      - /etc/ssl:/etc/ssl/
     networks:
       tinyboards:
         aliases:
