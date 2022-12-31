@@ -81,7 +81,7 @@ fn update_user_aggregates_rep(conn: &mut PgConnection) {
      from (
          select
              u.id as user_id, 
-             round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / (coalesce(pd.posts, 1) + coalesce(cd.comments, 0))) as rep 
+             round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep 
          from users u
          left join (
              select p.creator_id,

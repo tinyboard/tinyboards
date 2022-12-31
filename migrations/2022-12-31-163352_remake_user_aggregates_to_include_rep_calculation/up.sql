@@ -23,7 +23,7 @@ insert into user_aggregates (user_id, post_count, post_score, comment_count, com
   coalesce(pd.score, 0),
   coalesce(cd.comments, 0),
   coalesce(cd.score, 0),
-  round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / (coalesce(pd.posts, 1) + coalesce(cd.comments, 0))) -- coalesced 1 into posts to prevent division by zero
+  round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) -- coalesced 1 into posts to prevent division by zero
   from users u
   left join (
     select p.creator_id,
@@ -54,7 +54,7 @@ begin
         from (
             select
                 u.id as user_id, 
-                round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / (coalesce(pd.posts, 1) + coalesce(cd.comments, 0))) as rep 
+                round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep 
             from users u
             left join (
                 select p.creator_id,
@@ -80,7 +80,7 @@ begin
         from (
             select
                 u.id as user_id, 
-                round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / (coalesce(pd.posts, 1) + coalesce(cd.comments, 0))) as rep 
+                round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep 
             from users u
             left join (
                 select p.creator_id,
