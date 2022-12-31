@@ -270,6 +270,8 @@ impl<'a> PostQuery<'a> {
                     .and(post_votes::user_id.eq(user_id_join))),
             )
             .select((posts::all_columns,))
+            .filter(posts::is_deleted.eq(false))
+            .filter(posts::is_removed.eq(false))
             .into_boxed();
 
         if let Some(listing_type) = self.listing_type {

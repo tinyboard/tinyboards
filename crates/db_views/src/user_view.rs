@@ -194,6 +194,8 @@ impl<'a> UserQuery<'a> {
         let count_query = users::table
             .inner_join(user_aggregates::table)
             .select(UserSafe::safe_columns_tuple())
+            .filter(users::is_deleted.eq(false))
+            .filter(users::is_banned.eq(false))
             .into_boxed();
 
         if let Some(search_term) = self.search_term {

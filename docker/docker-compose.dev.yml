@@ -31,11 +31,11 @@ services:
       - postgres
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson
-     networks:
+    networks:
       tinyboards:
         aliases:
           - tinyboards-be
-    depends_on:
+      depends_on:
       - postgres
       - pictrs
 
