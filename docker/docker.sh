@@ -358,7 +358,6 @@ cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
 networks:
   tinyboards: {}
 EOF
-fi
 
 #docker-scripts
 
