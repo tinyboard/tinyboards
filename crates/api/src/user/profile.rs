@@ -92,6 +92,7 @@ impl<'des> Perform<'des> for Profile {
         })
         .await??;
 
+        let rep = view.counts.rep;
         let posts_count = view.counts.post_count;
         let posts_score = view.counts.post_score;
         let comments_count = view.counts.comment_count;
@@ -116,6 +117,7 @@ impl<'des> Perform<'des> for Profile {
             user_type: _user_type,
             is_admin,
             display_name,
+            rep,
             posts_count,
             posts_score,
             comments_count,
