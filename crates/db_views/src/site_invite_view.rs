@@ -32,7 +32,7 @@ pub struct InviteQueryResponse {
 impl<'a> InviteQuery<'a> {
     pub fn list(self) -> Result<InviteQueryResponse, Error> {
         
-        let query = site_invite::table
+        let mut query = site_invite::table
             .select((
                 site_invite::all_columns,
             ))
@@ -45,7 +45,9 @@ impl<'a> InviteQuery<'a> {
         .into_boxed();
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
-    
+        
+        query = query.then_order_by(site_invite::created.desc());
+
         let res = query
             .limit(limit)
             .offset(offset)
