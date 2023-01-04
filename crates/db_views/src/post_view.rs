@@ -380,6 +380,7 @@ impl<'a> PostQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
+            .then_order_by(post_aggregates::is_stickied.desc())
             .filter(posts::is_removed.eq(false))
             .filter(posts::is_deleted.eq(false))
             .filter(boards::is_banned.eq(false))
