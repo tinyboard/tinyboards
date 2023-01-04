@@ -335,6 +335,9 @@ impl<'a> PostQuery<'a> {
             query = query.filter(user_blocks::user_id.is_null());
         }
 
+        // sticky posts on top
+        query = query.then_order_by(post_aggregates::is_stickied.desc());
+
         query = match self.sort.unwrap_or(SortType::Hot) {
             SortType::Active => query
                 .then_order_by(
@@ -380,7 +383,6 @@ impl<'a> PostQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .then_order_by(post_aggregates::is_stickied.desc())
             .filter(posts::is_removed.eq(false))
             .filter(posts::is_deleted.eq(false))
             .filter(boards::is_banned.eq(false))
