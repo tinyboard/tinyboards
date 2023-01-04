@@ -23,8 +23,8 @@ echo "****SSL IS ENABLED****"
     # Add SSL configuration to the file
     cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
     listen 443 ssl;
-    ssl_certificate_key /etc/ssl/key.pem;
-    ssl_certificate /etc/ssl/cert.pem;
+    ssl_certificate /etc/ssl/fullchain.pem;
+    ssl_certificate_key /etc/ssl/privkey.pem;
 EOF
 fi
 
