@@ -271,6 +271,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    notifications (id) {
+        id -> Int4,
+        user_id -> Int4,
+        comment_id -> Int4,
+        creation_date -> Timestamp,
+        is_read -> Bool,
+    }
+}
+
+diesel::table! {
     password_reset_requests (id) {
         id -> Int4,
         user_id -> Int4,
@@ -332,17 +342,6 @@ diesel::table! {
         admin_id -> Nullable<Int4>,
         deny_reason -> Nullable<Text>,
         published -> Timestamp,
-    }
-}
-
-diesel::table! {
-    reports (id) {
-        id -> Int4,
-        user_id -> Nullable<Int4>,
-        comment_id -> Nullable<Int4>,
-        post_id -> Nullable<Int4>,
-        reason -> Nullable<Text>,
-        creation_date -> Timestamp,
     }
 }
 
@@ -537,15 +536,14 @@ diesel::joinable!(mod_remove_post -> posts (post_id));
 diesel::joinable!(mod_remove_post -> users (mod_user_id));
 diesel::joinable!(mod_sticky_post -> posts (post_id));
 diesel::joinable!(mod_sticky_post -> users (mod_user_id));
+diesel::joinable!(notifications -> comments (comment_id));
+diesel::joinable!(notifications -> users (user_id));
 diesel::joinable!(password_reset_requests -> users (user_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
 diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> users (creator_id));
-diesel::joinable!(reports -> comments (comment_id));
-diesel::joinable!(reports -> posts (post_id));
-diesel::joinable!(reports -> users (user_id));
 diesel::joinable!(site -> users (creator_id));
 diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(user_aggregates -> users (user_id));
@@ -586,12 +584,12 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_remove_comment,
     mod_remove_post,
     mod_sticky_post,
+    notifications,
     password_reset_requests,
     post_aggregates,
     post_votes,
     posts,
     registration_applications,
-    reports,
     secret,
     site,
     site_aggregates,
