@@ -19,7 +19,6 @@ pub struct Post {
     pub is_removed: bool,
     pub is_locked: bool,
     pub creation_date: NaiveDateTime,
-    pub edited_date: Option<NaiveDateTime>,
     pub is_deleted: bool,
     pub is_nsfw: bool,
     pub is_stickied: bool,

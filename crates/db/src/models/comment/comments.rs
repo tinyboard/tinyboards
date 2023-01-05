@@ -16,7 +16,6 @@ pub struct Comment {
     pub read: bool,
     pub creation_date: NaiveDateTime,
     pub level: i32,
-    pub edited_date: Option<NaiveDateTime>,
     pub is_deleted: bool,
     pub updated: Option<NaiveDateTime>,
     pub is_locked: bool,

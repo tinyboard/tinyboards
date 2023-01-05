@@ -130,7 +130,6 @@ diesel::table! {
         read -> Bool,
         creation_date -> Timestamp,
         level -> Int4,
-        edited_date -> Nullable<Timestamp>,
         is_deleted -> Bool,
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
@@ -147,7 +146,6 @@ diesel::table! {
         is_deleted -> Bool,
         read -> Bool,
         creation_date -> Timestamp,
-        edited_date -> Nullable<Timestamp>,
         updated -> Nullable<Timestamp>,
     }
 }
@@ -319,7 +317,6 @@ diesel::table! {
         is_removed -> Bool,
         is_locked -> Bool,
         creation_date -> Timestamp,
-        edited_date -> Nullable<Timestamp>,
         is_deleted -> Bool,
         is_nsfw -> Bool,
         is_stickied -> Bool,

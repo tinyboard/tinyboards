@@ -15,3 +15,14 @@ pub struct PrivateMessage {
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
 }
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
+#[diesel(table_name = dms)]
+pub struct PrivateMessageForm {
+    pub creator_id: Option<i32>,
+    pub recipient_id: Option<i32>,
+    pub body: Option<String>,
+    pub is_deleted: Option<bool>,
+    pub read: Option<bool>,
+    pub updated: Option<NaiveDateTime>,
+}
