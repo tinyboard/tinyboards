@@ -377,6 +377,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    site_aggregates (id) {
+        id -> Int4,
+        site_id -> Int4,
+        users -> Int8,
+        posts -> Int8,
+        comments -> Int8,
+        boards -> Int8,
+    }
+}
+
+diesel::table! {
     site_invite (id) {
         id -> Int4,
         verification_code -> Text,
@@ -539,6 +550,7 @@ diesel::joinable!(reports -> comments (comment_id));
 diesel::joinable!(reports -> posts (post_id));
 diesel::joinable!(reports -> users (user_id));
 diesel::joinable!(site -> users (creator_id));
+diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_ban -> users (user_id));
 diesel::joinable!(user_board_blocks -> boards (board_id));
@@ -585,6 +597,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     reports,
     secret,
     site,
+    site_aggregates,
     site_invite,
     tag,
     user_aggregates,
