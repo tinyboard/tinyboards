@@ -218,7 +218,9 @@ impl<'a> UserMentionQuery<'a> {
                 comment_votes::score.nullable(),
             ))
             .into_boxed();
-
+        
+        println!("here!");
+        
         if let Some(recipient_id) = self.recipient_id {
             query = query.filter(user_mentions::recipient_id.eq(recipient_id));
         }
@@ -245,10 +247,14 @@ impl<'a> UserMentionQuery<'a> {
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
 
+        println!("here 2!");
+
         let res = query
             .limit(limit)
             .offset(offset)
             .load::<UserMentionViewTuple>(self.conn)?;
+
+            println!("here 3!");
 
         Ok(UserMentionView::from_tuple_to_vec(res))
     }

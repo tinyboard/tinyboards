@@ -26,6 +26,8 @@ impl<'des> Perform<'des> for GetUserMentions {
     ) -> Result<GetUserMentionsResponse, TinyBoardsError> {
         let data: &GetUserMentions = &self;
 
+        println!("here");
+
         let user = 
             require_user(context.pool(), context.master_key(), auth)
             .await
@@ -39,6 +41,8 @@ impl<'des> Perform<'des> for GetUserMentions {
             let limit = data.limit;
             let unread_only = data.unread_only;
             let user_id = Some(user.id);
+
+            println!("user_id: {:?}", user_id);
             
             let mentions = blocking(context.pool(), move |conn| {
                 UserMentionQuery::builder()

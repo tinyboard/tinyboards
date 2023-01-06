@@ -39,6 +39,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/verify_email/{token}",
                         web::post().to(route_post::<VerifyEmail>),
                     )
+            )
+            // Notifications
+            .service(
+                web::scope("/notifications")
+                    .wrap(rate_limit.message())
                     .route("/mentions", web::get().to(route_get::<GetUserMentions>))
             )
             // Post
