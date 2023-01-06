@@ -152,3 +152,12 @@ pub struct GetCommentRepliesResponse {
     pub replies: Vec<CommentReplyView>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetUnreadCount {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetUnreadCountResponse {
+  pub replies: i64,
+  pub mentions: i64,
+  //pub private_messages: i64,
+}
