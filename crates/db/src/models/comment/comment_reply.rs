@@ -1,26 +1,22 @@
-use crate::newtypes::{CommentId, UserId};
+use crate::schema::comment_reply;
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
-#[cfg_attr(feature = "full", derive(Queryable, Associations, Identifiable))]
-#[cfg_attr(
-    feature = "full",
-    diesel(belongs_to(crate::models::comment::comment::Comment))
-)]
-#[cfg_attr(feature = "full", diesel(table_name = comment_reply))]
-/// This table keeps a list of replies to comments and posts.
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[diesel(table_name = comment_reply)]
 pub struct CommentReply {
-    pub id: CommentId,
-    pub recipient_id: UserId,
-    pub comment_id: CommentId,
+    pub id: i32,
+    pub recipient_id: i32,
+    pub comment_id: i32,
     pub read: bool,
-    pub creation_date: chrono::NaiveDateTime,
+    pub creation_date: NaiveDateTime,
 }
 
-#[cfg_attr(feature = "full", derive(Insertable, AsChangeset))]
-#[cfg_attr(feature = "full", diesel(table_name = comment_reply))]
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = comment_reply)]
 pub struct CommentReplyForm {
-    pub recipient_id: UserId,
-    pub comment_id: CommentId,
+    pub recipient_id: Option<i32>,
+    pub comment_id: Option<i32>,
     pub read: Option<bool>,
 }

@@ -109,6 +109,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    comment_reply (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        comment_id -> Int4,
+        read -> Bool,
+        creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
     comment_votes (id) {
         id -> Int4,
         user_id -> Int4,
@@ -519,6 +529,8 @@ diesel::joinable!(board_user_bans -> users (user_id));
 diesel::joinable!(boards -> tag (tag_id));
 diesel::joinable!(boards -> users (creator_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
+diesel::joinable!(comment_reply -> comments (comment_id));
+diesel::joinable!(comment_reply -> users (recipient_id));
 diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> users (user_id));
 diesel::joinable!(comments -> posts (post_id));
@@ -572,6 +584,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_user_bans,
     boards,
     comment_aggregates,
+    comment_reply,
     comment_votes,
     comments,
     dms,
