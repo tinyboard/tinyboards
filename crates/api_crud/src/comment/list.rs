@@ -93,7 +93,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         .await??;
 
         let mut comments = response.comments;
-        //println!("{:#?}", comments);
+
         let total_count = response.count;
 
         // blank out comment info if deleted or removed
@@ -107,7 +107,6 @@ impl<'des> PerformCrud<'des> for ListComments {
         if let Format::Tree = format {
             // order into tree
             comments = CommentView::into_tree(comments, parent_id);
-            //println!("{:#?}", comments);
         }
 
         Ok(ListCommentsResponse {

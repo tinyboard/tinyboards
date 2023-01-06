@@ -521,7 +521,6 @@ impl<'a> CommentQuery<'a> {
 
         let comments = CommentView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(self.conn)?;
-        //println!("{:#?}", comments);
 
         Ok(CommentQueryResponse { comments, count })
     }

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
   data::TinyBoardsContext,
   user::{GetUnreadCount, GetUnreadCountResponse},
-  utils::{require_user, blocking},
+  utils::{get_user_view_from_jwt, blocking},
 };
 use tinyboards_db_views::structs::{CommentReplyView, UserMentionView};
 use tinyboards_utils::error::TinyBoardsError;
@@ -21,9 +21,9 @@ impl<'des> Perform<'des> for GetUnreadCount {
     auth: Option<&str>
   ) -> Result<GetUnreadCountResponse, TinyBoardsError> {
     let user =
-      require_user(context.pool(), context.master_key(), auth)
-      .await
-      .unwrap()?;
+        get_user_view_from_jwt(auth, context.pool(), context.master_key())
+        .await?
+        .user;
 
     let user_id = user.id;
 
