@@ -3,15 +3,15 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
-    utils::{blocking, require_user},
+    utils::blocking,
 };
-use tinyboards_db::models::user::users::{User, UserSafe};
-use tinyboards_db_views::structs::UserView;
+use tinyboards_db::models::user::users::User;
+use tinyboards_db_views::structs::{LoggedInUserView, UserView};
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for GetLoggedInUser {
-    type Response = UserSafe;
+    type Response = LoggedInUserView;
     type Route = ();
 
     async fn perform(
@@ -20,11 +20,36 @@ impl<'des> Perform<'des> for GetLoggedInUser {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let user = require_user(context.pool(), context.master_key(), auth)
-            .await
-            .unwrap()?;
+        if auth.is_none() {
+            return Err(TinyBoardsError::from_message(401, "You're not logged in"));
+        }
 
-        Ok(user.into_safe())
+        let auth = auth.unwrap();
+        if auth.is_empty() {
+            return Err(TinyBoardsError::from_message(
+                401,
+                "Invalid `Authorization` header",
+            ));
+        }
+
+        if !auth.starts_with("Bearer ") {
+            return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
+        }
+        // Reference to the string stored in `auth` skipping the `Bearer ` part
+        // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
+        // maybe there's a better solution to this but I feel like this is too memory-consuming.
+        let token = String::from(&auth[7..]);
+        let master_key = context.master_key().jwt.clone();
+
+        let user = blocking(context.pool(), move |conn| {
+            LoggedInUserView::from_jwt(conn, token, master_key)
+        })
+        .await??;
+
+        match user {
+            Some(user) => Ok(user),
+            None => Err(TinyBoardsError::from_message(400, "Bad auth token")),
+        }
     }
 }
 

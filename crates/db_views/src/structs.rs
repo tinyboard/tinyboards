@@ -1,11 +1,13 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::{
-    aggregates::structs::{BoardAggregates, CommentAggregates, PostAggregates, UserAggregates, SiteAggregates},
+    aggregates::structs::{
+        BoardAggregates, CommentAggregates, PostAggregates, SiteAggregates, UserAggregates,
+    },
     models::{
         board::boards::BoardSafe,
         comment::comments::Comment,
         post::posts::Post,
-        site::{site_invite::SiteInvite, site::Site},
+        site::{site::Site, site_invite::SiteInvite},
         user::{
             user_mention::UserMention,
             users::{UserSafe, UserSettings},
@@ -18,6 +20,13 @@ use tinyboards_db::{
 pub struct UserView {
     pub user: UserSafe,
     pub counts: UserAggregates,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LoggedInUserView {
+    pub user: UserSafe,
+    pub counts: UserAggregates,
+    pub unread_notifications: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -119,7 +128,6 @@ pub struct SiteView {
     pub site: Site,
     pub counts: SiteAggregates,
 }
-
 
 /*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CommentReplyView {
