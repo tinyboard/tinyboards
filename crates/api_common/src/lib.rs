@@ -8,3 +8,4 @@ pub mod request;
 pub mod moderator;
 pub mod admin;
 pub mod site;
+pub mod websocket;

@@ -25,7 +25,7 @@ impl Post {
         for_creator_id: i32,
     ) -> Result<Vec<Self>, Error> {
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%pictrs/image%";
+        let pictrs_search = "%/image%";
         posts
             .filter(creator_id.eq(for_creator_id))
             .filter(url.like(pictrs_search))
@@ -37,7 +37,7 @@ impl Post {
         for_board_id: i32,
     ) -> Result<Vec<Self>, Error> {
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%pictrs/image%";
+        let pictrs_search = "%/image%";
         posts
             .filter(board_id.eq(for_board_id))
             .filter(url.like(pictrs_search))
@@ -50,7 +50,7 @@ impl Post {
         for_creator_id: i32,
     ) -> Result<Vec<Self>, Error> {
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%pictrs/image%";
+        let pictrs_search = "%/image%";
 
         diesel::update(
             posts
@@ -70,7 +70,7 @@ impl Post {
         for_board_id: i32,
     ) -> Result<Vec<Self>, Error> {
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%pictrs/image%";
+        let pictrs_search = "%/image%";
 
         diesel::update(
             posts
