@@ -1,5 +1,5 @@
-use crate::structs::{LoggedInUserView, UserSettingsView, UserView};
-use diesel::{dsl::sql, result::Error, sql_types::BigInt, PgConnection, *};
+use crate::structs::{LoggedInUserView, UserSettingsView, UserView, UserMentionView, CommentReplyView};
+use diesel::{result::Error, PgConnection, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
     //map_to_user_sort_type,
@@ -110,53 +110,26 @@ impl UserView {
     }
 }
 
-type LoggedInUserViewTuple = (UserSafe, UserAggregates, i64);
 
 impl LoggedInUserView {
-    pub fn read_opt(
-        conn: &mut PgConnection,
-        user_id: i32,
-    ) -> Result<Option<Self>, TinyBoardsError> {
-        let user_view_tuple = users::table
-            .find(user_id)
-            .inner_join(user_aggregates::table)
-            .select((
-                UserSafe::safe_columns_tuple(),
-                user_aggregates::all_columns,
-                // this is a bit ugly, but diesel won't let me use a select subquery here :( - better ideas welcome
-                sql::<BigInt>(
-                    format!(
-                        "(select count(id) from notifications n where n.is_read = false and n.user_id = {})",
-                        user_id
-                    )
-                    .as_ref(),
-                ),
-            ))
-            .first::<LoggedInUserViewTuple>(conn)
-            .optional()
+    
+    pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, TinyBoardsError> {
+
+        let user_view = UserView::read(conn, user_id)
             .map_err(|e| TinyBoardsError::from(e))?;
 
-        Ok(user_view_tuple.map(|(user, counts, notifs)| Self {
-            user,
-            counts,
-            unread_notifications: notifs,
-        }))
+        let mentions = UserMentionView::get_unread_mentions(conn, user_id)?;
+
+        let replies = CommentReplyView::get_unread_replies(conn, user_id)?;
+
+        Ok( LoggedInUserView { 
+            user: user_view.user, 
+            counts: user_view.counts, 
+            unread_notifications: mentions + replies 
+        })
+
     }
 
-    pub fn from_jwt(
-        conn: &mut PgConnection,
-        token: String,
-        master_key: String,
-    ) -> Result<Option<Self>, TinyBoardsError> {
-        let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
-        let claims: BTreeMap<String, String> = token
-            .verify_with_key(&key)
-            .map_err(|e| TinyBoardsError::from(e))?;
-
-        let uid = claims["uid"].parse::<i32>()?;
-
-        Self::read_opt(conn, uid)
-    }
 }
 
 type UserSettingsViewTuple = (UserSettings, UserAggregates);

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
-    utils::blocking,
+    utils::{blocking, require_user},
 };
 use tinyboards_db::models::user::users::User;
 use tinyboards_db_views::structs::{LoggedInUserView, UserView};
@@ -20,36 +20,17 @@ impl<'des> Perform<'des> for GetLoggedInUser {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        if auth.is_none() {
-            return Err(TinyBoardsError::from_message(401, "You're not logged in"));
-        }
 
-        let auth = auth.unwrap();
-        if auth.is_empty() {
-            return Err(TinyBoardsError::from_message(
-                401,
-                "Invalid `Authorization` header",
-            ));
-        }
+        let user = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
 
-        if !auth.starts_with("Bearer ") {
-            return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
-        }
-        // Reference to the string stored in `auth` skipping the `Bearer ` part
-        // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
-        // maybe there's a better solution to this but I feel like this is too memory-consuming.
-        let token = String::from(&auth[7..]);
-        let master_key = context.master_key().jwt.clone();
-
-        let user = blocking(context.pool(), move |conn| {
-            LoggedInUserView::from_jwt(conn, token, master_key)
+        let logged_in_view = blocking(context.pool(), move |conn| {
+            LoggedInUserView::read(conn, user.id)
         })
         .await??;
 
-        match user {
-            Some(user) => Ok(user),
-            None => Err(TinyBoardsError::from_message(400, "Bad auth token")),
-        }
+        Ok(logged_in_view)
     }
 }
 
