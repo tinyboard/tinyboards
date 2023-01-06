@@ -40,7 +40,7 @@ impl<'des> Perform<'des> for GetUserMentions {
             let unread_only = data.unread_only;
             let user_id = Some(user.id);
             
-            let mentions = blocking(context.pool(), move |conn| {
+            let resp = blocking(context.pool(), move |conn| {
                 UserMentionQuery::builder()
                     .conn(conn)
                     .recipient_id(user_id)
@@ -54,6 +54,6 @@ impl<'des> Perform<'des> for GetUserMentions {
             })
             .await??;
 
-            Ok(GetUserMentionsResponse { mentions })
+            Ok(GetUserMentionsResponse { mentions: resp.mentions, total_count: resp.count })
     }
 }

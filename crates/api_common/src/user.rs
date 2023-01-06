@@ -137,6 +137,7 @@ pub struct GetUserMentions {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetUserMentionsResponse {
     pub mentions: Vec<UserMentionView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -150,6 +151,7 @@ pub struct GetCommentReplies {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetCommentRepliesResponse {
     pub replies: Vec<CommentReplyView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -160,5 +162,4 @@ pub struct GetUnreadCountResponse {
   pub replies: i64,
   pub mentions: i64,
   //pub private_messages: i64,
-  pub total: i64,
 }

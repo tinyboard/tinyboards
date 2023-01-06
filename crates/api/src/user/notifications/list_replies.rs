@@ -40,7 +40,7 @@ impl<'des> Perform<'des> for GetCommentReplies {
             let unread_only = data.unread_only;
             let user_id = Some(user.id);
             
-            let replies = blocking(context.pool(), move |conn| {
+            let resp = blocking(context.pool(), move |conn| {
                 CommentReplyQuery::builder()
                     .conn(conn)
                     .recipient_id(user_id)
@@ -54,6 +54,6 @@ impl<'des> Perform<'des> for GetCommentReplies {
             })
             .await??;
 
-            Ok(GetCommentRepliesResponse { replies })
+            Ok(GetCommentRepliesResponse { replies: resp.replies, total_count: resp.count })
     }
 }

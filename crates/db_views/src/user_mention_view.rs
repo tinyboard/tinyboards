@@ -156,8 +156,14 @@ pub struct UserMentionQuery<'a> {
     limit: Option<i64>,
 }
 
+#[derive(Default, Clone)]
+pub struct UserMentionQueryResponse {
+    pub mentions: Vec<UserMentionView>,
+    pub count: i64,
+}
+
 impl<'a> UserMentionQuery<'a> {
-    pub fn list(self) -> Result<Vec<UserMentionView>, Error> {
+    pub fn list(self) -> Result<UserMentionQueryResponse, Error> {
         use diesel::dsl::*;
 
         let user_alias = diesel::alias!(users as user_1);
@@ -218,6 +224,17 @@ impl<'a> UserMentionQuery<'a> {
                 comment_votes::score.nullable(),
             ))
             .into_boxed();
+
+        let count_query = user_mentions::table
+        .inner_join(comments::table)
+        .inner_join(users::table.on(comments::creator_id.eq(users::id)))
+        .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
+        .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
+        .inner_join(user_alias)
+        .inner_join(
+            comment_aggregates::table.on(comments::id.eq(comment_aggregates::comment_id)),
+        )
+        .into_boxed();
         
         if let Some(recipient_id) = self.recipient_id {
             query = query.filter(user_mentions::recipient_id.eq(recipient_id));
@@ -250,7 +267,10 @@ impl<'a> UserMentionQuery<'a> {
             .offset(offset)
             .load::<UserMentionViewTuple>(self.conn)?;
 
-        Ok(UserMentionView::from_tuple_to_vec(res))
+        let mentions = UserMentionView::from_tuple_to_vec(res);
+        let count = count_query.count().get_result::<i64>(self.conn)?;
+
+        Ok(UserMentionQueryResponse { mentions, count })
     }
 }
 
