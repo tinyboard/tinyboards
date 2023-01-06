@@ -9,7 +9,7 @@ use tinyboards_db::{
         post::posts::Post,
         site::{site::Site, site_invite::SiteInvite},
         user::{
-            user_mention::UserMention,
+            user_mentions::UserMention,
             users::{UserSafe, UserSettings},
         },
     },

@@ -7,7 +7,7 @@ use tinyboards_db::{
         board::board_subscriptions::BoardSubscriber, board::board_user_bans::BoardUserBan,
         board::boards::BoardSafe, comment::comments::Comment,
         comment::user_comment_save::CommentSaved, post::posts::Post, user::user_blocks::UserBlock,
-        user::user_mention::UserMention, user::users::UserSafe,
+        user::user_mentions::UserMention, user::users::UserSafe,
     },
     schema::{
         board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,

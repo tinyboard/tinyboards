@@ -12,3 +12,11 @@ pub struct UserMention {
     pub read: bool,
     pub creation_date: NaiveDateTime,
 }
+
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = user_mentions)]
+pub struct UserMentionForm {
+    pub recipient_id: Option<i32>,
+    pub comment_id: Option<i32>,
+    pub read: Option<bool>,
+}
