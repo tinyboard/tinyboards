@@ -5,7 +5,7 @@ use tinyboards_db::{
     },
     models::{
         board::boards::BoardSafe,
-        comment::comments::Comment,
+        comment::{comments::Comment, comment_reply::CommentReply},
         post::posts::Post,
         site::{site::Site, site_invite::SiteInvite},
         user::{
@@ -129,7 +129,7 @@ pub struct SiteView {
     pub counts: SiteAggregates,
 }
 
-/*#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CommentReplyView {
     pub comment_reply: CommentReply,
     pub comment: Comment,
@@ -143,7 +143,7 @@ pub struct CommentReplyView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to PersonBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
-}*/
+}
 
 /*#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserViewSafe {
