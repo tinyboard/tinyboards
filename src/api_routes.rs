@@ -45,6 +45,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/notifications")
                     .wrap(rate_limit.message())
                     .route("/mentions", web::get().to(route_get::<GetUserMentions>))
+                    .route("/replies", web::get().to(route_get::<GetCommentReplies>))
             )
             // Post
             .service(
