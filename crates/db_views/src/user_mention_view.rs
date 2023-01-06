@@ -2,7 +2,6 @@ use crate::structs::UserMentionView;
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
-    map_to_comment_sort_type,
     models::{
         board::board_subscriptions::BoardSubscriber, board::board_user_bans::BoardUserBan,
         board::boards::BoardSafe, comment::comments::Comment,
@@ -151,7 +150,7 @@ pub struct UserMentionQuery<'a> {
     conn: &'a mut PgConnection,
     user_id: Option<i32>,
     recipient_id: Option<i32>,
-    sort: Option<String>,
+    sort: Option<CommentSortType>,
     unread_only: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -228,17 +227,20 @@ impl<'a> UserMentionQuery<'a> {
             query = query.filter(user_mentions::read.eq(false));
         }
 
-        let sort = map_to_comment_sort_type(self.sort.as_deref());
-
-        query = match sort {
-            CommentSortType::Hot => query
+        query = match self.sort {
+            Some(CommentSortType::Hot) => query
                 .then_order_by(
                     hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
                 )
                 .then_order_by(comment_aggregates::creation_date.desc()),
-            CommentSortType::New => query.then_order_by(comments::creation_date.desc()),
-            CommentSortType::Old => query.then_order_by(comments::creation_date.asc()),
-            CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
+            Some(CommentSortType::New) => query.then_order_by(comments::creation_date.desc()),
+            Some(CommentSortType::Old) => query.then_order_by(comments::creation_date.asc()),
+            Some(CommentSortType::Top) => query.order_by(comment_aggregates::score.desc()),
+            None => query
+            .then_order_by(
+                hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
+            )
+            .then_order_by(comment_aggregates::creation_date.desc()),
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

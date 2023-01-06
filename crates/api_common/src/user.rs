@@ -1,7 +1,7 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::{UserView, UserSettingsView};
+use tinyboards_db_views::structs::{UserView, UserSettingsView, UserMentionView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -125,3 +125,16 @@ pub struct AcceptSiteInvite {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AcceptSiteInviteResponse {}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetUserMentions {
+    pub sort: Option<String>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub unread_only: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetUserMentionsResponse {
+    pub mentions: Vec<UserMentionView>,
+}
