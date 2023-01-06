@@ -7,6 +7,7 @@ use tinyboards_api_common::{
         blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         require_user,
     },
+    websocket::send::send_notifications,
 };
 use tinyboards_db::{
     models::{
@@ -19,7 +20,7 @@ use tinyboards_db::{
     traits::{Crud, Voteable},
 };
 use tinyboards_db_views::structs::CommentView;
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::scrape_text_for_mentions};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateComment {
@@ -127,6 +128,20 @@ impl<'des> PerformCrud<'des> for CreateComment {
             CommentView::read(conn, new_comment.id, Some(user.id))
         })
         .await??;
+
+
+        // send notifications
+        let mentions = scrape_text_for_mentions(&new_comment.comment.body_html);
+        let _recipient_ids = send_notifications(
+            mentions, 
+            &new_comment.comment, 
+            &user, 
+            &post, 
+            context
+        )
+        .await?;
+
+
 
         Ok(new_comment)
     }

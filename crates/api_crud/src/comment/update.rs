@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{
         blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_or_removed, require_user,
-    },
+    }, websocket::send::send_notifications,
 };
 use tinyboards_db::{
     models::comment::comments::{Comment, CommentForm},
@@ -14,7 +14,7 @@ use tinyboards_db::{
     utils::naive_now,
 };
 use tinyboards_db_views::structs::CommentView;
-use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown};
+use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown, utils::scrape_text_for_mentions};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditComment {
@@ -81,6 +81,15 @@ impl<'des> PerformCrud<'des> for EditComment {
             CommentView::read(conn, comment_id, Some(orig_comment.comment.creator_id))
         })
         .await??;
+
+        let mentions = scrape_text_for_mentions(&comment_view.comment.body_html);
+        let _recipient_ids = send_notifications(
+            mentions, 
+            &comment_view.comment, 
+            &user, 
+            &orig_comment.post, 
+            context,
+        ).await?;
 
         Ok(CommentResponse { comment_view })
     }
