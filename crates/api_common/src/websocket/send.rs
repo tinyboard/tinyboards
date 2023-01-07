@@ -36,26 +36,37 @@ pub async fn send_notifications(
         .collect::<Vec<&MentionData>>() 
     {
         let mention_name = mention.name.clone();
-        let user_view = blocking(context.pool(), move |conn| {
+        let user_view_res = blocking(context.pool(), move |conn| {
             UserView::read_from_name(conn, &mention_name)
         })
-        .await??;
+        .await?;
 
-        recipient_ids.push(user_view.user.id.clone());
+        match user_view_res {
+            // we only proceed with trying to make a user mention if the user view returned successfully
+            Ok(user_view) => {
 
-        let user_mention_form = UserMentionForm {
-            recipient_id: Some(user_view.user.id.clone()),
-            comment_id: Some(comment.id),
-            read: Some(false)
-        };
+                recipient_ids.push(user_view.user.id.clone());
+                
+                let user_mention_form = UserMentionForm {
+                    recipient_id: Some(user_view.user.id.clone()),
+                    comment_id: Some(comment.id),
+                    read: Some(false)
+                };
 
-        // this might fail softly because comment edits might re-update or replace it
-        // the table's uniqueness will handle the fail
-        blocking(context.pool(), move |conn| {
-            UserMention::create(conn, &user_mention_form)
-        })
-        .await?
-        .ok();
+                // this might fail softly because comment edits might re-update or replace it
+                // the table's uniqueness will handle the fail
+                blocking(context.pool(), move |conn| {
+                    UserMention::create(conn, &user_mention_form)
+                })
+                .await?
+                .ok();
+
+            },
+            // do nothing if the user view lookup failed
+            Err(_) => {
+                ()
+            }
+        };        
     }
 
     // send comment reply to parent commenter/OP

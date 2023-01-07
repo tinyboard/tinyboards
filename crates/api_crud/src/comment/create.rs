@@ -94,8 +94,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         }
 
         let body_html = parse_markdown(&data.body);
-
-        // TODO: scrape comment text for @mentions and send notifs
+        
         let new_comment = CommentForm {
             creator_id: user.id,
             body: Some(data.body),
