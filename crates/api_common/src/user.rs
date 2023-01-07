@@ -165,3 +165,9 @@ pub struct GetUnreadCountResponse {
   pub mentions: i64,
   //pub private_messages: i64,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct MarkAllMentionsRead {}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct MarkAllRepliesRead {}

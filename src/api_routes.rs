@@ -46,7 +46,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("/unread", web::get().to(route_get::<GetUnreadCount>))
                     .route("/mentions", web::get().to(route_get::<GetUserMentions>))
+                    .route("/mentions/mark_read", web::post().to(route_post::<MarkAllMentionsRead>))
                     .route("/replies", web::get().to(route_get::<GetCommentReplies>))
+                    .route("/replies/mark_read", web::post().to(route_post::<MarkAllRepliesRead>))
             )
             // Post
             .service(
