@@ -51,16 +51,17 @@ pub fn scrape_text_for_mentions(text: &str) -> Vec<MentionData> {
 
 pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
 
-  let base_url = settings.get_protocol_and_hostname();
+  let _base_url = settings.get_protocol_and_hostname();
   let mut result = IMG_TAG_REGEX.replace_all(body, "<img loading='lazy' src=").to_string();
   let rcopy = result.clone();
 
   for cap in MENTIONS_REGEX
     .captures_iter(rcopy.as_str()) {
       let uname = cap["name"].to_string();
-      let profile_link = format!("{}/user/{}", base_url, uname);
-      let profile_ref = format!("<a href='{}'>@{}</a>", profile_link, uname);
-      result = result.replace(&format!("@{}", uname), &profile_ref);
+      //let profile_link = format!("{}/user/{}", base_url, uname);
+      //let profile_ref = format!("<a href='{}'>@{}</a>", profile_link, uname);
+      let nuxt_ref = format!("<NuxtLink to='/user/{}'>@{}</NuxtLink>", uname, uname);
+      result = result.replace(&format!("@{}", uname), &nuxt_ref);
     }
   
   result
