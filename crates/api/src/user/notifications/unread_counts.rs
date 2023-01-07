@@ -43,6 +43,7 @@ impl<'des> Perform<'des> for GetUnreadCount {
     Ok(GetUnreadCountResponse {
         replies,
         mentions,
+        total_count: replies + mentions,
     })
   }
 }
