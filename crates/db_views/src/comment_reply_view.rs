@@ -173,6 +173,15 @@ impl CommentReplyView {
         .select(count(comment_reply::id))
         .first::<i64>(conn)
     }
+
+    /// Marks all unread as read for a user
+    pub fn mark_all_replies_as_read(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
+        diesel::update(comment_reply::table)
+            .filter(comment_reply::read.eq(false))
+            .filter(comment_reply::recipient_id.eq(user_id))
+            .set(comment_reply::read.eq(true))
+            .execute(conn)
+    }
 }
 
 #[derive(TypedBuilder)]
@@ -192,6 +201,7 @@ pub struct CommentReplyQuery<'a> {
 pub struct CommentReplyQueryResponse {
     pub replies: Vec<CommentReplyView>,
     pub count: i64,
+    pub unread: i64,
 }
 
 impl <'a> CommentReplyQuery<'a> {
@@ -264,7 +274,7 @@ impl <'a> CommentReplyQuery<'a> {
         ))
         .into_boxed();
 
-        let mut count_query = comment_reply::table
+        let count_query = comment_reply::table
         .inner_join(comments::table)
         .inner_join(users::table.on(comments::creator_id.eq(users::id)))
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
@@ -279,7 +289,6 @@ impl <'a> CommentReplyQuery<'a> {
 
         if self.unread_only.unwrap_or(false) {
             query = query.filter(comment_reply::read.eq(false));
-            count_query = count_query.filter(comment_reply::read.eq(false));
         }
 
         query = match self.sort.unwrap_or(CommentSortType::Hot) {
@@ -300,8 +309,9 @@ impl <'a> CommentReplyQuery<'a> {
         
         let replies = CommentReplyView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(self.conn)?;
+        let unread = CommentReplyView::get_unread_replies(self.conn, user_id_join)?;
 
-        Ok(CommentReplyQueryResponse { replies, count })
+        Ok(CommentReplyQueryResponse { replies, count, unread })
     }
 }
 

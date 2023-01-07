@@ -160,6 +160,7 @@ pub struct UserMentionQuery<'a> {
 pub struct UserMentionQueryResponse {
     pub mentions: Vec<UserMentionView>,
     pub count: i64,
+    pub unread: i64,
 }
 
 impl<'a> UserMentionQuery<'a> {
@@ -225,7 +226,7 @@ impl<'a> UserMentionQuery<'a> {
             ))
             .into_boxed();
 
-        let mut count_query = user_mentions::table
+        let count_query = user_mentions::table
         .inner_join(comments::table)
         .inner_join(users::table.on(comments::creator_id.eq(users::id)))
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
@@ -242,7 +243,6 @@ impl<'a> UserMentionQuery<'a> {
 
         if self.unread_only.unwrap_or(false) {
             query = query.filter(user_mentions::read.eq(false));
-            count_query = count_query.filter(user_mentions::read.eq(false));
         }
 
         query = match self.sort {
@@ -270,8 +270,9 @@ impl<'a> UserMentionQuery<'a> {
 
         let mentions = UserMentionView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(self.conn)?;
+        let unread = UserMentionView::get_unread_mentions(self.conn, user_id_join)?;
 
-        Ok(UserMentionQueryResponse { mentions, count })
+        Ok(UserMentionQueryResponse { mentions, count, unread })
     }
 }
 

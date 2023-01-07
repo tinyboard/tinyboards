@@ -54,6 +54,6 @@ impl<'des> Perform<'des> for GetCommentReplies {
             })
             .await??;
 
-            Ok(GetCommentRepliesResponse { replies: resp.replies, total_count: resp.count })
+            Ok(GetCommentRepliesResponse { replies: resp.replies, total_count: resp.count, unread_count: resp.unread })
     }
 }

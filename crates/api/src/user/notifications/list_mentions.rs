@@ -54,6 +54,6 @@ impl<'des> Perform<'des> for GetUserMentions {
             })
             .await??;
 
-            Ok(GetUserMentionsResponse { mentions: resp.mentions, total_count: resp.count })
+            Ok(GetUserMentionsResponse { mentions: resp.mentions, total_count: resp.count, unread_count: resp.unread })
     }
 }
