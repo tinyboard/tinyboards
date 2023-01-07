@@ -264,7 +264,7 @@ impl <'a> CommentReplyQuery<'a> {
         ))
         .into_boxed();
 
-        let count_query = comment_reply::table
+        let mut count_query = comment_reply::table
         .inner_join(comments::table)
         .inner_join(users::table.on(comments::creator_id.eq(users::id)))
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
@@ -279,6 +279,7 @@ impl <'a> CommentReplyQuery<'a> {
 
         if self.unread_only.unwrap_or(false) {
             query = query.filter(comment_reply::read.eq(false));
+            count_query = count_query.filter(comment_reply::read.eq(false));
         }
 
         query = match self.sort.unwrap_or(CommentSortType::Hot) {

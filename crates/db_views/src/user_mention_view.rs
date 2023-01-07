@@ -225,7 +225,7 @@ impl<'a> UserMentionQuery<'a> {
             ))
             .into_boxed();
 
-        let count_query = user_mentions::table
+        let mut count_query = user_mentions::table
         .inner_join(comments::table)
         .inner_join(users::table.on(comments::creator_id.eq(users::id)))
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
@@ -242,6 +242,7 @@ impl<'a> UserMentionQuery<'a> {
 
         if self.unread_only.unwrap_or(false) {
             query = query.filter(user_mentions::read.eq(false));
+            count_query = count_query.filter(user_mentions::read.eq(false));
         }
 
         query = match self.sort {
