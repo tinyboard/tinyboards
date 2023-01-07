@@ -141,6 +141,16 @@ impl UserMentionView {
             .select(count(user_mentions::id))
             .first::<i64>(conn)
     }
+
+    /// Marks all unread as read for a user
+    pub fn mark_all_mentions_as_read(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
+        diesel::update(user_mentions::table)
+            .filter(user_mentions::read.eq(false))
+            .filter(user_mentions::recipient_id.eq(user_id))
+            .set(user_mentions::read.eq(true))
+            .execute(conn)
+    }
+
 }
 
 #[derive(TypedBuilder)]
