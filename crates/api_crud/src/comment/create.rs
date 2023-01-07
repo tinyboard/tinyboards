@@ -20,7 +20,7 @@ use tinyboards_db::{
     traits::{Crud, Voteable},
 };
 use tinyboards_db_views::structs::CommentView;
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::scrape_text_for_mentions};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::{scrape_text_for_mentions, custom_body_parsing}};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateComment {
@@ -93,7 +93,8 @@ impl<'des> PerformCrud<'des> for CreateComment {
             level = parent_comment.level + 1;
         }
 
-        let body_html = parse_markdown(&data.body);
+        let mut body_html = parse_markdown(&data.body);
+        body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
         
         let new_comment = CommentForm {
             creator_id: user.id,

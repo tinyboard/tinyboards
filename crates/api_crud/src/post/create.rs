@@ -13,7 +13,7 @@ use tinyboards_db::{
     traits::Voteable,
 };
 use tinyboards_db_views::structs::PostView;
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::custom_body_parsing};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for SubmitPost {
@@ -40,8 +40,9 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         check_board_deleted_or_removed(data.board_id.unwrap_or(1), context.pool()).await?;
 
         let body = data.body.unwrap_or_default();
-        let body_html = parse_markdown(&body.as_str());
-
+        let mut body_html = parse_markdown(&body.as_str());
+        body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
+        
         let post_form = PostForm {
             title: Some(data.title),
             type_: data.type_,

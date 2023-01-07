@@ -14,7 +14,7 @@ use tinyboards_db::{
     utils::naive_now,
 };
 use tinyboards_db_views::structs::CommentView;
-use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown, utils::scrape_text_for_mentions};
+use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown, utils::{scrape_text_for_mentions, custom_body_parsing}};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditComment {
@@ -55,7 +55,9 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         let body = Some(data.body.clone());
         // we re-parse the markdown right here
-        let body_html = parse_markdown(&body.clone().unwrap().as_str());
+        let mut body_html = parse_markdown(&body.clone().unwrap().as_str());
+        body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
+
         let comment_id = path.comment_id;
         // grabbing the current timestamp for the update
         let updated = Some(naive_now());
