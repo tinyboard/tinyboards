@@ -14,6 +14,7 @@ cat > $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
 
   server {
     listen 80;
+    listen [::]:80;
     server_name $SERVER_NAME;
 EOF
 
@@ -22,7 +23,16 @@ if [ "$ENVIRONMENT" = "prod" ]; then
 echo "****SSL IS ENABLED****"
     # Add SSL configuration to the file
     cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
-    listen 443 ssl;
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+  server {
+    listen 443 ssl default_server;
+    server_name example.com;
     ssl_certificate /etc/ssl/fullchain.pem;
     ssl_certificate_key /etc/ssl/privkey.pem;
 EOF
