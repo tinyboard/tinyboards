@@ -54,7 +54,7 @@ pub async fn send_notifications(
         blocking(context.pool(), move |conn| {
             UserMention::create(conn, &user_mention_form)
         })
-        .await
+        .await?
         .ok();
     }
 
@@ -90,10 +90,13 @@ pub async fn send_notifications(
                 read: Some(false),
             };
 
+            // this needs to fail softly as well
             blocking(context.pool(), move |conn| {
                 CommentReply::create(conn, &comment_reply_form)
             })
-            .await??;
+            .await?
+            .ok();
+            
         } else {
             // if no parent id then send a notification to the OP
             let user_id = user.id.clone();
@@ -117,10 +120,11 @@ pub async fn send_notifications(
                     read: Some(false),
                 };
 
+                // this needs to fail softly as well
                 blocking(context.pool(), move |conn| {
                     CommentReply::create(conn, &comment_reply_form)
                 })
-                .await
+                .await?
                 .ok();
             }
 
