@@ -205,8 +205,7 @@ impl<'a> UserQuery<'a> {
             UserSortType::New => query.then_order_by(users::creation_date.desc()),
             UserSortType::Old => query.then_order_by(users::creation_date.asc()),
             UserSortType::MostRep => query
-                .then_order_by(user_aggregates::post_score.desc())
-                .then_order_by(user_aggregates::comment_score.desc()),
+                .then_order_by(user_aggregates::rep.desc()),
             UserSortType::MostPosts => query.then_order_by(user_aggregates::post_count.desc()),
             UserSortType::MostComments => {
                 query.then_order_by(user_aggregates::comment_count.desc())
