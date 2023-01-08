@@ -211,8 +211,8 @@ EOF
   nginx:
     image: nginx:1-alpine
     ports:
-      - "$HTTP_PORT:80"
-      - "$HTTPS_PORT:443"
+      - "127.0.0.1:$HTTP_PORT:80"
+      - "127.0.0.1:$HTTPS_PORT:443"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d
       - /etc/ssl:/etc/ssl/
@@ -234,8 +234,8 @@ cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
   tinyboards:
     image: kronusdev/tinyboards-be:latest
     ports:
-      - "$BE_PORT_A:8536"
-      - "$BE_PORT_B:6669"
+      - "127.0.0.1:$BE_PORT_A:8536"
+      - "127.0.0.1:$BE_PORT_B:6669"
     restart: always
     environment:
       - RUST_LOG="info"
@@ -257,8 +257,8 @@ else
   tinyboards:
     image: tinyboards
     ports:
-      - "$BE_PORT_A:8536"
-      - "$BE_PORT_B:6669"
+      - "127.0.0.1:$BE_PORT_A:8536"
+      - "127.0.0.1:$BE_PORT_B:6669"
     restart: always
     environment:
       - RUST_LOG="info"
@@ -286,7 +286,7 @@ cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
   tinyboards-fe:
     image: kronusdev/tinyboards-fe:latest
     ports:
-      - "$FE_PORT:3000"
+      - "127.0.0.1:$FE_PORT:3000"
     restart: always
     networks:
       tinyboards:
@@ -302,7 +302,7 @@ echo "****WILL BUILD FROM SOURCE****"
   tinyboards-fe:
     image: tinyboards-fe
     ports:
-      - "$FE_PORT:3000"
+      - "127.0.0.1:$FE_PORT:3000"
     restart: always
     build:
       context: ../../tinyboards-fe
@@ -325,7 +325,7 @@ cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
     # needs to match the pictrs url in the config hjson
     hostname: pictrs
     ports:
-      - "0.0.0.0:$PICTRS_PORT:8080"
+      - "127.0.0.1:$PICTRS_PORT:8080"
     networks:
       tinyboards:
         aliases:
@@ -346,7 +346,7 @@ cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
     image: postgres:14-alpine
     ports:
       # use a different port so it doesn't conflict with postgres running on the host
-      - "$POSTGRES_PORT:5432"
+      - "127.0.0.1:$POSTGRES_PORT:5432"
     environment:
       - POSTGRES_USER=$POSTGRES_USER
       - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
