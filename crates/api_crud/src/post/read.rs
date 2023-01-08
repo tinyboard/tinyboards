@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{blocking, check_private_instance, get_user_view_from_jwt, load_user_opt},
+    utils::{blocking, check_private_instance, load_user_opt},
 };
 
 use tinyboards_utils::TinyBoardsError;
