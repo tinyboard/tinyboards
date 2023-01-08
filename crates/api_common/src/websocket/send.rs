@@ -108,39 +108,40 @@ pub async fn send_notifications(
             .await?
             .ok();
             
-        } else {
-            // if no parent id then send a notification to the OP
-            let user_id = user.id.clone();
-            let post_creator_id = post.creator_id.clone();
-            let creator_blocked = blocking(context.pool(), move |conn| {
-                UserBlock::read(conn, user_id, post_creator_id)
+        } 
+
+    } else {
+        // if no parent id then send a notification to the OP
+        let user_id = user.id.clone();
+        let post_creator_id = post.creator_id.clone();
+        let creator_blocked = blocking(context.pool(), move |conn| {
+            UserBlock::read(conn, user_id, post_creator_id)
+        })
+        .await?
+        .is_ok();
+
+        if post.creator_id != user.id && !creator_blocked {
+            let creator_id = post.creator_id;
+            let parent_user_view = blocking(context.pool(), move |conn| {
+                UserView::read(conn, creator_id)
+            })
+            .await??;
+
+            let comment_reply_form = CommentReplyForm {
+                recipient_id: Some(parent_user_view.user.id),
+                comment_id: Some(comment.id),
+                read: Some(false),
+            };
+
+            // this needs to fail softly as well
+            blocking(context.pool(), move |conn| {
+                CommentReply::create(conn, &comment_reply_form)
             })
             .await?
-            .is_ok();
-
-            if post.creator_id != user.id && !creator_blocked {
-                let creator_id = post.creator_id;
-                let parent_user_view = blocking(context.pool(), move |conn| {
-                    UserView::read(conn, creator_id)
-                })
-                .await??;
-
-                let comment_reply_form = CommentReplyForm {
-                    recipient_id: Some(parent_user_view.user.id),
-                    comment_id: Some(comment.id),
-                    read: Some(false),
-                };
-
-                // this needs to fail softly as well
-                blocking(context.pool(), move |conn| {
-                    CommentReply::create(conn, &comment_reply_form)
-                })
-                .await?
-                .ok();
-            }
-
+            .ok();
         }
 
     }
+    
     Ok(recipient_ids)
 }

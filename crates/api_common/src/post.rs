@@ -1,5 +1,6 @@
 use crate::sensitive::Sensitive;
 use serde::{Deserialize, Serialize};
+use tinyboards_db::aggregates::structs::UserAggregates;
 use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -40,6 +41,7 @@ pub struct GetPostResponse {
     pub post_view: PostView,
     pub board_view: BoardView,
     pub moderators: Vec<BoardModeratorView>,
+    pub author_counts: UserAggregates,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

@@ -3,13 +3,13 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{blocking, check_private_instance, get_user_view_from_jwt, load_user_opt},
 };
 
 use tinyboards_utils::TinyBoardsError;
 
 use tinyboards_db_views::{
-    structs::{BoardModeratorView, BoardView, PostView},
+    structs::{BoardModeratorView, BoardView, PostView, UserView},
     DeleteableOrRemoveable,
 };
 
@@ -63,11 +63,17 @@ impl<'des> PerformCrud<'des> for GetPost {
             BoardModeratorView::for_board(conn, board_id)
         })
         .await??;
-
+        
+        let author_counts = blocking(context.pool(), move |conn| {
+            UserView::read(conn, post_view.post.creator_id)
+        }).await??
+        .counts;
+        
         Ok(GetPostResponse {
             post_view,
             board_view,
             moderators,
+            author_counts,
         })
     }
 }
