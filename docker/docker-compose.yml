@@ -12,7 +12,7 @@ services:
     networks:
       tinyboards:
         aliases:
-          - tinyboards.lol
+          - example.com
     restart: always
     depends_on:
       - tinyboards-fe
@@ -21,8 +21,8 @@ services:
   tinyboards:
     image: kronusdev/tinyboards-be:latest
     ports:
-      - "8536:8536"
-      - "6669:6669"
+      - "127.0.0.1:8536:8536"
+      - "127.0.0.1:6669:6669"
     restart: always
     environment:
       - RUST_LOG="info"
@@ -41,7 +41,7 @@ services:
   tinyboards-fe:
     image: kronusdev/tinyboards-fe:latest
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     restart: always
     networks:
       tinyboards:
@@ -55,7 +55,7 @@ services:
     # needs to match the pictrs url in the config hjson
     hostname: pictrs
     ports:
-      - "0.0.0.0:8080:8080"
+      - "127.0.0.1:8080:8080"
     networks:
       tinyboards:
         aliases:
@@ -71,7 +71,7 @@ services:
     image: postgres:14-alpine
     ports:
       # use a different port so it doesn't conflict with postgres running on the host
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
     environment:
       - POSTGRES_USER=tinyboards
       - POSTGRES_PASSWORD=tinyboards
