@@ -52,7 +52,7 @@ pub fn scrape_text_for_mentions(text: &str) -> Vec<MentionData> {
 pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
 
   let base_url = settings.get_protocol_and_hostname();
-  let mut result = IMG_TAG_REGEX.replace_all(body, "<img loading='lazy' src=").to_string();
+  let mut result = IMG_TAG_REGEX.replace_all(body, "<img loading='lazy' class='img-expand' src=").to_string();
   let rcopy = result.clone();
 
   for cap in MENTIONS_REGEX
