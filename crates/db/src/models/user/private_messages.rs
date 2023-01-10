@@ -9,6 +9,7 @@ pub struct PrivateMessage {
     pub id: i32,
     pub creator_id: i32,
     pub recipient_id: i32,
+    pub subject: Option<String>,
     pub body: String,
     pub is_deleted: bool,
     pub read: bool,
@@ -21,6 +22,7 @@ pub struct PrivateMessage {
 pub struct PrivateMessageForm {
     pub creator_id: Option<i32>,
     pub recipient_id: Option<i32>,
+    pub subject: Option<Option<String>>,
     pub body: Option<String>,
     pub is_deleted: Option<bool>,
     pub read: Option<bool>,

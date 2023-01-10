@@ -326,6 +326,7 @@ diesel::table! {
         id -> Int4,
         creator_id -> Int4,
         recipient_id -> Int4,
+        subject -> Nullable<Text>,
         body -> Text,
         is_deleted -> Bool,
         read -> Bool,
