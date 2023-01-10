@@ -1,10 +1,10 @@
-use crate::schema::dms;
+use crate::schema::private_messages;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-#[diesel(table_name = dms)]
+#[diesel(table_name = private_messages)]
 pub struct PrivateMessage {
     pub id: i32,
     pub creator_id: i32,
@@ -17,7 +17,7 @@ pub struct PrivateMessage {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
-#[diesel(table_name = dms)]
+#[diesel(table_name = private_messages)]
 pub struct PrivateMessageForm {
     pub creator_id: Option<i32>,
     pub recipient_id: Option<i32>,

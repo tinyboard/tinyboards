@@ -148,19 +148,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    dms (id) {
-        id -> Int4,
-        creator_id -> Int4,
-        recipient_id -> Int4,
-        body -> Text,
-        is_deleted -> Bool,
-        read -> Bool,
-        creation_date -> Timestamp,
-        updated -> Nullable<Timestamp>,
-    }
-}
-
-diesel::table! {
     email_verification (id) {
         id -> Int4,
         user_id -> Int4,
@@ -330,6 +317,19 @@ diesel::table! {
         is_deleted -> Bool,
         is_nsfw -> Bool,
         is_stickied -> Bool,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    private_messages (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        recipient_id -> Int4,
+        body -> Text,
+        is_deleted -> Bool,
+        read -> Bool,
+        creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
     }
 }
@@ -587,7 +587,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment_reply,
     comment_votes,
     comments,
-    dms,
     email_verification,
     mod_add_admin,
     mod_add_board,
@@ -603,6 +602,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_aggregates,
     post_votes,
     posts,
+    private_messages,
     registration_applications,
     reports,
     secret,

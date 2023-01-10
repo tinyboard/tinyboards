@@ -1,0 +1,1 @@
+alter table dms rename to private_messages;
