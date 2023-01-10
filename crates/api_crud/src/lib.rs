@@ -6,6 +6,7 @@ use serde::Deserialize;
 pub mod comment;
 pub mod post;
 pub mod user;
+pub mod private_messages;
 pub mod invite;
 
 #[async_trait::async_trait(?Send)]
