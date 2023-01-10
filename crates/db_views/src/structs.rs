@@ -10,7 +10,7 @@ use tinyboards_db::{
         site::{site::Site, site_invite::SiteInvite},
         user::{
             user_mentions::UserMention,
-            users::{UserSafe, UserSettings},
+            users::{UserSafe, UserSettings}, private_messages::PrivateMessage,
         },
     },
     SubscribedType,
@@ -145,8 +145,9 @@ pub struct CommentReplyView {
     pub my_vote: Option<i16>,            // Left join to CommentLike
 }
 
-/*#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UserViewSafe {
-    pub user: UserSafe,
-    pub counts: UserAggregates,
-}*/
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct PrivateMessageView {
+    pub private_message: PrivateMessage,
+    pub creator: UserSafe,
+    pub recipient: UserSafe,
+}
