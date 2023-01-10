@@ -172,3 +172,20 @@ pub struct MarkAllMentionsRead {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MarkAllRepliesRead {}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct UsernameInfo {
+    pub name: String,
+    pub avatar: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SearchNames {
+    pub q: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct SearchNamesResponse {
+    pub users: Vec<UsernameInfo>,
+}

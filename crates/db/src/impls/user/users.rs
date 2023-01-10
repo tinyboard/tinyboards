@@ -1,3 +1,4 @@
+
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
@@ -6,10 +7,8 @@ use std::collections::BTreeMap;
 use crate::models::user::users::{User, UserForm, UserSafe};
 use crate::schema::users::dsl::*;
 use crate::traits::Crud;
-use crate::utils::naive_now;
-use diesel::prelude::*;
-use diesel::result::Error;
-use diesel::PgConnection;
+use crate::utils::{naive_now, fuzzy_search};
+use diesel::{prelude::*, result::Error};
 use tinyboards_utils::{hash_password, TinyBoardsError};
 
 impl User {
@@ -91,6 +90,14 @@ impl User {
         diesel::update(users.find(user_id))
             .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+    }
+
+    pub fn search_by_name(
+        conn: &mut PgConnection,
+        query: &str
+    ) -> Result<Vec<Self>, Error> {
+        use crate::schema::users::dsl::*;
+        users.filter(name.ilike(fuzzy_search(query))).load(conn)
     }
 
     pub fn update_admin(

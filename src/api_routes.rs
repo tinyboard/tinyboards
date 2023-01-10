@@ -32,6 +32,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/signup", web::post().to(route_post_crud::<Register>)),
             )
             // User
+            .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
             .service(
                 web::scope("/user")
                     .route("/{username}", web::get().to(route_get::<Profile>))
