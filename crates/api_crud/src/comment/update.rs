@@ -76,9 +76,6 @@ impl<'des> PerformCrud<'des> for EditComment {
         })
         .await??;
 
-        // do mentions parsing here
-        // do mentions notifications sending here
-
         let comment_view = blocking(context.pool(), move |conn| {
             CommentView::read(conn, comment_id, Some(orig_comment.comment.creator_id))
         })

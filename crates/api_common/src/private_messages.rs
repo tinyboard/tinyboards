@@ -34,3 +34,8 @@ pub struct PrivateMessageResponse {
 pub struct EditPrivateMessage {
     pub body: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PrivateMessageIdPath {
+    pub pm_id: i32,
+}
