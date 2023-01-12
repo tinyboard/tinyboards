@@ -33,7 +33,7 @@ pub struct User {
 }
 
 /// A safe representation of user, without the sensitive info
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable, Default)]
 #[diesel(table_name = users)]
 pub struct UserSafe {
     pub id: i32,

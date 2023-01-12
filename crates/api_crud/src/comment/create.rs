@@ -27,12 +27,13 @@ impl<'des> PerformCrud<'des> for CreateComment {
     type Response = CommentView;
     type Route = ();
 
+    #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &web::Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<Self::Response, TinyBoardsError> {
+    ) -> Result<CommentView, TinyBoardsError> {
         let data = self;
 
         let post = blocking(context.pool(), move |conn| Post::read(conn, data.post_id)).await??;

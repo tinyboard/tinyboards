@@ -1,11 +1,8 @@
-use crate::sensitive::Sensitive;
-use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::models::user::private_messages::{PrivateMessage};
+use tinyboards_db_views::structs::PrivateMessageView;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CreatePrivateMessage {
-    pub creator_id: i32,
     pub recipient_id: i32,
     pub subject: Option<String>,
     pub body: String,    
@@ -13,5 +10,5 @@ pub struct CreatePrivateMessage {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CreatePrivateMessageResponse {
-    
+    pub message: PrivateMessageView,
 }

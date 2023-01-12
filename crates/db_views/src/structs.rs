@@ -145,7 +145,7 @@ pub struct CommentReplyView {
     pub my_vote: Option<i16>,            // Left join to CommentLike
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct PrivateMessageView {
     pub private_message: PrivateMessage,
     pub creator: UserSafe,

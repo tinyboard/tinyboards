@@ -12,7 +12,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
-        user::users::User,
+        user::{users::User, user_blocks::UserBlock},
     },
     traits::Crud, SiteMode,
 };
@@ -440,6 +440,26 @@ pub async fn check_post_deleted_removed_or_locked(
         Err(TinyBoardsError::from_message(403, "post locked"))
     } else if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message(404, "post deleted or removed"))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn check_user_block(
+    my_id: i32,
+    other_id: i32,
+    pool: &PgPool,
+) -> Result<(), TinyBoardsError> {
+    
+    let is_blocked = blocking(pool, move |conn| {
+        UserBlock::read(conn, other_id, my_id)
+    })
+    .await?
+    .is_ok();
+
+    if is_blocked {
+        Err(TinyBoardsError::from_message(405, "user is blocking you"))
     } else {
         Ok(())
     }

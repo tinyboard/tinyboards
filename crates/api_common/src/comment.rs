@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tinyboards_db::models::user::users::User;
 use tinyboards_db_views::structs::CommentView;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateComment {
     pub body: String,
     pub post_id: i32,
