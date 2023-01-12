@@ -36,6 +36,12 @@ pub struct EditPrivateMessage {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeletePrivateMessage {
+    pub is_deleted: bool,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PrivateMessageIdPath {
     pub pm_id: i32,
 }

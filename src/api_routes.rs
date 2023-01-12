@@ -2,7 +2,7 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::Perform;
 use tinyboards_api_common::{
-    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::{CreatePrivateMessage, GetPrivateMessages, EditPrivateMessage},
+    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::{CreatePrivateMessage, GetPrivateMessages, EditPrivateMessage, DeletePrivateMessage},
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -58,7 +58,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::post().to(route_post_crud::<CreatePrivateMessage>))
                     .route("", web::get().to(route_get_crud::<GetPrivateMessages>))
                     .route("/{pm_id}", web::put().to(route_post_crud::<EditPrivateMessage>))
-
+                    .route("/{pm_id}", web::delete().to(route_post_crud::<DeletePrivateMessage>))
             )
             // Post
             .service(
