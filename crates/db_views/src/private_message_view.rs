@@ -49,7 +49,6 @@ impl PrivateMessageView {
 pub struct PrivateMessageQuery<'a> {
     #[builder(!default)]
     conn: &'a mut PgConnection,
-    #[builder(!default)]
     recipient_id: i32,
     unread_only: Option<bool>,
     page: Option<i64>,
@@ -57,7 +56,7 @@ pub struct PrivateMessageQuery<'a> {
 }
 
 impl<'a> PrivateMessageQuery<'a> {
-    pub async fn list(self) -> Result<Vec<PrivateMessageView>, Error> {
+    pub fn list(self) -> Result<Vec<PrivateMessageView>, Error> {
         let user_alias = diesel::alias!(users as users1);
         
         let mut query = private_messages::table

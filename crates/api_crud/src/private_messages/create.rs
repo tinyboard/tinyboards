@@ -6,7 +6,6 @@ use tinyboards_api_common::{
         blocking,
         require_user, check_user_block,
     },
-    websocket::send::send_notifications, 
     data::TinyBoardsContext,
 };
 use tinyboards_db::{
@@ -16,7 +15,7 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::PrivateMessageView;
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::{custom_body_parsing}};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
 impl <'des> PerformCrud<'des> for CreatePrivateMessage {
