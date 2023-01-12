@@ -42,6 +42,16 @@ impl PrivateMessageView {
 
         Ok(PrivateMessageView { private_message, creator, recipient })
     }
+    
+    pub fn get_unread_message_count(conn: &mut PgConnection, user_id: i32) -> Result<i64, Error> {
+        use diesel::dsl::count;
+        private_messages::table
+            .filter(private_messages::read.eq(false))
+            .filter(private_messages::recipient_id.eq(user_id))
+            .filter(private_messages::is_deleted.eq(false))
+            .select(count(private_messages::id))
+            .first::<i64>(conn)
+    }
 }
 
 #[derive(TypedBuilder)]

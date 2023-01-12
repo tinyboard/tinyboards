@@ -163,7 +163,7 @@ pub struct GetUnreadCount {}
 pub struct GetUnreadCountResponse {
   pub replies: i64,
   pub mentions: i64,
-  //pub private_messages: i64,
+  pub messages: i64,
   pub total_count: i64,
 }
 

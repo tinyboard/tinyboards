@@ -5,7 +5,7 @@ use tinyboards_api_common::{
   user::{GetUnreadCount, GetUnreadCountResponse},
   utils::{get_user_view_from_jwt, blocking},
 };
-use tinyboards_db_views::structs::{CommentReplyView, UserMentionView};
+use tinyboards_db_views::structs::{CommentReplyView, UserMentionView, PrivateMessageView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -40,10 +40,17 @@ impl<'des> Perform<'des> for GetUnreadCount {
         })
         .await??;
 
+    let messages
+        = blocking(context.pool(), move |conn| {
+          PrivateMessageView::get_unread_message_count(conn, user_id)
+        })
+        .await??;
+
     Ok(GetUnreadCountResponse {
         replies,
         mentions,
-        total_count: replies + mentions,
+        messages,
+        total_count: replies + mentions + messages,
     })
   }
 }
