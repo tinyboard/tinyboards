@@ -1,0 +1,1 @@
+alter table private_messages add column parent_id int references private_messages on update cascade on delete cascade;

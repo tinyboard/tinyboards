@@ -57,6 +57,7 @@ impl<'des> PerformCrud<'des> for DeletePrivateMessage {
             is_deleted: Some(is_deleted),
             read: Some(orig_pm.read),
             updated: Some(naive_now()),
+            parent_id: Some(orig_pm.parent_id),
         };
 
         blocking(context.pool(), move |conn| {

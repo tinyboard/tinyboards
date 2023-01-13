@@ -61,6 +61,7 @@ impl<'des> PerformCrud<'des> for EditPrivateMessage {
             is_deleted: Some(orig_pm.is_deleted),
             read: Some(orig_pm.read),
             updated,
+            parent_id: Some(orig_pm.parent_id),
         };
 
         blocking(context.pool(), move |conn| {

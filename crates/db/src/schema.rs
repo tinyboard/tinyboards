@@ -332,6 +332,7 @@ diesel::table! {
         read -> Bool,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
+        parent_id -> Nullable<Int4>,
     }
 }
 

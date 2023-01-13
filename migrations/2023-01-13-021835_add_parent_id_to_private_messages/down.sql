@@ -1,0 +1,1 @@
+alter table private_messages drop column parent_id cascade;

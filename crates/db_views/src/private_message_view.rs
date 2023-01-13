@@ -59,7 +59,9 @@ impl PrivateMessageView {
 pub struct PrivateMessageQuery<'a> {
     #[builder(!default)]
     conn: &'a mut PgConnection,
+    #[builder(!default)]
     recipient_id: i32,
+    parent_id: Option<i32>,
     unread_only: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -95,6 +97,15 @@ impl<'a> PrivateMessageQuery<'a> {
                     .eq(self.recipient_id)
                     .or(private_messages::creator_id.eq(self.recipient_id)),
                 )
+        }
+
+        // filter for thread of private messages otherwise only grab top level private messages
+        if let Some(parent_id) = self.parent_id {
+            query = query
+                .filter(private_messages::parent_id.eq(parent_id).or(private_messages::id.eq(parent_id)));
+        } else {
+            query = query
+                .filter(private_messages::parent_id.is_null());
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

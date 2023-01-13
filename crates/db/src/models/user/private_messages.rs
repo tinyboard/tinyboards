@@ -15,6 +15,7 @@ pub struct PrivateMessage {
     pub read: bool,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub parent_id: Option<i32>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -27,4 +28,5 @@ pub struct PrivateMessageForm {
     pub is_deleted: Option<bool>,
     pub read: Option<bool>,
     pub updated: Option<NaiveDateTime>,
+    pub parent_id: Option<Option<i32>>,
 }

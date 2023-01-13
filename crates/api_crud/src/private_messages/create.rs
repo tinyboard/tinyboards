@@ -43,6 +43,7 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
 
         let creator_id = sender.id.clone();
         let recipient_id = data.recipient_id.clone();
+        let parent_id = data.parent_id.clone();
         let subject = data.subject.clone();
         let body = data.body.clone();
         let body_parsed = parse_markdown(&body.as_str());
@@ -55,6 +56,7 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
             is_deleted: Some(false),
             read: Some(false),
             updated: None,
+            parent_id: Some(parent_id),
         };
 
         // create the private message
