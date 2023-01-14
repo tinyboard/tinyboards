@@ -33,7 +33,7 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
         let limit = data.limit;
         let unread_only = data.unread_only;
 
-        let mut messages
+        let query_response
             = blocking(context.pool(), move |conn| {
                 PrivateMessageQuery::builder()
                     .conn(conn)
@@ -45,6 +45,10 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
                     .list()
             })
             .await??;
+
+        let mut messages = query_response.messages;
+        let total_count = query_response.count;
+        let unread_count = query_response.unread;
         
         // mark all messages sent by user as read (cosmetically)
         messages.iter_mut().for_each(|pm| {
@@ -53,6 +57,6 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
             }
         });
 
-        Ok(PrivateMessagesResponse { messages })
+        Ok(PrivateMessagesResponse { messages, total_count, unread_count })
     }
 }

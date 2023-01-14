@@ -67,8 +67,17 @@ pub struct PrivateMessageQuery<'a> {
     limit: Option<i64>,
 }
 
+#[derive(Default, Clone)]
+pub struct PrivateMessageQueryResponse {
+    pub messages: Vec<PrivateMessageView>,
+    pub count: i64,
+    pub unread: i64,
+}
+
+
+
 impl<'a> PrivateMessageQuery<'a> {
-    pub fn list(self) -> Result<Vec<PrivateMessageView>, Error> {
+    pub fn list(self) -> Result<PrivateMessageQueryResponse, Error> {
         let user_alias = diesel::alias!(users as users1);
         
         let mut query = private_messages::table
@@ -82,10 +91,20 @@ impl<'a> PrivateMessageQuery<'a> {
                 UserSafe::safe_columns_tuple(),
             ))
         .into_boxed();
+
+        let mut count_query = private_messages::table
+            .inner_join(users::table.on(private_messages::creator_id.eq(users::id)))
+            .inner_join(
+                user_alias.on(private_messages::recipient_id.eq(user_alias.field(users::id))),
+            )
+        .into_boxed();
         
         // if it's unread we only want unread messages to the end user
         if self.unread_only.unwrap_or(false) {
             query = query
+                .filter(private_messages::read.eq(false))
+                .filter(private_messages::recipient_id.eq(self.recipient_id));
+            count_query = count_query
                 .filter(private_messages::read.eq(false))
                 .filter(private_messages::recipient_id.eq(self.recipient_id));
         }
@@ -96,15 +115,25 @@ impl<'a> PrivateMessageQuery<'a> {
                     private_messages::recipient_id
                     .eq(self.recipient_id)
                     .or(private_messages::creator_id.eq(self.recipient_id)),
-                )
+                );
+            count_query = count_query
+                .filter(
+                    private_messages::recipient_id
+                    .eq(self.recipient_id)
+                    .or(private_messages::creator_id.eq(self.recipient_id)),
+                ); 
         }
 
         // filter for thread of private messages otherwise only grab top level private messages
         if let Some(parent_id) = self.parent_id {
             query = query
                 .filter(private_messages::parent_id.eq(parent_id).or(private_messages::id.eq(parent_id)));
+            count_query = count_query
+                .filter(private_messages::parent_id.eq(parent_id).or(private_messages::id.eq(parent_id)));
         } else {
             query = query
+                .filter(private_messages::parent_id.is_null());
+            count_query = count_query
                 .filter(private_messages::parent_id.is_null());
         }
 
@@ -118,7 +147,11 @@ impl<'a> PrivateMessageQuery<'a> {
         
         let res = query.load::<PrivateMessageViewTuple>(self.conn)?;
 
-        Ok(PrivateMessageView::from_tuple_to_vec(res))
+        let messages = PrivateMessageView::from_tuple_to_vec(res);
+        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let unread = PrivateMessageView::get_unread_message_count(self.conn, self.recipient_id)?;
+
+        Ok(PrivateMessageQueryResponse { messages, count, unread })
     }
 }
 

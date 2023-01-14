@@ -24,6 +24,8 @@ pub struct GetPrivateMessages {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PrivateMessagesResponse {
   pub messages: Vec<PrivateMessageView>,
+  pub total_count: i64,
+  pub unread_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
