@@ -324,15 +324,16 @@ diesel::table! {
 diesel::table! {
     private_messages (id) {
         id -> Int4,
+        chat_id -> Text,
         creator_id -> Int4,
         recipient_id -> Int4,
         subject -> Nullable<Text>,
         body -> Text,
+        is_parent -> Bool,
         is_deleted -> Bool,
         read -> Bool,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
-        parent_id -> Nullable<Int4>,
     }
 }
 

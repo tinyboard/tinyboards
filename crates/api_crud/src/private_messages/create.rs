@@ -15,7 +15,7 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::PrivateMessageView;
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::generate_rand_string};
 
 #[async_trait::async_trait(?Send)]
 impl <'des> PerformCrud<'des> for CreatePrivateMessage {
@@ -43,20 +43,30 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
 
         let creator_id = sender.id.clone();
         let recipient_id = data.recipient_id.clone();
-        let parent_id = data.parent_id.clone();
+        let mut chat_id = data.chat_id.clone();
         let subject = data.subject.clone();
         let body = data.body.clone();
         let body_parsed = parse_markdown(&body.as_str());
+        let mut is_parent = true;
+
+        // if chat_id is supplied this message is not a parent message, so set that to false
+        // if chat_id is not supplied this message is a parennt message, so generate a chat_id for it
+        if chat_id.is_some() {
+            is_parent = false;
+        } else {
+            chat_id = Some(generate_rand_string());
+        }
 
         let private_message_form = PrivateMessageForm {
+            chat_id,
             creator_id: Some(creator_id), 
             recipient_id: Some(recipient_id),
             subject: Some(subject),
             body: body_parsed,
+            is_parent: Some(is_parent),
             is_deleted: Some(false),
             read: Some(false),
             updated: None,
-            parent_id: Some(parent_id),
         };
 
         // create the private message

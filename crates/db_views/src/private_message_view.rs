@@ -53,10 +53,10 @@ impl PrivateMessageView {
             .first::<i64>(conn)
     }
 
-    pub fn mark_thread_as_read(conn: &mut PgConnection, thread_parent_id: i32) -> Result<usize, Error> {
+    pub fn mark_thread_as_read(conn: &mut PgConnection, chat_id: String) -> Result<usize, Error> {
         diesel::update(private_messages::table)
             .filter(private_messages::read.eq(false))
-            .filter(private_messages::parent_id.eq(thread_parent_id).or(private_messages::id.eq(thread_parent_id)))
+            .filter(private_messages::chat_id.eq(chat_id))
             .set(private_messages::read.eq(true))
             .execute(conn)
     }
@@ -70,7 +70,7 @@ pub struct PrivateMessageQuery<'a> {
     conn: &'a mut PgConnection,
     #[builder(!default)]
     recipient_id: i32,
-    parent_id: Option<i32>,
+    chat_id: Option<String>,
     unread_only: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -134,16 +134,16 @@ impl<'a> PrivateMessageQuery<'a> {
         }
 
         // filter for thread of private messages otherwise only grab top level private messages
-        if let Some(parent_id) = self.parent_id {
+        if let Some(chat_id) = self.chat_id {
             query = query
-                .filter(private_messages::parent_id.eq(parent_id).or(private_messages::id.eq(parent_id)));
+                .filter(private_messages::chat_id.eq(chat_id.clone()));
             count_query = count_query
-                .filter(private_messages::parent_id.eq(parent_id).or(private_messages::id.eq(parent_id)));
+                .filter(private_messages::chat_id.eq(chat_id.clone()));
         } else {
             query = query
-                .filter(private_messages::parent_id.is_null());
+                .filter(private_messages::is_parent.eq(true));
             count_query = count_query
-                .filter(private_messages::parent_id.is_null());
+                .filter(private_messages::is_parent.eq(true));
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

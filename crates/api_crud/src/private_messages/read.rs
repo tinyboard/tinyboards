@@ -33,7 +33,7 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
         let page = data.page;
         let limit = data.limit;
         let unread_only = data.unread_only;
-        let parent_id = data.parent_id.clone();
+        let chat_id = data.chat_id.clone();
 
         let query_response
             = blocking(context.pool(), move |conn| {
@@ -41,7 +41,7 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
                     .conn(conn)
                     .recipient_id(user.id)
                     .unread_only(unread_only)
-                    .parent_id(parent_id)
+                    .chat_id(chat_id)
                     .page(page)
                     .limit(limit)
                     .build()
@@ -60,11 +60,11 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
             }
         });
 
-        let thread_parent_id = data.parent_id.clone();
+        let chat_id = data.chat_id.clone();
         // actually mark thread as read like a boss 
-        if thread_parent_id.is_some() {
+        if chat_id.is_some() {
             blocking(context.pool(), move |conn| {
-                PrivateMessageView::mark_thread_as_read(conn, thread_parent_id.unwrap())
+                PrivateMessageView::mark_thread_as_read(conn, chat_id.unwrap())
             })
             .await??;
         }

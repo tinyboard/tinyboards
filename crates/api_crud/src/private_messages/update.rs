@@ -54,14 +54,15 @@ impl<'des> PerformCrud<'des> for EditPrivateMessage {
         let updated = Some(naive_now());
 
         let form = PrivateMessageForm {
+            chat_id: Some(orig_pm.chat_id),
             creator_id: Some(orig_pm.creator_id),
             recipient_id: Some(orig_pm.recipient_id),
             subject: Some(orig_pm.subject),
             body: body_parsed,
+            is_parent: Some(orig_pm.is_parent),
             is_deleted: Some(orig_pm.is_deleted),
             read: Some(orig_pm.read),
             updated,
-            parent_id: Some(orig_pm.parent_id),
         };
 
         blocking(context.pool(), move |conn| {

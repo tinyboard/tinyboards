@@ -50,14 +50,15 @@ impl<'des> PerformCrud<'des> for DeletePrivateMessage {
         }
 
         let form = PrivateMessageForm {
+            chat_id: Some(orig_pm.chat_id),
             creator_id: Some(orig_pm.creator_id),
             recipient_id: Some(orig_pm.recipient_id),
             subject: Some(orig_pm.subject),
             body: Some(orig_pm.body),
+            is_parent: Some(orig_pm.is_parent),
             is_deleted: Some(is_deleted),
             read: Some(orig_pm.read),
             updated: Some(naive_now()),
-            parent_id: Some(orig_pm.parent_id),
         };
 
         blocking(context.pool(), move |conn| {

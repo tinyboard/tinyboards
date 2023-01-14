@@ -2,6 +2,7 @@ use actix_web::dev::ConnectionInfo;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use crate::{IpAddr, settings::structs::Settings};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
 pub fn get_ip(conn_info: &ConnectionInfo) -> IpAddr {
     IpAddr(
@@ -65,4 +66,12 @@ pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
     }
   
   result
+}
+
+pub fn generate_rand_string() -> String {
+  thread_rng()
+    .sample_iter(&Alphanumeric)
+    .map(char::from)
+    .take(18)
+    .collect()
 }
