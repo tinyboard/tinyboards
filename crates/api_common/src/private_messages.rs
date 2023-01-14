@@ -17,6 +17,7 @@ pub struct CreatePrivateMessageResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetPrivateMessages {
     pub unread_only: Option<bool>,
+    pub parent_id: Option<i32>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
 }

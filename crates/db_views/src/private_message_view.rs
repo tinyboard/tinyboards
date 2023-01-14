@@ -52,6 +52,15 @@ impl PrivateMessageView {
             .select(count(private_messages::id))
             .first::<i64>(conn)
     }
+
+    pub fn mark_thread_as_read(conn: &mut PgConnection, thread_parent_id: i32) -> Result<usize, Error> {
+        diesel::update(private_messages::table)
+            .filter(private_messages::read.eq(false))
+            .filter(private_messages::parent_id.eq(thread_parent_id).or(private_messages::id.eq(thread_parent_id)))
+            .set(private_messages::read.eq(true))
+            .execute(conn)
+    }
+
 }
 
 #[derive(TypedBuilder)]
