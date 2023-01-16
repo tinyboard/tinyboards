@@ -126,6 +126,28 @@ impl User {
             .first::<Self>(conn)
     }
 
+    pub fn get_users_by_chat_id(conn: &mut PgConnection, c_id: String) -> Result<Vec<Self>, Error> {
+        use crate::schema::users::dsl::*;
+        users
+            .filter(chat_id.eq(c_id))
+            .load::<Self>(conn)
+    }
+
+    pub fn get_user_by_chat_id(conn: &mut PgConnection, c_id: String) -> Result<Self, Error> {
+        use crate::schema::users::dsl::*;
+        users
+            .filter(chat_id.eq(c_id))
+            .first::<Self>(conn)
+    }
+
+    pub fn update_chat_id(conn: &mut PgConnection, user_id: i32, new_chat_id: String) -> Result<usize, Error> {
+        use crate::schema::users::dsl::*;
+        diesel::update(users)
+            .filter(id.eq(user_id))
+            .set((chat_id.eq(new_chat_id), updated.eq(naive_now())))
+            .execute(conn)
+    }
+
     pub fn get_by_email(conn: &mut PgConnection, email_addr: &str) -> Result<Self, Error> {
         use crate::schema::users::dsl::*;
         users

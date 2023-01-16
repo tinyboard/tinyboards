@@ -10,7 +10,7 @@ use tinyboards_db::{
     utils::naive_now,
 };
 use tinyboards_utils::{
-    error::TinyBoardsError, passhash::hash_password, settings::structs::Settings,
+    error::TinyBoardsError, passhash::hash_password, settings::structs::Settings, utils::generate_rand_string,
 };
 use tracing::info;
 
@@ -19,8 +19,36 @@ pub async fn run_advanced_migrations(
     settings: &Settings,
 ) -> Result<(), TinyBoardsError> {
     initialize_local_site_and_admin_user(pool, settings).await?;
+    generate_chat_ids_for_users(pool).await?;
 
     Ok(())
+}
+
+/// This ensures every user has a chat_id, it's fine to run every time to ensure everyone has a proper id
+async fn generate_chat_ids_for_users(
+    pool: &PgPool,
+) -> Result<(), TinyBoardsError> {
+    info!("Running generate_chat_ids_for_users");
+
+    let users = blocking(pool, move |conn| {
+        User::get_users_by_chat_id(conn, String::from("n/a"))
+    })
+    .await??;
+
+    if users.len() == 0 {
+        info!("No chat ids needed to be generated, proceeding...");
+        Ok(())
+    } else {
+        for user in users.into_iter() {
+            let chat_id = generate_rand_string();
+            blocking(pool, move |conn| {
+                User::update_chat_id(conn, user.id, chat_id)
+            })
+            .await??;
+        }
+        info!("Successfully generated chat ids, proceeding...");
+        Ok(())
+    }
 }
 
 /// This ensures the site is initialized

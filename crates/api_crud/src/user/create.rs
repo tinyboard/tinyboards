@@ -12,6 +12,7 @@ use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::models::user::users::{User, UserForm};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
+use tinyboards_utils::utils::generate_rand_string;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
@@ -69,13 +70,6 @@ impl<'des> PerformCrud<'des> for Register {
             ));
         }
 
-        /*if data.password != data.password_verify {
-            return Err(TinyBoardsError::new(
-                400,
-                String::from("passwords do not match!"),
-            ));
-        }*/
-
         // captcha logic here (when we implement captcha)
 
         // generate apub actor_keypair here whenever we get to implementing federation
@@ -85,6 +79,7 @@ impl<'des> PerformCrud<'des> for Register {
             email: data.email,
             passhash: Some(data.password.unpack()),
             avatar: Some(site.default_avatar),
+            chat_id: Some(generate_rand_string()),
             ..UserForm::default()
         };
 

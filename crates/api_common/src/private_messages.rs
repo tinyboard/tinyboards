@@ -3,9 +3,7 @@ use tinyboards_db_views::structs::PrivateMessageView;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CreatePrivateMessage {
-    pub recipient_id: i32,
-    pub chat_id: Option<String>,
-    pub subject: Option<String>,
+    pub chat_id: String,
     pub body: String,    
 }
 

@@ -30,6 +30,7 @@ pub struct User {
     pub is_application_accepted: bool,
     pub email_verified: bool,
     pub signature: Option<String>,
+    pub chat_id: String,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -100,4 +101,5 @@ pub struct UserForm {
     pub bio: Option<Option<String>>,
     pub is_application_accepted: Option<bool>,
     pub email_verified: Option<bool>,
+    pub chat_id: Option<String>,
 }

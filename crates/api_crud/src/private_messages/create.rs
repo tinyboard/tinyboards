@@ -10,12 +10,12 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        user::private_messages::{PrivateMessage, PrivateMessageForm},
+        user::{private_messages::{PrivateMessage, PrivateMessageForm}, users::User},
     },
     traits::Crud,
 };
 use tinyboards_db_views::structs::PrivateMessageView;
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::generate_rand_string};
+use tinyboards_utils::{parser::parse_markdown, TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
 impl <'des> PerformCrud<'des> for CreatePrivateMessage {
@@ -32,36 +32,42 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
         
         let data: &CreatePrivateMessage = &self;
 
-        let sender 
+        let creator 
             = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
+
+        let chat_id = data.chat_id.clone();
+
+        let recipient 
+            = blocking(context.pool(), move |conn| {
+                User::get_user_by_chat_id(conn, chat_id)
+            })
+            .await??;
+
         // error out if the recipient is blocking you
-        check_user_block(sender.id.clone(), data.recipient_id.clone(), context.pool())
+        check_user_block(creator.id.clone(), recipient.id.clone(), context.pool())
             .await?;
 
-        let creator_id = sender.id.clone();
-        let recipient_id = data.recipient_id.clone();
-        let mut chat_id = data.chat_id.clone();
-        let subject = data.subject.clone();
+        let creator_id = creator.id.clone();
+        let recipient_id = recipient.id.clone();
         let body = data.body.clone();
         let body_parsed = parse_markdown(&body.as_str());
         let mut is_parent = true;
 
-        // if chat_id is supplied this message is not a parent message, so set that to false
-        // if chat_id is not supplied this message is a parennt message, so generate a chat_id for it
-        if chat_id.is_some() {
+        let thread_exists = blocking(context.pool(), move |conn| {
+            PrivateMessageView::thread_exists(conn, creator_id, recipient_id)
+        })
+        .await??;
+
+        if thread_exists {
             is_parent = false;
-        } else {
-            chat_id = Some(generate_rand_string());
         }
 
         let private_message_form = PrivateMessageForm {
-            chat_id,
             creator_id: Some(creator_id), 
             recipient_id: Some(recipient_id),
-            subject: Some(subject),
             body: body_parsed,
             is_parent: Some(is_parent),
             is_deleted: Some(false),

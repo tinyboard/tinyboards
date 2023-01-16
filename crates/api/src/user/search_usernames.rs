@@ -35,7 +35,7 @@ impl<'des> Perform<'des> for SearchNames {
 
         for user in user_info
             .into_iter() {
-                users.push(UsernameInfo { name: user.name, avatar: user.avatar, user_id: user.id });
+                users.push(UsernameInfo { name: user.name, avatar: user.avatar, chat_id: user.chat_id });
         }
 
         Ok( SearchNamesResponse { users } )

@@ -178,7 +178,7 @@ pub struct MarkAllRepliesRead {}
 pub struct UsernameInfo {
     pub name: String,
     pub avatar: Option<String>,
-    pub user_id: i32,
+    pub chat_id: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

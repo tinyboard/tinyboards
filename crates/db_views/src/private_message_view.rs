@@ -53,12 +53,27 @@ impl PrivateMessageView {
             .first::<i64>(conn)
     }
 
-    pub fn mark_thread_as_read(conn: &mut PgConnection, chat_id: String) -> Result<usize, Error> {
+    pub fn mark_thread_as_read(conn: &mut PgConnection, creator_id: i32) -> Result<usize, Error> {
         diesel::update(private_messages::table)
             .filter(private_messages::read.eq(false))
-            .filter(private_messages::chat_id.eq(chat_id))
+            .filter(private_messages::creator_id.eq(creator_id))
             .set(private_messages::read.eq(true))
             .execute(conn)
+    }
+
+    pub fn thread_exists(conn: &mut PgConnection, creator_id: i32, recipient_id: i32) -> Result<bool, Error> {
+        use diesel::dsl::count;
+
+        let messages = private_messages::table
+            .filter(private_messages::creator_id.eq(creator_id).and(private_messages::recipient_id.eq(recipient_id)))
+            .select(count(private_messages::id))
+            .first::<i64>(conn);
+
+        if messages == Ok(0) {
+            Ok(false)
+        } else {
+            Ok(true)
+        }
     }
 
 }
@@ -70,7 +85,7 @@ pub struct PrivateMessageQuery<'a> {
     conn: &'a mut PgConnection,
     #[builder(!default)]
     recipient_id: i32,
-    chat_id: Option<String>,
+    creator_id: Option<i32>,
     unread_only: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -82,8 +97,6 @@ pub struct PrivateMessageQueryResponse {
     pub count: i64,
     pub unread: i64,
 }
-
-
 
 impl<'a> PrivateMessageQuery<'a> {
     pub fn list(self) -> Result<PrivateMessageQueryResponse, Error> {
@@ -108,42 +121,33 @@ impl<'a> PrivateMessageQuery<'a> {
             )
         .into_boxed();
         
-        // if it's unread we only want unread messages to the end user
         if self.unread_only.unwrap_or(false) {
             query = query
-                .filter(private_messages::read.eq(false))
-                .filter(private_messages::recipient_id.eq(self.recipient_id));
+                .filter(private_messages::read.eq(false));
             count_query = count_query
-                .filter(private_messages::read.eq(false))
-                .filter(private_messages::recipient_id.eq(self.recipient_id));
-        }
-        // otherwise we return both sent and received messages
-        else {
-            query = query
-                .filter(
-                    private_messages::recipient_id
-                    .eq(self.recipient_id)
-                    .or(private_messages::creator_id.eq(self.recipient_id)),
-                );
-            count_query = count_query
-                .filter(
-                    private_messages::recipient_id
-                    .eq(self.recipient_id)
-                    .or(private_messages::creator_id.eq(self.recipient_id)),
-                ); 
-        }
+                .filter(private_messages::read.eq(false));
+        } 
 
-        // filter for thread of private messages otherwise only grab top level private messages
-        if let Some(chat_id) = self.chat_id {
+        // if creator_id is provided, then grab the thread of private messages,
+        // if creator_id is not provided, then grab all the parent messages (whether the thread was initiated by the requester or not)
+        if let Some(creator_id) = self.creator_id {
             query = query
-                .filter(private_messages::chat_id.eq(chat_id.clone()));
+                .filter(private_messages::creator_id.eq(creator_id).or(private_messages::recipient_id.eq(self.recipient_id)))
+                .filter(private_messages::is_parent.eq(false));
             count_query = count_query
-                .filter(private_messages::chat_id.eq(chat_id.clone()));
+                .filter(private_messages::creator_id.eq(creator_id).or(private_messages::recipient_id.eq(self.recipient_id)))
+                .filter(private_messages::is_parent.eq(false));
         } else {
             query = query
-                .filter(private_messages::is_parent.eq(true));
+                .filter(private_messages::recipient_id.eq(self.recipient_id).and(private_messages::is_parent.eq(true)).or(
+                    private_messages::creator_id.eq(self.recipient_id).and(private_messages::is_parent.eq(true)),
+                ),
+            );
             count_query = count_query
-                .filter(private_messages::is_parent.eq(true));
+                .filter(private_messages::recipient_id.eq(self.recipient_id).and(private_messages::is_parent.eq(true)).or(
+                    private_messages::creator_id.eq(self.recipient_id).and(private_messages::is_parent.eq(true)),
+                ),
+            );
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

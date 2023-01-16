@@ -324,10 +324,8 @@ diesel::table! {
 diesel::table! {
     private_messages (id) {
         id -> Int4,
-        chat_id -> Text,
         creator_id -> Int4,
         recipient_id -> Int4,
-        subject -> Nullable<Text>,
         body -> Text,
         is_parent -> Bool,
         is_deleted -> Bool,
@@ -513,6 +511,7 @@ diesel::table! {
         is_application_accepted -> Bool,
         email_verified -> Bool,
         signature -> Nullable<Text>,
+        chat_id -> Text,
     }
 }
 

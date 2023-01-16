@@ -8,6 +8,7 @@ use tinyboards_api_common::{
     },
     data::TinyBoardsContext,
 };
+use tinyboards_db::models::user::users::User;
 use tinyboards_db_views::{private_message_view::PrivateMessageQuery, structs::PrivateMessageView};
 use tinyboards_utils::{TinyBoardsError};
 
@@ -35,40 +36,55 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
         let unread_only = data.unread_only;
         let chat_id = data.chat_id.clone();
 
-        let query_response
-            = blocking(context.pool(), move |conn| {
-                PrivateMessageQuery::builder()
-                    .conn(conn)
-                    .recipient_id(user.id)
-                    .unread_only(unread_only)
-                    .chat_id(chat_id)
-                    .page(page)
-                    .limit(limit)
-                    .build()
-                    .list()
-            })
-            .await??;
+        if let Some(chat_id) = chat_id {
+            
+            let creator 
+                = blocking(context.pool(), move |conn| {
+                    User::get_user_by_chat_id(conn, chat_id)
+                })
+                .await??;
+            
+            let query_response
+                = blocking(context.pool(), move |conn| {
+                    PrivateMessageQuery::builder()
+                        .conn(conn)
+                        .recipient_id(user.id)
+                        .unread_only(unread_only)
+                        .creator_id(Some(creator.id))
+                        .page(page)
+                        .limit(limit)
+                        .build()
+                        .list()
+                })
+                .await??;
+            let messages = query_response.messages;
+            let total_count = query_response.count;
+            let unread_count = query_response.unread;
 
-        let mut messages = query_response.messages;
-        let total_count = query_response.count;
-        let unread_count = query_response.unread;
-
-        // mark all messages sent by user as read (cosmetically)
-        messages.iter_mut().for_each(|pm| {
-            if pm.creator.id == user.id {
-                pm.private_message.read = true
-            }
-        });
-
-        let chat_id = data.chat_id.clone();
-        // actually mark thread as read like a boss 
-        if chat_id.is_some() {
+            // mark all messages from creator as read (in the thread)
             blocking(context.pool(), move |conn| {
-                PrivateMessageView::mark_thread_as_read(conn, chat_id.unwrap())
+                PrivateMessageView::mark_thread_as_read(conn, creator.id)
             })
             .await??;
+            Ok(PrivateMessagesResponse { messages, total_count, unread_count })
+            
+        }  else {
+            let query_response
+                = blocking(context.pool(), move |conn| {
+                    PrivateMessageQuery::builder()
+                        .conn(conn)
+                        .recipient_id(user.id)
+                        .unread_only(unread_only)
+                        .page(page)
+                        .limit(limit)
+                        .build()
+                        .list()
+                })
+                .await??;
+            let messages = query_response.messages;
+            let total_count = query_response.count;
+            let unread_count = query_response.unread;
+            Ok(PrivateMessagesResponse { messages, total_count, unread_count })
         }
-
-        Ok(PrivateMessagesResponse { messages, total_count, unread_count })
     }
 }

@@ -212,7 +212,7 @@ impl<'a> UserQuery<'a> {
             }
         };
 
-        let count_query = users::table
+        let mut count_query = users::table
             .inner_join(user_aggregates::table)
             .select(UserSafe::safe_columns_tuple())
             .filter(users::is_deleted.eq(false))
@@ -221,14 +221,17 @@ impl<'a> UserQuery<'a> {
 
         if let Some(search_term) = self.search_term {
             query = query.filter(users::name.ilike(fuzzy_search(&search_term)));
+            count_query = count_query.filter(users::name.ilike(fuzzy_search(&search_term)));
         };
 
         if let Some(is_banned) = self.is_banned {
             query = query.filter(users::is_banned.eq(is_banned));
+            count_query = count_query.filter(users::is_banned.eq(is_banned));
         };
 
         if let Some(is_admin) = self.is_admin {
             query = query.filter(users::is_admin.eq(is_admin));
+            count_query = count_query.filter(users::is_admin.eq(is_admin));
         };
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
