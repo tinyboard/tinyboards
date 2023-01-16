@@ -30,7 +30,7 @@ TB_CONFIG_LOCATION=/path/to/tinyboards/config/file.hjson
 
 3. Open up this repository in terminal, and change directory to `docker` with `cd docker`
 
-4. Rename `env.example` to `.env` by running `cp env.example env` and adjust `.env` as desired.
+4. Rename `env.example` to `.env` by running `cp env.example .env` and adjust `.env` as desired.
 
 5. Run `./docker.sh` to generate configuration files.
 
