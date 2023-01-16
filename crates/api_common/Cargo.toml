@@ -28,6 +28,7 @@ percent-encoding = { version = "2.2.0" }
 encoding = { version = "0.2.33" }
 reqwest-middleware = { version = "0.1.6" }
 webpage = { version = "1.4.0", default-features = false, features = ["serde"] }
+reqwest = { version = "0.11.12", features = ["json"] }
 
 [dependencies.uuid]
 version = "1.1.2"
@@ -40,4 +41,3 @@ features = [
 
 [dev-dependencies]
 actix-rt = { version = "2.7.0", default-features = false }
-reqwest = { version = "0.11.12", features = ["json"] }

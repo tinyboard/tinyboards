@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
     utils::{blocking, get_user_view_from_jwt, require_user, send_verification_email},
-    request::purge_image_from_pictrs,
+    request::{purge_image_from_pictrs, upload_to_pictrs},
 };
 use tinyboards_db::{
     models::site::site::Site,
@@ -34,10 +34,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             .unwrap()?;
 
         let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
-
-        let avatar = diesel_option_overwrite(&data.avatar);
-        let banner = diesel_option_overwrite(&data.banner);
-        let signature = diesel_option_overwrite(&data.signature);
+        
         let bio = diesel_option_overwrite(&data.bio);
         let email_deref = data.email.as_deref().map(str::to_lowercase);
         let email = match email_deref {
@@ -49,29 +46,6 @@ impl<'des> Perform<'des> for SaveUserSettings {
                 }
             }
             None => None,
-        };
-
-        // delete old images if new images applied
-        let current_avatar = user.avatar.clone().unwrap_or_default();
-        let current_banner = user.banner.clone().unwrap_or_default();
-        let current_signature = user.signature.clone().unwrap_or_default();
-
-        if let Some(Some(avatar)) = avatar.clone() {
-            if avatar != current_avatar && !avatar.is_empty() && !current_avatar.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(avatar.as_str()).unwrap()).await?;
-            }
-        };
-
-        if let Some(Some(banner)) = banner.clone() {
-            if banner != current_banner && !banner.is_empty() && !current_banner.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(banner.as_str()).unwrap()).await?;
-            }
-        };
-
-        if let Some(Some(signature)) = signature.clone() {
-            if signature != current_signature && !signature.is_empty() && !current_signature.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(signature.as_str()).unwrap()).await?;
-            }
         };
 
         // send a new verification email if email gets changed and email verification is required
@@ -104,19 +78,55 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // grabbing the current timestamp for the update
         let updated = Some(naive_now());
 
-        let update_form = UserForm {
+        let mut update_form = UserForm {
             bio,
             email,
             show_nsfw: data.show_nsfw,
             theme: data.theme.clone(),
-            avatar,
-            signature,
-            banner,
             default_listing_type,
             default_sort_type,
             updated,
             ..UserForm::default()
         };
+
+        let avatar = data.avatar.clone();
+        let banner = data.banner.clone();
+        let signature = data.signature.clone();
+        let base_url = context.settings().get_protocol_and_hostname();
+
+        if let Some(avatar) = avatar {
+            let upload_resp = upload_to_pictrs(context.client(), context.settings(), avatar).await?;
+            let avatar_url = format!("{}/image/{}", &base_url, upload_resp.files[0].file);
+            // purge the old image from pictrs
+            if !user.avatar.clone().unwrap_or_default().is_empty() {
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(user.avatar.clone().unwrap().as_str()).unwrap()).await?;
+            }
+
+            update_form.avatar = Some(Some(avatar_url));
+    
+        }
+
+        if let Some(banner) = banner {
+            let upload_resp = upload_to_pictrs(context.client(), context.settings(), banner).await?;
+            let banner_url = format!("{}/image/{}", &base_url, upload_resp.files[0].file);
+            // purge the old image from pictrs
+            if !user.banner.clone().unwrap_or_default().is_empty() {
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(user.banner.clone().unwrap().as_str()).unwrap()).await?;
+            }
+
+            update_form.banner = Some(Some(banner_url));
+        } 
+
+        if let Some(signature) = signature {
+            let upload_resp = upload_to_pictrs(context.client(), context.settings(), signature).await?;
+            let signature_url = format!("{}/image/{}", &base_url, upload_resp.files[0].file);
+            // purge the old image from pictrs
+            if !user.signature.clone().unwrap_or_default().is_empty() {
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(user.signature.clone().unwrap().as_str()).unwrap()).await?;
+            }
+
+            update_form.signature = Some(Some(signature_url));
+        } 
 
         // perform settings update
         blocking(context.pool(), move |conn| {

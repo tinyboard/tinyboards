@@ -1,3 +1,4 @@
+use reqwest::multipart;
 use reqwest_middleware::ClientWithMiddleware;
 use serde::Deserialize;
 use tinyboards_utils::{
@@ -37,6 +38,58 @@ pub(crate) struct PictrsPurgeResponse {
     msg: String,
 }
 
+#[derive(Deserialize, Debug, Clone)]
+pub struct PictrsFileDetails {
+    pub width: i64,
+    pub height: i64,
+    pub content_type: String,
+    pub created_at: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct PictrsFile {
+    pub delete_token: String,
+    pub file: String,
+    pub details: PictrsFileDetails,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct PictrsUploadResponse {
+    pub msg: String,
+    pub files: Vec<PictrsFile>,
+}
+
+/// submits upload image request to pictrs
+pub async fn upload_to_pictrs(
+    client: &ClientWithMiddleware,
+    settings: &Settings,
+    image: String
+) -> Result<PictrsUploadResponse, TinyBoardsError> {
+
+    let upload_form = multipart::Form::new()
+        .text("images[]", image);
+
+    let pictrs_config = settings.pictrs_config()?;
+
+    let upload_url = format!("{}/image", pictrs_config.url);
+
+    let response = client
+        .post(&upload_url)
+        .multipart(upload_form)
+        .timeout(REQWEST_TIMEOUT)
+        .send()
+        .await?;
+
+    let response: PictrsUploadResponse = response.json().await.map_err(TinyBoardsError::from)?;
+
+    if response.msg == "ok" {
+        Ok(response)
+    } else {
+        Err(TinyBoardsError::from_message(400, &response.msg))
+    }
+  }
+
+
 /// Purges image from pictrs
 pub async fn purge_image_from_pictrs(
     client: &ClientWithMiddleware,
@@ -73,3 +126,5 @@ pub async fn purge_image_from_pictrs(
         Err(TinyBoardsError::from_message(400, &response.msg))
     }
 }
+
+
