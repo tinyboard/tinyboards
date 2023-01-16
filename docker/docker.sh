@@ -402,7 +402,7 @@ export const baseURL = "http://$SERVER_NAME:$HTTP_PORT/api/v1";
 EOF
 fi
 
-#override hosts
+#add to hosts file
 if [ "$ENVIRONMENT" = "dev" ]; then
 echo "127.0.0.1  $SERVER_NAME" >> /etc/hosts
 fi
