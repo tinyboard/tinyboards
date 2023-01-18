@@ -195,6 +195,15 @@ impl User {
             .get_result::<Self>(conn)
     }
 
+    /// accept all users that are unaccepted, NOTE: this is only called when toggling application mode on/off
+    pub fn accept_all_applications(conn: &mut PgConnection) -> Result<usize, Error> {
+        use crate::schema::users::dsl::*;
+        diesel::update(users)
+            .filter(is_application_accepted.eq(false))
+            .set((is_application_accepted.eq(true), updated.eq(naive_now())))
+            .execute(conn)
+    }
+
     pub fn into_safe(self) -> UserSafe {
         UserSafe {
             id: self.id,

@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{blocking, get_current_site_mode, require_user},
 };
 use tinyboards_db::{
-    models::site::site::{Site, SiteForm},
+    models::{site::site::{Site, SiteForm}, user::users::User},
     traits::Crud,
     utils::naive_now,
     SiteMode,
@@ -34,6 +34,8 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             .unwrap()?;
 
         let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+
+        let current_require_app = site.require_application;
 
         let name = data.name.clone();
         let description = data.description.clone();
@@ -70,6 +72,16 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             Some(SiteMode::InviteMode) => Some(false),
             None => Some(site.require_application),
         };
+
+        // we need to toggle all unaccepted users to accepted after toggling app mode on/off
+        if let Some(require_application) = require_application {
+            if require_application != current_require_app {
+                blocking(context.pool(), move |conn| {
+                    User::accept_all_applications(conn)
+                })
+                .await??;
+            }
+        }
 
         let invite_only = match site_mode {
             Some(SiteMode::OpenMode) => Some(false),
