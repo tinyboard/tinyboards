@@ -16,7 +16,7 @@ use tinyboards_db::{
     },
     traits::Crud, SiteMode,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView};
+use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView, UserSettingsView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
@@ -639,10 +639,36 @@ pub async fn purge_image_posts_for_board(
     let body = format!("Your email for your new {} account was successful!", &settings.hostname);
     send_email(&subject, &email, &user.name, &body, settings)?;
     Ok(())
-  }
+}
+
+/// Sends email to admins after a user applies
+  pub async fn send_new_applicant_email_to_admins(
+    applicant_username: &str,
+    pool: &PgPool,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+    let admins = blocking(pool, move |conn| {
+        UserSettingsView::list_admins_with_email(conn)
+    })
+    .await??;
+
+    let application_link = &format!(
+        "{}/admin/applications",
+        settings.get_protocol_and_hostname(),
+    );
+
+    for admin in &admins {
+        let email = &admin.settings.email.clone().expect("email");
+        let subject = format!("New Account Up For Review - {}", applicant_username);
+        let body = format!("A new user named {} has registered to {}!\n\nPlease review their application here: {}", applicant_username, settings.hostname, application_link);
+        send_email(&subject, email, &admin.settings.name, &body, settings)?;
+    }
+
+    Ok(())
+}
 
 
-  /// gets current site mode
+/// gets current site mode
   pub fn get_current_site_mode(site: &Site, site_mode: &Option<SiteMode>) -> SiteMode {
     let mut current_mode = match site_mode {
         Some(SiteMode::OpenMode) => SiteMode::OpenMode,

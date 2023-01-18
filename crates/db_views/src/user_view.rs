@@ -147,6 +147,20 @@ impl UserSettingsView {
 
         Ok(Self { settings, counts })
     }
+
+    pub fn list_admins_with_email(conn: &mut PgConnection) -> Result<Vec<Self>, Error> {
+        let res = users::table
+            .filter(users::is_admin.eq(true))
+            .filter(users::email.is_not_null())
+            .inner_join(user_aggregates::table.on(users::id.eq(user_aggregates::user_id)))
+            .select((
+                UserSettings::safe_columns_tuple(),
+                user_aggregates::all_columns,
+            ))
+            .load::<UserSettingsViewTuple>(conn)?;
+
+            Ok(UserSettingsView::from_tuple_to_vec(res))
+    }
 }
 
 impl ViewToVec for UserSettingsView {

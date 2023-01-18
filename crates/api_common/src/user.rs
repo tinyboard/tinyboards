@@ -27,12 +27,9 @@ pub struct Register {
     pub username: String,
     pub password: Sensitive<String>,
     pub invite_token: Option<String>,
-    // pub password_verify: Sensitive<String>,
-    // email = mandatory if email verification enabled on server
     pub email: Option<String>,
     pub captcha_uuid: Option<String>,
     pub captcha_answer: Option<String>,
-    // An answer = required if require application is enabled on server
     pub answer: Option<String>,
 }
 

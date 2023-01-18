@@ -2,11 +2,13 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use regex::Regex;
 use tinyboards_api_common::data::TinyBoardsContext;
+use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
 use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Register, SignupResponse},
     utils::{blocking, send_verification_email},
 };
+use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
 use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::models::user::users::{User, UserForm};
@@ -48,6 +50,12 @@ impl<'des> PerformCrud<'des> for Register {
             ));
         }
 
+        if !site.open_registration && site.require_application && data.answer.is_none() {
+            return Err(TinyBoardsError::from_message(
+                403, 
+                "application answer is required"));
+        }
+        
         // USERNAME CHECK
         let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
         if !re.is_match(&data.username) {
@@ -104,6 +112,26 @@ impl<'des> PerformCrud<'des> for Register {
                 SiteInvite::delete(conn, invite.unwrap().id)
             })
             .await??;
+        }
+
+        // if site is in application mode, add the application to the database
+        if site.require_application {
+            let form = RegistrationApplicationForm {
+                user_id: inserted_user.id,
+                answer: data.answer.clone(),
+                ..RegistrationApplicationForm::default()
+            };
+
+            blocking(context.pool(), move |conn| {
+                RegistrationApplication::create(conn, &form)
+            })
+            .await??;
+        }
+
+        // email the admins regarding the new application
+        if site.require_application {
+            send_new_applicant_email_to_admins(&data.username, context.pool(), context.settings())
+            .await?;
         }
 
         let email = inserted_user.email.clone().unwrap_or_default();

@@ -64,6 +64,7 @@ pub struct UserSafe {
 #[diesel(table_name = users)]
 pub struct UserSettings {
     pub id: i32,
+    pub name: String,
     pub email: Option<String>,
     pub show_nsfw: bool,
     pub theme: String,

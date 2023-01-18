@@ -286,6 +286,7 @@ pub mod safe_type {
 
     type SettingColumns = (
         id,
+        name,
         email,
         show_nsfw,
         theme,
@@ -333,6 +334,7 @@ pub mod safe_type {
         fn safe_columns_tuple() -> Self::SafeColumns {
             (
                 id,
+                name,
                 email,
                 show_nsfw,
                 theme,
