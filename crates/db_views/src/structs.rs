@@ -7,7 +7,7 @@ use tinyboards_db::{
         board::boards::BoardSafe,
         comment::{comments::Comment, comment_reply::CommentReply},
         post::posts::Post,
-        site::{site::Site, site_invite::SiteInvite},
+        site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication},
         user::{
             user_mentions::UserMention,
             users::{UserSafe, UserSettings}, private_messages::PrivateMessage,
@@ -150,4 +150,12 @@ pub struct PrivateMessageView {
     pub private_message: PrivateMessage,
     pub creator: UserSafe,
     pub recipient: UserSafe,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct RegistrationApplicationView {
+  pub application: RegistrationApplication,
+  pub applicant_settings: UserSettings,
+  pub applicant: UserSafe,
+  pub admin: Option<UserSafe>,
 }
