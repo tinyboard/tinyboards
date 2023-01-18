@@ -142,15 +142,18 @@ impl<'des> PerformCrud<'des> for Register {
                 .await?;
         }
 
-        // logic about emailing the admins of the site if application submitted and email notification for user etc
-
-        let response = SignupResponse {
+        let mut response = SignupResponse {
             jwt: Some(Sensitive::new(
                 inserted_user.get_jwt(context.master_key().jwt.as_ref()),
             )),
             registration_created: false,
             verify_email_sent: false,
         };
+
+        if site.require_application {
+            response.registration_created = true;
+            response.jwt = None;
+        }
 
         // logic block about handling email verification/application messaging (hey you applied wait until admin approves)
 
