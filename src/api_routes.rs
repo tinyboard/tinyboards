@@ -2,7 +2,7 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::Perform;
 use tinyboards_api_common::{
-    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::{CreatePrivateMessage, GetPrivateMessages, EditPrivateMessage, DeletePrivateMessage},
+    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::{CreatePrivateMessage, GetPrivateMessages, EditPrivateMessage, DeletePrivateMessage}, applications::ListRegistrationApplications,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -123,23 +123,12 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
-                    .route(
-                        "/site_settings",
-                        web::get().to(route_get::<GetSiteSettings>),
-                    )
-                    .route(
-                        "/site_settings",
-                        web::put().to(route_post::<SaveSiteSettings>),
-                    )
-                    .route(
-                        "/invite",
-                        web::post().to(route_post_crud::<CreateSiteInvite>),
-                    )
+                    .route("/site_settings",web::get().to(route_get::<GetSiteSettings>))
+                    .route("/site_settings",web::put().to(route_post::<SaveSiteSettings>))
+                    .route("/invite", web::post().to(route_post_crud::<CreateSiteInvite>))
                     .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
-                    .route(
-                        "/invite/{invite_id}",
-                        web::delete().to(route_post_crud::<DeleteSiteInvite>),
-                    ),
+                    .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
+                    .route("/application", web::get().to(route_get_crud::<ListRegistrationApplications>))
             ),
     );
 }

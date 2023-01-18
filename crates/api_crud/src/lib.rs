@@ -8,6 +8,7 @@ pub mod post;
 pub mod user;
 pub mod private_messages;
 pub mod invite;
+pub mod applications;
 
 #[async_trait::async_trait(?Send)]
 pub trait PerformCrud<'des> {

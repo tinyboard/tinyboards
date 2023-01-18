@@ -10,3 +10,4 @@ pub mod admin;
 pub mod site;
 pub mod websocket;
 pub mod private_messages;
+pub mod applications;
