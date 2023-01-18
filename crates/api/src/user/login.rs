@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     user::{Login, LoginResponse},
     utils::blocking,
 };
-use tinyboards_db::models::user::users::User;
+use tinyboards_db::models::{user::users::User, site::site::Site};
 use tinyboards_db_views::structs::UserView;
 use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
@@ -34,6 +34,14 @@ impl<'des> Perform<'des> for Login {
             Ok::<(User, UserView), TinyBoardsError>((user, user_view))
         })
         .await??;
+
+        let site = blocking(context.pool(), move |conn| {
+            Site::read_local(conn)
+        }).await??;
+
+        if site.require_application == true && user.is_application_accepted == false {
+            return Err(TinyBoardsError::from_message(401, "login failed - application not accepted"));
+        }
 
         if !verify_password(&user.passhash, &self.password) {
             return Err(TinyBoardsError::from_message(400, "login failed"));
