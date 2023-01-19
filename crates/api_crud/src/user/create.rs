@@ -34,15 +34,6 @@ impl<'des> PerformCrud<'des> for Register {
         let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
 
         // some email verification logic here?
-
-        // make sure site has open registration first here
-        if !site.open_registration && data.invite_token.is_none() {
-            return Err(TinyBoardsError::from_message(
-                400,
-                "site is not in open registration mode",
-            ));
-        }
-
         if !site.open_registration && site.invite_only && data.invite_token.is_none() {
             return Err(TinyBoardsError::from_message(
                 403,
