@@ -17,6 +17,40 @@ type RegistrationApplicationViewTuple = (
     Option<UserSafe>,
 );
 
+impl RegistrationApplicationView {
+    pub fn read(
+        conn: &mut PgConnection,
+        app_id: i32,
+    ) -> Result<Self, Error> {
+        let user_alias = diesel::alias!(users as users_alias);
+        let (
+            application,
+            applicant_settings,
+            applicant,
+            admin,
+        ) = registration_applications::table
+        .find(app_id)
+        .inner_join(users::table.on(registration_applications::user_id.eq(users::id)))
+        .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
+        .order_by(registration_applications::published.desc())
+        .select((
+            registration_applications::all_columns,
+            UserSettings::safe_columns_tuple(),
+            UserSafe::safe_columns_tuple(),
+            user_alias.fields(UserSafe::safe_columns_tuple()).nullable(),
+        ))
+        .first::<RegistrationApplicationViewTuple>(conn)?;
+
+        Ok(RegistrationApplicationView {
+            application,
+            applicant_settings,
+            applicant,
+            admin,
+        })
+    }
+}
+
+
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
 pub struct ApplicationQuery<'a> {

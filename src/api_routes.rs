@@ -129,6 +129,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
                     .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
                     .route("/application", web::get().to(route_get_crud::<ListRegistrationApplications>))
+                    .route("/application/{app_id}", web::post().to(route_post::<HandleRegistrationApplication>))
             ),
     );
 }

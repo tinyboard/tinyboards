@@ -641,6 +641,18 @@ pub async fn purge_image_posts_for_board(
     Ok(())
 }
 
+/// Send a approval email to applicant when admin approves
+pub async fn send_application_approval_email(
+    applicant_username: &str,
+    applicant_email: &str,
+    settings: &Settings,
+) -> Result<(), TinyBoardsError> {
+    let subject = format!("Welcome To {} - {}!", settings.hostname, applicant_username);
+    let body = format!("Your application to {} has been successfully approved by an admin!\n\nYou can now login to your {} account with the credentials you used when you applied.", settings.hostname, settings.hostname);
+    send_email(&subject, applicant_email, applicant_username, &body, settings)?;
+    Ok(())
+}   
+
 /// Sends email to admins after a user applies
   pub async fn send_new_applicant_email_to_admins(
     applicant_username: &str,
