@@ -16,11 +16,17 @@ FROM debian:buster-slim as tinyboards
 
 RUN apt-get update && apt-get install libpq-dev -y
 
+RUN apt-get install ca-certificates -y
+
+RUN update-ca-certificates
+
 COPY --from=builder /app/tinyboards_server /app/tinyboards
 
 COPY --from=builder /app/config/defaults.hjson /config/defaults.hjson
 
 COPY --from=builder /app/assets/ /assets/
+
+
 
 RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
 
