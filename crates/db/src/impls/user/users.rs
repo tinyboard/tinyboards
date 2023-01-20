@@ -86,9 +86,18 @@ impl User {
         user_id: i32,
         new_banned: bool,
     ) -> Result<Self, Error> {
-        //use crate::schema::user::dsl::*;
         diesel::update(users.find(user_id))
             .set((is_banned.eq(new_banned), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
+    pub fn update_is_application_accepted(
+        conn: &mut PgConnection,
+        user_id: i32,
+        new_is_application_accepted: bool,
+    ) -> Result<Self, Error> {
+        diesel::update(users.find(user_id))
+            .set((is_application_accepted.eq(new_is_application_accepted), updated.eq(naive_now())))
             .get_result::<Self>(conn)
     }
 

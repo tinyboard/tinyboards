@@ -200,6 +200,7 @@ pub struct UserQuery<'a> {
     search_term: Option<String>,
     is_admin: Option<bool>,
     is_banned: Option<bool>,
+    approved_only: Option<bool>,
 }
 
 #[derive(Default, Clone)]
@@ -247,6 +248,11 @@ impl<'a> UserQuery<'a> {
             query = query.filter(users::is_admin.eq(is_admin));
             count_query = count_query.filter(users::is_admin.eq(is_admin));
         };
+
+        if self.approved_only.unwrap_or(false) {
+            query = query.filter(users::is_application_accepted.eq(true));
+            count_query = count_query.filter(users::is_application_accepted.eq(true));
+        }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
 

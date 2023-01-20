@@ -45,6 +45,7 @@ impl<'des> Perform<'des> for GetMembers {
                 .sort(Some(sort))
                 .is_admin(is_admin)
                 .is_banned(is_banned)
+                .approved_only(Some(true)) // we only want to display approved users
                 .limit(limit)
                 .page(page)
                 .build()

@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm},
+        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm}, user::users::User,
     },
     traits::Crud,
 };
@@ -51,6 +51,12 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
             if let Some(app_email) = app_email {
                 send_application_approval_email(&app_username, &app_email, context.settings()).await?;
             }
+            // update user in the db so that their is_application_approved value is true so they can login
+            blocking(context.pool(), move |conn| {
+                User::update_is_application_accepted(conn, app.applicant.id.clone(), true)
+            })
+            .await??;
+            // at this point we no longer need the app in the db, so delete it
             blocking(context.pool(), move |conn| {
                 RegistrationApplication::delete(conn, app_id.clone())
             })
