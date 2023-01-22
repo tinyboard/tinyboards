@@ -47,7 +47,8 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             title: Some(data.title),
             type_: data.type_,
             url: data.url,
-            body: Some(body), // lol
+            image: data.image,
+            body: Some(body), // once told me, the world was gonna roll me
             body_html: body_html,
             creator_id: Some(user.id),
             board_id: Some(board_id),

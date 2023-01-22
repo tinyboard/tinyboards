@@ -23,6 +23,7 @@ pub struct Post {
     pub is_nsfw: bool,
     pub is_stickied: bool,
     pub updated: Option<NaiveDateTime>,
+    pub image: Option<String>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -43,4 +44,5 @@ pub struct PostForm {
     pub is_deleted: Option<bool>,
     pub is_nsfw: Option<bool>,
     pub is_stickied: Option<bool>,
+    pub image: Option<String>,
 }

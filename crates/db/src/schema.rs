@@ -318,6 +318,7 @@ diesel::table! {
         is_nsfw -> Bool,
         is_stickied -> Bool,
         updated -> Nullable<Timestamp>,
+        image -> Nullable<Text>,
     }
 }
 

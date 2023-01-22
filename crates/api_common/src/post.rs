@@ -18,6 +18,7 @@ pub struct SubmitPost {
     pub title: String,
     pub type_: Option<String>,
     pub url: Option<String>,
+    pub image: Option<String>,
     pub body: Option<String>,
     pub board_id: Option<i32>,
     pub is_nsfw: bool,

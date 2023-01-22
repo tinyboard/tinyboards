@@ -428,6 +428,7 @@ impl DeleteableOrRemoveable for PostView {
         self.post.body = obscure_text.clone();
         self.post.body_html = obscure_text;
         self.post.url = None;
+        self.post.image = None;
         self.post.creator_id = -1;
         self.creator = None;
     }
