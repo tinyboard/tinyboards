@@ -75,7 +75,7 @@ pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
   
   for cap in YT_REGEX.captures_iter(rcopy.as_str()) {
     let yt_code = cap["yt_code"].to_string();
-    let yt_tag =  format!("<lite-youtube videoid='{}'></lite-youtube>", yt_code);
+    let yt_tag =  format!("<span class='lite-youtube'><lite-youtube videoid='{}'></lite-youtube></span>", yt_code);
     
     let mut yt_vec: Vec<&str> = Vec::new();
 
