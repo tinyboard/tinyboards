@@ -11,3 +11,5 @@ echo "Authenticating and pushing image to Docker Hub"
 docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
 docker push "${IMAGE_NAME}:${IMAGE_TAG}"
 docker push "${IMAGE_NAME}:latest"
+
+docker image prune -af
