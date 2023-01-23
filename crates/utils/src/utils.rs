@@ -1,6 +1,6 @@
 use actix_web::dev::ConnectionInfo;
 use once_cell::sync::Lazy;
-use regex::Regex;
+use regex::{Regex};
 use crate::{IpAddr, settings::structs::Settings};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 
@@ -22,6 +22,12 @@ static MENTIONS_REGEX: Lazy<Regex> = Lazy::new(|| {
 
 static IMG_TAG_REGEX: Lazy<Regex> = Lazy::new(|| {
   Regex::new(r"<img src=").expect("compile img tag regex")
+});
+
+static YT_REGEX: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(
+    r#"(?P<a>https?://|http://)(?P<b>www\.)?(?P<c>youtube\.com/watch\?v=|youtube\.com/user/[a-zA-Z0-9_]+#p/a/u/[a-zA-Z0-9_]+/|youtube\.com/v/|youtube\.com/watch\?v=|youtube\.com/embed/|youtu\.be/|youtube\.com/shorts/)(?P<yt_code>[a-zA-Z0-9_]+)(?P<end>[^\s]*)"#)
+    .expect("compile yt link regex")
 });
 
 #[derive(Clone, PartialEq, Eq, Hash)]
@@ -65,6 +71,38 @@ pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
       result = result.replace(&format!("@{}", uname), &profile_ref);
     }
   
+  let rcopy = result.clone();
+  
+  for cap in YT_REGEX.captures_iter(rcopy.as_str()) {
+    let yt_code = cap["yt_code"].to_string();
+    let yt_tag =  format!("<lite-youtube videoid='{}'></lite-youtube>", yt_code);
+    
+    let mut yt_vec: Vec<&str> = Vec::new();
+
+    if let Some(a) = cap.name("a") {
+      yt_vec.push(a.as_str());
+    }
+
+    if let Some(b) = cap.name("b") {
+      yt_vec.push(b.as_str());
+    }
+
+    if let Some(c) = cap.name("c") {
+      yt_vec.push(c.as_str());
+    }
+
+    if let Some(d) = cap.name("yt_code") {
+      yt_vec.push(d.as_str());
+    }
+
+    if let Some(e) = cap.name("e") {
+      yt_vec.push(e.as_str());
+    }
+
+    let yt_link = yt_vec.concat();
+
+    result = result.replace(&yt_link, &yt_tag);
+  }
   result
 }
 
