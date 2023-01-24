@@ -211,8 +211,8 @@ EOF
   nginx:
     image: nginx:1-alpine
     ports:
-      - "127.0.0.1:$HTTP_PORT:80"
-      - "127.0.0.1:$HTTPS_PORT:443"
+      - "$HTTP_PORT:80"
+      - "$HTTPS_PORT:443"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d
       - /etc/ssl:/etc/ssl/
