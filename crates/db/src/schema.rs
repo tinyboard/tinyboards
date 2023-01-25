@@ -268,11 +268,11 @@ diesel::table! {
 }
 
 diesel::table! {
-    password_reset_requests (id) {
+    password_resets (id) {
         id -> Int4,
         user_id -> Int4,
-        token_encrypted -> Text,
-        published -> Timestamp,
+        reset_token -> Text,
+        creation_date -> Timestamp,
     }
 }
 
@@ -552,7 +552,7 @@ diesel::joinable!(mod_remove_post -> posts (post_id));
 diesel::joinable!(mod_remove_post -> users (mod_user_id));
 diesel::joinable!(mod_sticky_post -> posts (post_id));
 diesel::joinable!(mod_sticky_post -> users (mod_user_id));
-diesel::joinable!(password_reset_requests -> users (user_id));
+diesel::joinable!(password_resets -> users (user_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
 diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
@@ -601,7 +601,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_remove_comment,
     mod_remove_post,
     mod_sticky_post,
-    password_reset_requests,
+    password_resets,
     post_aggregates,
     post_votes,
     posts,
