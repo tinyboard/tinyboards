@@ -12,8 +12,7 @@ use tinyboards_db::{
     },
     traits::Crud,
 };
-use tinyboards_utils::error::TinyBoardsError;
-use uuid::Uuid;
+use tinyboards_utils::{error::TinyBoardsError, utils::generate_rand_string};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateSiteInvite {
@@ -44,7 +43,7 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
         }
 
         let form = SiteInviteForm {
-            verification_code: Uuid::new_v4().to_string(),
+            verification_code: generate_rand_string(),
         };
 
         // create record in db
