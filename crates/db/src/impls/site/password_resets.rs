@@ -7,6 +7,15 @@ use crate::{
 };
 use diesel::{dsl::*, result::Error, *};
 
+impl PasswordReset {
+    pub fn get_by_token(conn: &mut PgConnection, token: &str) -> Result<Self, Error> {
+        use crate::schema::password_resets::dsl::*;
+        password_resets
+            .filter(reset_token.eq(token))
+            .first::<Self>(conn)
+    }
+}
+
 impl Crud for PasswordReset {
     type Form = PasswordResetForm;
     type IdType = i32;

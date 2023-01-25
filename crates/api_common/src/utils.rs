@@ -608,6 +608,24 @@ pub async fn purge_image_posts_for_board(
     Ok(())
   }
 
+  /// Send password reset success email
+  pub async fn send_password_reset_success_email(
+    username: &str,
+    email: &str,
+    settings: &Settings,
+  ) -> Result<(), TinyBoardsError> {
+
+    let subject = format!("Successfully Reset Password for your {} Account", &settings.hostname);
+    let body = format!(
+        "You have successfully reset the password for your {} account.",
+        settings.get_protocol_and_hostname()
+    );
+
+    // send email
+    send_email(&subject, email, username, &body, settings)?;
+
+    Ok(())
+  }
 
   /// Send a verification email
   pub async fn send_verification_email(

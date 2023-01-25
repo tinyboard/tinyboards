@@ -91,6 +91,16 @@ impl User {
             .get_result::<Self>(conn)
     }
 
+    pub fn update_passhash(
+        conn: &mut PgConnection,
+        user_id: i32,
+        new_passhash: String,
+    ) -> Result<Self, Error> {
+        diesel::update(users.find(user_id))
+            .set((passhash.eq(new_passhash), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+
     pub fn update_is_application_accepted(
         conn: &mut PgConnection,
         user_id: i32,

@@ -20,6 +20,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/approve", web::post().to(route_post::<ApproveObject>))
             .route("/lock", web::post().to(route_post::<LockObject>))
             .route("/unlock", web::post().to(route_post::<UnlockObject>))
+            .route("/password_reset", web::post().to(route_post::<PasswordResetRequest>))
+            .route("/password_reset/{reset_token}", web::post().to(route_post::<ExecutePasswordReset>))
             .route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),

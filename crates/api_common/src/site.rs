@@ -174,3 +174,14 @@ pub struct InviteToken {
 pub struct PasswordResetRequest {
     pub email: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PasswordResetTokenPath {
+    pub reset_token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ExecutePasswordReset {
+    pub new_password: String,
+    pub new_password_verify: String,
+} 
