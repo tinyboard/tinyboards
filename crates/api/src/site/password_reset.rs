@@ -58,6 +58,12 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
         })
         .await??;
 
+        // no longer need the password reset in the db, so delete it here
+        blocking(context.pool(), move |conn| {
+            PasswordReset::delete(conn, reset_request.id)
+        })
+        .await??;
+
         // send an email that the reset was successful
         send_password_reset_success_email(&user.name, &user.email.unwrap(), context.settings()).await?;
 
