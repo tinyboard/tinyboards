@@ -169,3 +169,8 @@ pub struct ValidateSiteInvite {}
 pub struct InviteToken {
     pub invite_token: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PasswordResetRequest {
+    pub email: String,
+}
