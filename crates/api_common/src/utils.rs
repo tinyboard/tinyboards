@@ -25,6 +25,10 @@ use tinyboards_utils::{
 };
 use url::Url;
 use uuid::Uuid;
+use base64::{
+    Engine as _,
+    engine::{general_purpose},
+};
 
 use crate::request::purge_image_from_pictrs;
 
@@ -742,4 +746,32 @@ pub async fn send_application_approval_email(
     }
 
     current_mode
+  }
+
+  pub fn decode_base64_image(encoded_img: String) -> Result<(Vec<u8>, String), TinyBoardsError> {
+
+    let mut split = encoded_img.split("base64,");
+
+    let img_info = split.nth(0).unwrap_or_default();
+    let img_data = split.nth(1).unwrap_or_default();
+
+    let img_fmt_string = match img_info {
+        "data:image/png;" => Some("png"),
+        "data:image/jpeg;" => Some("jpeg"),
+        "data:image/gif;" => Some("gif"),
+        "data:image/webp;" => Some("webp"),
+        _ => None,
+    };
+
+    if img_fmt_string.is_none() {
+        return Err(TinyBoardsError::from_message(400, "invalid image format."));
+    }
+
+    let bytes = general_purpose::STANDARD
+        .decode(img_data)
+        .unwrap();
+
+    let file_name = format!("image.{}", img_fmt_string.unwrap());
+
+    Ok((bytes, file_name))
   }

@@ -10,14 +10,14 @@ use actix_web::{
     HttpRequest,
     HttpResponse,
 };
-use futures::stream::{Stream, StreamExt};
-use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user};
+//use futures::stream::{Stream, StreamExt};
+use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db::models::site::site::Site;
 use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
-use reqwest::Body;
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
+use reqwest::multipart::Part;
 
 pub fn config(
     cfg: &mut web::ServiceConfig,
@@ -171,9 +171,16 @@ async fn image(
     Ok(client_res.body(BodyStream::new(res.bytes_stream())))
 }
 
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UploadRequest {
+    pub image: String,
+}
+
+
 async fn upload(
     req: HttpRequest,
-    body: web::Payload,
+    body: web::Data<UploadRequest>,
     client: web::Data<ClientWithMiddleware>,
     context: web::Data<TinyBoardsContext>
 ) -> Result<HttpResponse, Error> {
@@ -189,18 +196,29 @@ async fn upload(
     .await
     .unwrap()?;
 
+
+    println!("{:?}", body.image.clone());
+
     let pictrs_conf = context.settings().pictrs_config()?;
 
     let image_url = format!("{}image", pictrs_conf.url);
 
-    let mut client_req = adapt_request(&req, &client, image_url);
+    //let mut client_req = adapt_request(&req, &client, image_url);
 
-    if let Some(addr) = req.head().peer_addr {
-        client_req = client_req.header("X-Forwarded-For", addr.to_string());
-    };
+    // if let Some(addr) = req.head().peer_addr {
+    //     client_req = client_req.header("X-Forwarded-For", addr.to_string());
+    // };
+    
+    let (img_bytes, file_name) = decode_base64_image(body.image.clone())?;
+    let img_part = Part::bytes(img_bytes).file_name(file_name);
 
-    let res = client_req
-        .body(Body::wrap_stream(make_send(body)))
+    let form = reqwest::multipart::Form::new()
+        .part("images[]", img_part);
+
+    
+    let res = client
+        .post(&image_url)
+        .multipart(form)
         .send()
         .await
         .map_err(ErrorBadRequest)?;
@@ -233,38 +251,38 @@ async fn delete(
     Ok(HttpResponse::build(res.status()).body(BodyStream::new(res.bytes_stream())))
   }
 
-fn make_send<S>(mut stream: S) -> impl Stream<Item = S::Item> + Send + Unpin + 'static 
-    where
-        S: Stream + Unpin + 'static,
-        S::Item: Send,
-{
-    let (tx, rx) = tokio::sync::mpsc::channel(8);
+// fn make_send<S>(mut stream: S) -> impl Stream<Item = S::Item> + Send + Unpin + 'static 
+//     where
+//         S: Stream + Unpin + 'static,
+//         S::Item: Send,
+// {
+//     let (tx, rx) = tokio::sync::mpsc::channel(8);
 
-    actix_web::rt::spawn(async move {
-        while let Some(res) = stream.next().await {
-            if tx.send(res).await.is_err() {
-                break;
-            }
-        }
-    });
+//     actix_web::rt::spawn(async move {
+//         while let Some(res) = stream.next().await {
+//             if tx.send(res).await.is_err() {
+//                 break;
+//             }
+//         }
+//     });
 
-    SendStream { rx }
-}
+//     SendStream { rx }
+// }
 
-struct SendStream<T> {
-    rx: tokio::sync::mpsc::Receiver<T>,
-}
+// struct SendStream<T> {
+//     rx: tokio::sync::mpsc::Receiver<T>,
+// }
 
-impl<T> Stream for SendStream<T>
-where
-    T: Send,
-{
-    type Item = T;
+// impl<T> Stream for SendStream<T>
+// where
+//     T: Send,
+// {
+//     type Item = T;
 
-    fn poll_next(
-        mut self: std::pin::Pin<&mut Self>,
-        cx: &mut std::task::Context<'_>,
-    ) -> std::task::Poll<Option<Self::Item>> {
-        std::pin::Pin::new(&mut self.rx).poll_recv(cx)
-    }
-}
+//     fn poll_next(
+//         mut self: std::pin::Pin<&mut Self>,
+//         cx: &mut std::task::Context<'_>,
+//     ) -> std::task::Poll<Option<Self::Item>> {
+//         std::pin::Pin::new(&mut self.rx).poll_recv(cx)
+//     }
+// }

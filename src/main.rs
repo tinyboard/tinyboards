@@ -13,7 +13,7 @@ use diesel::{
 use diesel_migrations::EmbeddedMigrations;
 use dotenv::dotenv;
 use reqwest::Client;
-use reqwest_middleware::ClientBuilder;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
 use std::{thread, time::Duration};
@@ -105,7 +105,7 @@ async fn main() -> Result<(), TinyBoardsError> {
         backoff_exponent: 2,
     };
 
-    let client = ClientBuilder::new(reqwest_client.clone())
+    let client: ClientWithMiddleware = ClientBuilder::new(reqwest_client.clone())
         .with(TracingMiddleware::default())
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build();
