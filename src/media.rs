@@ -8,7 +8,7 @@ use actix_web::{
     web,
     Error,
     HttpRequest,
-    HttpResponse, HttpMessage,
+    HttpResponse,
 };
 use futures::StreamExt;
 //use futures::stream::{Stream, StreamExt};
@@ -171,13 +171,6 @@ async fn image(
 
     Ok(client_res.body(BodyStream::new(res.bytes_stream())))
 }
-
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UploadRequest {
-    pub image: String,
-}
-
 
 async fn upload(
     req: HttpRequest,
