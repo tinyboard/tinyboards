@@ -8,8 +8,9 @@ use actix_web::{
     web,
     Error,
     HttpRequest,
-    HttpResponse,
+    HttpResponse, HttpMessage,
 };
+use futures::StreamExt;
 //use futures::stream::{Stream, StreamExt};
 use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
@@ -172,7 +173,7 @@ async fn image(
 }
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UploadRequest {
     pub image: String,
 }
@@ -180,7 +181,7 @@ pub struct UploadRequest {
 
 async fn upload(
     req: HttpRequest,
-    body: web::Data<UploadRequest>,
+    mut body: web::Payload,
     client: web::Data<ClientWithMiddleware>,
     context: web::Data<TinyBoardsContext>
 ) -> Result<HttpResponse, Error> {
@@ -196,8 +197,11 @@ async fn upload(
     .await
     .unwrap()?;
 
-
-    println!("{:?}", body.image.clone());
+    let mut bytes = web::BytesMut::new();
+    while let Some(item) = body.next().await {
+        bytes.extend_from_slice(&item?);
+    }
+    let img_str_b64 = String::from_utf8_lossy(&bytes[..]).to_string();
 
     let pictrs_conf = context.settings().pictrs_config()?;
 
@@ -209,7 +213,7 @@ async fn upload(
     //     client_req = client_req.header("X-Forwarded-For", addr.to_string());
     // };
     
-    let (img_bytes, file_name) = decode_base64_image(body.image.clone())?;
+    let (img_bytes, file_name) = decode_base64_image(img_str_b64)?;
     let img_part = Part::bytes(img_bytes).file_name(file_name);
 
     let form = reqwest::multipart::Form::new()

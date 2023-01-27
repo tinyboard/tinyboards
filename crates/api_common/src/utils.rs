@@ -750,10 +750,11 @@ pub async fn send_application_approval_email(
 
   pub fn decode_base64_image(encoded_img: String) -> Result<(Vec<u8>, String), TinyBoardsError> {
 
-    let mut split = encoded_img.split("base64,");
+    let img_split = encoded_img.split("base64,");
+    let img_vec = img_split.collect::<Vec<&str>>();
 
-    let img_info = split.nth(0).unwrap_or_default();
-    let img_data = split.nth(1).unwrap_or_default();
+    let img_info = img_vec[0];
+    let img_data = img_vec[1];
 
     let img_fmt_string = match img_info {
         "data:image/png;" => Some("png"),
