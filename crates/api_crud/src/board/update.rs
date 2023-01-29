@@ -2,7 +2,7 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    board::{CreateBoard, BoardResponse},
+    board::{EditBoard, BoardResponse, BoardIdPath},
     utils::{
         blocking,
         require_user,
@@ -12,7 +12,7 @@ use tinyboards_db::{
     models::{
         board::boards::{Board, BoardForm},
     },
-    traits::Crud,
+    traits::Crud, utils::naive_now,
 };
 use tinyboards_db_views::structs::BoardView;
 use tinyboards_utils::{
@@ -21,28 +21,28 @@ use tinyboards_utils::{
 };
 
 #[async_trait::async_trait(?Send)]
-impl<'des> PerformCrud<'des> for CreateBoard {
+impl<'des> PerformCrud<'des> for EditBoard {
     type Response = BoardResponse;
-    type Route = ();
+    type Route = BoardIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        _: Self::Route,
+        path: Self::Route,
         auth: Option<&str>,
     ) -> Result<BoardResponse, TinyBoardsError> {
-        let data: &CreateBoard = &self;
+        let data: &EditBoard = &self;
 
-        let name = data.name.clone();
         let title = data.title.clone();
         let mut description = data.description.clone();
+        let is_nsfw = data.is_nsfw.clone();
 
-
-        // board creation restricted to admins (may provide other options in the future)
-        let user = require_user(context.pool(), context.master_key(), auth)
+        // board update restricted to board mod or admin (may provide other options in the future)
+        let _user = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_board_mod(path.board_id.clone(), context.pool())
+            .await
             .unwrap()?;
 
         if let Some(desc) = description {
@@ -50,16 +50,16 @@ impl<'des> PerformCrud<'des> for CreateBoard {
         }
 
         let form = BoardForm {
-            name: Some(name),
-            title: Some(title),
+            title,
             description: Some(description),
-            creator_id: Some(user.id),
+            is_nsfw,
+            updated: Some(Some(naive_now())),
             ..BoardForm::default()
         };
 
-        // create the board
+        // update the board
         let board = blocking(context.pool(), move |conn| {
-            Board::create(conn, &form)
+            Board::update(conn, path.board_id.clone(), &form)
         })
         .await??;
 

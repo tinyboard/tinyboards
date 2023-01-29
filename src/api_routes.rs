@@ -2,7 +2,7 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::Perform;
 use tinyboards_api_common::{
-    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::{CreatePrivateMessage, GetPrivateMessages, EditPrivateMessage, DeletePrivateMessage}, applications::ListRegistrationApplications, board::CreateBoard,
+    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::*, applications::*, board::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -67,7 +67,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/boards")
                 .wrap(rate_limit.message())
                 .route("", web::post().to(route_post_crud::<CreateBoard>))
-                //.route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
+                .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
                 //.route("/{board_id}", web::delete().to(route_post_crud::<DeleteBoard>))
             )
             // Post

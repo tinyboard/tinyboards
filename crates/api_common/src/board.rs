@@ -1,4 +1,3 @@
-// use crate::sensitive::Sensitive;
 // use tinyboards_db::{
 //     ListingType,
 //     SortType,
@@ -14,6 +13,21 @@ pub struct CreateBoard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct CreateBoardResponse {
+pub struct BoardResponse {
     pub board_view: BoardView,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BoardIdPath {
+    pub board_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EditBoard {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub is_nsfw: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeleteBoard {}
