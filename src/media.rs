@@ -10,7 +10,6 @@ use actix_web::{
     HttpRequest,
     HttpResponse,
 };
-use futures::StreamExt;
 //use futures::stream::{Stream, StreamExt};
 use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
@@ -52,6 +51,13 @@ struct Image {
 struct Images {
     msg: String,
     files: Option<Vec<Image>>,
+    url: Option<String>,
+    delete_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct UploadRequest {
+    image: Option<String>,
     url: Option<String>,
 }
 
@@ -180,7 +186,7 @@ async fn image(
 
 async fn upload(
     req: HttpRequest,
-    mut body: web::Payload,
+    data: web::Json<UploadRequest>,
     client: web::Data<ClientWithMiddleware>,
     context: web::Data<TinyBoardsContext>
 ) -> Result<HttpResponse, Error> {
@@ -196,44 +202,54 @@ async fn upload(
     .await
     .unwrap()?;
 
-    let mut bytes = web::BytesMut::new();
-    while let Some(item) = body.next().await {
-        bytes.extend_from_slice(&item?);
+    if let Some(img_str_b64) = &data.image {    
+
+        let pictrs_conf = context.settings().pictrs_config()?;
+        let image_url = format!("{}image", pictrs_conf.url);
+        let (img_bytes, file_name) = decode_base64_image(img_str_b64.to_owned())?;
+        let img_part = Part::bytes(img_bytes).file_name(file_name);
+        let form = reqwest::multipart::Form::new()
+            .part("images[]", img_part);
+    
+        let res = client
+            .post(&image_url)
+            .multipart(form)
+            .send()
+            .await
+            .map_err(ErrorBadRequest)?;
+    
+        let status = res.status();
+        let mut images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
+        
+        if let Some(files) = &images.files {
+            images.url = Some(format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file));
+            images.delete_url = Some(format!("{}/image/delete/{}/{}", context.settings().get_protocol_and_hostname(), files[0].delete_token, files[0].file));
+        }
+        
+        Ok(HttpResponse::build(status).json(images))
+    } else if let Some(url) = &data.url {
+        
+        let pictrs_conf = context.settings().pictrs_config()?;
+        let image_download_url = format!("{}image/download?url={}", pictrs_conf.url, url);
+
+        let res = client
+            .get(&image_download_url)
+            .send()
+            .await
+            .map_err(ErrorBadRequest)?;
+        
+        let status = res.status();
+        let mut images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
+
+        if let Some(files) = &images.files {
+            images.url = Some(format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file));
+            images.delete_url = Some(format!("{}/image/delete/{}/{}", context.settings().get_protocol_and_hostname(), files[0].delete_token, files[0].file));
+        }
+        
+        Ok(HttpResponse::build(status).json(images))
+    } else {
+        return Err(ErrorBadRequest("b64 image or url not provided"));
     }
-    let img_str_b64 = String::from_utf8_lossy(&bytes[..]).to_string();
-
-    let pictrs_conf = context.settings().pictrs_config()?;
-
-    let image_url = format!("{}image", pictrs_conf.url);
-
-    //let mut client_req = adapt_request(&req, &client, image_url);
-
-    // if let Some(addr) = req.head().peer_addr {
-    //     client_req = client_req.header("X-Forwarded-For", addr.to_string());
-    // };
-    
-    let (img_bytes, file_name) = decode_base64_image(img_str_b64)?;
-    let img_part = Part::bytes(img_bytes).file_name(file_name);
-
-    let form = reqwest::multipart::Form::new()
-        .part("images[]", img_part);
-
-    
-    let res = client
-        .post(&image_url)
-        .multipart(form)
-        .send()
-        .await
-        .map_err(ErrorBadRequest)?;
-
-    let status = res.status();
-    let mut images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
-    
-    if let Some(files) = &images.files {
-        images.url = Some(format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file));
-    }
-
-    Ok(HttpResponse::build(status).json(images))
 }
 
 async fn delete(
