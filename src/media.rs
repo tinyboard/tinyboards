@@ -58,6 +58,7 @@ struct Images {
 struct PictrsParams {
     format: Option<String>,
     thumbnail: Option<i32>,
+    blur: Option<i32>,
 }
 
 #[derive(Deserialize)]
@@ -135,6 +136,10 @@ async fn full_res(
 
         if let Some(size) = params.thumbnail {
             url = format!("{}&thumbnail={}", url, size);
+        }
+
+        if let Some(blur) = params.blur {
+            url = format!("{}&blur={}", url, blur);
         }
         url
     };
