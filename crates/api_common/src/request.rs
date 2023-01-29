@@ -149,7 +149,7 @@ pub async fn purge_image_from_pictrs(
         .next_back()
         .ok_or_else(|| TinyBoardsError::from_message(400, "image url missing last path segment"))?;
 
-    let purge_url = format!("{}/internal/purge?alias={}", pictrs_config.url, alias);
+    let purge_url = format!("{}internal/purge?alias={}", pictrs_config.url, alias);
 
     let pictrs_api_key = pictrs_config.api_key.ok_or_else(|| {
         TinyBoardsError::from_message(400, "pictrs api key not provided in settings")
