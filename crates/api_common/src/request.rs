@@ -1,5 +1,5 @@
 use reqwest_middleware::ClientWithMiddleware;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tinyboards_utils::{
     error::TinyBoardsError, settings::structs::Settings, version::VERSION, REQWEST_TIMEOUT,
 };
@@ -36,6 +36,65 @@ async fn is_image_content_type(
 pub(crate) struct PictrsPurgeResponse {
     msg: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct Image {
+    file: String,
+    delete_token: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct Images {
+    msg: String,
+    files: Option<Vec<Image>>,
+    url: Option<String>,
+    delete_url: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PictrsUploadRequest {
+    pub image: Option<String>,
+    pub url: Option<String>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct PictrsUploadResponse {
+    pub url: String,
+    pub delete_url: String,
+}
+
+/// Forwards image upload request to our own upload image endpoint
+pub async fn upload_image_to_pictrs(
+    client: &ClientWithMiddleware,
+    settings: &Settings,
+    auth: &str,
+    image: Option<String>,
+    url: Option<String>,
+) -> Result<PictrsUploadResponse, TinyBoardsError> {
+
+    let upload_url = format!("{}/image", settings.get_protocol_and_hostname());
+
+    let request = PictrsUploadRequest {
+        image,
+        url,
+    };
+
+    let auth_header = format!("Bearer {}", auth);
+
+    let resp = client
+        .post(&upload_url)
+        .json(&request)
+        .header("Authorization", &auth_header)
+        .send()
+        .await
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "failed to upload image"))?;
+
+    
+    let images = resp.json::<Images>().await.map_err(|_e| TinyBoardsError::from_message(500, "failed mapping response into json object")).unwrap();
+
+    Ok(PictrsUploadResponse { url: images.url.unwrap(), delete_url: images.delete_url.unwrap() })
+}
+
 
 /// Purges image from pictrs
 pub async fn purge_image_from_pictrs(

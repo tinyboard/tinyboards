@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
     utils::{blocking, get_user_view_from_jwt, require_user, send_verification_email},
-    request::purge_image_from_pictrs,
+    request::{purge_image_from_pictrs, upload_image_to_pictrs, PictrsUploadResponse},
 };
 use tinyboards_db::{
     models::site::site::Site,
@@ -35,9 +35,49 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
 
-        let avatar = diesel_option_overwrite(&data.avatar);
-        let banner = diesel_option_overwrite(&data.banner);
-        let signature = diesel_option_overwrite(&data.signature);
+
+        let mut avatar_upload_response: Option<PictrsUploadResponse> = None;
+        if let Some(avatar) = data.avatar.clone() {
+            if avatar.contains("base64,") && auth.is_some() {
+                avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), Some(avatar), None).await?);
+            } else {
+                avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), None, Some(avatar)).await?);
+            }
+        }
+        
+        let mut banner_upload_response: Option<PictrsUploadResponse> = None;
+        if let Some(banner) = data.banner.clone() {
+            if banner.contains("base64,") && auth.is_some() {
+                banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), Some(banner), None).await?);
+            } else {
+                banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), None, Some(banner)).await?);
+            }
+        }
+
+        let mut signature_upload_response: Option<PictrsUploadResponse> = None;
+        if let Some(signature) = data.signature.clone() {
+            if signature.contains("base64,") && auth.is_some() {
+                signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), Some(signature), None).await?);
+            } else {
+                signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), None, Some(signature)).await?);
+            }
+        }
+
+        let avatar = match avatar_upload_response {
+            Some(resp) => diesel_option_overwrite(&Some(resp.url)),
+            None => None,
+        };
+
+        let banner = match banner_upload_response {
+            Some(resp) => diesel_option_overwrite(&Some(resp.url)),
+            None => None,
+        };
+
+        let signature = match signature_upload_response {
+            Some(resp) => diesel_option_overwrite(&Some(resp.url)),
+            None => None,
+        };
+
         let bio = diesel_option_overwrite(&data.bio);
         let email_deref = data.email.as_deref().map(str::to_lowercase);
         let email = match email_deref {
