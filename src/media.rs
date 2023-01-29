@@ -202,6 +202,10 @@ async fn upload(
     .await
     .unwrap()?;
 
+    if data.image.is_some() && data.url.is_some() {
+        return Err(ErrorBadRequest("you can't input both a base64 string and a url to upload an image"));
+    }
+
     if let Some(img_str_b64) = &data.image {    
 
         let pictrs_conf = context.settings().pictrs_config()?;

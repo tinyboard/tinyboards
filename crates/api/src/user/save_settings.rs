@@ -39,27 +39,27 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let mut avatar_upload_response: Option<PictrsUploadResponse> = None;
         if let Some(avatar) = data.avatar.clone() {
             if avatar.contains("base64,") && auth.is_some() {
-                avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), Some(avatar), None).await?);
+                avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), Some(avatar), None).await?);
             } else {
-                avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), None, Some(avatar)).await?);
+                avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), None, Some(avatar)).await?);
             }
         }
         
         let mut banner_upload_response: Option<PictrsUploadResponse> = None;
         if let Some(banner) = data.banner.clone() {
             if banner.contains("base64,") && auth.is_some() {
-                banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), Some(banner), None).await?);
+                banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), Some(banner), None).await?);
             } else {
-                banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), None, Some(banner)).await?);
+                banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), None, Some(banner)).await?);
             }
         }
 
         let mut signature_upload_response: Option<PictrsUploadResponse> = None;
         if let Some(signature) = data.signature.clone() {
             if signature.contains("base64,") && auth.is_some() {
-                signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), Some(signature), None).await?);
+                signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), Some(signature), None).await?);
             } else {
-                signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), auth.unwrap(), None, Some(signature)).await?);
+                signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), None, Some(signature)).await?);
             }
         }
 

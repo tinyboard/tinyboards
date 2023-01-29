@@ -1,9 +1,12 @@
+use reqwest::multipart::Part;
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
 use tinyboards_utils::{
     error::TinyBoardsError, settings::structs::Settings, version::VERSION, REQWEST_TIMEOUT,
 };
 use url::Url;
+
+use crate::utils::decode_base64_image;
 
 pub fn build_user_agent(settings: &Settings) -> String {
     format!(
@@ -67,32 +70,67 @@ pub struct PictrsUploadResponse {
 pub async fn upload_image_to_pictrs(
     client: &ClientWithMiddleware,
     settings: &Settings,
-    auth: &str,
     image: Option<String>,
     url: Option<String>,
 ) -> Result<PictrsUploadResponse, TinyBoardsError> {
 
-    let upload_url = format!("{}/image", settings.get_protocol_and_hostname());
 
-    let request = PictrsUploadRequest {
-        image,
-        url,
-    };
+    if image.is_some() && url.is_some() {
+        return Err(TinyBoardsError::from_message(400, "you can't input both a base64 string and a url to upload an image"))
+    }
 
-    let auth_header = format!("Bearer {}", auth);
+    if let Some(img_str_b64) = image {    
 
-    let resp = client
-        .post(&upload_url)
-        .json(&request)
-        .header("Authorization", &auth_header)
-        .send()
-        .await
-        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "failed to upload image"))?;
-
+        let pictrs_conf = settings.pictrs_config()?;
+        let image_url = format!("{}image", pictrs_conf.url);
+        let (img_bytes, file_name) = decode_base64_image(img_str_b64)?;
+        let img_part = Part::bytes(img_bytes).file_name(file_name);
+        let form = reqwest::multipart::Form::new()
+            .part("images[]", img_part);
     
-    let images = resp.json::<Images>().await.map_err(|_e| TinyBoardsError::from_message(500, "failed mapping response into json object")).unwrap();
+        let res = client
+            .post(&image_url)
+            .multipart(form)
+            .send()
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "failed to upload image"))?;
+    
+        let images = res.json::<Images>().await.map_err(|e| TinyBoardsError::from_error_message(e, 500, "failed to map response to json"))?;
+        
+        let mut url: Option<String> = None;
+        let mut delete_url: Option<String> = None;
 
-    Ok(PictrsUploadResponse { url: images.url.unwrap(), delete_url: images.delete_url.unwrap() })
+        if let Some(files) = &images.files {
+            url = Some(format!("{}/image/{}", settings.get_protocol_and_hostname(), files[0].file));
+            delete_url = Some(format!("{}/image/delete/{}/{}", settings.get_protocol_and_hostname(), files[0].delete_token, files[0].file));
+        }
+        
+        Ok(PictrsUploadResponse { url: url.unwrap(), delete_url: delete_url.unwrap() })
+    } else if let Some(url) = url {
+        
+        let pictrs_conf = settings.pictrs_config()?;
+        let image_download_url = format!("{}image/download?url={}", pictrs_conf.url, url);
+
+        let res = client
+            .get(&image_download_url)
+            .send()
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "failed to upload image from URL"))?;
+        
+        let images = res.json::<Images>().await.map_err(|e| TinyBoardsError::from_error_message(e, 500, "failed to map response to json"))?;
+        
+        let mut url: Option<String> = None;
+        let mut delete_url: Option<String> = None;
+
+        if let Some(files) = &images.files {
+            url = Some(format!("{}/image/{}", settings.get_protocol_and_hostname(), files[0].file));
+            delete_url = Some(format!("{}/image/delete/{}/{}", settings.get_protocol_and_hostname(), files[0].delete_token, files[0].file));
+        }
+        
+        Ok(PictrsUploadResponse { url: url.unwrap(), delete_url: delete_url.unwrap() })
+    } else {
+        return Err(TinyBoardsError::from_message(400, "b64 image or url not provided"));
+    }
 }
 
 
