@@ -68,7 +68,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 .wrap(rate_limit.message())
                 .route("", web::post().to(route_post_crud::<CreateBoard>))
                 .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
-                //.route("/{board_id}", web::delete().to(route_post_crud::<DeleteBoard>))
+                .route("/{board_id}", web::delete().to(route_post_crud::<DeleteBoard>))
             )
             // Post
             .service(

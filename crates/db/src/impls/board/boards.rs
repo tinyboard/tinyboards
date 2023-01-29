@@ -45,6 +45,17 @@ impl Board {
         ban_id.map(|opt| opt.is_some())
     }
 
+    pub fn update_deleted(
+        conn: &mut PgConnection,
+        board_id: i32,
+        new_is_deleted: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::boards::dsl::*;
+        diesel::update(boards.find(board_id))
+            .set((is_deleted.eq(new_is_deleted), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+    }
+    
     pub fn update_banned(
         conn: &mut PgConnection,
         board_id: i32,
