@@ -42,16 +42,17 @@ pub fn config(
     );
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Image {
     file: String,
     delete_token: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct Images {
     msg: String,
     files: Option<Vec<Image>>,
+    url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -226,7 +227,11 @@ async fn upload(
         .map_err(ErrorBadRequest)?;
 
     let status = res.status();
-    let images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
+    let mut images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
+    
+    if let Some(files) = &images.files {
+        images.url = Some(format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file));
+    }
 
     Ok(HttpResponse::build(status).json(images))
 }
