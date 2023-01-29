@@ -98,19 +98,19 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         if let Some(Some(avatar)) = avatar.clone() {
             if avatar != current_avatar && !avatar.is_empty() && !current_avatar.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(avatar.as_str()).unwrap()).await?;
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_avatar.as_str()).unwrap()).await?;
             }
         };
 
         if let Some(Some(banner)) = banner.clone() {
             if banner != current_banner && !banner.is_empty() && !current_banner.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(banner.as_str()).unwrap()).await?;
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_banner.as_str()).unwrap()).await?;
             }
         };
 
         if let Some(Some(signature)) = signature.clone() {
             if signature != current_signature && !signature.is_empty() && !current_signature.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(signature.as_str()).unwrap()).await?;
+                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_signature.as_str()).unwrap()).await?;
             }
         };
 
