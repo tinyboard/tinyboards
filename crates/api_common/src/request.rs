@@ -1,4 +1,4 @@
-use reqwest::multipart::Part;
+use reqwest::{multipart::Part, StatusCode};
 use reqwest_middleware::ClientWithMiddleware;
 use serde::{Deserialize, Serialize};
 use tinyboards_utils::{
@@ -90,6 +90,7 @@ pub async fn upload_image_to_pictrs(
     
         let res = client
             .post(&image_url)
+            .header("Content-Type", "multipart/form-data")
             .multipart(form)
             .send()
             .await
@@ -140,6 +141,13 @@ pub async fn purge_image_from_pictrs(
     settings: &Settings,
     image_url: &Url,
 ) -> Result<(), TinyBoardsError> {
+
+    let exists_check = client.get(image_url.as_str()).send().await?;
+
+    if exists_check.status() == StatusCode::NOT_FOUND {
+        return Ok(());
+    }
+
     let pictrs_config = settings.pictrs_config()?;
     is_image_content_type(client, image_url).await?;
 
