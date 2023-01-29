@@ -3,6 +3,7 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_utils::error::TinyBoardsError;
 use serde::Deserialize;
 
+pub mod board;
 pub mod comment;
 pub mod post;
 pub mod user;

@@ -1,4 +1,5 @@
 pub mod data;
+pub mod board;
 pub mod user;
 pub mod sensitive;
 pub mod utils;

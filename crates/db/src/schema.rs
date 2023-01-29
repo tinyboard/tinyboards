@@ -86,7 +86,6 @@ diesel::table! {
         name -> Varchar,
         title -> Varchar,
         description -> Nullable<Text>,
-        tag_id -> Int4,
         creator_id -> Int4,
         is_banned -> Bool,
         creation_date -> Timestamp,
@@ -405,13 +404,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    tag (id) {
-        id -> Int4,
-        name -> Varchar,
-    }
-}
-
-diesel::table! {
     user_aggregates (id) {
         id -> Int4,
         user_id -> Int4,
@@ -529,7 +521,6 @@ diesel::joinable!(board_subscriptions -> boards (board_id));
 diesel::joinable!(board_subscriptions -> users (user_id));
 diesel::joinable!(board_user_bans -> boards (board_id));
 diesel::joinable!(board_user_bans -> users (user_id));
-diesel::joinable!(boards -> tag (tag_id));
 diesel::joinable!(boards -> users (creator_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
 diesel::joinable!(comment_reply -> comments (comment_id));
@@ -612,7 +603,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     site,
     site_aggregates,
     site_invite,
-    tag,
     user_aggregates,
     user_ban,
     user_blocks,

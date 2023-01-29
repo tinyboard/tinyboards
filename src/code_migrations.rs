@@ -90,7 +90,6 @@ async fn initialize_local_site_and_admin_user(
         let default_board_form = BoardForm {
             name: Some(default_name),
             title: Some(default_title),
-            tag_id: Some(1),
             creator_id: Some(inserted_admin.id.clone()),
             ..BoardForm::default()
         };
