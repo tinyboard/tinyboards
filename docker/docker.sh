@@ -390,18 +390,6 @@ sudo docker-compose -f docker-compose.dev.yml up
 EOF
 fi
 
-#Override constants.js
-
-if [ "$ENVIRONMENT" = "prod" ]; then
-cat > ../../tinyboards-fe/server/constants.js <<EOF
-export const baseURL = "https://$SERVER_NAME/api/v1";
-EOF
-else
-  cat > ../../tinyboards-fe/server/constants.js <<EOF
-export const baseURL = "http://$SERVER_NAME:$HTTP_PORT/api/v1";
-EOF
-fi
-
 #add to hosts file
 if [ "$ENVIRONMENT" = "dev" ]; then
 echo "127.0.0.1  $SERVER_NAME" >> /etc/hosts

@@ -42,6 +42,8 @@ services:
     ports:
       - "3000:3000"
     restart: always
+    environment:
+      - TB_URL='example.com'
     build:
       context: ../../tinyboards-fe
       dockerfile: Dockerfile
