@@ -4,6 +4,11 @@ INSTALL_LOCATION="$(pwd)"
 # Load variables from environment file
 source .env
 
+if [ -z "$API_KEY" ]; then
+  API_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
+  export API_KEY
+fi
+
 cat > $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
   upstream tinyboards-frontend {
     server tinyboards-fe:3000;
@@ -20,7 +25,6 @@ EOF
 
 # Check if SSL is enabled
 if [ "$ENVIRONMENT" = "prod" ]; then
-echo "****SSL IS ENABLED****"
     # Add SSL configuration to the file
     cat >> $INSTALL_LOCATION/nginx/conf/nginx.conf <<EOF
     location /.well-known/acme-challenge/ {
@@ -195,8 +199,6 @@ else
   COMPOSE_FILE="docker-compose.dev.yml"
 fi
 
-echo "****${ENVIRONMENT} ENVIRONMENT****"
-
   # Create a docker-compose.yml file if prod is true
 cat > $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
 version: '3.3'
@@ -228,7 +230,6 @@ EOF
 
 #tinyboards-be
 if [ "$ENVIRONMENT" = "prod" ]; then
-echo "****WILL PULL IMAGES FROM DOCKERHUB****"
   # pull prod image from dockerhub
 cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
   tinyboards:
@@ -280,7 +281,6 @@ EOF
 fi
 #tinyboards-fe
 if [ "$ENVIRONMENT" = "prod" ]; then
-echo "****TINYBOARDS-FE PULL FROM DOCKERHUB ****"
   # pull prod image from dockerhub
 cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
   tinyboards-fe:
@@ -297,7 +297,6 @@ cat >> $INSTALL_LOCATION/docker-compose.yml <<EOF
 EOF
 else
   # dev - build from source
-echo "****WILL BUILD FROM SOURCE****"
   cat >> $INSTALL_LOCATION/docker-compose.dev.yml <<EOF
   tinyboards-fe:
     image: tinyboards-fe
@@ -414,6 +413,40 @@ chmod u+x docker-start.sh
 else
 chmod u+x docker-start-dev.sh
 fi
+
+cat << EOF
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%                                %%%%%%%%%%%%%%
+%%%%%%%%%%*                                       #%%%%%%%%%
+%%%%%%%%/                                           %%%%%%%%
+%%%%%%%(                                            .%%%%%%%
+%%%%%%%/                                             %%%%%%%
+%%%%%%%/           #%%%%%%%%%%%%%%%%%%%%%/           %%%%%%%
+%%%%%%%/                                             %%%%%%%
+%%%%%%%/           (%%%%%%%%%%%/                     %%%%%%%
+%%%%%%%/           ,##########(.                     %%%%%%%
+%%%%%%%/                                            .%%%%%%%
+%%%%%%%%,                                           /%%%%%%%
+%%%%%%%%%(                                        .%%%%%%%%%
+%%%%%%%%%%%%#/,                              .,(%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%(            .%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%,         (%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%      *%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%#   %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
++----------------------------------------------------------+
+
+SITE NAME = $SERVER_NAME
+ENVIRONMENT = $ENVIRONMENT
+ADMIN USER = $ADMIN_USER
+ADMIN PASSWORD = $ADMIN_PASSWORD
+PICTRS API KEY = $API_KEY
+
+
+EOF
 
 if [ "$ENVIRONMENT" = "prod" ]; then
 echo "****PROCESS COMPLETE, RUN "docker-start.sh" TO BUILD PROD ENVIRONMENT****"
