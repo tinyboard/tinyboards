@@ -4,6 +4,11 @@ INSTALL_LOCATION="$(pwd)"
 # Load variables from environment file
 source .env
 
+if [ -z "$ADMIN_PASSWORD" ]; then
+  ADMIN_PASSWORD=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 16 | head -n 1)
+  export ADMIN_PASSWORD
+fi
+
 if [ -z "$API_KEY" ]; then
   API_KEY=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)
   export API_KEY
@@ -330,7 +335,7 @@ cat >> $INSTALL_LOCATION/$COMPOSE_FILE <<EOF
         aliases:
           - pictrs
     environment:
-      - PICTRS__API_KEY=$API_KEY
+      - PICTRS__SERVER__API_KEY=$API_KEY
     user: root
     volumes:
       - ./volumes/pictrs:/mnt
@@ -439,7 +444,7 @@ cat << EOF
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 +----------------------------------------------------------+
 
-SITE NAME = $SERVER_NAME
+SERVER NAME = $SERVER_NAME
 ENVIRONMENT = $ENVIRONMENT
 ADMIN USER = $ADMIN_USER
 ADMIN PASSWORD = $ADMIN_PASSWORD
