@@ -7,16 +7,15 @@ edition = "2021"
 doctest = false
 
 [dependencies]
-tinyboards_db = { path = "../db" }
-tinyboards_utils = { version = "0.1.0", path = "../utils" }
-diesel = { version = "2.0.0", features = ["postgres","chrono","r2d2","serde_json"] }
-serde = { version = "1.0.145", features = ["derive"] }
-tracing = "0.1.36"
-diesel_ltree = "0.3.0"
-typed-builder = "0.10.0"
-jwt = "0.16.0"
-hmac = "0.12.1"
-sha2 = { version = "0.10.6" }
+tinyboards_db = { workspace = true }
+tinyboards_utils = { workspace = true }
+diesel = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+typed-builder = { workspace = true }
+jwt = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
 
 [dev-dependencies]
 serial_test = "0.9.0"

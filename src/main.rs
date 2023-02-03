@@ -2,9 +2,6 @@
 extern crate diesel_migrations;
 
 use crate::diesel_migrations::MigrationHarness;
-#[allow(unused_imports)]
-use actix::prelude::*;
-use actix_files as fs;
 use actix_web::{web::Data, *};
 use diesel::{
     r2d2::{ConnectionManager, Pool},
@@ -110,7 +107,7 @@ async fn main() -> Result<(), TinyBoardsError> {
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build();
 
-    let pictrs_client = ClientBuilder::new(reqwest_client.clone())
+    let pictrs_client: ClientWithMiddleware = ClientBuilder::new(reqwest_client.clone())
         .with(TracingMiddleware::default())
         .build();
 
@@ -131,7 +128,6 @@ async fn main() -> Result<(), TinyBoardsError> {
             .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
             // the extra routes
             .configure(|cfg| media::config(cfg, pictrs_client.clone(), &rate_limit_cell))
-            .service(fs::Files::new("/assets", "./assets"))
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?

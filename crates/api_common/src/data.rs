@@ -1,6 +1,6 @@
 use tinyboards_db::{models::secret::Secret, utils::DbPool};
 use tinyboards_utils::{settings::{structs::Settings, SETTINGS}, rate_limit::RateLimitCell};
-use reqwest_middleware::ClientWithMiddleware;
+use reqwest_middleware::{ClientWithMiddleware};
 
 /// The global context for the application
 pub struct TinyBoardsContext {

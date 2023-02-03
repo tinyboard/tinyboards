@@ -4,19 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tinyboards_utils = { version = "0.1.0", path = "../utils" }
-tinyboards_db = { version = "0.1.0", path = "../db" }
-tinyboards_db_views = { version = "0.1.0", path = "../db_views" }
-tinyboards_api = { version = "0.1.0", path = "../api" }
-tinyboards_api_common = { version = "0.1.0", path = "../api_common" }
-activitypub_federation = { version = "0.2.2" }
-bcrypt = "0.13.0"
-serde_json = { version = "1.0.85", features = ["preserve_order"] }
-serde = { version = "1.0.145", features = ["derive"] }
-actix-web = { version = "4.2.1", default-features = false }
-tracing = "0.1.36"
-url = { version = "2.3.1", features = ["serde"] }
-async-trait = "0.1.57"
-webmention = "0.4.0"
-regex = { version = "1.6.0" }
-uuid = "1.2.2"
+tinyboards_utils = { workspace = true }
+tinyboards_db = { workspace = true }
+tinyboards_db_views = { workspace = true }
+tinyboards_api = { workspace = true }
+tinyboards_api_common = { workspace = true }
+bcrypt = { workspace = true }
+serde_json = { workspace = true }
+serde = { workspace = true }
+actix-web = { workspace = true }
+tracing = { workspace = true }
+url = { workspace = true }
+async-trait = { workspace = true }
+regex = { workspace = true }
+uuid = { workspace = true }

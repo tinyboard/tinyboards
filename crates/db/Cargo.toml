@@ -4,20 +4,18 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-tinyboards_utils = { version = "0.1.0", path = "../utils" }
-chrono = { version = "0.4.22", features = ["serde"], default-features = false }
-diesel = { version = "2.0.0", features = ["postgres", "r2d2", "serde_json", "chrono"] }
-diesel_migrations = { version = "2.0.0" }
-diesel-derive-newtype = { version = "1.0.0" }
-diesel_ltree = "0.3.0"
-r2d2 = "0.8.10"
-dotenvy = "0.15"
-serde = { version = "1.0.145", features = ["derive"] }
-bigdecimal = "0.3.0"
-url = { version = "2.3.1", features = ["serde"] }
-jwt = "0.16.0"
-hmac = "0.12.1"
-sha2 = { version = "0.10.6" }
-strum = "0.24.1"
-strum_macros = "0.24.3"
-async-trait = "0.1.57"
+tinyboards_utils = { workspace = true }
+chrono = { workspace = true }
+diesel = { workspace = true }
+diesel_migrations = { workspace = true }
+r2d2 = { workspace = true }
+dotenvy = { workspace = true }
+serde = { workspace = true }
+bigdecimal = { workspace = true }
+url = { workspace = true }
+jwt = { workspace = true }
+hmac = { workspace = true }
+sha2 = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+async-trait = { workspace = true }

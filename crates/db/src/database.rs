@@ -6,7 +6,7 @@ use std::env;
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 
-fn estabilish_connection() -> PgPool {
+fn establish_connection() -> PgPool {
     dotenv().ok();
 
     let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be specified");
@@ -24,7 +24,7 @@ pub struct Database {
 impl Database {
     pub fn connect() -> Self {
         Self {
-            pool: estabilish_connection(),
+            pool: establish_connection(),
         }
     }
 }
