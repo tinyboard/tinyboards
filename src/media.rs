@@ -27,12 +27,12 @@ pub fn config(
     cfg
     .app_data(web::Data::new(client))
     .service(
-        web::resource("/image")
+        web::resource("/upload_image")
         .wrap(rate_limit.image())
         .route(web::post().to(upload)),
     )
     .service(
-        web::resource("/upload_image")
+        web::resource("/image")
         .wrap(rate_limit.image())
         .route(web::post().to(upload_image_file)),
     )
