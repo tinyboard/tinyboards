@@ -17,7 +17,7 @@ use tinyboards_db::models::site::site::Site;
 use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
-use reqwest::{multipart::Part, Body, Method};
+use reqwest::{multipart::Part, Body};
 
 pub fn config(
     cfg: &mut web::ServiceConfig,
@@ -32,9 +32,9 @@ pub fn config(
         .route(web::post().to(upload)),
     )
     .service(
-        web::resource("/image")
+        web::resource("/upload_image")
         .wrap(rate_limit.image())
-        .route(web::put().to(upload_file)),
+        .route(web::post().to(upload_image_file)),
     )
     .service(
         web::resource("/image/{filename}")
@@ -85,19 +85,13 @@ fn adapt_request(
     request: &HttpRequest,
     client: &ClientWithMiddleware,
     url: String,
-    adapt_to: Option<&str>,
 ) -> RequestBuilder {
     const INVALID_HEADERS: &[HeaderName] = &[ACCEPT_ENCODING, HOST];
 
     
-    let client_request = match adapt_to {
-        Some("post") => client
-            .request(Method::POST, url)
-            .timeout(REQWEST_TIMEOUT),
-        _ => client
+    let client_request = client
             .request(request.method().clone(), url)
-            .timeout(REQWEST_TIMEOUT)
-    };
+            .timeout(REQWEST_TIMEOUT);
 
     request
         .headers()
@@ -171,7 +165,7 @@ async fn image(
     req: HttpRequest,
     client: web::Data<ClientWithMiddleware>,
 ) -> Result<HttpResponse, Error> {
-    let mut client_req = adapt_request(&req, &client, url, None);
+    let mut client_req = adapt_request(&req, &client, url);
 
     if let Some(addr) = req.head().peer_addr {
         client_req = client_req.header("X-Forwarded-For", addr.to_string());
@@ -196,7 +190,7 @@ async fn image(
     Ok(client_res.body(BodyStream::new(res.bytes_stream())))
 }
 
-async fn upload_file(
+async fn upload_image_file(
     req: HttpRequest,
     body: web::Payload,
     client: web::Data<ClientWithMiddleware>,
@@ -217,7 +211,7 @@ async fn upload_file(
     let pictrs_config = context.settings().pictrs_config()?;
     let image_url = format!("{}image", pictrs_config.url);
 
-    let mut client_req = adapt_request(&req, &client, image_url, Some("post"));
+    let mut client_req = adapt_request(&req, &client, image_url);
 
     if let Some(addr) = req.head().peer_addr {
         client_req = client_req.header("X-Forwarded-For", addr.to_string())
@@ -323,7 +317,7 @@ async fn delete(
     let pictrs_conf = context.settings().pictrs_config()?;
     let url = format!("{}image/delete/{}/{}", pictrs_conf.url, &token, &file);
   
-    let mut client_req = adapt_request(&req, &client, url, None);
+    let mut client_req = adapt_request(&req, &client, url);
   
     if let Some(addr) = req.head().peer_addr {
       client_req = client_req.header("X-Forwarded-For", addr.to_string());
