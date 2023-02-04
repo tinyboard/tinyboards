@@ -1,6 +1,6 @@
 use actix_web::{
     body::BodyStream,
-    error::ErrorBadRequest,
+    error::{ErrorBadRequest, self},
     http::{
         header::{HeaderName, ACCEPT_ENCODING, HOST},
         StatusCode,
@@ -10,14 +10,14 @@ use actix_web::{
     HttpRequest,
     HttpResponse,
 };
-//use futures::stream::{Stream, StreamExt};
+use futures::stream::{Stream, StreamExt};
 use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db::models::site::site::Site;
 use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
-use reqwest::multipart::Part;
+use reqwest::{multipart::Part, Body, Method};
 
 pub fn config(
     cfg: &mut web::ServiceConfig,
@@ -30,6 +30,11 @@ pub fn config(
         web::resource("/image")
         .wrap(rate_limit.image())
         .route(web::post().to(upload)),
+    )
+    .service(
+        web::resource("/image")
+        .wrap(rate_limit.image())
+        .route(web::put().to(upload_file)),
     )
     .service(
         web::resource("/image/{filename}")
@@ -80,12 +85,19 @@ fn adapt_request(
     request: &HttpRequest,
     client: &ClientWithMiddleware,
     url: String,
+    adapt_to: Option<&str>,
 ) -> RequestBuilder {
     const INVALID_HEADERS: &[HeaderName] = &[ACCEPT_ENCODING, HOST];
 
-    let client_request = client
-        .request(request.method().clone(), url)
-        .timeout(REQWEST_TIMEOUT);
+    
+    let client_request = match adapt_to {
+        Some("post") => client
+            .request(Method::POST, url)
+            .timeout(REQWEST_TIMEOUT),
+        _ => client
+            .request(request.method().clone(), url)
+            .timeout(REQWEST_TIMEOUT)
+    };
 
     request
         .headers()
@@ -159,7 +171,7 @@ async fn image(
     req: HttpRequest,
     client: web::Data<ClientWithMiddleware>,
 ) -> Result<HttpResponse, Error> {
-    let mut client_req = adapt_request(&req, &client, url);
+    let mut client_req = adapt_request(&req, &client, url, None);
 
     if let Some(addr) = req.head().peer_addr {
         client_req = client_req.header("X-Forwarded-For", addr.to_string());
@@ -182,6 +194,50 @@ async fn image(
     }
 
     Ok(client_res.body(BodyStream::new(res.bytes_stream())))
+}
+
+async fn upload_file(
+    req: HttpRequest,
+    body: web::Payload,
+    client: web::Data<ClientWithMiddleware>,
+    context: web::Data<TinyBoardsContext>,
+) -> Result<HttpResponse, Error> {
+
+    let auth = req
+        .headers()
+        .get("Authorization")
+        .unwrap()
+        .to_str()
+        .unwrap();
+    
+    require_user(context.pool(), context.master_key(), Some(auth))
+        .await
+        .unwrap()?;
+
+    let pictrs_config = context.settings().pictrs_config()?;
+    let image_url = format!("{}image", pictrs_config.url);
+
+    let mut client_req = adapt_request(&req, &client, image_url, Some("post"));
+
+    if let Some(addr) = req.head().peer_addr {
+        client_req = client_req.header("X-Forwarded-For", addr.to_string())
+    };
+
+    let res = client_req
+        .body(Body::wrap_stream(make_send(body)))
+        .send()
+        .await
+        .map_err(error::ErrorBadRequest)?;
+
+    let status = res.status();
+    let mut images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
+    
+    if let Some(files) = &images.files {
+        images.url = Some(format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file));
+        images.delete_url = Some(format!("{}/image/delete/{}/{}", context.settings().get_protocol_and_hostname(), files[0].delete_token, files[0].file));
+    }
+    
+    Ok(HttpResponse::build(status).json(images))
 }
 
 async fn upload(
@@ -267,7 +323,7 @@ async fn delete(
     let pictrs_conf = context.settings().pictrs_config()?;
     let url = format!("{}image/delete/{}/{}", pictrs_conf.url, &token, &file);
   
-    let mut client_req = adapt_request(&req, &client, url);
+    let mut client_req = adapt_request(&req, &client, url, None);
   
     if let Some(addr) = req.head().peer_addr {
       client_req = client_req.header("X-Forwarded-For", addr.to_string());
@@ -278,38 +334,38 @@ async fn delete(
     Ok(HttpResponse::build(res.status()).body(BodyStream::new(res.bytes_stream())))
   }
 
-// fn make_send<S>(mut stream: S) -> impl Stream<Item = S::Item> + Send + Unpin + 'static 
-//     where
-//         S: Stream + Unpin + 'static,
-//         S::Item: Send,
-// {
-//     let (tx, rx) = tokio::sync::mpsc::channel(8);
+fn make_send<S>(mut stream: S) -> impl Stream<Item = S::Item> + Send + Unpin + 'static 
+    where
+        S: Stream + Unpin + 'static,
+        S::Item: Send,
+{
+    let (tx, rx) = tokio::sync::mpsc::channel(8);
 
-//     actix_web::rt::spawn(async move {
-//         while let Some(res) = stream.next().await {
-//             if tx.send(res).await.is_err() {
-//                 break;
-//             }
-//         }
-//     });
+    actix_web::rt::spawn(async move {
+        while let Some(res) = stream.next().await {
+            if tx.send(res).await.is_err() {
+                break;
+            }
+        }
+    });
 
-//     SendStream { rx }
-// }
+    SendStream { rx }
+}
 
-// struct SendStream<T> {
-//     rx: tokio::sync::mpsc::Receiver<T>,
-// }
+struct SendStream<T> {
+    rx: tokio::sync::mpsc::Receiver<T>,
+}
 
-// impl<T> Stream for SendStream<T>
-// where
-//     T: Send,
-// {
-//     type Item = T;
+impl<T> Stream for SendStream<T>
+where
+    T: Send,
+{
+    type Item = T;
 
-//     fn poll_next(
-//         mut self: std::pin::Pin<&mut Self>,
-//         cx: &mut std::task::Context<'_>,
-//     ) -> std::task::Poll<Option<Self::Item>> {
-//         std::pin::Pin::new(&mut self.rx).poll_recv(cx)
-//     }
-// }
+    fn poll_next(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        std::pin::Pin::new(&mut self.rx).poll_recv(cx)
+    }
+}
