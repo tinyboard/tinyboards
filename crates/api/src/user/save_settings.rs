@@ -110,7 +110,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         };
 
         if let Some(Some(banner)) = banner.clone() {
-            if banner != current_banner && !banner.is_empty() && current_banner.is_empty() {
+            if banner != current_banner && !banner.is_empty() && !current_banner.is_empty() {
                 purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_banner.as_str()).unwrap()).await?;
             }
         };
