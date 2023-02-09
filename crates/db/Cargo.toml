@@ -7,6 +7,7 @@ edition = "2021"
 tinyboards_utils = { workspace = true }
 chrono = { workspace = true }
 diesel = { workspace = true }
+diesel-async = { workspace = true, features = ["postgres", "bb8"] }
 diesel_migrations = { workspace = true }
 r2d2 = { workspace = true }
 dotenvy = { workspace = true }
@@ -19,3 +20,4 @@ sha2 = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 async-trait = { workspace = true }
+actix-web = { workspace = true }

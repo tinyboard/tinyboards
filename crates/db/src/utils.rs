@@ -1,9 +1,9 @@
-use crate::{newtypes::DbUrl, CommentSortType, SortType};
+use crate::{newtypes::DbUrl, CommentSortType, SortType, database::PgPool};
 use diesel::{
     // backend::Backend,
     // deserialize::FromSql,
     // pg::Pg,
-    result::Error::QueryBuilderError,
+    result::Error::{QueryBuilderError, self},
     // serialize::{Output, ToSql},
     // sql_types::Text,
     Connection,
@@ -12,8 +12,12 @@ use diesel::{
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use tinyboards_utils::error::TinyBoardsError;
 use url::Url;
+use diesel_async::{
+    pg::AsyncPgConnection,
+    pooled_connection::{bb8::{Pool, PooledConnection}, AsyncDieselConnectionManager},
+};
 
-pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
+pub type DbPool = Pool<AsyncPgConnection>;
 
 pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
     std::env::var("TINYBOARDS_DATABASE_URL")
@@ -136,3 +140,9 @@ pub fn post_to_comment_sort_type(sort: SortType) -> CommentSortType {
         | SortType::TopYear => CommentSortType::Top,
     }
 }
+
+// pub async fn get_conn(
+//     pool: &DbPool,
+// ) -> Result<PooledConnection<AsyncDieselConnectionManager<AsyncPgConnection>>, Error> {
+//     pool.get().await.map_err(|e| QueryBuilderError(e.into()))
+// }

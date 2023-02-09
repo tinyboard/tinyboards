@@ -1,6 +1,18 @@
 use crate::{models::site::stray_images::*, traits::Crud};
 use diesel::{result::Error, *};
-// use crate::schema::stray_images::dsl::*;
+use crate::schema::stray_images::dsl::*;
+use actix_web::error::*;
+
+impl StrayImage {
+    pub async fn add_url_to_stray_images(pool: &PgPool, url: String) -> Result<Self, actix_web::Error> {
+        let form = StrayImageForm { img_url: url };
+        
+        diesel::insert_into(stray_images)
+            .values(form)
+            .get_result::<Self>(conn)
+            .map_err(ErrorBadRequest)
+    }
+}
 
 impl Crud for StrayImage {
     type Form = StrayImageForm;
