@@ -1,4 +1,3 @@
-
 use crate::{models::site::site_invite::*, traits::Crud};
 use diesel::{result::Error, *};
 use crate::schema::site_invite::dsl::*;
