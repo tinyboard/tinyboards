@@ -7,16 +7,18 @@ use std::collections::BTreeMap;
 use crate::models::user::users::{User, UserForm, UserSafe};
 use crate::schema::users::dsl::*;
 use crate::traits::Crud;
-use crate::utils::{naive_now, fuzzy_search};
+use crate::utils::{naive_now, fuzzy_search, DbPool, get_conn};
 use diesel::{prelude::*, result::Error};
 use tinyboards_utils::{hash_password, TinyBoardsError};
+use diesel_async::RunQueryDsl;
 
 impl User {
-    pub fn check_name_and_email(
-        conn: &mut PgConnection,
+    pub async fn check_name_and_email(
+        pool: &DbPool,
         username: &str,
         emailaddr: &Option<String>,
     ) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
 
         let user = if let Some(emailaddr) = emailaddr {
@@ -25,11 +27,13 @@ impl User {
                 .filter(name.ilike(username))
                 .or_filter(email.ilike(emailaddr))
                 .first::<i32>(conn)
+                .await
         } else {
             users
                 .select(id)
                 .filter(name.ilike(username))
                 .first::<i32>(conn)
+                .await
         }
         .optional()?;
 
@@ -63,11 +67,12 @@ impl User {
         token
     }
 
-    pub fn from_jwt(
-        conn: &mut PgConnection,
+    pub async fn from_jwt(
+        pool: &DbPool,
         token: String,
         master_key: String,
     ) -> Result<Option<Self>, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
 
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
@@ -78,59 +83,71 @@ impl User {
         users
             .filter(id.eq(uid))
             .first::<Self>(conn)
+            .await
             .optional()
             .map_err(|e| TinyBoardsError::from_error_message(e, 401, "error getting user from jwt"))
     }
-    pub fn update_ban(
-        conn: &mut PgConnection,
+    pub async fn update_ban(
+        pool: &DbPool,
         user_id: i32,
         new_banned: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(users.find(user_id))
             .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn update_passhash(
-        conn: &mut PgConnection,
+    pub async fn update_passhash(
+        pool: &DbPool,
         user_id: i32,
         new_passhash: String,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(users.find(user_id))
             .set((passhash.eq(new_passhash), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn update_is_application_accepted(
-        conn: &mut PgConnection,
+    pub async fn update_is_application_accepted(
+        pool: &DbPool,
         user_id: i32,
         new_is_application_accepted: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(users.find(user_id))
             .set((is_application_accepted.eq(new_is_application_accepted), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn search_by_name(
-        conn: &mut PgConnection,
+    pub async fn search_by_name(
+        pool: &DbPool,
         query: &str
     ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         users.filter(name.ilike(fuzzy_search(query))).load(conn)
+        .await
     }
 
-    pub fn update_admin(
-        conn: &mut PgConnection,
+    pub async fn update_admin(
+        pool: &DbPool,
         user_id: i32,
         new_admin: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         diesel::update(users.find(user_id))
             .set((is_admin.eq(new_admin), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn get_by_name(conn: &mut PgConnection, username: &str) -> Result<Self, Error> {
+    pub async fn get_by_name(pool: &DbPool, username: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         // sanitization could be better
         users
@@ -143,31 +160,39 @@ impl User {
                 ),
             )
             .first::<Self>(conn)
+            .await
     }
 
-    pub fn get_users_by_chat_id(conn: &mut PgConnection, c_id: String) -> Result<Vec<Self>, Error> {
+    pub async fn get_users_by_chat_id(pool: &DbPool, c_id: String) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         users
             .filter(chat_id.eq(c_id))
             .load::<Self>(conn)
+            .await
     }
 
-    pub fn get_user_by_chat_id(conn: &mut PgConnection, c_id: String) -> Result<Self, Error> {
+    pub async fn get_user_by_chat_id(pool: &DbPool, c_id: String) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         users
             .filter(chat_id.eq(c_id))
             .first::<Self>(conn)
+            .await
     }
 
-    pub fn update_chat_id(conn: &mut PgConnection, user_id: i32, new_chat_id: String) -> Result<usize, Error> {
+    pub async fn update_chat_id(pool: &DbPool, user_id: i32, new_chat_id: String) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         diesel::update(users)
             .filter(id.eq(user_id))
             .set((chat_id.eq(new_chat_id), updated.eq(naive_now())))
             .execute(conn)
+            .await
     }
 
-    pub fn get_by_email(conn: &mut PgConnection, email_addr: &str) -> Result<Self, Error> {
+    pub async fn get_by_email(pool: &DbPool, email_addr: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         users
             .filter(
@@ -179,10 +204,11 @@ impl User {
                 ),
             )
             .first::<Self>(conn)
+            .await
     }
 
-    pub fn register(conn: &mut PgConnection, form: UserForm) -> Result<Self, TinyBoardsError> {
-        Self::check_name_and_email(conn, &form.name.clone().unwrap_or_default(), &form.email)?;
+    pub async fn register(pool: &DbPool, form: UserForm) -> Result<Self, TinyBoardsError> {
+        Self::check_name_and_email(pool, &form.name.clone().unwrap_or_default(), &form.email).await?;
 
         let unencrypted = form.passhash.unwrap();
 
@@ -192,7 +218,8 @@ impl User {
             ..form
         };
 
-        Self::create(conn, &form)
+        Self::create(pool, &form)
+            .await    
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create user"))
     }
 
@@ -204,23 +231,27 @@ impl User {
         }
     }
 
-    pub fn update_settings(
-        conn: &mut PgConnection,
+    pub async fn update_settings(
+        pool: &DbPool,
         user_id: i32,
         form: &UserForm,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(users.find(user_id))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 
     /// accept all users that are unaccepted, NOTE: this is only called when toggling application mode on/off
-    pub fn accept_all_applications(conn: &mut PgConnection) -> Result<usize, Error> {
+    pub async fn accept_all_applications(pool: &DbPool) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         diesel::update(users)
             .filter(is_application_accepted.eq(false))
             .set((is_application_accepted.eq(true), updated.eq(naive_now())))
             .execute(conn)
+            .await
     }
 
     pub fn into_safe(self) -> UserSafe {
@@ -249,27 +280,36 @@ impl User {
     }
 }
 
+#[async_trait::async_trait]
 impl Crud for User {
     type Form = UserForm;
     type IdType = i32;
 
-    fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, user_id: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         users.find(user_id).first::<Self>(conn)
+        .await
     }
-    fn delete(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, user_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::delete(users.find(user_id)).execute(conn)
+        .await
     }
-    fn create(conn: &mut PgConnection, form: &UserForm) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &UserForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let local_user = diesel::insert_into(users)
             .values(form)
-            .get_result::<Self>(conn)?;
+            .get_result::<Self>(conn)
+            .await?;
 
         Ok(local_user)
     }
-    fn update(conn: &mut PgConnection, user_id: i32, form: &UserForm) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, user_id: i32, form: &UserForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(users.find(user_id))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 }
 

@@ -1,13 +1,16 @@
 use crate::{
     models::post::user_post_save::{PostSaved, PostSavedForm},
-    traits::Saveable,
+    traits::Saveable, utils::{get_conn, DbPool},
 };
-use diesel::{insert_into, prelude::*, PgConnection};
+use diesel::{insert_into, prelude::*};
 use tinyboards_utils::TinyBoardsError;
+use diesel_async::RunQueryDsl;
 
+#[async_trait::async_trait]
 impl Saveable for PostSaved {
     type Form = PostSavedForm;
-    fn save(conn: &mut PgConnection, form: &PostSavedForm) -> Result<Self, TinyBoardsError> {
+    async fn save(pool: &DbPool, form: &PostSavedForm) -> Result<Self, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::user_post_save::dsl::*;
         insert_into(user_post_save)
             .values(form)
@@ -15,10 +18,12 @@ impl Saveable for PostSaved {
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
+            .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not save post"))
     }
 
-    fn unsave(conn: &mut PgConnection, form: &PostSavedForm) -> Result<usize, TinyBoardsError> {
+    async fn unsave(pool: &DbPool, form: &PostSavedForm) -> Result<usize, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::user_post_save::dsl::*;
         diesel::delete(
             user_post_save
@@ -26,6 +31,7 @@ impl Saveable for PostSaved {
                 .filter(user_id.eq(form.user_id)),
         )
         .execute(conn)
+        .await
         .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not unsave post"))
     }
 }

@@ -1,4 +1,5 @@
 use crate::schema::registration_applications::dsl::*;
+use crate::utils::{get_conn, DbPool};
 use crate::{
     models::site::registration_applications::{
         RegistrationApplication, RegistrationApplicationForm,
@@ -6,40 +7,52 @@ use crate::{
     traits::Crud,
 };
 use diesel::{dsl::*, result::Error, *};
+use diesel_async::RunQueryDsl;
 
+#[async_trait::async_trait]
 impl Crud for RegistrationApplication {
     type Form = RegistrationApplicationForm;
     type IdType = i32;
 
-    fn read(conn: &mut PgConnection, id_: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         registration_applications.find(id_).first::<Self>(conn)
+        .await
     }
 
-    fn create(conn: &mut PgConnection, form: &RegistrationApplicationForm) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &RegistrationApplicationForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         insert_into(registration_applications)
             .values(form)
             .get_result::<Self>(conn)
+            .await
     }
 
-    fn update(
-        conn: &mut PgConnection,
+    async fn update(
+        pool: &DbPool,
         id_: i32,
         form: &RegistrationApplicationForm,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(registration_applications.find(id_))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 
-    fn delete(conn: &mut PgConnection, id_: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::delete(registration_applications.find(id_)).execute(conn)
+        .await
     }
 }
 
 impl RegistrationApplication {
-    pub fn find_by_user_id(conn: &mut PgConnection, user_id_: i32) -> Result<Self, Error> {
+    pub async fn find_by_user_id(pool: &DbPool, user_id_: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         registration_applications
             .filter(user_id.eq(user_id_))
             .first::<Self>(conn)
+            .await
     }
 }

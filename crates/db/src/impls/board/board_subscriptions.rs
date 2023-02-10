@@ -2,8 +2,10 @@ use crate::{
     models::board::board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
     traits::Subscribeable,
     SubscribedType,
+    utils::{get_conn, DbPool},
 };
 use diesel::{insert_into, result::Error, *};
+use diesel_async::RunQueryDsl;
 
 impl BoardSubscriber {
     pub fn to_subscribed_type(subscriber: &Option<Self>) -> SubscribedType {
@@ -20,10 +22,12 @@ impl BoardSubscriber {
     }
 }
 
+#[async_trait::async_trait]
 impl Subscribeable for BoardSubscriber {
     type Form = BoardSubscriberForm;
 
-    fn subscribe(conn: &mut diesel::PgConnection, sub_form: &Self::Form) -> Result<Self, Error> {
+    async fn subscribe(pool: &DbPool, sub_form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, user_id};
         insert_into(board_subscriptions)
             .values(sub_form)
@@ -31,9 +35,11 @@ impl Subscribeable for BoardSubscriber {
             .do_update()
             .set(sub_form)
             .get_result::<Self>(conn)
+            .await
     }
 
-    fn unsubscribe(conn: &mut diesel::PgConnection, sub_form: &Self::Form) -> Result<usize, Error> {
+    async fn unsubscribe(pool: &DbPool, sub_form: &Self::Form) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, user_id};
         diesel::delete(
             board_subscriptions
@@ -41,5 +47,6 @@ impl Subscribeable for BoardSubscriber {
                 .filter(user_id.eq(sub_form.user_id)),
         )
         .execute(conn)
+        .await
     }
 }

@@ -1,31 +1,41 @@
 use crate::{
     models::user::user_mentions::{UserMention, UserMentionForm},
-    traits::Crud,
+    traits::Crud, utils::{get_conn, DbPool},
 };
-use diesel::{result::Error, PgConnection, QueryDsl, RunQueryDsl};
+use diesel::{result::Error, QueryDsl};
+use diesel_async::RunQueryDsl;
 
+#[async_trait::async_trait]
 impl Crud for UserMention {
     type Form = UserMentionForm;
     type IdType = i32;
-    fn read(conn: &mut PgConnection, id_: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::user_mentions::dsl::*;
         user_mentions.find(id_).first::<Self>(conn)
+        .await
     }
-    fn delete(conn: &mut PgConnection, id_: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::user_mentions::dsl::*;
         diesel::delete(user_mentions.find(id_)).execute(conn)
+        .await
     }
-    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::user_mentions::dsl::*;
         let new = diesel::insert_into(user_mentions)
             .values(form)
-            .get_result::<Self>(conn)?;
+            .get_result::<Self>(conn)
+            .await?;
         Ok(new)
     }
-    fn update(conn: &mut PgConnection, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::user_mentions::dsl::*;
         diesel::update(user_mentions.find(id_))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 }
