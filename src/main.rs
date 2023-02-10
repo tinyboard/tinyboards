@@ -19,8 +19,8 @@ use tinyboards_api_common::{
     request::build_user_agent,
     utils::{blocking, get_rate_limit_config},
 };
-use tinyboards_db::models::secret::Secret;
-use tinyboards_db::utils::get_database_url_from_env;
+use tinyboards_db::{models::secret::Secret, utils::build_db_pool};
+use tinyboards_db::utils::get_db_url_from_env;
 use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging, media,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
@@ -42,17 +42,14 @@ async fn main() -> Result<(), TinyBoardsError> {
     init_logging(&settings.opentelemetry_url)
         .map_err(|_| TinyBoardsError::from_message(500, "failed to initialize logger"))?;
 
-    let db_url = match get_database_url_from_env() {
+    let db_url = match get_db_url_from_env() {
         Ok(url) => url,
         Err(_) => settings.get_database_url(),
     };
 
     let manager = ConnectionManager::<PgConnection>::new(&db_url);
-    let pool = Pool::builder()
-        .max_size(settings.database.pool_size)
-        .min_idle(Some(1))
-        .build(manager)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
+    let pool = 
+        build_db_pool(&settings).await?;
 
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
 

@@ -21,3 +21,5 @@ strum = { workspace = true }
 strum_macros = { workspace = true }
 async-trait = { workspace = true }
 actix-web = { workspace = true }
+tracing = { workspace = true }
+bb8 = { workspace = true }

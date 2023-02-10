@@ -3764,6 +3764,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "async-trait",
+ "bb8",
  "bigdecimal",
  "chrono",
  "diesel",
@@ -3778,6 +3779,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "tinyboards_utils",
+ "tracing",
  "url",
 ]
 

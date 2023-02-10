@@ -96,6 +96,7 @@ deser-hjson = "1.1.0"
 smart-default = "0.6.0"
 html2text = "0.4.5"
 jsonwebtoken = "8.2.0"
+bb8 = "0.8.0"
 
 [dependencies]
 tinyboards_api = { workspace = true }
