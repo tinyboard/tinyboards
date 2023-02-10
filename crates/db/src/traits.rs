@@ -1,23 +1,26 @@
-use crate::newtypes::UserId;
+use crate::{newtypes::UserId, utils::DbPool};
+use async_trait::async_trait;
 use diesel::{result::Error, PgConnection};
 use tinyboards_utils::TinyBoardsError;
 
+
+#[async_trait]
 pub trait Crud {
     type Form;
     type IdType;
 
-    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
+    async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
 
-    fn read(conn: &mut PgConnection, id: Self::IdType) -> Result<Self, Error>
+    async fn read(pool: &DbPool, id: Self::IdType) -> Result<Self, Error>
     where
         Self: Sized;
 
-    fn update(conn: &mut PgConnection, id: Self::IdType, form: &Self::Form) -> Result<Self, Error>
+    async fn update(pool: &DbPool, id: Self::IdType, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    fn delete(_conn: &mut PgConnection, _id: Self::IdType) -> Result<usize, Error>
+    async fn delete(pool: &DbPool, id: Self::IdType) -> Result<usize, Error>
     where
         Self: Sized;
 }

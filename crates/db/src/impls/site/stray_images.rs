@@ -1,11 +1,10 @@
 use crate::{models::site::stray_images::*, traits::Crud, utils::{DbPool, get_conn}};
 use diesel::{result::Error, *};
 use crate::schema::stray_images::dsl::*;
-use actix_web::error::*;
 use diesel_async::RunQueryDsl;
 
 impl StrayImage {
-    pub async fn add_url_to_stray_images(pool: &DbPool, url: String) -> Result<Self, actix_web::Error> {
+    pub async fn add_url_to_stray_images(pool: &DbPool, url: String) -> Result<Self, Error> {
         
         let conn = &mut get_conn(pool).await?;
         
@@ -14,7 +13,7 @@ impl StrayImage {
         diesel::insert_into(stray_images)
             .values(form)
             .get_result::<Self>(conn)
-            .map_err(ErrorBadRequest)
+            .await
     }
 }
 
