@@ -13,7 +13,7 @@ use tinyboards_db::{
         posts, user_blocks, user_comment_save, user_mentions, users,
     },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, limit_and_offset},
+    utils::{functions::hot_rank, limit_and_offset, get_conn, DbPool},
     CommentSortType,
 };
 use typed_builder::TypedBuilder;
@@ -32,13 +32,15 @@ type UserMentionViewTuple = (
     Option<UserBlock>,
     Option<i16>,
 );
+use diesel_async::RunQueryDsl;
 
 impl UserMentionView {
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read(
+        pool: &DbPool,
         user_mention_id: i32,
         user_id: Option<i32>,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_alias = diesel::alias!(users as user_1);
 
         let user_id_join = user_id.unwrap_or(-1);
@@ -110,7 +112,8 @@ impl UserMentionView {
                 user_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
             ))
-            .first::<UserMentionViewTuple>(conn)?;
+            .first::<UserMentionViewTuple>(conn)
+            .await?;
 
         Ok(UserMentionView {
             user_mention,
@@ -129,7 +132,8 @@ impl UserMentionView {
     }
 
     /// Gets count of unread mentions
-    pub fn get_unread_mentions(conn: &mut PgConnection, user_id: i32) -> Result<i64, Error> {
+    pub async fn get_unread_mentions(pool: &DbPool, user_id: i32) -> Result<i64, Error> {
+        let conn = &mut get_conn(pool).await?;
         use diesel::dsl::*;
 
         user_mentions::table
@@ -140,15 +144,18 @@ impl UserMentionView {
             .filter(comments::is_removed.eq(false))
             .select(count(user_mentions::id))
             .first::<i64>(conn)
+            .await
     }
 
     /// Marks all unread as read for a user
-    pub fn mark_all_mentions_as_read(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
+    pub async fn mark_all_mentions_as_read(pool: &DbPool, user_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(user_mentions::table)
             .filter(user_mentions::read.eq(false))
             .filter(user_mentions::recipient_id.eq(user_id))
             .set(user_mentions::read.eq(true))
             .execute(conn)
+            .await
     }
 
 }
@@ -157,7 +164,7 @@ impl UserMentionView {
 #[builder(field_defaults(default))]
 pub struct UserMentionQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     user_id: Option<i32>,
     recipient_id: Option<i32>,
     sort: Option<CommentSortType>,
@@ -174,7 +181,8 @@ pub struct UserMentionQueryResponse {
 }
 
 impl<'a> UserMentionQuery<'a> {
-    pub fn list(self) -> Result<UserMentionQueryResponse, Error> {
+    pub async fn list(self) -> Result<UserMentionQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
         let user_alias = diesel::alias!(users as user_1);
@@ -278,11 +286,12 @@ impl<'a> UserMentionQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .load::<UserMentionViewTuple>(self.conn)?;
+            .load::<UserMentionViewTuple>(conn)
+            .await?;
 
         let mentions = UserMentionView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
-        let unread = UserMentionView::get_unread_mentions(self.conn, user_id_join)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
+        let unread = UserMentionView::get_unread_mentions(self.pool, user_id_join).await?;
 
         Ok(UserMentionQueryResponse { mentions, count, unread })
     }

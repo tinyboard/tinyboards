@@ -8,10 +8,11 @@ use tinyboards_db::{
     },
     schema::{board_aggregates, board_subscriptions, boards, user_board_blocks, users},
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
+    utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
     ListingType, SortType,
 };
 use typed_builder::TypedBuilder;
+use diesel_async::RunQueryDsl;
 
 type BoardViewTuple = (
     BoardSafe,
@@ -21,11 +22,12 @@ type BoardViewTuple = (
 );
 
 impl BoardView {
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read(
+        pool: &DbPool,
         board_id: i32,
         user_id: Option<i32>,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_id_join = user_id.unwrap_or(-1);
 
         let (board, counts, subscriber, blocked) = boards::table
@@ -47,7 +49,8 @@ impl BoardView {
                 board_subscriptions::all_columns.nullable(),
                 user_board_blocks::all_columns.nullable(),
             ))
-            .first::<BoardViewTuple>(conn)?;
+            .first::<BoardViewTuple>(conn)
+            .await?;
 
         Ok(BoardView {
             board,
@@ -57,8 +60,9 @@ impl BoardView {
         })
     }
 
-    pub fn is_admin(conn: &mut PgConnection, user_id: i32) -> Result<bool, Error> {
-        let res = UserView::admins(conn)
+    pub async fn is_admin(pool: &DbPool, user_id: i32) -> Result<bool, Error> {
+        let res = UserView::admins(pool)
+            .await
             .map(|v| v.into_iter().map(|a| a.user.id).collect::<Vec<i32>>())
             .unwrap_or_default()
             .contains(&user_id);
@@ -66,10 +70,10 @@ impl BoardView {
         Ok(res)
     }
 
-    pub fn is_mod_or_admin(conn: &mut PgConnection, user_id: i32, board_id: i32) -> bool {
+    pub async fn is_mod_or_admin(pool: &DbPool, user_id: i32, board_id: i32) -> bool {
         // check board moderators for user_id
-
-        let is_mod = BoardModeratorView::for_board(conn, board_id)
+        let is_mod = BoardModeratorView::for_board(pool, board_id)
+            .await    
             .map(|v| v.into_iter().map(|m| m.moderator.id).collect::<Vec<i32>>())
             .unwrap_or_default()
             .contains(&user_id);
@@ -79,7 +83,8 @@ impl BoardView {
         }
 
         // check list of admins for user_id
-        UserView::admins(conn)
+        UserView::admins(pool)
+            .await
             .map(|v| v.into_iter().map(|a| a.user.id).collect::<Vec<i32>>())
             .unwrap_or_default()
             .contains(&user_id)
@@ -90,7 +95,7 @@ impl BoardView {
 #[builder(field_defaults(default))]
 pub struct BoardQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
     user: Option<&'a User>,
@@ -106,7 +111,8 @@ pub struct BoardQueryResponse {
 }
 
 impl<'a> BoardQuery<'a> {
-    pub fn list(self) -> Result<BoardQueryResponse, Error> {
+    pub async fn list(self) -> Result<BoardQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
         let mut query = boards::table
@@ -201,10 +207,11 @@ impl<'a> BoardQuery<'a> {
             .offset(offset)
             .filter(boards::is_banned.eq(false))
             .filter(boards::is_deleted.eq(false))
-            .load::<BoardViewTuple>(self.conn)?;
+            .load::<BoardViewTuple>(conn)
+            .await?;
 
         let boards = BoardView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(BoardQueryResponse { boards, count })
     }

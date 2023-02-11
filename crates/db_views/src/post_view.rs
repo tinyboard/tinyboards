@@ -20,7 +20,7 @@ use tinyboards_db::{
         user_blocks, user_board_blocks, user_post_read, user_post_save, users,
     },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, fuzzy_search, limit_and_offset},
+    utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
     ListingType, SortType,
 };
 use typed_builder::TypedBuilder;
@@ -37,15 +37,17 @@ type PostViewTuple = (
     Option<UserBlock>,
     Option<i16>,
 );
+use diesel_async::RunQueryDsl;
 
 sql_function!(fn coalesce(x: sql_types::Nullable<sql_types::BigInt>, y: sql_types::BigInt) -> sql_types::BigInt);
 
 impl PostView {
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read(
+        pool: &DbPool,
         post_id: i32,
         my_user_id: Option<i32>,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_id_join = my_user_id.unwrap_or(-1);
         let (
             post,
@@ -110,7 +112,8 @@ impl PostView {
                 user_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
             ))
-            .first::<PostViewTuple>(conn)?;
+            .first::<PostViewTuple>(conn)
+            .await?;
 
         let my_vote = if my_user_id.is_some() && post_vote.is_none() {
             Some(0)
@@ -137,7 +140,7 @@ impl PostView {
 #[builder(field_defaults(default))]
 pub struct PostQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
     creator_id: Option<i32>,
@@ -159,7 +162,8 @@ pub struct PostQueryResponse {
 }
 
 impl<'a> PostQuery<'a> {
-    pub fn list(self) -> Result<PostQueryResponse, Error> {
+    pub async fn list(self) -> Result<PostQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
         let user_id_join = match self.user {
@@ -388,10 +392,10 @@ impl<'a> PostQuery<'a> {
             .filter(boards::is_banned.eq(false))
             .filter(boards::is_deleted.eq(false));
 
-        let res = query.load::<PostViewTuple>(self.conn)?;
+        let res = query.load::<PostViewTuple>(conn).await?;
 
         let posts = PostView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(PostQueryResponse { posts, count })
     }
@@ -454,121 +458,3 @@ impl ViewToVec for PostView {
             .collect::<Vec<Self>>()
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::post_view::{PostQuery, PostView};
-//     use diesel::PgConnection;
-//     use tinyboards_db::{
-//         aggregates::structs::PostAggregates,
-//         utils::establish_unpooled_connection,
-//         models::{
-//             board::boards::*,
-//             board::user_board_blocks::{BoardBlock, BoardBlockForm},
-//             site::site::{Site, SiteForm},
-//             user::user::{User, UserForm},
-//             user::user_blocks::{UserBlock, UserBlockForm},
-//             post::posts::*,
-//         },
-//         traits::{Blockable, Crud, Voteable}, SortType,
-//     };
-//     use serial_test::serial;
-
-//     struct Data {
-//         inserted_site: Site,
-//         inserted_user: User,
-//         inserted_blocked_user: User,
-//         inserted_board: Board,
-//         inserted_post: Post,
-//     }
-
-//     fn init_data(conn: &mut PgConnection) -> Data {
-
-//         let inserted_site_form = SiteForm {
-//             name: Some("domain.tld".to_string()),
-//             description: Some("my heckin website".to_string()),
-//             ..SiteForm::default()
-//         };
-
-//         let inserted_site = Site::create(conn, &inserted_site_form).unwrap();
-
-//         let inserted_user_form = UserForm {
-//             name: "kroner".to_string(),
-//             passhash: "the_most_secure_password".to_string(),
-//             email: Some("example@domain.tld".to_string()),
-//             ..UserForm::default()
-//         };
-
-//         let inserted_user = User::create(conn, &inserted_user_form).unwrap();
-
-//         let inserted_blocked_user_form = UserForm {
-//             name: "bullyhunter05".to_string(),
-//             passhash: "the_most_secure_password2".to_string(),
-//             email: Some("example@domain.tld".to_string()),
-//             ..UserForm::default()
-//         };
-
-//         let inserted_blocked_user = User::create(conn, &inserted_blocked_user_form).unwrap();
-
-//         let inserted_board_form = BoardForm {
-//             name: Some("Test Board".to_string()),
-//             creator_id: Some(inserted_user.id.clone()),
-//             ..BoardForm::default()
-//         };
-
-//         let inserted_board = Board::create(conn, &inserted_board_form).unwrap();
-
-//         let inserted_post_form = PostForm {
-//             title: "test post".to_string(),
-//             type_: Some("text".to_string()),
-//             body: Some("this is a test post lol".to_string()),
-//             creator_id: inserted_user.id.clone(),
-//             board_id: inserted_board.id.clone(),
-//             ..PostForm::default()
-//         };
-
-//         let inserted_post = Post::create(conn, &inserted_post_form).unwrap();
-
-//         // also create a post from blocked user
-//         let inserted_post_blocked_user_form = PostForm {
-//             title: "test post 2 (should not appear)".to_string(),
-//             type_: Some("text".to_string()),
-//             body: Some("this is a test post lol".to_string()),
-//             creator_id: inserted_blocked_user.id.clone(),
-//             board_id: inserted_board.id.clone(),
-//             ..PostForm::default()
-//         };
-
-//         Post::create(conn, &inserted_post_blocked_user_form).unwrap();
-
-//         Data {
-//             inserted_site,
-//             inserted_user,
-//             inserted_blocked_user,
-//             inserted_board,
-//             inserted_post,
-//         }
-//     }
-
-//     #[test]
-//     #[serial]
-//     fn post_listing_with_user() {
-//         let conn = &mut establish_unpooled_connection();
-//         let data = init_data(conn);
-
-//         let read_post_listing = PostQuery::builder()
-//             .conn(conn)
-//             .sort(Some(SortType::New))
-//             .board_id(Some(data.inserted_board.id))
-//             .user_id(Some(data.inserted_user.id))
-//             .build()
-//             .list()
-//             .unwrap();
-
-//         let post_listing_single_with_user =
-//             PostView::read(conn, data.inserted_post.id, Some(data.inserted_user.id)).unwrap();
-
-//         let mut expected_post_listing_with_user = todo!()
-
-//     }
-// }

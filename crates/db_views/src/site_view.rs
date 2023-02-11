@@ -3,8 +3,9 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::SiteAggregates,
     schema::{site, site_aggregates},
-    models::{site::site::Site,},
+    models::{site::site::Site,}, utils::{get_conn, DbPool},
 };
+use diesel_async::RunQueryDsl;
 
 type SiteViewTuple = (
     Site,
@@ -12,9 +13,10 @@ type SiteViewTuple = (
 );
 
 impl SiteView {
-    pub fn read_local(
-        conn: &mut PgConnection
+    pub async fn read_local(
+        pool: &DbPool
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let (
             site, 
             counts
@@ -27,7 +29,8 @@ impl SiteView {
                 site::all_columns,
                 site_aggregates::all_columns,
             ))
-            .first::<SiteViewTuple>(conn)?;
+            .first::<SiteViewTuple>(conn)
+            .await?;
 
         
         Ok( SiteView {

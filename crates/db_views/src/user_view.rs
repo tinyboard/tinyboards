@@ -1,12 +1,12 @@
 use crate::structs::{LoggedInUserView, UserSettingsView, UserView, UserMentionView, CommentReplyView};
-use diesel::{result::Error, PgConnection, *};
+use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
     //map_to_user_sort_type,
     models::user::users::{UserSafe, UserSettings},
     schema::{user_aggregates, users},
     traits::{ToSafe, ViewToVec},
-    utils::{functions::lower, fuzzy_search, limit_and_offset},
+    utils::{functions::lower, fuzzy_search, limit_and_offset, get_conn, DbPool},
     UserSortType,
 };
 use tinyboards_utils::TinyBoardsError;
@@ -16,27 +16,30 @@ use jwt::VerifyWithKey;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use typed_builder::TypedBuilder;
+use diesel_async::RunQueryDsl;
 
 type UserViewTuple = (UserSafe, UserAggregates);
 
 impl UserView {
-    pub fn read_opt(
-        conn: &mut PgConnection,
+    pub async fn read_opt(
+        pool: &DbPool,
         user_id: i32,
     ) -> Result<Option<Self>, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
         let user_view_tuple = users::table
             .find(user_id)
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .first::<UserViewTuple>(conn)
+            .await
             .optional()
             .map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(user_view_tuple.map(|(user, counts)| Self { user, counts }))
     }
 
-    pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, TinyBoardsError> {
-        match Self::read_opt(conn, user_id) {
+    pub async fn read(pool: &DbPool, user_id: i32) -> Result<Self, TinyBoardsError> {
+        match Self::read_opt(pool, user_id).await {
             Ok(opt) => match opt {
                 Some(u) => Ok(u),
                 None => Err(TinyBoardsError::from_message(404, "no user view found")),
@@ -45,8 +48,8 @@ impl UserView {
         }
     }
 
-    pub fn from_jwt(
-        conn: &mut PgConnection,
+    pub async fn from_jwt(
+        pool: &DbPool,
         token: String,
         master_key: String,
     ) -> Result<Option<Self>, TinyBoardsError> {
@@ -57,23 +60,26 @@ impl UserView {
 
         let uid = claims["uid"].parse::<i32>()?;
 
-        Self::read_opt(conn, uid)
+        Self::read_opt(pool, uid).await
     }
 
-    pub fn read_from_name(conn: &mut PgConnection, name: &str) -> Result<Self, Error> {
+    pub async fn read_from_name(pool: &DbPool, name: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let (user, counts) = users::table
             .filter(users::name.eq(name))
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)?;
+            .first::<UserViewTuple>(conn)
+            .await?;
 
         Ok(Self { user, counts })
     }
 
-    pub fn find_by_email_or_name(
-        conn: &mut PgConnection,
+    pub async fn find_by_email_or_name(
+        pool: &DbPool,
         name_or_email: &str,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let (user, counts) = users::table
             .inner_join(user_aggregates::table)
             .filter(
@@ -82,29 +88,34 @@ impl UserView {
                     .or(users::email.eq(name_or_email)),
             )
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)?;
+            .first::<UserViewTuple>(conn)
+            .await?;
 
         Ok(Self { user, counts })
     }
 
-    pub fn find_by_email(conn: &mut PgConnection, from_email: &str) -> Result<Self, Error> {
+    pub async fn find_by_email(pool: &DbPool, from_email: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let (user, counts) = users::table
             .inner_join(user_aggregates::table)
             .filter(users::email.eq(from_email))
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)?;
+            .first::<UserViewTuple>(conn)
+            .await?;
 
         Ok(Self { user, counts })
     }
 
-    pub fn admins(conn: &mut PgConnection) -> Result<Vec<Self>, Error> {
+    pub async fn admins(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let admins = users::table
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .filter(users::is_admin.eq(true))
             .filter(users::is_deleted.eq(false))
             .order_by(users::creation_date)
-            .load::<UserViewTuple>(conn)?;
+            .load::<UserViewTuple>(conn)
+            .await?;
 
         Ok(Self::from_tuple_to_vec(admins))
     }
@@ -113,14 +124,15 @@ impl UserView {
 
 impl LoggedInUserView {
     
-    pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, TinyBoardsError> {
+    pub async fn read(pool: &DbPool, user_id: i32) -> Result<Self, TinyBoardsError> {
 
-        let user_view = UserView::read(conn, user_id)
+        let user_view = UserView::read(pool, user_id)
+            .await    
             .map_err(|e| TinyBoardsError::from(e))?;
 
-        let mentions = UserMentionView::get_unread_mentions(conn, user_id)?;
+        let mentions = UserMentionView::get_unread_mentions(pool, user_id).await?;
 
-        let replies = CommentReplyView::get_unread_replies(conn, user_id)?;
+        let replies = CommentReplyView::get_unread_replies(pool, user_id).await?;
 
         Ok( LoggedInUserView { 
             user: user_view.user, 
@@ -135,7 +147,8 @@ impl LoggedInUserView {
 type UserSettingsViewTuple = (UserSettings, UserAggregates);
 
 impl UserSettingsView {
-    pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, Error> {
+    pub async fn read(pool: &DbPool, user_id: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let (settings, counts) = users::table
             .find(user_id)
             .inner_join(user_aggregates::table)
@@ -143,12 +156,14 @@ impl UserSettingsView {
                 UserSettings::safe_columns_tuple(),
                 user_aggregates::all_columns,
             ))
-            .first::<UserSettingsViewTuple>(conn)?;
+            .first::<UserSettingsViewTuple>(conn)
+            .await?;
 
         Ok(Self { settings, counts })
     }
 
-    pub fn list_admins_with_email(conn: &mut PgConnection) -> Result<Vec<Self>, Error> {
+    pub async fn list_admins_with_email(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let res = users::table
             .filter(users::is_admin.eq(true))
             .filter(users::email.is_not_null())
@@ -157,7 +172,8 @@ impl UserSettingsView {
                 UserSettings::safe_columns_tuple(),
                 user_aggregates::all_columns,
             ))
-            .load::<UserSettingsViewTuple>(conn)?;
+            .load::<UserSettingsViewTuple>(conn)
+            .await?;
 
             Ok(UserSettingsView::from_tuple_to_vec(res))
     }
@@ -193,7 +209,7 @@ impl ViewToVec for UserView {
 #[builder(field_defaults(default))]
 pub struct UserQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     sort: Option<UserSortType>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -210,7 +226,8 @@ pub struct UserQueryResponse {
 }
 
 impl<'a> UserQuery<'a> {
-    pub fn list(self) -> Result<UserQueryResponse, Error> {
+    pub async fn list(self) -> Result<UserQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         let mut query = users::table
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
@@ -262,10 +279,10 @@ impl<'a> UserQuery<'a> {
             .filter(users::is_deleted.eq(false))
             .filter(users::is_banned.eq(false));
 
-        let res = query.load::<UserViewTuple>(self.conn)?;
+        let res = query.load::<UserViewTuple>(conn).await?;
 
         let users = UserView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(UserQueryResponse { users, count })
     }

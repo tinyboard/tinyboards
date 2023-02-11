@@ -3,13 +3,15 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{board::boards::BoardSafe, user::users::UserSafe},
     schema::{board_mods, boards, users},
-    traits::{ToSafe, ViewToVec},
+    traits::{ToSafe, ViewToVec}, utils::{get_conn, DbPool},
 };
+use diesel_async::RunQueryDsl;
 
 type BoardModeratorViewTuple = (BoardSafe, UserSafe);
 
 impl BoardModeratorView {
-    pub fn for_board(conn: &mut PgConnection, board_id: i32) -> Result<Vec<Self>, Error> {
+    pub async fn for_board(pool: &DbPool, board_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let res = board_mods::table
             .inner_join(boards::table)
             .inner_join(users::table)
@@ -19,12 +21,14 @@ impl BoardModeratorView {
             ))
             .filter(board_mods::board_id.eq(board_id))
             .order_by(board_mods::creation_date)
-            .load::<BoardModeratorViewTuple>(conn)?;
+            .load::<BoardModeratorViewTuple>(conn)
+            .await?;
 
         Ok(Self::from_tuple_to_vec(res))
     }
 
-    pub fn for_user(conn: &mut PgConnection, user_id: i32) -> Result<Vec<Self>, Error> {
+    pub async fn for_user(pool: &DbPool, user_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let res = board_mods::table
             .inner_join(boards::table)
             .inner_join(users::table)
@@ -36,7 +40,8 @@ impl BoardModeratorView {
             .filter(boards::is_deleted.eq(false))
             .filter(boards::is_banned.eq(false))
             .order_by(board_mods::creation_date)
-            .load::<BoardModeratorViewTuple>(conn)?;
+            .load::<BoardModeratorViewTuple>(conn)
+            .await?;
 
         Ok(Self::from_tuple_to_vec(res))
     }

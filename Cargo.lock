@@ -3788,6 +3788,7 @@ name = "tinyboards_db_views"
 version = "0.1.0"
 dependencies = [
  "diesel",
+ "diesel-async",
  "hmac",
  "jwt",
  "serde",
@@ -3804,6 +3805,7 @@ name = "tinyboards_db_views_mod"
 version = "0.1.0"
 dependencies = [
  "diesel",
+ "diesel-async",
  "serde",
  "serial_test",
  "tinyboards_db",

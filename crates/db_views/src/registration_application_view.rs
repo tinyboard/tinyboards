@@ -6,9 +6,10 @@ use tinyboards_db::{
     },
     schema::{users, registration_applications},
     traits::{ViewToVec, ToSafe},
-    utils::limit_and_offset,
+    utils::{limit_and_offset, get_conn, DbPool},
 };
 use typed_builder::TypedBuilder;
+use diesel_async::RunQueryDsl;
 
 type RegistrationApplicationViewTuple = (
     RegistrationApplication,
@@ -18,10 +19,11 @@ type RegistrationApplicationViewTuple = (
 );
 
 impl RegistrationApplicationView {
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read (
+        pool: &DbPool,
         app_id: i32,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_alias = diesel::alias!(users as users_alias);
         let (
             application,
@@ -39,7 +41,8 @@ impl RegistrationApplicationView {
             UserSafe::safe_columns_tuple(),
             user_alias.fields(UserSafe::safe_columns_tuple()).nullable(),
         ))
-        .first::<RegistrationApplicationViewTuple>(conn)?;
+        .first::<RegistrationApplicationViewTuple>(conn)
+        .await?;
 
         Ok(RegistrationApplicationView {
             application,
@@ -55,7 +58,7 @@ impl RegistrationApplicationView {
 #[builder(field_defaults(default))]
 pub struct ApplicationQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     page: Option<i64>,
     limit: Option<i64>,
 }
@@ -67,7 +70,8 @@ pub struct ApplicationQueryResponse {
 }
 
 impl<'a> ApplicationQuery<'a> {
-    pub fn list(self) -> Result<ApplicationQueryResponse, Error> {
+    pub async fn list(self) -> Result<ApplicationQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         
         let user_alias = diesel::alias!(users as users_alias);
         let query = registration_applications::table
@@ -93,10 +97,11 @@ impl<'a> ApplicationQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .load::<RegistrationApplicationViewTuple>(self.conn)?;
+            .load::<RegistrationApplicationViewTuple>(conn)
+            .await?;
 
         let applications = RegistrationApplicationView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(ApplicationQueryResponse { applications, count })
         

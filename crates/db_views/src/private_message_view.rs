@@ -4,8 +4,9 @@ use tinyboards_db::{
     models::user::private_messages::{PrivateMessage},
     models::user::users::UserSafe,
     schema::{users, private_messages},
-    traits::{ToSafe, ViewToVec}, utils::limit_and_offset,
+    traits::{ToSafe, ViewToVec}, utils::{limit_and_offset, get_conn, DbPool},
 };
+use diesel_async::RunQueryDsl;
 
 type PrivateMessageViewTuple = (
     PrivateMessage,
@@ -15,10 +16,11 @@ type PrivateMessageViewTuple = (
 use typed_builder::TypedBuilder;
 
 impl PrivateMessageView {
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read(
+        pool: &DbPool,
         pm_id: i32,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         
         let user_alias = diesel::alias!(users as users1);
         
@@ -38,12 +40,14 @@ impl PrivateMessageView {
                 UserSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
-            .first::<PrivateMessageViewTuple>(conn)?;
+            .first::<PrivateMessageViewTuple>(conn)
+            .await?;
 
         Ok(PrivateMessageView { private_message, creator, recipient })
     }
     
-    pub fn get_unread_message_count(conn: &mut PgConnection, user_id: i32) -> Result<i64, Error> {
+    pub async fn get_unread_message_count(pool: &DbPool, user_id: i32) -> Result<i64, Error> {
+        let conn = &mut get_conn(pool).await?;
         use diesel::dsl::count;
         private_messages::table
             .filter(private_messages::read.eq(false))
@@ -51,23 +55,28 @@ impl PrivateMessageView {
             .filter(private_messages::is_deleted.eq(false))
             .select(count(private_messages::id))
             .first::<i64>(conn)
+            .await
     }
 
-    pub fn mark_thread_as_read(conn: &mut PgConnection, creator_id: i32) -> Result<usize, Error> {
+    pub async fn mark_thread_as_read(pool: &DbPool, creator_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(private_messages::table)
             .filter(private_messages::read.eq(false))
             .filter(private_messages::creator_id.eq(creator_id))
             .set(private_messages::read.eq(true))
             .execute(conn)
+            .await
     }
 
-    pub fn thread_exists(conn: &mut PgConnection, creator_id: i32, recipient_id: i32) -> Result<bool, Error> {
+    pub async fn thread_exists(pool: &DbPool, creator_id: i32, recipient_id: i32) -> Result<bool, Error> {
+        let conn = &mut get_conn(pool).await?;
         use diesel::dsl::count;
 
         let messages = private_messages::table
             .filter(private_messages::creator_id.eq(creator_id).and(private_messages::recipient_id.eq(recipient_id)))
             .select(count(private_messages::id))
-            .first::<i64>(conn);
+            .first::<i64>(conn)
+            .await;
 
         if messages == Ok(0) {
             Ok(false)
@@ -82,7 +91,7 @@ impl PrivateMessageView {
 #[builder(field_defaults(default))]
 pub struct PrivateMessageQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     #[builder(!default)]
     recipient_id: i32,
     creator_id: Option<i32>,
@@ -99,7 +108,8 @@ pub struct PrivateMessageQueryResponse {
 }
 
 impl<'a> PrivateMessageQuery<'a> {
-    pub fn list(self) -> Result<PrivateMessageQueryResponse, Error> {
+    pub async fn list(self) -> Result<PrivateMessageQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         let user_alias = diesel::alias!(users as users1);
         
         let mut query = private_messages::table
@@ -158,11 +168,11 @@ impl<'a> PrivateMessageQuery<'a> {
             .offset(offset)
             .order_by(private_messages::creation_date.desc());
         
-        let res = query.load::<PrivateMessageViewTuple>(self.conn)?;
+        let res = query.load::<PrivateMessageViewTuple>(conn).await?;
 
         let messages = PrivateMessageView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
-        let unread = PrivateMessageView::get_unread_message_count(self.conn, self.recipient_id)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
+        let unread = PrivateMessageView::get_unread_message_count(self.pool, self.recipient_id).await?;
 
         Ok(PrivateMessageQueryResponse { messages, count, unread })
     }

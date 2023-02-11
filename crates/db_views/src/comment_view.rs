@@ -19,11 +19,12 @@ use tinyboards_db::{
         posts, user_blocks, user_board_blocks, user_comment_save, users,
     },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited},
+    utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited, get_conn, DbPool},
     CommentSortType, ListingType,
 };
 use tinyboards_utils::TinyBoardsError;
 use typed_builder::TypedBuilder;
+use diesel_async::RunQueryDsl;
 
 type CommentViewTuple = (
     Comment,
@@ -109,11 +110,12 @@ impl CommentView {
         tree
     }
 
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read(
+        pool: &DbPool,
         comment_id: i32,
         my_user_id: Option<i32>,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_id_join = my_user_id.unwrap_or(-1);
 
         let (
@@ -175,7 +177,8 @@ impl CommentView {
                 user_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
             ))
-            .first::<CommentViewTuple>(conn)?;
+            .first::<CommentViewTuple>(conn)
+            .await?;
 
         let my_vote = if my_user_id.is_some() && comment_votes.is_none() {
             Some(0)
@@ -201,8 +204,8 @@ impl CommentView {
     /**
     Returns a comments with a list of its replies up to level 5, ordered into a tree. You can optionally specify `context` to load a specific amount of parent commments as well.
     */
-    pub fn get_comment_with_replies(
-        conn: &mut PgConnection,
+    pub async fn get_comment_with_replies(
+        pool: &DbPool,
         comment_id: i32,
         sort: Option<CommentSortType>,
         user: Option<&User>,
@@ -212,7 +215,7 @@ impl CommentView {
         // max allowed value for context is 4
         let context = std::cmp::min(context.unwrap_or(0), 4);
         let user_id = user.as_ref().map(|u| u.id);
-        let top_comment = Self::read(conn, comment_id, user_id)?;
+        let top_comment = Self::read(pool, comment_id, user_id).await?;
 
         if let Some(parent_post_id) = parent_post_id {
             if top_comment.comment.post_id != parent_post_id {
@@ -232,7 +235,7 @@ impl CommentView {
         // read parent comments equal to context
         if let Some(mut parent_comment_id) = parent_comment_id {
             for _ in 0..context {
-                let parent_comment_view = Self::read(conn, parent_comment_id, user_id)?;
+                let parent_comment_view = Self::read(pool, parent_comment_id, user_id).await?;
                 top_comment_id = parent_comment_view.comment.id;
                 let parent_id = parent_comment_view.comment.parent_id;
                 comments_vec.push(parent_comment_view);
@@ -251,12 +254,12 @@ impl CommentView {
                 mut comments,
                 count,
             } = CommentQuery::builder()
-                .conn(conn)
+                .pool(pool)
                 .parent_ids(Some(&ids))
                 .user_id(user_id)
                 .sort(sort)
                 .build()
-                .list()?;
+                .list().await?;
 
             total_count += count;
             ids = comments
@@ -291,7 +294,7 @@ impl CommentView {
 #[builder(field_defaults(default))]
 pub struct CommentQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     listing_type: Option<ListingType>,
     sort: Option<CommentSortType>,
     board_id: Option<i32>,
@@ -314,7 +317,8 @@ pub struct CommentQueryResponse {
 }
 
 impl<'a> CommentQuery<'a> {
-    pub fn list(self) -> Result<CommentQueryResponse, Error> {
+    pub async fn list(self) -> Result<CommentQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
         let user_id_join = self.user_id.unwrap_or(-1);
@@ -517,10 +521,12 @@ impl<'a> CommentQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .load::<CommentViewTuple>(self.conn)?;
+            .load::<CommentViewTuple>(conn)
+            .await?;
 
         let comments = CommentView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let count = count_query.count().get_result::<i64>(conn)
+            .await?;
 
         Ok(CommentQueryResponse { comments, count })
     }

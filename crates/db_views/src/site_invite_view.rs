@@ -6,19 +6,20 @@ use tinyboards_db::{
     },
     schema::site_invite,
     traits::ViewToVec,
-    utils::limit_and_offset,
+    utils::{limit_and_offset, DbPool, get_conn},
 };
 use typed_builder::TypedBuilder;
 
 type SiteInviteViewTuple = (
     SiteInvite,
 );
+use diesel_async::RunQueryDsl;
 
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
 pub struct InviteQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     page: Option<i64>,
     limit: Option<i64>,
 }
@@ -30,7 +31,8 @@ pub struct InviteQueryResponse {
 }
 
 impl<'a> InviteQuery<'a> {
-    pub fn list(self) -> Result<InviteQueryResponse, Error> {
+    pub async fn list(self) -> Result<InviteQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
         
         let mut query = site_invite::table
             .select((
@@ -51,10 +53,11 @@ impl<'a> InviteQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .load::<SiteInviteViewTuple>(self.conn)?;
+            .load::<SiteInviteViewTuple>(conn)
+            .await?;
 
         let invites = SiteInviteView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(InviteQueryResponse { invites, count })
         

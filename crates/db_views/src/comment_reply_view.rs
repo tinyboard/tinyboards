@@ -7,8 +7,6 @@ use diesel::{
     JoinOnDsl,
     NullableExpressionMethods,
     QueryDsl, 
-    RunQueryDsl,
-    PgConnection,
 };
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
@@ -37,10 +35,11 @@ use tinyboards_db::{
         post::posts::Post,
     },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, limit_and_offset},
+    utils::{functions::hot_rank, limit_and_offset, get_conn, DbPool},
     CommentSortType,
 };
 use typed_builder::TypedBuilder;
+use diesel_async::RunQueryDsl;
 
 type CommentReplyViewTuple = (
     CommentReply,
@@ -58,11 +57,12 @@ type CommentReplyViewTuple = (
 );
 
 impl CommentReplyView {
-    pub fn read(
-        conn: &mut PgConnection,
+    pub async fn read(
+        pool: &DbPool,
         comment_reply_id: i32,
         user_id: Option<i32>,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_alias = diesel::alias!(users as users_alias);
 
         let user_id_join = user_id.unwrap_or(-1);
@@ -142,7 +142,8 @@ impl CommentReplyView {
                 user_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
             ))
-            .first::<CommentReplyViewTuple>(conn)?;
+            .first::<CommentReplyViewTuple>(conn)
+            .await?;
 
         Ok( CommentReplyView {
             comment_reply,
@@ -161,7 +162,8 @@ impl CommentReplyView {
     }
 
     /// Gets number of unread replies
-    pub fn get_unread_replies(conn: &mut PgConnection, user_id: i32) -> Result<i64, Error> {
+    pub async fn get_unread_replies(pool: &DbPool, user_id: i32) -> Result<i64, Error> {
+        let conn = &mut get_conn(pool).await?;
         use diesel::dsl::count;
 
         comment_reply::table
@@ -172,15 +174,18 @@ impl CommentReplyView {
         .filter(comments::is_removed.eq(false))
         .select(count(comment_reply::id))
         .first::<i64>(conn)
+        .await
     }
 
     /// Marks all unread as read for a user
-    pub fn mark_all_replies_as_read(conn: &mut PgConnection, user_id: i32) -> Result<usize, Error> {
+    pub async fn mark_all_replies_as_read(pool: &DbPool, user_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(comment_reply::table)
             .filter(comment_reply::read.eq(false))
             .filter(comment_reply::recipient_id.eq(user_id))
             .set(comment_reply::read.eq(true))
             .execute(conn)
+            .await
     }
 }
 
@@ -188,7 +193,7 @@ impl CommentReplyView {
 #[builder(field_defaults(default))]
 pub struct CommentReplyQuery<'a> {
     #[builder(!default)]
-    conn: &'a mut PgConnection,
+    pool: &'a DbPool,
     user_id: Option<i32>,
     recipient_id: Option<i32>,
     sort: Option<CommentSortType>,
@@ -205,7 +210,8 @@ pub struct CommentReplyQueryResponse {
 }
 
 impl <'a> CommentReplyQuery<'a> {
-    pub fn list(self) -> Result<CommentReplyQueryResponse, Error> {
+    pub async fn list(self) -> Result<CommentReplyQueryResponse, Error> {
+        let conn = &mut get_conn(self.pool).await?;
 
         let user_alias = diesel::alias!(users as user_alias);
 
@@ -307,11 +313,12 @@ impl <'a> CommentReplyQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .load::<CommentReplyViewTuple>(self.conn)?;
+            .load::<CommentReplyViewTuple>(conn)
+            .await?;
         
         let replies = CommentReplyView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(self.conn)?;
-        let unread = CommentReplyView::get_unread_replies(self.conn, user_id_join)?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
+        let unread = CommentReplyView::get_unread_replies(self.pool, user_id_join).await?;
 
         Ok(CommentReplyQueryResponse { replies, count, unread })
     }
