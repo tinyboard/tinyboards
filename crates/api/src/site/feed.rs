@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::ListPostsResponse,
     site::GetFeed,
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{map_to_listing_type, map_to_sort_type, ListingType, SortType};
 use tinyboards_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
@@ -60,23 +60,21 @@ impl<'des> Perform<'des> for GetFeed {
             nsfw = params_nsfw.unwrap();
         }
 
-        let response = blocking(context.pool(), move |conn| {
-            PostQuery::builder()
-                .conn(conn)
-                .listing_type(Some(listing_type))
-                .sort(Some(sort))
-                .board_id(board_id)
-                .search_term(search_term)
-                .user(user_match.as_ref())
-                .creator_id(creator_id)
-                .saved_only(saved_only)
-                .show_nsfw(Some(nsfw))
-                .limit(limit)
-                .page(page)
-                .build()
-                .list()
-        })
-        .await??;
+        let response = PostQuery::builder()
+            .pool(context.pool())
+            .listing_type(Some(listing_type))
+            .sort(Some(sort))
+            .board_id(board_id)
+            .search_term(search_term)
+            .user(user_match.as_ref())
+            .creator_id(creator_id)
+            .saved_only(saved_only)
+            .show_nsfw(Some(nsfw))
+            .limit(limit)
+            .page(page)
+            .build()
+            .list()
+            .await?;
 
         let mut posts = response.posts;
         let total_count = response.count;

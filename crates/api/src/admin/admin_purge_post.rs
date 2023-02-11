@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::ModActionResponse,
     request::purge_image_from_pictrs,
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db::{
     models::{
@@ -39,7 +39,7 @@ impl<'des> Perform<'des> for PurgePost {
         let target_post_id = data.post_id;
         let reason = data.reason.clone();
 
-        let post = blocking(context.pool(), move |conn| Post::read(conn, target_post_id)).await??;
+        let post = Post::read(context.pool(), target_post_id).await?; 
 
         // purge image
         if let Some(url) = post.url {
@@ -58,10 +58,7 @@ impl<'des> Perform<'des> for PurgePost {
         }
 
         // delete post
-        blocking(context.pool(), move |conn| {
-            Post::delete(conn, target_post_id)
-        })
-        .await??;
+        Post::delete(context.pool(), target_post_id).await?;
 
         let form = AdminPurgePostForm {
             admin_id: user.id,
@@ -70,10 +67,7 @@ impl<'des> Perform<'des> for PurgePost {
         };
 
         // submit mod log action
-        let mod_action = blocking(context.pool(), move |conn| {
-            AdminPurgePost::create(conn, &form)
-        })
-        .await??;
+        let mod_action = AdminPurgePost::create(context.pool(), &form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

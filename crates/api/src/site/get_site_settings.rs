@@ -3,9 +3,6 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetSiteSettings, GetSiteSettingsResponse},
-    utils::{
-        blocking,
-    }
 };
 use tinyboards_db::{
     models::site::site::Site, SiteMode
@@ -25,11 +22,7 @@ impl<'des> Perform<'des> for GetSiteSettings {
         _: Option<&str>,
     ) -> Result<GetSiteSettingsResponse, TinyBoardsError> {
 
-        let site =
-            blocking(context.pool(), move |conn| {
-                Site::read_local(conn)
-            })
-            .await??;
+        let site = Site::read_local(context.pool()).await?;
         
         let mut site_mode = SiteMode::OpenMode;
 

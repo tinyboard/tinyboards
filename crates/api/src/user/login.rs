@@ -4,7 +4,6 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
     user::{Login, LoginResponse},
-    utils::blocking,
 };
 use tinyboards_db::models::{user::users::User, site::site::Site};
 use tinyboards_db_views::structs::UserView;
@@ -22,22 +21,16 @@ impl<'des> Perform<'des> for Login {
         _: Self::Route,
         _: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let (user, user_view) = blocking(context.pool(), move |conn| {
-            let user: User = if self.username_or_email.contains('@') {
-                User::get_by_email(conn, &self.username_or_email)
-            } else {
-                User::get_by_name(conn, &self.username_or_email)
-            }?;
+                  
+        let user = if self.username_or_email.contains('@') {
+            User::get_by_email(context.pool(), &self.username_or_email).await
+        } else {
+            User::get_by_name(context.pool(), &self.username_or_email).await
+        }?;
 
-            let user_view: UserView = UserView::read(conn, user.id)?;
+        let user_view: UserView = UserView::read(context.pool(), user.id).await?;
 
-            Ok::<(User, UserView), TinyBoardsError>((user, user_view))
-        })
-        .await??;
-
-        let site = blocking(context.pool(), move |conn| {
-            Site::read_local(conn)
-        }).await??;
+        let site = Site::read_local(context.pool()).await?;
 
         if site.require_application == true && user.is_application_accepted == false {
             return Err(TinyBoardsError::from_message(401, "login failed - application not accepted"));

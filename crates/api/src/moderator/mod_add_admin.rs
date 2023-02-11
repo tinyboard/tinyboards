@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{AddAdmin, ModActionResponse},
-    utils::{blocking, require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::{
@@ -39,10 +39,7 @@ impl<'des> Perform<'des> for AddAdmin {
         let added_user_id = data.added_user_id;
 
         // update added user to be an admin
-        blocking(context.pool(), move |conn| {
-            User::update_admin(conn, added_user_id.clone(), added.clone())
-        })
-        .await??;
+        User::update_admin(context.pool(), added_user_id.clone(), added.clone()).await?;
 
         // log this mod action
         let mod_add_admin_form = ModAddAdminForm {
@@ -52,10 +49,7 @@ impl<'des> Perform<'des> for AddAdmin {
         };
 
         // submit to the mod log
-        let mod_action = blocking(context.pool(), move |conn| {
-            ModAddAdmin::create(conn, &mod_add_admin_form)
-        })
-        .await??;
+        let mod_action = ModAddAdmin::create(context.pool(), &mod_add_admin_form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

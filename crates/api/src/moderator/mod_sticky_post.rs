@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{ModActionResponse, StickyPost},
-    utils::{blocking, require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModStickyPost, ModStickyPostForm},
@@ -30,10 +30,7 @@ impl<'des> Perform<'des> for StickyPost {
         let stickied = data.stickied;
 
         // get the post object
-        let orig_post = blocking(context.pool(), move |conn| {
-            Post::read(conn, post_id.clone())
-        })
-        .await??;
+        let orig_post = Post::read(context.pool(), post_id.clone()).await?;
 
         // require a mod/admin for this action
         let user = require_user(context.pool(), context.master_key(), auth)
@@ -43,10 +40,7 @@ impl<'des> Perform<'des> for StickyPost {
             .unwrap()?;
 
         // update the post in the database to be stickied (or un-stickied)
-        blocking(context.pool(), move |conn| {
-            Post::update_stickied(conn, post_id.clone(), stickied.clone())
-        })
-        .await??;
+        Post::update_stickied(context.pool(), post_id.clone(), stickied.clone()).await?;
 
         // form for submitting post sticky action to the mod log
         let sticky_post_form = ModStickyPostForm {
@@ -56,10 +50,7 @@ impl<'des> Perform<'des> for StickyPost {
         };
 
         // submit mod action to the mod log
-        let mod_action = blocking(context.pool(), move |conn| {
-            ModStickyPost::create(conn, &sticky_post_form)
-        })
-        .await??;
+        let mod_action = ModStickyPost::create(context.pool(), &sticky_post_form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

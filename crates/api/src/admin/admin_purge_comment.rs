@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     admin::PurgeComment,
     data::TinyBoardsContext,
     moderator::ModActionResponse,
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db::{
     models::{
@@ -38,10 +38,7 @@ impl<'des> Perform<'des> for PurgeComment {
         let reason = data.reason.clone();
 
         // delete comment
-        blocking(context.pool(), move |conn| {
-            Comment::delete(conn, target_comment_id)
-        })
-        .await??;
+        Comment::delete(context.pool(), target_comment_id).await?;
 
         let form = AdminPurgeCommentForm {
             admin_id: user.id,
@@ -50,10 +47,7 @@ impl<'des> Perform<'des> for PurgeComment {
         };
 
         // submit mod log action
-        let mod_action = blocking(context.pool(), move |conn| {
-            AdminPurgeComment::create(conn, &form)
-        })
-        .await??;
+        let mod_action = AdminPurgeComment::create(context.pool(), &form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

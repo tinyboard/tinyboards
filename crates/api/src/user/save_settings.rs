@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
-    utils::{blocking, get_user_view_from_jwt, require_user, send_verification_email},
+    utils::{get_user_view_from_jwt, require_user, send_verification_email},
     request::{purge_image_from_pictrs, upload_image_to_pictrs, PictrsUploadResponse},
 };
 use tinyboards_db::{
@@ -33,7 +33,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             .await
             .unwrap()?;
 
-        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+        let site = Site::read_local(context.pool()).await?;
         
         // delete old images if new images applied
         let current_avatar = user.avatar.clone().unwrap_or_default();
@@ -166,11 +166,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
         };
 
         // perform settings update
-        blocking(context.pool(), move |conn| {
-            User::update_settings(conn, user.id, &update_form)
-                .map_err(|_| TinyBoardsError::from_message(500, "could not update user settings"))
-        })
-        .await??;
+        User::update_settings(context.pool(), user.id, &update_form)
+            .await
+            .map_err(|_| TinyBoardsError::from_message(500, "could not update user settings"))?;
 
         let updated_user_view =
             get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;

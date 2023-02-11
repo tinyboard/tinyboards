@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::MarkAllRepliesRead,
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db_views::{structs::CommentReplyView};
 use tinyboards_utils::error::TinyBoardsError;
@@ -25,10 +25,7 @@ impl<'des> Perform<'des> for MarkAllRepliesRead {
                 .await
                 .unwrap()?;
             
-            blocking(context.pool(), move |conn| {
-                CommentReplyView::mark_all_replies_as_read(conn, user.id)
-            })
-            .await??;
+            CommentReplyView::mark_all_replies_as_read(context.pool(), user.id).await?;
 
             Ok(())
     }

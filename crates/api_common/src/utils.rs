@@ -222,18 +222,13 @@ impl UserResult {
                     return Self(Ok(u));
                 }
                 
-                let is_banned = BoardUserBanView::get(pool, u.id, board_id).await;
+                let is_banned = BoardUserBanView::get(pool, u.id, board_id)
+                    .await
+                    .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
 
                 let inner = match is_banned {
                     Ok(is_banned) => {
-                        if let Ok(board_ban) = is_banned.ok() {
-                            Err(TinyBoardsError::from_message(
-                                403,
-                                format!("You are banned from /b/{}", is_banned.board.name).as_str(),
-                            ))
-                        } else {
-                            Ok(u)
-                        }
+                        Err(TinyBoardsError::from_message(403, format!("You are banned from /b/{}", is_banned.board.name).as_str()))
                     }
                     Err(e) => Err(e),
                 };
@@ -252,7 +247,7 @@ impl UserResult {
                     return Self(Ok(u));
                 }
 
-                let is_mod = Board::board_has_mod(pool, board_id, u.id).await.unwrap();
+                let is_mod = Board::board_has_mod(pool, board_id, u.id).await;
 
                 let inner = match is_mod {
                     Ok(is_mod) => {

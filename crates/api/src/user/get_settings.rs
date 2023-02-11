@@ -4,7 +4,6 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetUserSettings, GetUserSettingsResponse},
     utils::{
-        blocking,
         get_user_view_from_jwt,
     },
 };
@@ -27,11 +26,7 @@ impl<'des> Perform<'des> for GetUserSettings {
         let user_view = 
             get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
-        let settings = 
-            blocking(context.pool(), move |conn| {
-                UserSettingsView::read(conn, user_view.user.id)
-            })
-            .await??;
+        let settings = UserSettingsView::read(context.pool(), user_view.user.id).await?;
         
         Ok( GetUserSettingsResponse { settings } )
     }

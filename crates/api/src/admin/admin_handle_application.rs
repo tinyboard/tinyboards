@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     admin::{ApplicationIdPath, HandleRegistrationApplication, HandleRegistrationApplicationResponse},
     data::TinyBoardsContext,
-    utils::{blocking, require_user, send_application_approval_email},
+    utils::{require_user, send_application_approval_email},
 };
 use tinyboards_db::{
     models::{
@@ -39,10 +39,7 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
 
         let app_id = path.app_id.clone();
         
-        let app = blocking(context.pool(), move |conn| {
-            RegistrationApplicationView::read(conn, app_id.clone())
-        })
-        .await??;
+        let app = RegistrationApplicationView::read(context.pool(), app_id.clone()).await?;
 
         if approve == true {
             // if admin is approving the app, we can just approve the application, send an approval email, and remove it from the DB
@@ -52,15 +49,9 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
                 send_application_approval_email(&app_username, &app_email, context.settings()).await?;
             }
             // update user in the db so that their is_application_approved value is true so they can login
-            blocking(context.pool(), move |conn| {
-                User::update_is_application_accepted(conn, app.applicant.id.clone(), true)
-            })
-            .await??;
+            User::update_is_application_accepted(context.pool(), app.applicant.id.clone(), true).await?;
             // at this point we no longer need the app in the db, so delete it
-            blocking(context.pool(), move |conn| {
-                RegistrationApplication::delete(conn, app_id.clone())
-            })
-            .await??;
+            RegistrationApplication::delete(context.pool(), app_id.clone()).await?;
 
             Ok(HandleRegistrationApplicationResponse { application: None })
 
@@ -73,13 +64,9 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
                 admin_id: Some(Some(user.id.clone())),
             };
             // update the application
-            blocking(context.pool(), move |conn| {
-                RegistrationApplication::update(conn, app_id.clone(), &form)
-            })
-            .await??;
+            RegistrationApplication::update(context.pool(), app_id.clone(), &form).await?;
             // get the updated app view
-            let application = blocking(context.pool(), move |conn| RegistrationApplicationView::read(conn, app_id.clone()))
-                .await??;
+            let application = RegistrationApplicationView::read(context.pool(), app_id.clone()).await?;
             
             Ok(HandleRegistrationApplicationResponse { application: Some(application) })
         }

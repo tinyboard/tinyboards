@@ -2,7 +2,6 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::moderator::ApproveObject;
-use tinyboards_api_common::utils::blocking;
 use tinyboards_api_common::utils::require_user;
 use tinyboards_api_common::{moderator::RemoveObject, site::Message};
 use tinyboards_utils::TinyBoardsError;
@@ -29,10 +28,7 @@ impl<'des> Perform<'des> for RemoveObject {
             .await
             .unwrap()?;
 
-        blocking(context.pool(), move |conn| {
-            target_object.remove(Some(user.id), self.reason, conn)
-        })
-        .await??;
+        target_object.remove(Some(user.id), self.reason, context.pool()).await?;
 
         Ok(Message::new("Removed!"))
     }
@@ -58,10 +54,7 @@ impl<'des> Perform<'des> for ApproveObject {
             .await
             .unwrap()?;
 
-        blocking(context.pool(), move |conn| {
-            target_object.approve(Some(user.id), conn)
-        })
-        .await??;
+        target_object.approve(Some(user.id), context.pool()).await?;
 
         Ok(Message::new("Approved!"))
     }

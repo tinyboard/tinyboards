@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db::models::user::users::User;
 use tinyboards_db_views::structs::{LoggedInUserView, UserView};
@@ -25,10 +25,7 @@ impl<'des> Perform<'des> for GetLoggedInUser {
             .await
             .unwrap()?;
 
-        let logged_in_view = blocking(context.pool(), move |conn| {
-            LoggedInUserView::read(conn, user.id)
-        })
-        .await??;
+        let logged_in_view = LoggedInUserView::read(context.pool(), user.id).await?;
 
         Ok(logged_in_view)
     }
@@ -47,10 +44,7 @@ impl<'des> Perform<'des> for Profile {
     ) -> Result<Self::Response, TinyBoardsError> {
         let rcopy = route.clone();
 
-        let user = blocking(context.pool(), move |conn| {
-            User::get_by_name(conn, &rcopy.username)
-        })
-        .await??;
+        let user = User::get_by_name(context.pool(), &rcopy.username).await?;
 
         let settings = SETTINGS.to_owned();
         let domain = settings.hostname;
@@ -93,10 +87,7 @@ impl<'des> Perform<'des> for Profile {
         let display_name = user.preferred_name.unwrap_or(user.name);
 
         let rcopy2 = route.clone();
-        let view = blocking(context.pool(), move |conn| {
-            UserView::read_from_name(conn, &rcopy2.username)
-        })
-        .await??;
+        let view = UserView::read_from_name(context.pool(), &rcopy2.username).await?;
 
         let rep = view.counts.rep;
         let posts_count = view.counts.post_count;

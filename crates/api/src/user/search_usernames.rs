@@ -4,7 +4,6 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{SearchNames, SearchNamesResponse, UsernameInfo},
     utils::{
-        blocking,
         require_user,
     },
 };
@@ -26,10 +25,7 @@ impl<'des> Perform<'des> for SearchNames {
 
         require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
 
-        let user_info = blocking(context.pool(), move |conn| {
-            User::search_by_name(conn, &self.q)
-        })
-        .await??;
+        let user_info = User::search_by_name(context.pool(), &self.q).await?;
 
         let mut users: Vec<UsernameInfo> = Vec::new();
 

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     comment::{CommentIdPath, CommentResponse, SaveComment},
     data::TinyBoardsContext,
-    utils::{blocking, get_user_view_from_jwt},
+    utils::{get_user_view_from_jwt},
 };
 use tinyboards_db::{
     models::comment::user_comment_save::{CommentSaved, CommentSavedForm},
@@ -34,24 +34,19 @@ impl<'des> Perform<'des> for SaveComment {
         };
 
         if data.save {
-            let save_comment = move |conn: &mut _| CommentSaved::save(conn, &saved_form);
-            blocking(context.pool(), save_comment)
-                .await?
+            CommentSaved::save(context.pool(), &saved_form)
+                .await
                 .map_err(|_e| TinyBoardsError::from_message(500, "could not save comment"))?;
+
         } else {
-            let unsave_comment = move |conn: &mut _| CommentSaved::unsave(conn, &saved_form);
-            blocking(context.pool(), unsave_comment)
-                .await?
+            CommentSaved::unsave(context.pool(), &saved_form)
+                .await
                 .map_err(|_e| TinyBoardsError::from_message(500, "could not unsave comment"))?;
         }
 
         let comment_id = path.comment_id;
         let user_id = user_view.user.id;
-        let comment_view = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, comment_id, Some(user_id))
-                .map_err(|_e| TinyBoardsError::from_message(404, "could not find comment"))
-        })
-        .await??;
+        let comment_view = CommentView::read(context.pool(), comment_id, Some(user_id)).await?;
 
         Ok(CommentResponse { comment_view })
     }
