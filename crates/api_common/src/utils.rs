@@ -221,18 +221,15 @@ impl UserResult {
                 if u.is_admin {
                     return Self(Ok(u));
                 }
-
-                let is_banned = blocking(pool, move |conn| {
-                    BoardUserBanView::get(pool, u.id, board_id)
-                })
-                .await;
+                
+                let is_banned = BoardUserBanView::get(pool, u.id, board_id).await;
 
                 let inner = match is_banned {
                     Ok(is_banned) => {
-                        if let Ok(board_ban) = is_banned {
+                        if let Ok(board_ban) = is_banned.ok() {
                             Err(TinyBoardsError::from_message(
                                 403,
-                                format!("You are banned from /b/{}", board_ban.board.name).as_str(),
+                                format!("You are banned from /b/{}", is_banned.board.name).as_str(),
                             ))
                         } else {
                             Ok(u)
@@ -255,13 +252,9 @@ impl UserResult {
                     return Self(Ok(u));
                 }
 
-                let is_mod = Board::board_has_mod(pool, board_id, u.id).await;
+                let is_mod = Board::board_has_mod(pool, board_id, u.id).await.unwrap();
 
-                if is_mod.is_err() {
-                    return Self(Err(TinyBoardsError::from_message(403, "nerd")));
-                };
-
-                let inner = match is_mod.unwrap() {
+                let inner = match is_mod {
                     Ok(is_mod) => {
                         if is_mod {
                             Ok(u)
@@ -307,10 +300,8 @@ pub async fn get_user_view_from_jwt_opt(
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
-    blocking(pool, move |conn| {
-        UserView::from_jwt(conn, token, master_key)
-    })
-    .await?
+
+    UserView::from_jwt(pool, token, master_key).await
 }
 
 #[tracing::instrument(skip_all)]
@@ -344,11 +335,7 @@ pub async fn check_registration_application(
 ) -> Result<(), TinyBoardsError> {
     if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
         let user_id = user_view.user.id;
-        let registration = blocking(pool, move |conn| {
-            RegistrationApplication::find_by_user_id(conn, user_id)
-                .map_err(|_e| TinyBoardsError::from_message(404, "could not find user registration"))
-        })
-        .await??;
+        let registration = RegistrationApplication::find_by_user_id(pool, user_id).await?;
 
         if let Some(deny_reason) = registration.deny_reason {
             let registration_denied_message = &deny_reason;
@@ -366,11 +353,7 @@ pub async fn check_registration_application(
 #[tracing::instrument(skip_all)]
 pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
     if score == -1 {
-        let site = blocking(pool, move |conn| {
-            Site::read_local(conn)
-                .map_err(|_e| TinyBoardsError::from_message(500, "could not read site"))
-        })
-        .await??;
+        let site = Site::read_local(pool).await?;
 
         if !site.enable_downvotes {
             return Err(TinyBoardsError::from_message(403, "downvotes are disabled"));
@@ -385,7 +368,7 @@ pub async fn check_private_instance(
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
-        let site = blocking(pool, move |conn| Site::read_local(conn)).await?;
+        let site = Site::read_local(pool).await;
 
         if let Ok(site) = site {
             if site.private_instance {
@@ -401,9 +384,7 @@ pub async fn check_board_deleted_or_removed(
     board_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let board = blocking(pool, move |conn| Board::read(conn, board_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
+    let board = Board::read(pool, board_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
 
     if board.is_deleted || board.is_banned {
         Err(TinyBoardsError::from_message(404, "board deleted or banned"))
@@ -417,9 +398,7 @@ pub async fn check_post_deleted_or_removed(
     post_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let post = blocking(pool, move |conn| Post::read(conn, post_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
+    let post = Post::read(pool, post_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
 
     if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message(404, "post deleted or removed"))
@@ -433,9 +412,7 @@ pub async fn check_post_deleted_removed_or_locked(
     post_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let post = blocking(pool, move |conn| Post::read(conn, post_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
+    let post = Post::read(pool, post_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
 
     if post.is_locked {
         Err(TinyBoardsError::from_message(403, "post locked"))
@@ -453,11 +430,7 @@ pub async fn check_user_block(
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     
-    let is_blocked = blocking(pool, move |conn| {
-        UserBlock::read(conn, other_id, my_id)
-    })
-    .await?
-    .is_ok();
+    let is_blocked = UserBlock::read(pool, other_id, my_id).await.is_ok();
 
     if is_blocked {
         Err(TinyBoardsError::from_message(405, "user is blocking you"))
@@ -471,9 +444,8 @@ pub async fn check_comment_deleted_or_removed(
     comment_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let comment = blocking(pool, move |conn| Comment::read(conn, comment_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find comment"))?;
+
+    let comment = Comment::read(pool, comment_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find comment"))?;
 
     if comment.is_deleted || comment.is_removed {
         Err(TinyBoardsError::from_message(404, "comment deleted or removed"))
@@ -506,10 +478,8 @@ pub async fn is_mod_or_admin(
     user_id: i32,
     board_id: i32,
 ) -> Result<(), TinyBoardsError> {
-    let is_mod_or_admin = blocking(pool, move |conn| {
-        BoardView::is_mod_or_admin(conn, user_id, board_id)
-    })
-    .await?;
+    let is_mod_or_admin = BoardView::is_mod_or_admin(pool, user_id, board_id).await;
+
     if !is_mod_or_admin {
         return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
     }
@@ -687,10 +657,8 @@ pub async fn send_application_approval_email(
     pool: &DbPool,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
-    let admins = blocking(pool, move |conn| {
-        UserSettingsView::list_admins_with_email(conn)
-    })
-    .await??;
+
+    let admins = UserSettingsView::list_admins_with_email(pool).await?;
 
     let application_link = &format!(
         "{}/admin/applications",
