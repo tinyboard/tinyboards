@@ -108,6 +108,7 @@ tinyboards_db_views_mod = { workspace = true }
 tinyboards_utils = { workspace = true }
 diesel = { workspace = true }
 diesel_migrations = { workspace = true }
+diesel-async = { workspace = true }
 serde = { workspace = true }
 actix-web = { workspace = true }
 dotenv  = { workspace = true }

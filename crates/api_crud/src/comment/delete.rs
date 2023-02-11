@@ -4,10 +4,10 @@ use tinyboards_api_common::{
     comment::{CommentIdPath, DeleteComment},
     data::TinyBoardsContext,
     site::Message,
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db::{
-    models::{comment::comments::Comment, post::posts::Post},
+    models::{comment::comments::Comment},
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -32,13 +32,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         let comment_id = path.comment_id;
 
-        let orig_comment =
-            blocking(context.pool(), move |conn| Comment::read(conn, comment_id)).await??;
-
-        blocking(context.pool(), move |conn| {
-            Post::read(conn, orig_comment.post_id)
-        })
-        .await??;
+        let orig_comment = Comment::read(context.pool(), comment_id).await?;
 
         if orig_comment.is_deleted == data.deleted {
             return Err(TinyBoardsError::from_message(
@@ -56,10 +50,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         let deleted = data.deleted;
 
-        blocking(context.pool(), move |conn| {
-            Comment::update_deleted(conn, comment_id, deleted)
-        })
-        .await??;
+        Comment::update_deleted(context.pool(), comment_id, deleted).await?;
 
         Ok(Message::new("Comment deleted!"))
     }

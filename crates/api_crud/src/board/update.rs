@@ -4,7 +4,6 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     board::{EditBoard, BoardResponse, BoardIdPath},
     utils::{
-        blocking,
         require_user,
     },
 };
@@ -58,15 +57,9 @@ impl<'des> PerformCrud<'des> for EditBoard {
         };
 
         // update the board
-        let board = blocking(context.pool(), move |conn| {
-            Board::update(conn, path.board_id.clone(), &form)
-        })
-        .await??;
+        let board = Board::update(context.pool(), path.board_id.clone(), &form).await?;
 
-        let board_view = blocking(context.pool(), move |conn| {
-            BoardView::read(conn, board.id, None)
-        })
-        .await??;
+        let board_view = BoardView::read(context.pool(), board.id, None).await?;
 
         Ok(BoardResponse { board_view })
     }

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{ListSiteInvites, ListSiteInvitesResponse},
-    utils::{require_user, blocking},
+    utils::{require_user},
 };
 use tinyboards_utils::error::TinyBoardsError;
 use tinyboards_db_views::site_invite_view::InviteQuery;
@@ -31,15 +31,13 @@ impl<'des> PerformCrud<'des> for ListSiteInvites {
         .require_admin()
         .unwrap()?;
 
-        let response = blocking(context.pool(), move |conn| {
-            InviteQuery::builder()
-                .conn(conn)
-                .page(page)
-                .limit(limit)
-                .build()
-                .list()
-        })
-        .await??;
+        let response = InviteQuery::builder()
+            .pool(context.pool())
+            .page(page)
+            .limit(limit)
+            .build()
+            .list()
+            .await?;
 
         let invites = response.invites;
         let total_count = response.count;

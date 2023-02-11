@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{DeletePost, PostIdPath},
     site::Message,
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db::{models::post::posts::Post, traits::Crud};
 use tinyboards_utils::error::TinyBoardsError;
@@ -27,7 +27,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
             .unwrap()?;
 
         let post_id = path.post_id;
-        let orig_post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+        let orig_post = Post::read(context.pool(), post_id).await?;
 
         if orig_post.is_deleted == data.deleted {
             return Err(TinyBoardsError::from_message(
@@ -43,10 +43,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         let post_id = path.post_id;
         let deleted = data.deleted;
 
-        blocking(context.pool(), move |conn| {
-            Post::update_deleted(conn, post_id, deleted)
-        })
-        .await??;
+        Post::update_deleted(context.pool(), post_id, deleted).await?;
 
         Ok(Message::new("Post deleted!"))
     }

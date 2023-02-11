@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{DeleteSiteInvite, InviteId},
-    utils::{require_user, blocking},
+    utils::{require_user},
 };
 use tinyboards_db::{
     models::{
@@ -34,10 +34,7 @@ impl<'des> PerformCrud<'des> for DeleteSiteInvite {
         .unwrap()?;
 
         // delete site invite
-        blocking(context.pool(), move  |conn| {
-            SiteInvite::delete(conn, id)
-        })
-        .await??;
+        SiteInvite::delete(context.pool(), id).await?;
 
         Ok(())
     }

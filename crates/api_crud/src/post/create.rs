@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{PostResponse, SubmitPost},
-    utils::{blocking, check_board_deleted_or_removed, require_user},
+    utils::{check_board_deleted_or_removed, require_user},
 };
 use tinyboards_db::{
     models::post::{
@@ -56,8 +56,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             ..PostForm::default()
         };
 
-        let published_post =
-            blocking(context.pool(), move |conn| Post::submit(conn, post_form)).await??;
+        let published_post = Post::submit(context.pool(), post_form).await?;
 
         // auto upvote own post
         let post_vote = PostVoteForm {
@@ -66,12 +65,9 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             score: 1,
         };
 
-        blocking(context.pool(), move |conn| PostVote::vote(conn, &post_vote)).await??;
+        PostVote::vote(context.pool(), &post_vote).await?;
 
-        let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, published_post.id, Some(user.id))
-        })
-        .await??;
+        let post_view = PostView::read(context.pool(), published_post.id, Some(user.id)).await?;
 
         Ok(PostResponse { post_view })
     }

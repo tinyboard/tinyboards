@@ -1,13 +1,11 @@
-use tinyboards_api_common::utils::blocking;
 use tinyboards_db::{
-    database::PgPool,
     models::{
         board::boards::{Board, BoardForm},
         site::site::{Site, SiteForm},
         user::users::{User, UserForm},
     },
     traits::Crud,
-    utils::naive_now,
+    utils::{naive_now, DbPool},
 };
 use tinyboards_utils::{
     error::TinyBoardsError, passhash::hash_password, settings::structs::Settings, utils::generate_rand_string,
@@ -15,7 +13,7 @@ use tinyboards_utils::{
 use tracing::info;
 
 pub async fn run_advanced_migrations(
-    pool: &PgPool,
+    pool: &DbPool,
     settings: &Settings,
 ) -> Result<(), TinyBoardsError> {
     initialize_local_site_and_admin_user(pool, settings).await?;
@@ -26,14 +24,11 @@ pub async fn run_advanced_migrations(
 
 /// This ensures every user has a chat_id, it's fine to run every time to ensure everyone has a proper id
 async fn generate_chat_ids_for_users(
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     info!("Running generate_chat_ids_for_users");
 
-    let users = blocking(pool, move |conn| {
-        User::get_users_by_chat_id(conn, String::from("n/a"))
-    })
-    .await??;
+    let users = User::get_users_by_chat_id(pool, String::from("n/a")).await?;
 
     if users.len() == 0 {
         info!("No chat ids needed to be generated, proceeding...");
@@ -41,10 +36,7 @@ async fn generate_chat_ids_for_users(
     } else {
         for user in users.into_iter() {
             let chat_id = generate_rand_string();
-            blocking(pool, move |conn| {
-                User::update_chat_id(conn, user.id, chat_id)
-            })
-            .await??;
+            User::update_chat_id(pool, user.id, chat_id).await?;
         }
         info!("Successfully generated chat ids, proceeding...");
         Ok(())
@@ -55,14 +47,14 @@ async fn generate_chat_ids_for_users(
 ///
 /// If the site is already initialized, this will not run
 async fn initialize_local_site_and_admin_user(
-    pool: &PgPool,
+    pool: &DbPool,
     settings: &Settings,
 ) -> Result<(), TinyBoardsError> {
     info!("Running initialize_local_site_and_admin_user");
 
     // check to see if local site exists
-    let exists = blocking(pool, move |conn| Site::exists(conn))
-        .await?
+    let exists = Site::exists(pool)
+        .await
         .is_ok();
 
     if exists {
@@ -82,7 +74,7 @@ async fn initialize_local_site_and_admin_user(
             ..UserForm::default()
         };
 
-        let inserted_admin = blocking(pool, move |conn| User::create(conn, &user_form)).await??;
+        let inserted_admin = User::create(pool, &user_form).await?;
 
         let default_name = "campfire".to_string();
         let default_title = "The Default Board".to_string();
@@ -95,7 +87,7 @@ async fn initialize_local_site_and_admin_user(
         };
 
         // make the default board
-        blocking(pool, move |conn| Board::create(conn, &default_board_form)).await??;
+        Board::create(pool, &default_board_form).await?;
 
         let site_form = SiteForm {
             name: Some(setup.site_name.clone()),
@@ -112,7 +104,7 @@ async fn initialize_local_site_and_admin_user(
         };
 
         // initialize the site
-        blocking(pool, move |conn| Site::create(conn, &site_form)).await??;
+        Site::create(pool, &site_form).await?;
     }
 
     info!("admin and site successfully initialized!");

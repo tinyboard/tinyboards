@@ -3822,6 +3822,7 @@ dependencies = [
  "clokwerk",
  "console-subscriber",
  "diesel",
+ "diesel-async",
  "diesel_migrations",
  "doku",
  "dotenv",

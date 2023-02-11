@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{CreateSiteInvite, CreateSiteInviteResponse},
-    utils::{blocking, require_user},
+    utils::{require_user},
 };
 use tinyboards_db::{
     models::{
@@ -33,7 +33,7 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
             .unwrap()?;
 
         // we only create invites if site is in invite mode
-        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+        let site = Site::read_local(context.pool()).await?;
 
         if !site.invite_only {
             return Err(TinyBoardsError::from_message(
@@ -47,8 +47,7 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
         };
 
         // create record in db
-        let invite =
-            blocking(context.pool(), move |conn| SiteInvite::create(conn, &form)).await??;
+        let invite = SiteInvite::create(context.pool(), &form).await?;
 
         let invite_url = format!(
             "{}/validate_invite/{}",

@@ -3,7 +3,6 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     private_messages::{GetPrivateMessages, PrivateMessagesResponse},
     utils::{
-        blocking,
         require_user,
     },
     data::TinyBoardsContext,
@@ -38,49 +37,40 @@ impl<'des> PerformCrud<'des> for GetPrivateMessages {
 
         if let Some(chat_id) = chat_id {
             
-            let creator 
-                = blocking(context.pool(), move |conn| {
-                    User::get_user_by_chat_id(conn, chat_id)
-                })
-                .await??;
+            let creator = User::get_user_by_chat_id(context.pool(), chat_id).await?;
             
-            let query_response
-                = blocking(context.pool(), move |conn| {
-                    PrivateMessageQuery::builder()
-                        .conn(conn)
-                        .recipient_id(user.id)
-                        .unread_only(unread_only)
-                        .creator_id(Some(creator.id))
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                })
-                .await??;
+            let query_response = PrivateMessageQuery::builder()
+                .pool(context.pool())
+                .recipient_id(user.id)
+                .unread_only(unread_only)
+                .creator_id(Some(creator.id))
+                .page(page)
+                .limit(limit)
+                .build()
+                .list()
+                .await?;
+
             let messages = query_response.messages;
             let total_count = query_response.count;
             let unread_count = query_response.unread;
 
             // mark all messages from creator as read (in the thread)
-            blocking(context.pool(), move |conn| {
-                PrivateMessageView::mark_thread_as_read(conn, creator.id)
-            })
-            .await??;
+            PrivateMessageView::mark_thread_as_read(context.pool(), creator.id).await?;
+
             Ok(PrivateMessagesResponse { messages, total_count, unread_count })
             
         }  else {
-            let query_response
-                = blocking(context.pool(), move |conn| {
-                    PrivateMessageQuery::builder()
-                        .conn(conn)
-                        .recipient_id(user.id)
-                        .unread_only(unread_only)
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                })
-                .await??;
+            
+            let query_response = PrivateMessageQuery::builder()
+                .pool(context.pool())
+                .recipient_id(user.id)
+                .unread_only(unread_only)
+                .page(page)
+                .limit(limit)
+                .build()
+                .list()
+                .await?;
+
             let messages = query_response.messages;
             let total_count = query_response.count;
             let unread_count = query_response.unread;
