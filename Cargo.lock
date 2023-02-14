@@ -912,15 +912,14 @@ dependencies = [
 
 [[package]]
 name = "diesel-async"
-version = "0.2.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f9ff806825ea92f061cfca008f4885149a6c62b7f508d00d2c35c3d7522b946"
+checksum = "588383fa6d12fb17edf0fda88942222bbad070d185b5dcc3ac4d8354ce84b583"
 dependencies = [
  "async-trait",
  "bb8",
  "diesel",
  "futures",
- "scoped-futures",
  "tokio",
  "tokio-postgres",
 ]
@@ -3221,16 +3220,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "977a7519bff143a44f842fd07e80ad1329295bd71686457f18e496736f4bf9bf"
 dependencies = [
  "parking_lot 0.12.1",
-]
-
-[[package]]
-name = "scoped-futures"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1473e24c637950c9bd38763220bea91ec3e095a89f672bbd7a10d03e77ba467"
-dependencies = [
- "cfg-if",
- "pin-utils",
 ]
 
 [[package]]
