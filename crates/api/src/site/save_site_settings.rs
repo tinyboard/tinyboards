@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{get_current_site_mode, require_user},
 };
 use tinyboards_db::{
-    models::{site::site::{Site, SiteForm}, user::users::User},
+    models::{site::{site::{Site, SiteForm}, stray_images::StrayImage}, user::users::User},
     traits::Crud,
     utils::naive_now,
     SiteMode,
@@ -105,6 +105,10 @@ impl<'des> Perform<'des> for SaveSiteSettings {
 
         // perform settings update
         let updated_site = Site::update(context.pool(), site.id, &form).await?;
+
+        if updated_site.default_avatar.is_some() {
+            StrayImage::remove_url_from_stray_images(context.pool(), updated_site.default_avatar.clone().unwrap()).await?;
+        }
 
         Ok(GetSiteSettingsResponse {
             name: updated_site.name,

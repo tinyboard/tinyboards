@@ -9,7 +9,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::site::site::Site,
-    models::user::users::{User, UserForm},
+    models::{user::users::{User, UserForm}, site::stray_images::StrayImage},
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
@@ -172,6 +172,19 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let updated_user_view =
             get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+
+        // remove any uploaded image urls from the stray image deletion queue
+        if updated_user_view.user.avatar.is_some() {
+            StrayImage::remove_url_from_stray_images(context.pool(), updated_user_view.user.avatar.clone().unwrap()).await?;
+        }
+
+        if updated_user_view.user.banner.is_some() {
+            StrayImage::remove_url_from_stray_images(context.pool(), updated_user_view.user.banner.clone().unwrap()).await?;
+        }
+
+        if updated_user_view.user.signature.is_some() {
+            StrayImage::remove_url_from_stray_images(context.pool(), updated_user_view.user.signature.clone().unwrap()).await?;
+        }
 
         let new_jwt = Claims::jwt(
             updated_user_view.user.id,

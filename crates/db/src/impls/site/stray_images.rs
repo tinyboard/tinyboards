@@ -15,6 +15,15 @@ impl StrayImage {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn remove_url_from_stray_images(pool: &DbPool, url: String) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
+
+        diesel::delete(stray_images)
+            .filter(img_url.eq(url))
+            .execute(conn)
+            .await
+    }
 }
 
 #[async_trait::async_trait]

@@ -13,7 +13,7 @@ use actix_web::{
 use futures::stream::{Stream, StreamExt};
 use tinyboards_api_common::utils::{get_user_view_from_jwt, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
-use tinyboards_db::{models::site::{site::Site, stray_images::{StrayImage, StrayImageForm}}, traits::Crud};
+use tinyboards_db::{models::site::{site::Site, stray_images::StrayImage}};
 use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -229,9 +229,9 @@ async fn upload_image_file(
         let image_url = format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file);
         images.url = Some(image_url.clone());
         images.delete_url = Some(format!("{}/image/delete/{}/{}", context.settings().get_protocol_and_hostname(), files[0].delete_token, files[0].file));
-
-        // StrayImage::add_url_to_stray_images(context.pool(), image_url.clone()).await?;
-
+        
+        // add image url to stray image cache, allow to soft fail
+        StrayImage::add_url_to_stray_images(context.pool(), image_url.clone()).await.ok();
     }
 
     Ok(HttpResponse::build(status).json(images))

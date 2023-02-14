@@ -6,10 +6,10 @@ use tinyboards_api_common::{
     utils::{check_board_deleted_or_removed, require_user},
 };
 use tinyboards_db::{
-    models::post::{
+    models::{post::{
         post_votes::{PostVote, PostVoteForm},
         posts::{Post, PostForm},
-    },
+    }, site::stray_images::StrayImage},
     traits::Voteable,
 };
 use tinyboards_db_views::structs::PostView;
@@ -57,6 +57,11 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         };
 
         let published_post = Post::submit(context.pool(), post_form).await?;
+
+        // remove image url from the stray image deletion queue if it's actually posted
+        if published_post.image.is_some() {
+            StrayImage::remove_url_from_stray_images(context.pool(), published_post.image.unwrap()).await?;
+        }
 
         // auto upvote own post
         let post_vote = PostVoteForm {
