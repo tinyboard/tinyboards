@@ -4,13 +4,15 @@ use tinyboards_db::{
     models::{moderator::mod_actions::ModAddBoardMod, user::users::UserSafe},
     schema::{mod_add_board_mod, users},
     traits::{ToSafe, ViewToVec},
-    utils::limit_and_offset,
+    utils::{limit_and_offset, DbPool, get_conn},
 };
+use diesel_async::RunQueryDsl;
 
 type ModAddBoardModViewTuple = (ModAddBoardMod, Option<UserSafe>, UserSafe);
 
 impl ModAddBoardModView {
-    pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
+    pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let user_alias = diesel::alias!(users as user_1);
         let mod_id_join = params.mod_user_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
@@ -46,7 +48,8 @@ impl ModAddBoardModView {
             .limit(limit)
             .offset(offset)
             .order_by(mod_add_board_mod::when_.desc())
-            .load::<ModAddBoardModViewTuple>(conn)?;
+            .load::<ModAddBoardModViewTuple>(conn)
+            .await?;
 
         let results = Self::from_tuple_to_vec(res);
 

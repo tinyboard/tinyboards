@@ -4,13 +4,15 @@ use tinyboards_db::{
     models::{moderator::admin_actions::AdminPurgePost, user::users::UserSafe},
     schema::{admin_purge_post, users},
     traits::{ToSafe, ViewToVec},
-    utils::limit_and_offset,
+    utils::{limit_and_offset, DbPool, get_conn},
 };
+use diesel_async::RunQueryDsl;
 
 type AdminPurgePostViewTuple = (AdminPurgePost, Option<UserSafe>);
 
 impl AdminPurgePostView {
-    pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
+    pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let admin_user_id_join = params.mod_user_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
@@ -37,7 +39,8 @@ impl AdminPurgePostView {
             .limit(limit)
             .offset(offset)
             .order_by(admin_purge_post::when_.desc())
-            .load::<AdminPurgePostViewTuple>(conn)?;
+            .load::<AdminPurgePostViewTuple>(conn)
+            .await?;
 
         let results = Self::from_tuple_to_vec(res);
 

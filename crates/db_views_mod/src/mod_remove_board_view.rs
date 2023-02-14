@@ -6,13 +6,15 @@ use tinyboards_db::{
     },
     schema::{boards, mod_remove_board, users},
     traits::{ToSafe, ViewToVec},
-    utils::limit_and_offset,
+    utils::{limit_and_offset, DbPool, get_conn},
 };
+use diesel_async::RunQueryDsl;
 
 type ModRemoveBoardViewTuple = (ModRemoveBoard, Option<UserSafe>, BoardSafe);
 
 impl ModRemoveBoardView {
-    pub fn list(conn: &mut PgConnection, params: ModLogParams) -> Result<Vec<Self>, Error> {
+    pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         let mod_id_join = params.mod_user_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
@@ -45,7 +47,8 @@ impl ModRemoveBoardView {
             .limit(limit)
             .offset(offset)
             .order_by(mod_remove_board::when_.desc())
-            .load::<ModRemoveBoardViewTuple>(conn)?;
+            .load::<ModRemoveBoardViewTuple>(conn)
+            .await?;
 
         let results = Self::from_tuple_to_vec(res);
 
