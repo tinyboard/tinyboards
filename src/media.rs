@@ -11,9 +11,9 @@ use actix_web::{
     HttpResponse,
 };
 use futures::stream::{Stream, StreamExt};
-use tinyboards_api_common::utils::{get_user_view_from_jwt, blocking, require_user, decode_base64_image};
+use tinyboards_api_common::utils::{get_user_view_from_jwt, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
-use tinyboards_db::models::site::site::Site;
+use tinyboards_db::{models::site::{site::Site, stray_images::{StrayImage, StrayImageForm}}, traits::Crud};
 use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};
@@ -113,11 +113,9 @@ async fn full_res(
     context: web::Data<TinyBoardsContext>,
 ) -> Result<HttpResponse, Error> {
     
-    let site = blocking(context.pool(), move |conn| {
-        Site::read_local(conn)
-    })
-    .await?
-    .map_err(ErrorBadRequest)?;
+    let site = Site::read_local(context.pool())
+        .await
+        .map_err(ErrorBadRequest)?;
 
     if site.private_instance {
         let jwt = req
@@ -227,10 +225,15 @@ async fn upload_image_file(
     let mut images = res.json::<Images>().await.map_err(ErrorBadRequest)?;
     
     if let Some(files) = &images.files {
-        images.url = Some(format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file));
+
+        let image_url = format!("{}/image/{}", context.settings().get_protocol_and_hostname(), files[0].file);
+        images.url = Some(image_url.clone());
         images.delete_url = Some(format!("{}/image/delete/{}/{}", context.settings().get_protocol_and_hostname(), files[0].delete_token, files[0].file));
+
+        // StrayImage::add_url_to_stray_images(context.pool(), image_url.clone()).await?;
+
     }
-    
+
     Ok(HttpResponse::build(status).json(images))
 }
 

@@ -36,6 +36,7 @@ tinyboards_db_views = { version = "=0.1.0", path="./crates/db_views" }
 tinyboards_db_views_mod = { version = "=0.1.0", path="./crates/db_views_mod" }
 base64 = "0.21.0"
 diesel = { version = "2.0.2", features = ["postgres", "r2d2", "serde_json", "chrono"] }
+diesel-async = "0.2.0"
 diesel_migrations = "2.0.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = { version = "1.0.91", features = ["preserve_order"] }
@@ -74,6 +75,7 @@ rand = "0.8.5"
 opentelemetry = { version = "0.18.0", features = ["rt-tokio"] }
 tracing-opentelemetry = { version = "0.18.0" }
 actix-ws = "0.2.5"
+actix = "0.13.0"
 bigdecimal = "0.3.0"
 dotenv = "0.15.0"
 dotenv_codegen = "0.15.0"
@@ -94,6 +96,7 @@ deser-hjson = "1.1.0"
 smart-default = "0.6.0"
 html2text = "0.4.5"
 jsonwebtoken = "8.2.0"
+bb8 = "0.8.0"
 
 [dependencies]
 tinyboards_api = { workspace = true }
@@ -105,6 +108,7 @@ tinyboards_db_views_mod = { workspace = true }
 tinyboards_utils = { workspace = true }
 diesel = { workspace = true }
 diesel_migrations = { workspace = true }
+diesel-async = { workspace = true }
 serde = { workspace = true }
 actix-web = { workspace = true }
 dotenv  = { workspace = true }

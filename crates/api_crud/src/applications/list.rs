@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     applications::{ListRegistrationApplications, ListRegistrationApplicationsResponse},
-    utils::{require_user, blocking},
+    utils::{require_user},
 };
 use tinyboards_utils::error::TinyBoardsError;
 use tinyboards_db_views::registration_application_view::ApplicationQuery;
@@ -31,15 +31,12 @@ impl<'des> PerformCrud<'des> for ListRegistrationApplications {
         .require_admin()
         .unwrap()?;
 
-        let response = blocking(context.pool(), move |conn| {
-            ApplicationQuery::builder()
-                .conn(conn)
-                .page(page)
-                .limit(limit)
-                .build()
-                .list()
-        })
-        .await??;
+        let response = ApplicationQuery::builder()
+            .pool(context.pool())
+            .page(page)
+            .limit(limit)
+            .build()
+            .list().await?;
 
         let applications = response.applications;
         let total_count = response.count;

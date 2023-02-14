@@ -1,12 +1,7 @@
 #[macro_use]
 extern crate diesel_migrations;
 
-use crate::diesel_migrations::MigrationHarness;
 use actix_web::{web::Data, *};
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection,
-};
 use diesel_migrations::EmbeddedMigrations;
 use dotenv::dotenv;
 use reqwest::Client;
@@ -17,10 +12,9 @@ use std::{thread, time::Duration};
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     request::build_user_agent,
-    utils::{blocking, get_rate_limit_config},
+    utils::{get_rate_limit_config},
 };
-use tinyboards_db::models::secret::Secret;
-use tinyboards_db::utils::get_database_url_from_env;
+use tinyboards_db::{models::secret::Secret, utils::{build_db_pool, run_migrations, get_db_url}};
 use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging, media,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
@@ -38,51 +32,33 @@ async fn main() -> Result<(), TinyBoardsError> {
     dotenv().ok();
 
     let settings = SETTINGS.to_owned();
+    
+    // Set up the bb8 connection pool
+    let db_url = get_db_url(Some(&settings));
+    run_migrations(&db_url);
 
     init_logging(&settings.opentelemetry_url)
         .map_err(|_| TinyBoardsError::from_message(500, "failed to initialize logger"))?;
 
-    let db_url = match get_database_url_from_env() {
-        Ok(url) => url,
-        Err(_) => settings.get_database_url(),
-    };
-
-    let manager = ConnectionManager::<PgConnection>::new(&db_url);
-    let pool = Pool::builder()
-        .max_size(settings.database.pool_size)
-        .min_idle(Some(1))
-        .build(manager)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", db_url));
+    
+    let pool = build_db_pool(&settings).await?;
 
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
-
-    blocking(&pool, move |conn| {
-        let _ = conn
-            .run_pending_migrations(MIGRATIONS)
-            .map_err(|_| TinyBoardsError::from_message(500, "Couldn't run migrations"))?;
-        Ok(()) as Result<(), TinyBoardsError>
-    })
-    .await??;
 
     // run advanced migrations
     run_advanced_migrations(&pool, &settings).await?;
 
-    let task_pool = pool.clone();
+    let db_url = get_db_url(Some(&settings));
     thread::spawn(move || {
-        scheduled_tasks::setup(task_pool).expect("Couldn't setup scheduled tasks");
+        scheduled_tasks::setup(db_url).expect("Couldn't setup scheduled tasks");
     });
 
     let rate_limit_config = get_rate_limit_config(&settings.rate_limit.to_owned().unwrap());
     let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;
 
     // init the secret
-    let conn = &mut pool.get().map_err(|_| {
-        TinyBoardsError::from_message(
-            500,
-            "could not establish connection pool for initializing secrets",
-        )
-    })?;
-    let secret = Secret::init(conn).expect("Couldn't initialize secrets.");
+    let db_url = get_db_url(Some(&settings));
+    let secret = Secret::init(db_url).expect("Couldn't initialize secrets.");
 
     println!(
         "Starting http server at {}:{}",

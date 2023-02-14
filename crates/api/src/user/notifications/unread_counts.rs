@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
   data::TinyBoardsContext,
   user::{GetUnreadCount, GetUnreadCountResponse},
-  utils::{get_user_view_from_jwt, blocking},
+  utils::{get_user_view_from_jwt},
 };
 use tinyboards_db_views::structs::{CommentReplyView, UserMentionView, PrivateMessageView};
 use tinyboards_utils::error::TinyBoardsError;
@@ -28,23 +28,11 @@ impl<'des> Perform<'des> for GetUnreadCount {
     let user_id = user.id;
 
 
-    let replies
-        = blocking(context.pool(), move |conn| {
-            CommentReplyView::get_unread_replies(conn, user_id)
-        })
-        .await??;
+    let replies = CommentReplyView::get_unread_replies(context.pool(), user_id).await?;
     
-    let mentions 
-        = blocking(context.pool(), move |conn| {
-            UserMentionView::get_unread_mentions(conn, user_id)
-        })
-        .await??;
+    let mentions  = UserMentionView::get_unread_mentions(context.pool(), user_id).await?;
 
-    let messages
-        = blocking(context.pool(), move |conn| {
-          PrivateMessageView::get_unread_message_count(conn, user_id)
-        })
-        .await??;
+    let messages = PrivateMessageView::get_unread_message_count(context.pool(), user_id).await?;
 
     Ok(GetUnreadCountResponse {
         replies,

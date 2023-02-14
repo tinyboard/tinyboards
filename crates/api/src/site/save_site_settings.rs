@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetSiteSettingsResponse, SaveSiteSettings},
-    utils::{blocking, get_current_site_mode, require_user},
+    utils::{get_current_site_mode, require_user},
 };
 use tinyboards_db::{
     models::{site::site::{Site, SiteForm}, user::users::User},
@@ -33,7 +33,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             .require_admin()
             .unwrap()?;
 
-        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+        let site = Site::read_local(context.pool()).await?;
 
         let current_require_app = site.require_application;
 
@@ -76,10 +76,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         // we need to toggle all unaccepted users to accepted after toggling app mode on/off
         if let Some(require_application) = require_application {
             if require_application != current_require_app {
-                blocking(context.pool(), move |conn| {
-                    User::accept_all_applications(conn)
-                })
-                .await??;
+                User::accept_all_applications(context.pool()).await?;
             }
         }
 
@@ -107,10 +104,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         };
 
         // perform settings update
-        let updated_site = blocking(context.pool(), move |conn| {
-            Site::update(conn, site.id, &form)
-        })
-        .await??;
+        let updated_site = Site::update(context.pool(), site.id, &form).await?;
 
         Ok(GetSiteSettingsResponse {
             name: updated_site.name,

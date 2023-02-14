@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::{CommentIdPath, CommentResponse, CreateCommentVote},
     data::TinyBoardsContext,
     utils::{
-        blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
+        check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_removed_or_locked, require_user,
     },
 };
@@ -37,10 +37,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
 
         let comment_id = path.comment_id;
 
-        let orig_comment = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, comment_id, Some(user.id))
-        })
-        .await??;
+        let orig_comment = CommentView::read(context.pool(), comment_id, Some(user.id)).await?;
 
         // check to see if board is even there or not
         check_board_deleted_or_removed(orig_comment.post.board_id, context.pool()).await?;
@@ -51,10 +48,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
         // check if comment even exists or not
         check_comment_deleted_or_removed(comment_id, context.pool()).await?;
 
-        let is_board_banned = blocking(context.pool(), move |conn| {
-            Board::board_has_ban(conn, orig_comment.post.board_id, user.id)
-        })
-        .await??;
+        let is_board_banned = Board::board_has_ban(context.pool(), orig_comment.post.board_id, user.id).await?;
 
         if !is_board_banned {
             let vote_form = CommentVoteForm {
@@ -64,33 +58,23 @@ impl<'des> Perform<'des> for CreateCommentVote {
             };
 
             // remove any existing votes first
-            blocking(context.pool(), move |conn| {
-                CommentVote::remove(conn, user.id, comment_id)
-            })
-            .await??;
+            CommentVote::remove(context.pool(), user.id, comment_id).await?;
 
             let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);
 
             if do_add {
                 let cloned_form = vote_form.clone();
-                let like = move |conn: &mut _| CommentVote::vote(conn, &cloned_form);
-                blocking(context.pool(), like).await??;
+                CommentVote::vote(context.pool(), &cloned_form).await?;
             } else {
                 let cloned_form = vote_form.clone();
-                let like = move |conn: &mut _| {
-                    CommentVote::remove(conn, cloned_form.user_id, cloned_form.comment_id)
-                };
-                blocking(context.pool(), like).await??;
+                CommentVote::remove(context.pool(), cloned_form.user_id, cloned_form.comment_id).await?;
             }
         }
 
         // mark comment as read here
 
         // grab updated comment view here
-        let comment_view = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, comment_id, Some(user.id))
-        })
-        .await??;
+        let comment_view = CommentView::read(context.pool(), comment_id, Some(user.id)).await?;
 
         Ok(CommentResponse { comment_view })
     }

@@ -1,23 +1,21 @@
 use crate::{newtypes::DbUrl, CommentSortType, SortType};
 use diesel::{
-    // backend::Backend,
-    // deserialize::FromSql,
-    // pg::Pg,
-    result::Error::QueryBuilderError,
-    // serialize::{Output, ToSql},
-    // sql_types::Text,
-    Connection,
-    PgConnection,
+    result::{Error as DieselError, Error::QueryBuilderError},
+    PgConnection, Connection,
+};
+use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};
+use bb8::PooledConnection;
+use diesel_async::{
+    pg::AsyncPgConnection,
+    pooled_connection::{bb8::Pool, AsyncDieselConnectionManager},
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use tinyboards_utils::error::TinyBoardsError;
+use std::{env, env::VarError};
+use tracing::info;
 use url::Url;
 
-pub type DbPool = diesel::r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::PgConnection>>;
 
-pub fn get_database_url_from_env() -> Result<String, std::env::VarError> {
-    std::env::var("TINYBOARDS_DATABASE_URL")
-}
+pub type DbPool = Pool<AsyncPgConnection>;
 
 pub const DEFAULT_FETCH_LIMIT: i64 = 20;
 pub const FETCH_LIMIT_MAX: i64 = 50;
@@ -78,7 +76,7 @@ pub fn naive_now() -> chrono::NaiveDateTime {
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 
 pub fn establish_unpooled_connection() -> PgConnection {
-    let db_url = match get_database_url_from_env() {
+    let db_url = match get_db_url_from_env() {
         Ok(url) => url,
         Err(e) => panic!(
             "Failed to read database URL from env var TINYBOARDS_DATABASE_URL: {}",
@@ -135,4 +133,63 @@ pub fn post_to_comment_sort_type(sort: SortType) -> CommentSortType {
         | SortType::TopMonth
         | SortType::TopYear => CommentSortType::Top,
     }
+}
+
+
+pub fn get_db_url_from_env() -> Result<String, VarError> {
+    env::var("TINYBOARDS_DATABASE_URL")
+}
+
+pub fn get_db_url(settings: Option<&Settings>) -> String {
+    match get_db_url_from_env() {
+        Ok(url) => url,
+        Err(e) => match settings {
+            Some(settings) => settings.get_database_url(),
+            None => panic!("Failed to read database URL from env var TINYBOARDS_DATABASE_URL: {e}"),
+        },
+    }
+}
+
+pub fn run_migrations(db_url: &str) {
+    let mut conn = 
+        PgConnection::establish(db_url).unwrap_or_else(|e| panic!("Error connecting to {db_url}: {e}"));
+    info!("Running db migrations! (this may take a while...)");
+    let _ = &mut conn
+        .run_pending_migrations(MIGRATIONS)
+        .unwrap_or_else(|e| panic!("Couldn't run DB Migrations: {e}"));
+    info!("Database migrations complete.")
+}
+
+async fn build_db_pool_settings_opt(settings: Option<&Settings>) -> Result<DbPool, TinyBoardsError> {
+    let db_url = get_db_url(settings);
+    let pool_size = settings.map(|s| s.database.pool_size).unwrap_or(5);
+    let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(&db_url);
+    let pool = Pool::builder()
+        .max_size(pool_size)
+        .min_idle(Some(1))
+        .build(manager)
+        .await?;
+
+    // If there's no settings then run DB Migrations (unit testing)
+    if settings.is_none() {
+        run_migrations(&db_url);
+    }
+
+    Ok(pool)
+}
+
+pub async fn build_db_pool(settings: &Settings) -> Result<DbPool, TinyBoardsError> {
+    build_db_pool_settings_opt(Some(settings)).await
+}
+
+pub async fn build_db_pool_for_tests() -> DbPool {
+    build_db_pool_settings_opt(None)
+        .await
+        .expect("db pool missing")
+}
+
+pub async fn get_conn(
+    pool: &DbPool,
+) -> Result<PooledConnection<AsyncDieselConnectionManager<AsyncPgConnection>>, DieselError> {
+    pool.get().await.map_err(|e| QueryBuilderError(e.into()))
 }

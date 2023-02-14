@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetMembers, GetMembersResponse},
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db_views::user_view::UserQuery;
 use tinyboards_utils::error::TinyBoardsError;
@@ -39,19 +39,17 @@ impl<'des> Perform<'des> for GetMembers {
         let is_admin = params.is_admin;
         let is_banned = params.is_banned;
 
-        let response = blocking(context.pool(), move |conn| {
-            UserQuery::builder()
-                .conn(conn)
-                .sort(Some(sort))
-                .is_admin(is_admin)
-                .is_banned(is_banned)
-                .approved_only(Some(true)) // we only want to display approved users
-                .limit(limit)
-                .page(page)
-                .build()
-                .list()
-        })
-        .await??;
+        let response = UserQuery::builder()
+            .pool(context.pool())
+            .sort(Some(sort))
+            .is_admin(is_admin)
+            .is_banned(is_banned)
+            .approved_only(Some(true)) // we only want to display approved users
+            .limit(limit)
+            .page(page)
+            .build()
+            .list()
+            .await?;
 
         let members = response.users;
         let total_count = response.count;

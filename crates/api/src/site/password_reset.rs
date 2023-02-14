@@ -4,7 +4,6 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{ExecutePasswordReset, PasswordResetTokenPath},
     utils::{
-        blocking,
         send_password_reset_success_email,
     },
 };
@@ -30,19 +29,13 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
         let new_password = data.new_password.clone();
         let new_password_verify = data.new_password_verify.clone();
 
-        let reset_request = blocking(context.pool(), move |conn| {
-            PasswordReset::get_by_token(conn, &reset_token)
-        })
-        .await??;
+        let reset_request = PasswordReset::get_by_token(context.pool(), &reset_token).await?;
         
         if new_password != new_password_verify {
             return Err(TinyBoardsError::from_message(400, "passwords did not match"));
         }
 
-        let user = blocking(context.pool(), move |conn| {
-            User::read(conn, reset_request.user_id.clone())
-        })
-        .await??;
+        let user = User::read(context.pool(), reset_request.user_id.clone()).await?;
 
         let equals_old_password = verify_password(&user.passhash, &new_password);
 
@@ -53,16 +46,10 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
         let new_passhash = hash_password(new_password);
         
         // actually update the password here
-        blocking(context.pool(), move |conn| {
-            User::update_passhash(conn, user.id.clone(), new_passhash)
-        })
-        .await??;
+        User::update_passhash(context.pool(), user.id.clone(), new_passhash).await?;
 
         // no longer need the password reset in the db, so delete it here
-        blocking(context.pool(), move |conn| {
-            PasswordReset::delete(conn, reset_request.id)
-        })
-        .await??;
+        PasswordReset::delete(context.pool(), reset_request.id).await?;
 
         // send an email that the reset was successful
         send_password_reset_success_email(&user.name, &user.email.unwrap(), context.settings()).await?;

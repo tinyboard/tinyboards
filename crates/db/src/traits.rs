@@ -1,55 +1,60 @@
-use crate::newtypes::UserId;
-use diesel::{result::Error, PgConnection};
+use crate::{newtypes::UserId, utils::DbPool};
+use diesel::{result::Error};
 use tinyboards_utils::TinyBoardsError;
 
+
+#[async_trait::async_trait]
 pub trait Crud {
     type Form;
     type IdType;
 
-    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
+    async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
 
-    fn read(conn: &mut PgConnection, id: Self::IdType) -> Result<Self, Error>
+    async fn read(pool: &DbPool, id: Self::IdType) -> Result<Self, Error>
     where
         Self: Sized;
 
-    fn update(conn: &mut PgConnection, id: Self::IdType, form: &Self::Form) -> Result<Self, Error>
+    async fn update(pool: &DbPool, id: Self::IdType, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    fn delete(_conn: &mut PgConnection, _id: Self::IdType) -> Result<usize, Error>
+    async fn delete(pool: &DbPool, id: Self::IdType) -> Result<usize, Error>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Subscribeable {
     type Form;
-    fn subscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
+    async fn subscribe(pool: &DbPool, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    fn unsubscribe(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, Error>
+    async fn unsubscribe(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Joinable {
     type Form;
-    fn join(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn join(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn leave(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn leave(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Voteable {
     type Form;
     type IdType;
-    fn vote(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn vote(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn remove(
-        conn: &mut PgConnection,
+    async fn remove(
+        pool: &DbPool,
         user_id: i32,
         item_id: Self::IdType,
     ) -> Result<usize, TinyBoardsError>
@@ -57,68 +62,72 @@ pub trait Voteable {
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Bannable {
     type Form;
-    fn ban(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error>
+    async fn ban(pool: &DbPool, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    fn unban(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, Error>
+    async fn unban(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Saveable {
     type Form;
-    fn save(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn save(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn unsave(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError>
+    async fn unsave(pool: &DbPool, form: &Self::Form) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Blockable {
     type Form;
-    fn block(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn block(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn unblock(conn: &mut PgConnection, form: &Self::Form) -> Result<usize, TinyBoardsError>
+    async fn unblock(pool: &DbPool, form: &Self::Form) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Readable {
     type Form;
-    fn mark_as_read(conn: &mut PgConnection, form: &Self) -> Result<Self, TinyBoardsError>
+    async fn mark_as_read(pool: &DbPool, form: &Self) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn mark_as_unread(conn: &mut PgConnection, form: &Self) -> Result<usize, TinyBoardsError>
+    async fn mark_as_unread(pool: &DbPool, form: &Self) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Reportable {
     type Form;
     type IdType;
-    fn report(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn report(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
     where
         Self: Sized;
-    fn resolve(
-        conn: &mut PgConnection,
+    async fn resolve(
+        pool: &DbPool,
         report_id: Self::IdType,
         resolver_id: UserId,
     ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
-    fn unresolve(
-        conn: &mut PgConnection,
+    async fn unresolve(
+        pool: &DbPool,
         report_id: Self::IdType,
         resolver_id: UserId,
     ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
 }
-
 pub trait ToSafe {
     type SafeColumns;
     fn safe_columns_tuple() -> Self::SafeColumns;
@@ -131,20 +140,21 @@ pub trait ViewToVec {
         Self: Sized;
 }
 
+#[async_trait::async_trait]
 pub trait Moderateable {
     fn get_board_id(&self) -> i32;
-    fn remove(
+    async fn remove(
         &self,
         admin_id: Option<i32>,
         reason: Option<String>,
-        conn: &mut PgConnection,
+        pool: &DbPool,
     ) -> Result<(), TinyBoardsError>;
-    fn approve(
+    async fn approve(
         &self,
         admin_id: Option<i32>,
-        conn: &mut PgConnection,
+        pool: &DbPool,
     ) -> Result<(), TinyBoardsError>;
-    fn lock(&self, admin_id: Option<i32>, conn: &mut PgConnection) -> Result<(), TinyBoardsError>;
-    fn unlock(&self, admin_id: Option<i32>, conn: &mut PgConnection)
+    async fn lock(&self, admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError>;
+    async fn unlock(&self, admin_id: Option<i32>, pool: &DbPool)
         -> Result<(), TinyBoardsError>;
 }

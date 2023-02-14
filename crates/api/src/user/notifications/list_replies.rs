@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetCommentReplies, GetCommentRepliesResponse},
-    utils::{blocking, get_user_view_from_jwt},
+    utils::{get_user_view_from_jwt},
 };
 use tinyboards_db::{
     map_to_comment_sort_type,
@@ -40,19 +40,17 @@ impl<'des> Perform<'des> for GetCommentReplies {
             let unread_only = data.unread_only;
             let user_id = Some(user.id);
             
-            let resp = blocking(context.pool(), move |conn| {
-                CommentReplyQuery::builder()
-                    .conn(conn)
-                    .recipient_id(user_id)
-                    .user_id(user_id)
-                    .sort(Some(sort))
-                    .unread_only(unread_only)
-                    .page(page)
-                    .limit(limit)
-                    .build()
-                    .list()
-            })
-            .await??;
+            let resp = CommentReplyQuery::builder()
+                .pool(context.pool())
+                .recipient_id(user_id)
+                .user_id(user_id)
+                .sort(Some(sort))
+                .unread_only(unread_only)
+                .page(page)
+                .limit(limit)
+                .build()
+                .list()
+                .await?;
 
             Ok(GetCommentRepliesResponse { replies: resp.replies, total_count: resp.count, unread_count: resp.unread })
     }

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{BanFromBoard, ModActionResponse},
-    utils::{blocking, require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::board::{
@@ -50,10 +50,7 @@ impl<'des> Perform<'des> for BanFromBoard {
 
         if banned {
             // ban user from board
-            blocking(context.pool(), move |conn| {
-                BoardUserBan::ban(conn, &board_user_ban_form)
-            })
-            .await??;
+            BoardUserBan::ban(context.pool(), &board_user_ban_form).await?;
 
             // also unsubscribe them from board, if subbed
             let sub_form = BoardSubscriberForm {
@@ -61,17 +58,11 @@ impl<'des> Perform<'des> for BanFromBoard {
                 user_id: target_user_id.clone(),
                 pending: None,
             };
-
-            blocking(context.pool(), move |conn| {
-                BoardSubscriber::unsubscribe(conn, &sub_form)
-            })
-            .await??;
+            BoardSubscriber::unsubscribe(context.pool(), &sub_form).await?;
+       
         } else {
             // unban user from board
-            blocking(context.pool(), move |conn| {
-                BoardUserBan::unban(conn, &board_user_ban_form)
-            })
-            .await??;
+            BoardUserBan::unban(context.pool(), &board_user_ban_form).await?;
         }
 
         // mod log form
@@ -84,10 +75,7 @@ impl<'des> Perform<'des> for BanFromBoard {
             expires: Some(expires),
         };
 
-        let mod_action = blocking(context.pool(), move |conn| {
-            ModBanFromBoard::create(conn, &ban_from_board_form)
-        })
-        .await??;
+        let mod_action = ModBanFromBoard::create(context.pool(), &ban_from_board_form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

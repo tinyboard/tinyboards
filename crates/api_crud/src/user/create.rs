@@ -6,7 +6,7 @@ use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
 use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Register, SignupResponse},
-    utils::{blocking, send_verification_email},
+    utils::{send_verification_email},
 };
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
 use tinyboards_db::models::site::site::Site;
@@ -31,7 +31,7 @@ impl<'des> PerformCrud<'des> for Register {
 
         let invite_token = data.invite_token.clone();
 
-        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+        let site = Site::read_local(context.pool()).await?;
 
         // some email verification logic here?
         if !site.open_registration && site.invite_only && data.invite_token.is_none() {
@@ -86,23 +86,14 @@ impl<'des> PerformCrud<'des> for Register {
 
         // perform a quick check if the site is in invite_only mode to see if the invite_token is valid
         if site.invite_only {
-            invite = Some(
-                blocking(context.pool(), move |conn| {
-                    SiteInvite::read_for_token(conn, &invite_token.unwrap())
-                })
-                .await??,
-            ); // (if the invite token is valid there will be a entry in the db for it)
+            invite = Some(SiteInvite::read_for_token(context.pool(), &invite_token.unwrap()).await?); // (if the invite token is valid there will be a entry in the db for it)
         }
 
-        let inserted_user =
-            blocking(context.pool(), move |conn| User::register(conn, user_form)).await??;
+        let inserted_user = User::register(context.pool(), user_form).await?;
 
         // if the user was invited, invalidate the invite token here by removing from db
         if site.invite_only {
-            blocking(context.pool(), move |conn| {
-                SiteInvite::delete(conn, invite.unwrap().id)
-            })
-            .await??;
+            SiteInvite::delete(context.pool(), invite.unwrap().id).await?;
         }
 
         // if site is in application mode, add the application to the database
@@ -113,10 +104,7 @@ impl<'des> PerformCrud<'des> for Register {
                 ..RegistrationApplicationForm::default()
             };
 
-            blocking(context.pool(), move |conn| {
-                RegistrationApplication::create(conn, &form)
-            })
-            .await??;
+            RegistrationApplication::create(context.pool(), &form).await?;
         }
 
         // email the admins regarding the new application

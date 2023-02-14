@@ -5,14 +5,16 @@ use crate::{
     models::post::posts::{Post, PostForm},
     schema::posts,
     traits::{Crud, Moderateable},
-    utils::naive_now,
+    utils::{naive_now, get_conn, DbPool},
 };
-use diesel::{prelude::*, result::Error, PgConnection};
+use diesel::{prelude::*, result::Error};
 use tinyboards_utils::TinyBoardsError;
+use diesel_async::RunQueryDsl;
 
 impl Post {
-    pub fn submit(conn: &mut PgConnection, form: PostForm) -> Result<Self, TinyBoardsError> {
-        Self::create(conn, &form)
+    pub async fn submit(pool: &DbPool, form: PostForm) -> Result<Self, TinyBoardsError> {
+        Self::create(pool, &form)
+            .await    
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit posts"))
     }
 
@@ -20,35 +22,40 @@ impl Post {
         user_id == post_creator_id
     }
 
-    pub fn fetch_image_posts_for_creator(
-        conn: &mut PgConnection,
+    pub async fn fetch_image_posts_for_creator(
+        pool: &DbPool,
         for_creator_id: i32,
     ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         let pictrs_search = "%/image%";
         posts
             .filter(creator_id.eq(for_creator_id))
             .filter(url.like(pictrs_search))
             .load::<Self>(conn)
+            .await
     }
 
-    pub fn fetch_image_posts_for_board(
-        conn: &mut PgConnection,
+    pub async fn fetch_image_posts_for_board(
+        pool: &DbPool,
         for_board_id: i32,
     ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         let pictrs_search = "%/image%";
         posts
             .filter(board_id.eq(for_board_id))
             .filter(url.like(pictrs_search))
             .load::<Self>(conn)
+            .await
     }
 
     /// Sets the url and thumbnails fields to None
-    pub fn remove_post_images_and_thumbnails_for_creator(
-        conn: &mut PgConnection,
+    pub async fn remove_post_images_and_thumbnails_for_creator(
+        pool: &DbPool,
         for_creator_id: i32,
     ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         let pictrs_search = "%/image%";
 
@@ -62,13 +69,15 @@ impl Post {
             thumbnail_url.eq::<Option<String>>(None),
         ))
         .get_results::<Self>(conn)
+        .await
     }
 
     /// Sets the url and thumbnails fields to None
-    pub fn remove_post_images_and_thumbnails_for_board(
-        conn: &mut PgConnection,
+    pub async fn remove_post_images_and_thumbnails_for_board(
+        pool: &DbPool,
         for_board_id: i32,
     ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         let pictrs_search = "%/image%";
 
@@ -82,18 +91,21 @@ impl Post {
             thumbnail_url.eq::<Option<String>>(None),
         ))
         .get_results::<Self>(conn)
+        .await
     }
 
     /// Checks if a posts with a given id exists. Don't use if you need a whole posts object.
-    pub fn check_if_exists(
-        conn: &mut PgConnection,
+    pub async fn check_if_exists(
+        pool: &DbPool,
         pid: i32,
     ) -> Result<Option<i32>, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         posts
             .select(id)
             .filter(id.eq(pid))
             .first::<i32>(conn)
+            .await
             .optional()
             .map_err(|e| {
                 TinyBoardsError::from_error_message(
@@ -104,87 +116,106 @@ impl Post {
             })
     }
 
-    pub fn update_locked(
-        conn: &mut PgConnection,
+    pub async fn update_locked(
+        pool: &DbPool,
         post_id: i32,
         new_locked: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         diesel::update(posts.find(post_id))
             .set((is_locked.eq(new_locked), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn update_stickied(
-        conn: &mut PgConnection,
+    pub async fn update_stickied(
+        pool: &DbPool,
         post_id: i32,
         new_stickied: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         diesel::update(posts.find(post_id))
             .set((is_stickied.eq(new_stickied), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn update_deleted(
-        conn: &mut PgConnection,
+    pub async fn update_deleted(
+        pool: &DbPool,
         post_id: i32,
         new_deleted: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         diesel::update(posts.find(post_id))
             .set((is_deleted.eq(new_deleted), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 
-    pub fn update_removed(
-        conn: &mut PgConnection,
+    pub async fn update_removed(
+        pool: &DbPool,
         post_id: i32,
         new_removed: bool,
     ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         diesel::update(posts.find(post_id))
             .set((is_removed.eq(new_removed), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
     }
 }
 
+#[async_trait::async_trait]
 impl Crud for Post {
     type Form = PostForm;
     type IdType = i32;
 
-    fn read(conn: &mut PgConnection, post_id: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, post_id: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         posts::table.find(post_id).first::<Self>(conn)
+        .await
     }
-    fn delete(conn: &mut PgConnection, post_id: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, post_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::delete(posts::table.find(post_id)).execute(conn)
+        .await
     }
-    fn create(conn: &mut PgConnection, form: &PostForm) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &PostForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let new_post = diesel::insert_into(posts::table)
             .values(form)
-            .get_result::<Self>(conn)?;
+            .get_result::<Self>(conn)
+            .await?;
 
         Ok(new_post)
     }
-    fn update(conn: &mut PgConnection, post_id: i32, form: &PostForm) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, post_id: i32, form: &PostForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(posts::table.find(post_id))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 }
 
+#[async_trait::async_trait]
 impl Moderateable for Post {
     fn get_board_id(&self) -> i32 {
         self.board_id
     }
 
-    fn remove(
+    async fn remove(
         &self,
         admin_id: Option<i32>,
         reason: Option<String>,
-        conn: &mut PgConnection,
+        pool: &DbPool,
     ) -> Result<(), TinyBoardsError> {
-        Self::update_removed(conn, self.id, true)
+        Self::update_removed(pool, self.id, true)
+            .await
             .map(|_| ())
             .map_err(|e| TinyBoardsError::from(e))?;
 
@@ -197,17 +228,18 @@ impl Moderateable for Post {
         };
 
         // submit mod action to mod log
-        ModRemovePost::create(conn, &remove_post_form).map_err(|e| TinyBoardsError::from(e))?;
+        ModRemovePost::create(pool, &remove_post_form).await.map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }
 
-    fn approve(
+    async fn approve(
         &self,
         admin_id: Option<i32>,
-        conn: &mut PgConnection,
+        pool: &DbPool,
     ) -> Result<(), TinyBoardsError> {
-        Self::update_removed(conn, self.id, false)
+        Self::update_removed(pool, self.id, false)
+            .await
             .map(|_| ())
             .map_err(|e| TinyBoardsError::from(e))?;
 
@@ -220,13 +252,14 @@ impl Moderateable for Post {
         };
 
         // submit mod action to mod log
-        ModRemovePost::create(conn, &remove_post_form).map_err(|e| TinyBoardsError::from(e))?;
+        ModRemovePost::create(pool, &remove_post_form).await.map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }
 
-    fn lock(&self, admin_id: Option<i32>, conn: &mut PgConnection) -> Result<(), TinyBoardsError> {
-        Self::update_locked(conn, self.id, true)
+    async fn lock(&self, admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError> {
+        Self::update_locked(pool, self.id, true)
+            .await
             .map(|_| ())
             .map_err(|e| TinyBoardsError::from(e))?;
 
@@ -237,17 +270,18 @@ impl Moderateable for Post {
             locked: Some(Some(true)),
         };
 
-        ModLockPost::create(conn, &lock_form).map_err(|e| TinyBoardsError::from(e))?;
+        ModLockPost::create(pool, &lock_form).await.map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }
 
-    fn unlock(
+    async fn unlock(
         &self,
         admin_id: Option<i32>,
-        conn: &mut PgConnection,
+        pool: &DbPool,
     ) -> Result<(), TinyBoardsError> {
-        Self::update_locked(conn, self.id, false)
+        Self::update_locked(pool, self.id, false)
+            .await
             .map(|_| ())
             .map_err(|e| TinyBoardsError::from(e))?;
 
@@ -258,7 +292,7 @@ impl Moderateable for Post {
             locked: Some(Some(false)),
         };
 
-        ModLockPost::create(conn, &lock_form).map_err(|e| TinyBoardsError::from(e))?;
+        ModLockPost::create(pool, &lock_form).await.map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }

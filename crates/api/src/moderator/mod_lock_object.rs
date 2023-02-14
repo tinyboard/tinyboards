@@ -4,7 +4,6 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::moderator::LockObject;
 use tinyboards_api_common::moderator::UnlockObject;
 use tinyboards_api_common::site::Message;
-use tinyboards_api_common::utils::blocking;
 use tinyboards_api_common::utils::require_user;
 use tinyboards_utils::TinyBoardsError;
 
@@ -30,10 +29,7 @@ impl<'des> Perform<'des> for LockObject {
             .await
             .unwrap()?;
 
-        blocking(context.pool(), move |conn| {
-            target_object.lock(Some(user.id), conn)
-        })
-        .await??;
+            target_object.lock(Some(user.id), context.pool()).await?;
 
         Ok(Message::new("Locked!"))
     }
@@ -59,10 +55,7 @@ impl<'des> Perform<'des> for UnlockObject {
             .await
             .unwrap()?;
 
-        blocking(context.pool(), move |conn| {
-            target_object.unlock(Some(user.id), conn)
-        })
-        .await??;
+            target_object.unlock(Some(user.id), context.pool()).await?;
 
         Ok(Message::new("Unlocked!"))
     }

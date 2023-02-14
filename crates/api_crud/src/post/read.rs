@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 
 use tinyboards_utils::TinyBoardsError;
@@ -38,10 +38,7 @@ impl<'des> PerformCrud<'des> for GetPost {
 
         let post_id = path.post_id;
 
-        let mut post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, post_id, user_id)
-        })
-        .await??;
+        let mut post_view = PostView::read(context.pool(), post_id, user_id).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
             post_view.hide_if_removed_or_deleted(user.as_ref());
@@ -52,22 +49,15 @@ impl<'des> PerformCrud<'des> for GetPost {
         // mark read here
 
         let board_id = post_view.board.id;
-        let board_view = blocking(context.pool(), move |conn| {
-            BoardView::read(conn, board_id, user_id)
-        })
-        .await??;
+        let board_view = BoardView::read(context.pool(), board_id, user_id).await?;
 
         // blank out deleted or removed info here
 
-        let moderators = blocking(context.pool(), move |conn| {
-            BoardModeratorView::for_board(conn, board_id)
-        })
-        .await??;
+        let moderators = BoardModeratorView::for_board(context.pool(), board_id).await?;
         
-        let author_counts = blocking(context.pool(), move |conn| {
-            UserView::read(conn, post_view.post.creator_id)
-        }).await??
-        .counts;
+        let author = UserView::read(context.pool(), post_view.post.creator_id).await?;
+
+        let author_counts = author.counts;
         
         Ok(GetPostResponse {
             post_view,

@@ -1,7 +1,6 @@
-use tinyboards_api_common::utils::blocking;
-use tinyboards_db::database::PgPool;
 use tinyboards_db::models::{comment::comments::Comment, post::posts::Post};
 use tinyboards_db::traits::{Crud, Moderateable};
+use tinyboards_db::utils::DbPool;
 use tinyboards_utils::TinyBoardsError;
 
 pub mod mod_add_admin;
@@ -24,7 +23,7 @@ enum IdType {
 Returns a Post or Comment from a fullname (both of them implement the `Moderateable` trait). fullname must start with either `t1_` (comments' prefix) or `t3_` (posts' prefix).
 */
 pub(crate) async fn get_moderateable_object(
-    pool: &PgPool,
+    pool: &DbPool,
     thing_fullname: &str,
 ) -> Result<Box<dyn Moderateable + Send>, TinyBoardsError> {
     use IdType::*;
@@ -53,12 +52,12 @@ pub(crate) async fn get_moderateable_object(
 
     let target_object: Box<dyn Moderateable + Send> = match id {
         CommentId(id) => {
-            let comment = blocking(pool, move |conn| Comment::read(conn, id)).await??;
+            let comment = Comment::read(pool, id).await?;
 
             Box::new(comment)
         }
         PostId(id) => {
-            let post = blocking(pool, move |conn| Post::read(conn, id)).await??;
+            let post = Post::read(pool, id).await?;
 
             Box::new(post)
         }

@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     admin::PurgeBoard,
     data::TinyBoardsContext,
     moderator::ModActionResponse,
-    utils::{blocking, purge_image_posts_for_board, require_user},
+    utils::{purge_image_posts_for_board, require_user},
 };
 use tinyboards_db::{
     models::{
@@ -54,10 +54,7 @@ impl<'des> Perform<'des> for PurgeBoard {
         .await?;
 
         // delete board
-        blocking(context.pool(), move |conn| {
-            Board::delete(conn, target_board_id)
-        })
-        .await??;
+        Board::delete(context.pool(), target_board_id).await?;
 
         let form = AdminPurgeBoardForm {
             admin_id: user.id,
@@ -66,10 +63,7 @@ impl<'des> Perform<'des> for PurgeBoard {
         };
 
         // submit mod log action
-        let mod_action = blocking(context.pool(), move |conn| {
-            AdminPurgeBoard::create(conn, &form)
-        })
-        .await??;
+        let mod_action = AdminPurgeBoard::create(context.pool(), &form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

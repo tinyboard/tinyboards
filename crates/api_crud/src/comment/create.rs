@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::CreateComment,
     data::TinyBoardsContext,
     utils::{
-        blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
+        check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         require_user,
     },
     websocket::send::send_notifications,
@@ -36,7 +36,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
     ) -> Result<CommentView, TinyBoardsError> {
         let data = self;
 
-        let post = blocking(context.pool(), move |conn| Post::read(conn, data.post_id)).await??;
+        let post = Post::read(context.pool(), data.post_id).await?;
 
         let user = require_user(context.pool(), context.master_key(), auth)
             .await
@@ -53,11 +53,9 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // check if parent comment exists
         // TODO: check if post's op is blocking the user (?)
-        if blocking(context.pool(), move |conn| {
-            Post::check_if_exists(conn, data.post_id)
-        })
-        .await??
-        .is_none()
+        if Post::check_if_exists(context.pool(), data.post_id)
+            .await?
+            .is_none()
         {
             return Err(TinyBoardsError::from_message(400, "invalid post id"));
         }
@@ -66,8 +64,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         // check if parent comment exists, if provided
         // TODO: check if comment's author is blocking the user (?)
         if let Some(cid) = data.parent_id {
-            let parent_comment =
-                blocking(context.pool(), move |conn| Comment::get_by_id(conn, cid)).await??;
+            let parent_comment = Comment::get_by_id(context.pool(), cid).await?;
             if parent_comment.is_none() {
                 return Err(TinyBoardsError::from_message(
                     400,
@@ -108,10 +105,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             ..CommentForm::default()
         };
 
-        let new_comment = blocking(context.pool(), move |conn| {
-            Comment::submit(conn, new_comment)
-        })
-        .await??;
+        let new_comment = Comment::submit(context.pool(), new_comment).await?;
 
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
@@ -120,15 +114,9 @@ impl<'des> PerformCrud<'des> for CreateComment {
             score: 1,
         };
 
-        blocking(context.pool(), move |conn| {
-            CommentVote::vote(conn, &comment_vote)
-        })
-        .await??;
+        CommentVote::vote(context.pool(), &comment_vote).await?;
 
-        let new_comment = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, new_comment.id, Some(user.id))
-        })
-        .await??;
+        let new_comment = CommentView::read(context.pool(), new_comment.id, Some(user.id)).await?;
 
 
         // send notifications

@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{VerifyEmail, VerifyEmailResponse},
-    utils::{blocking, send_email_verification_success},
+    utils::{send_email_verification_success},
 };
 use tinyboards_db::{
     models::site::email_verification::EmailVerification,
@@ -26,12 +26,9 @@ impl<'des> Perform<'des> for VerifyEmail {
     ) -> Result<Self::Response, TinyBoardsError> {
         let token = self.token.clone();
 
-        let verification = blocking(context.pool(), move |conn| {
-            EmailVerification::read_for_token(conn, &token.as_str()).map_err(|e| {
-                TinyBoardsError::from_error_message(e, 404, "could not find verification token")
-            })
-        })
-        .await??;
+        let verification =  EmailVerification::read_for_token(context.pool(), &token.as_str())
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 404, "could not find verification token"))?;
 
         let form = UserForm {
             email_verified: Some(true),
@@ -41,10 +38,7 @@ impl<'des> Perform<'des> for VerifyEmail {
 
         let user_id = verification.user_id.clone();
 
-        let updated_user = blocking(context.pool(), move |conn| {
-            User::update(conn, user_id, &form)
-        })
-        .await??;
+        let updated_user = User::update(context.pool(), user_id, &form).await?;
 
         send_email_verification_success(&updated_user, &context.settings())?;
 

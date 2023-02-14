@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{Search, SearchResponse},
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{
     map_to_listing_type, map_to_search_type, map_to_sort_type, utils::post_to_comment_sort_type,
@@ -67,74 +67,66 @@ impl<'des> Perform<'des> for Search {
 
         match search_type {
             SearchType::Post => {
-                let response = blocking(context.pool(), move |conn| {
-                    PostQuery::builder()
-                        .conn(conn)
-                        .show_deleted_or_removed(is_admin)
-                        .sort(Some(sort))
-                        .listing_type(Some(listing_type))
-                        .board_id(board_id)
-                        .creator_id(creator_id)
-                        .user(user.as_ref())
-                        .search_term(search_term)
-                        .url_search(url_search)
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                })
-                .await??;
+                let response = PostQuery::builder()
+                    .pool(context.pool())
+                    .show_deleted_or_removed(is_admin)
+                    .sort(Some(sort))
+                    .listing_type(Some(listing_type))
+                    .board_id(board_id)
+                    .creator_id(creator_id)
+                    .user(user.as_ref())
+                    .search_term(search_term)
+                    .url_search(url_search)
+                    .page(page)
+                    .limit(limit)
+                    .build()
+                    .list()
+                    .await?;
 
                 posts = response.posts
             }
             SearchType::Comment => {
-                let response = blocking(context.pool(), move |conn| {
-                    CommentQuery::builder()
-                        .conn(conn)
-                        .show_deleted_and_removed(is_admin)
-                        .sort(Some(comment_sort_type))
-                        .listing_type(Some(listing_type))
-                        .search_term(search_term)
-                        .board_id(board_id)
-                        .creator_id(creator_id)
-                        .user_id(user_id)
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                })
-                .await??;
+                let response = CommentQuery::builder()
+                    .pool(context.pool())
+                    .show_deleted_and_removed(is_admin)
+                    .sort(Some(comment_sort_type))
+                    .listing_type(Some(listing_type))
+                    .search_term(search_term)
+                    .board_id(board_id)
+                    .creator_id(creator_id)
+                    .user_id(user_id)
+                    .page(page)
+                    .limit(limit)
+                    .build()
+                    .list()
+                    .await?;
 
                 comments = response.comments
             }
             SearchType::Board => {
-                let response = blocking(context.pool(), move |conn| {
-                    BoardQuery::builder()
-                        .conn(conn)
-                        .listing_type(Some(listing_type))
-                        .sort(Some(sort))
-                        .user(user.as_ref())
-                        .search_term(search_term)
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                })
-                .await??;
+                let response = BoardQuery::builder()
+                    .pool(context.pool())
+                    .listing_type(Some(listing_type))
+                    .sort(Some(sort))
+                    .user(user.as_ref())
+                    .search_term(search_term)
+                    .page(page)
+                    .limit(limit)
+                    .build()
+                    .list()
+                    .await?;
 
                 boards = response.boards
             }
             SearchType::User => {
-                let response = blocking(context.pool(), move |conn| {
-                    UserQuery::builder()
-                        .conn(conn)
-                        .search_term(search_term)
-                        .page(page)
-                        .limit(limit)
-                        .build()
-                        .list()
-                })
-                .await??;
+                let response = UserQuery::builder()
+                .pool(context.pool())
+                .search_term(search_term)
+                .page(page)
+                .limit(limit)
+                .build()
+                .list()
+                .await?;
 
                 users = response.users
             }

@@ -3,7 +3,6 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     private_messages::{EditPrivateMessage, PrivateMessageResponse, PrivateMessageIdPath},
     utils::{
-        blocking,
         require_user,
     },
     data::TinyBoardsContext,
@@ -39,10 +38,7 @@ impl<'des> PerformCrud<'des> for EditPrivateMessage {
             .await
             .unwrap()?;
 
-        let orig_pm = blocking(context.pool(), move |conn| {
-            PrivateMessage::read(conn, pm_id)
-        })
-        .await??;
+        let orig_pm = PrivateMessage::read(context.pool(), pm_id).await?;
 
         if user.id != orig_pm.creator_id {
             return Err(TinyBoardsError::from_message(403, "private message edit not allowed"));
@@ -63,15 +59,9 @@ impl<'des> PerformCrud<'des> for EditPrivateMessage {
             updated,
         };
 
-        blocking(context.pool(), move |conn| {
-            PrivateMessage::update(conn, pm_id, &form)
-        })
-        .await??;
+        PrivateMessage::update(context.pool(), pm_id, &form).await?;
 
-        let message = blocking(context.pool(), move |conn| {
-            PrivateMessageView::read(conn, pm_id)
-        })
-        .await??;
+        let message = PrivateMessageView::read(context.pool(), pm_id).await?;
 
         Ok(PrivateMessageResponse { message })
     }

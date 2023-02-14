@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{PostIdPath, PostResponse, SavePost},
-    utils::{blocking, get_user_view_from_jwt},
+    utils::{get_user_view_from_jwt},
 };
 use tinyboards_db::{
     models::post::user_post_save::{PostSaved, PostSavedForm},
@@ -34,19 +34,14 @@ impl<'des> Perform<'des> for SavePost {
         };
 
         if data.save {
-            let save_post = move |conn: &mut _| PostSaved::save(conn, &saved_form);
-            blocking(context.pool(), save_post).await??;
+            PostSaved::save(context.pool(), &saved_form).await?;
         } else {
-            let unsave_post = move |conn: &mut _| PostSaved::unsave(conn, &saved_form);
-            blocking(context.pool(), unsave_post).await??;
+            PostSaved::unsave(context.pool(), &saved_form).await?;
         }
 
         let post_id = path.post_id;
         let user_id = user_view.user.id;
-        let post_view = blocking(context.pool(), move |conn| {
-            PostView::read(conn, post_id, Some(user_id))
-        })
-        .await??;
+        let post_view = PostView::read(context.pool(), post_id, Some(user_id)).await?;
 
         Ok(PostResponse { post_view })
     }

@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::{ListComments, ListCommentsResponse},
     data::TinyBoardsContext,
     post::{GetPostComments, PostIdPath},
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{
     map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post, CommentSortType,
@@ -72,25 +72,23 @@ impl<'des> PerformCrud<'des> for ListComments {
         let saved_only = data.saved_only;
         let show_deleted_and_removed = data.show_deleted_and_removed;
 
-        let response = blocking(context.pool(), move |conn| {
-            CommentQuery::builder()
-                .conn(conn)
-                .listing_type(Some(listing_type))
-                .sort(Some(sort))
-                .board_id(board_id)
-                .post_id(post_id)
-                .parent_id(parent_id)
-                .creator_id(creator_id)
-                .search_term(search_term)
-                .saved_only(saved_only)
-                .show_deleted_and_removed(show_deleted_and_removed)
-                .user_id(user_id)
-                .page(page)
-                .limit(limit)
-                .build()
-                .list()
-        })
-        .await??;
+        let response = CommentQuery::builder()
+            .pool(context.pool())
+            .listing_type(Some(listing_type))
+            .sort(Some(sort))
+            .board_id(board_id)
+            .post_id(post_id)
+            .parent_id(parent_id)
+            .creator_id(creator_id)
+            .search_term(search_term)
+            .saved_only(saved_only)
+            .show_deleted_and_removed(show_deleted_and_removed)
+            .user_id(user_id)
+            .page(page)
+            .limit(limit)
+            .build()
+            .list()
+            .await?;
 
         let mut comments = response.comments;
 
@@ -133,27 +131,23 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         check_private_instance(&user, context.pool()).await?;
 
         // check if post exists
-        if blocking(context.pool(), move |conn| {
-            Post::check_if_exists(conn, path.post_id)
-        })
-        .await??
-        .is_none()
+        if Post::check_if_exists(context.pool(), path.post_id)
+            .await?
+            .is_none()
         {
             return Err(TinyBoardsError::from_message(400, "invalid post id"));
         }
 
-        let response = blocking(context.pool(), move |conn| {
-            CommentQuery::builder()
-                .conn(conn)
-                //.sort(None)
-                .post_id(Some(path.post_id))
-                .show_deleted_and_removed(Some(true))
-                //.page(None)
-                //.limit(None)
-                .build()
-                .list()
-        })
-        .await??;
+        let response = CommentQuery::builder()
+            .pool(context.pool())
+            //.sort(None)
+            .post_id(Some(path.post_id))
+            .show_deleted_and_removed(Some(true))
+            //.page(None)
+            //.limit(None)
+            .build()
+            .list()
+            .await?;
 
         let mut comments = response.comments;
 

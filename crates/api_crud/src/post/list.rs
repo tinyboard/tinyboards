@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{ListPosts, ListPostsResponse},
-    utils::{blocking, check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{map_to_listing_type, map_to_sort_type};
 use tinyboards_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
@@ -37,42 +37,31 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let saved_only = data.saved_only;
         let user_match = user.clone();
 
-        let response = blocking(context.pool(), move |conn| {
-            let mut post_query = PostQuery::builder()
-                .conn(conn)
-                .listing_type(Some(listing_type))
-                .sort(Some(sort))
-                .board_id(board_id)
-                .user(user_match.as_ref())
-                .saved_only(saved_only)
-                .page(page)
-                .limit(limit)
-                .build()
-                .list();
+        let mut post_query = PostQuery::builder()
+            .pool(context.pool())
+            .listing_type(Some(listing_type))
+            .sort(Some(sort))
+            .board_id(board_id)
+            .user(user_match.as_ref())
+            .saved_only(saved_only)
+            .page(page)
+            .limit(limit)
+            .build()
+            .list()
+            .await?;
 
-            if let Ok(ref mut post_query) = post_query {
-                for pv in post_query
-                    .posts
-                    .iter_mut()
-                    .filter(|p| p.post.is_removed || p.post.is_deleted)
-                {
-                    pv.hide_if_removed_or_deleted(user.as_ref());
-                }
-            }
-
-            post_query
-        })
-        .await??;
-
-        let posts = response.posts;
-        let total_count = response.count;
-
-        /*for pv in posts
+        
+        for pv in post_query
+            .posts
             .iter_mut()
-            .filter(|p| p.board.is_deleted)
+            .filter(|p| p.post.is_removed || p.post.is_deleted)
         {
-            pv.board = pv.to_owned().board.blank_out_deleted_info();
-        }*/
+            pv.hide_if_removed_or_deleted(user.as_ref());
+        }
+        
+
+        let posts = post_query.posts;
+        let total_count = post_query.count;
 
         Ok(ListPostsResponse { posts, total_count })
     }

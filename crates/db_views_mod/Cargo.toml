@@ -9,6 +9,7 @@ doctest = false
 [dependencies]
 tinyboards_db = { workspace = true }
 diesel = { workspace = true }
+diesel-async = { workspace = true }
 serde = { workspace = true }
 tracing = { workspace = true }
 typed-builder = { workspace = true }

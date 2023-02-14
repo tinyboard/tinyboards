@@ -3,7 +3,6 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{InviteToken, ValidateSiteInvite},
-    utils::blocking,
 };
 use tinyboards_db::models::site::{site::Site, site_invite::SiteInvite};
 use tinyboards_utils::error::TinyBoardsError;
@@ -22,7 +21,7 @@ impl<'des> Perform<'des> for ValidateSiteInvite {
     ) -> Result<(), TinyBoardsError> {
         let token = path.invite_token.clone();
 
-        let site = blocking(context.pool(), move |conn| Site::read_local(conn)).await??;
+        let site = Site::read_local(context.pool()).await?;
 
         if !site.invite_only {
             return Err(TinyBoardsError::from_message(
@@ -31,10 +30,7 @@ impl<'des> Perform<'des> for ValidateSiteInvite {
             ));
         }
 
-        let invite = blocking(context.pool(), move |conn| {
-            SiteInvite::read_for_token(conn, &token.as_str())
-        })
-        .await??;
+        let invite = SiteInvite::read_for_token(context.pool(), &token.as_str()).await?;
 
         if path.invite_token.clone() == invite.verification_code {
             Ok(())

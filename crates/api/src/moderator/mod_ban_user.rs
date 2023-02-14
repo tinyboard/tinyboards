@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{BanUser, ModActionResponse},
-    utils::{blocking, require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
@@ -36,10 +36,7 @@ impl<'des> Perform<'des> for BanUser {
             .unwrap()?;
 
         // update the user in the database to be banned
-        blocking(context.pool(), move |conn| {
-            User::update_ban(conn, target_user_id.clone(), banned.clone())
-        })
-        .await??;
+        User::update_ban(context.pool(), target_user_id.clone(), banned.clone()).await?;
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
@@ -51,8 +48,7 @@ impl<'des> Perform<'des> for BanUser {
         };
 
         // enter mod log action
-        let mod_action =
-            blocking(context.pool(), move |conn| ModBan::create(conn, &ban_form)).await??;
+        let mod_action = ModBan::create(context.pool(), &ban_form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

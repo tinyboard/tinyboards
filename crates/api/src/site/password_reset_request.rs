@@ -4,7 +4,6 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{PasswordResetRequest},
     utils::{
-        blocking,
         send_password_reset_email,
     },
 };
@@ -27,10 +26,7 @@ impl<'des> Perform<'des> for PasswordResetRequest {
         let data: &PasswordResetRequest = &self;
         let email = data.email.clone();
 
-        let user_res = blocking(context.pool(), move |conn| {
-            User::get_by_email(conn, &email)
-        })
-        .await?;
+        let user_res = User::get_by_email(context.pool(), &email).await;
 
         if user_res.is_err() {
             return Err(TinyBoardsError::from_message(404, "user not found"));
@@ -45,10 +41,7 @@ impl<'des> Perform<'des> for PasswordResetRequest {
                 reset_token,
             };
             // create the password reset in the database
-            let reset_request = blocking(context.pool(), move |conn| {
-                PasswordReset::create(conn, &form)
-            })
-            .await??;
+            let reset_request = PasswordReset::create(context.pool(), &form).await?;
             // send the email to the user with the password reset link
             let reset_link = format!("{}/password_reset/{}", context.settings().get_protocol_and_hostname(), reset_request.reset_token);
             // send password reset email

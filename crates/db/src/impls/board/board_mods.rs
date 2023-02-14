@@ -1,14 +1,17 @@
 use crate::{
     models::board::board_mods::{BoardModerator, BoardModeratorForm},
-    traits::Crud,
+    traits::Crud, 
+    utils::{DbPool, get_conn},
 };
 use diesel::{result::Error, *};
+use diesel_async::RunQueryDsl;
 
 impl BoardModerator {
-    pub fn remove_board_mod(
-        conn: &mut PgConnection,
+    pub async fn remove_board_mod(
+        pool: &DbPool,
         form: &BoardModeratorForm,
     ) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_mods::dsl::*;
         diesel::delete(
             board_mods
@@ -16,31 +19,41 @@ impl BoardModerator {
                 .filter(user_id.eq(form.user_id)),
         )
         .execute(conn)
+        .await
     }
 }
 
+#[async_trait::async_trait]
 impl Crud for BoardModerator {
     type Form = BoardModeratorForm;
     type IdType = i32;
-    fn read(conn: &mut PgConnection, id_: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_mods::dsl::*;
         board_mods.find(id_).first::<Self>(conn)
+        .await
     }
-    fn delete(conn: &mut PgConnection, id_: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_mods::dsl::*;
         diesel::delete(board_mods.find(id_)).execute(conn)
+        .await
     }
-    fn create(conn: &mut PgConnection, form: &Self::Form) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_mods::dsl::*;
         let new = diesel::insert_into(board_mods)
             .values(form)
-            .get_result::<Self>(conn)?;
+            .get_result::<Self>(conn)
+            .await?;
         Ok(new)
     }
-    fn update(conn: &mut PgConnection, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         use crate::schema::board_mods::dsl::*;
         diesel::update(board_mods.find(id_))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 }

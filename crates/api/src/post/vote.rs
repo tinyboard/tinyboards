@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{CreatePostVote, PostIdPath, PostResponse},
     utils::{
-        blocking, check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
+        check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         require_user,
     },
 };
@@ -37,7 +37,7 @@ impl<'des> Perform<'des> for CreatePostVote {
 
         let post_id = path.post_id;
 
-        let post = blocking(context.pool(), move |conn| Post::read(conn, post_id)).await??;
+        let post = Post::read(context.pool(), post_id).await?;
 
         // check if post can be liked (not deleted, removed, or locked)
         check_post_deleted_removed_or_locked(post_id, context.pool()).await?;
@@ -46,10 +46,7 @@ impl<'des> Perform<'des> for CreatePostVote {
         check_board_deleted_or_removed(post.board_id, context.pool()).await?;
 
         // check if user is banned from board
-        let is_board_banned = blocking(context.pool(), move |conn| {
-            Board::board_has_ban(conn, post.board_id, user.id)
-        })
-        .await??;
+        let is_board_banned = Board::board_has_ban(context.pool(), post.board_id, user.id).await?;
 
         if !is_board_banned {
             let vote_form = PostVoteForm {
@@ -60,32 +57,22 @@ impl<'des> Perform<'des> for CreatePostVote {
 
             // remove any existing votes first
             let user_id = user.id;
-            blocking(context.pool(), move |conn| {
-                PostVote::remove(conn, user_id, post_id)
-            })
-            .await??;
+            PostVote::remove(context.pool(), user_id, post_id).await?;
 
             let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);
 
             if do_add {
                 let cloned_form = vote_form.clone();
-                let like = move |conn: &mut _| PostVote::vote(conn, &cloned_form);
-                blocking(context.pool(), like).await??;
+                PostVote::vote(context.pool(), &cloned_form).await?;
             } else {
                 let cloned_form = vote_form.clone();
-                let like = move |conn: &mut _| {
-                    PostVote::remove(conn, cloned_form.user_id, cloned_form.post_id)
-                };
-                blocking(context.pool(), like).await??;
+                PostVote::remove(context.pool(), cloned_form.user_id, cloned_form.post_id).await?;
             }
 
             // mark the post as read here
 
             // grab the post view here for the response
-            let post_view = blocking(context.pool(), move |conn| {
-                PostView::read(conn, vote_form.post_id, Some(vote_form.user_id))
-            })
-            .await??;
+            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.user_id)).await?;
 
             Ok(PostResponse { post_view })
         } else {

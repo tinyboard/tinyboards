@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::{CommentIdPath, CommentResponse, EditComment},
     data::TinyBoardsContext,
     utils::{
-        blocking, check_board_deleted_or_removed, check_comment_deleted_or_removed,
+        check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_or_removed, require_user,
     }, websocket::send::send_notifications,
 };
@@ -35,10 +35,7 @@ impl<'des> PerformCrud<'des> for EditComment {
             .unwrap()?;
 
         let comment_id = path.comment_id;
-        let orig_comment = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, comment_id, None)
-        })
-        .await??;
+        let orig_comment = CommentView::read(context.pool(), comment_id, None).await?;
 
         check_board_deleted_or_removed(orig_comment.board.id, context.pool()).await?;
 
@@ -71,15 +68,9 @@ impl<'des> PerformCrud<'des> for EditComment {
             ..CommentForm::default()
         };
 
-        blocking(context.pool(), move |conn| {
-            Comment::update(conn, comment_id, &form)
-        })
-        .await??;
+        Comment::update(context.pool(), comment_id, &form).await?;
 
-        let comment_view = blocking(context.pool(), move |conn| {
-            CommentView::read(conn, comment_id, Some(orig_comment.comment.creator_id))
-        })
-        .await??;
+        let comment_view = CommentView::read(context.pool(), comment_id, Some(orig_comment.comment.creator_id)).await?;
 
         let mentions = scrape_text_for_mentions(&comment_view.comment.body_html);
         let _recipient_ids = send_notifications(

@@ -3,7 +3,6 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     private_messages::{CreatePrivateMessage, CreatePrivateMessageResponse},
     utils::{
-        blocking,
         require_user, check_user_block,
     },
     data::TinyBoardsContext,
@@ -40,11 +39,7 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
 
         let chat_id = data.chat_id.clone();
 
-        let recipient 
-            = blocking(context.pool(), move |conn| {
-                User::get_user_by_chat_id(conn, chat_id)
-            })
-            .await??;
+        let recipient = User::get_user_by_chat_id(context.pool(), chat_id).await?;
 
         // error out if the recipient is blocking you
         check_user_block(creator.id.clone(), recipient.id.clone(), context.pool())
@@ -56,10 +51,7 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
         let body_parsed = parse_markdown(&body.as_str());
         let mut is_parent = true;
 
-        let thread_exists = blocking(context.pool(), move |conn| {
-            PrivateMessageView::thread_exists(conn, creator_id, recipient_id)
-        })
-        .await??;
+        let thread_exists = PrivateMessageView::thread_exists(context.pool(), creator_id, recipient_id).await?;
 
         if thread_exists {
             is_parent = false;
@@ -76,15 +68,9 @@ impl <'des> PerformCrud<'des> for CreatePrivateMessage {
         };
 
         // create the private message
-        let pm = blocking(context.pool(), move |conn| {
-            PrivateMessage::create(conn, &private_message_form)
-        })
-        .await??;
+        let pm = PrivateMessage::create(context.pool(), &private_message_form).await?;
 
-        let message = blocking(context.pool(), move |conn| {
-            PrivateMessageView::read(conn, pm.id)
-        })
-        .await??;
+        let message = PrivateMessageView::read(context.pool(), pm.id).await?;
 
 
         // eventually add email support here and ws stuff

@@ -1,11 +1,10 @@
-use actix_web::web;
+
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use reqwest_middleware::ClientWithMiddleware;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use tinyboards_db::{
-    database::PgPool,
     models::{
         board::boards::Board,
         comment::comments::Comment,
@@ -14,7 +13,8 @@ use tinyboards_db::{
         site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
         user::{users::User, user_blocks::UserBlock},
     },
-    traits::Crud, SiteMode,
+    traits::Crud, SiteMode, 
+    utils::DbPool,
 };
 use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView, UserSettingsView};
 use tinyboards_utils::{
@@ -58,24 +58,24 @@ pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
  * Passes a mutable reference to an open connection to the db to the closure and executes it. Then, the result of the closure is returned.
  * *(shamelessly stolen from lemmy)*
  */
-pub async fn blocking<F, T>(pool: &PgPool, f: F) -> Result<T, TinyBoardsError>
-where
-    F: FnOnce(&mut diesel::PgConnection) -> T + Send + 'static,
-    T: Send + 'static,
-{
-    let pool = pool.clone();
-    let res = web::block(move || {
-        let mut conn = pool.get().unwrap();
-        let res = (f)(&mut conn);
-        Ok(res) as Result<T, TinyBoardsError>
-    })
-    .await
-    .map_err(|e| {
-        TinyBoardsError::from_error_message(e, 500, "Internal Server Error (Blocking Error)")
-    })?;
+// pub async fn blocking<F, T>(pool: &DbPool, f: F) -> Result<T, TinyBoardsError>
+// where
+//     F: FnOnce(&mut diesel::PgConnection) -> T + Send + 'static,
+//     T: Send + 'static,
+// {
+//     let pool = pool.clone();
+//     let res = web::block(move || {
+//         let mut conn = pool.get().unwrap();
+//         let res = (f)(&mut conn);
+//         Ok(res) as Result<T, TinyBoardsError>
+//     })
+//     .await
+//     .map_err(|e| {
+//         TinyBoardsError::from_error_message(e, 500, "Internal Server Error (Blocking Error)")
+//     })?;
 
-    res
-}
+//     res
+// }
 
 /// Checks the password length
 pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
@@ -91,7 +91,7 @@ type UResultOpt = Result<Option<User>, TinyBoardsError>;
 type UResult = Result<User, TinyBoardsError>;
 
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
-pub async fn load_user_opt(pool: &PgPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
+pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
     if auth.is_none() {
         return Ok(None);
     };
@@ -111,7 +111,7 @@ pub async fn load_user_opt(pool: &PgPool, master_key: &Secret, auth: Option<&str
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
-    blocking(pool, |conn| User::from_jwt(conn, token, master_key)).await?
+    User::from_jwt(pool, token, master_key).await
 }
 
 /**
@@ -121,7 +121,7 @@ pub async fn load_user_opt(pool: &PgPool, master_key: &Secret, auth: Option<&str
 pub struct UserResult(UResult);
 
 /// Enforces a logged in user. Returns `Ok<User>` if everything is OK, otherwise errors. If being logged in is optional, `load_user_opt` should be used.
-pub async fn require_user(pool: &PgPool, master_key: &Secret, auth: Option<&str>) -> UserResult {
+pub async fn require_user(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UserResult {
     if auth.is_none() {
         let err: UResult = Err(TinyBoardsError::from_message(
             401,
@@ -214,29 +214,21 @@ impl UserResult {
         })
     }
 
-    pub async fn not_banned_from_board(self, board_id: i32, pool: &PgPool) -> Self {
+    pub async fn not_banned_from_board(self, board_id: i32, pool: &DbPool) -> Self {
         match self.0 {
             Ok(u) => {
                 // skip this check for admins :))))
                 if u.is_admin {
                     return Self(Ok(u));
                 }
-
-                let is_banned = blocking(pool, move |conn| {
-                    BoardUserBanView::get(conn, u.id, board_id)
-                })
-                .await;
+                
+                let is_banned = BoardUserBanView::get(pool, u.id, board_id)
+                    .await
+                    .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
 
                 let inner = match is_banned {
                     Ok(is_banned) => {
-                        if let Ok(board_ban) = is_banned {
-                            Err(TinyBoardsError::from_message(
-                                403,
-                                format!("You are banned from /b/{}", board_ban.board.name).as_str(),
-                            ))
-                        } else {
-                            Ok(u)
-                        }
+                        Err(TinyBoardsError::from_message(403, format!("You are banned from /b/{}", is_banned.board.name).as_str()))
                     }
                     Err(e) => Err(e),
                 };
@@ -247,7 +239,7 @@ impl UserResult {
         }
     }
 
-    pub async fn require_board_mod(self, board_id: i32, pool: &PgPool) -> Self {
+    pub async fn require_board_mod(self, board_id: i32, pool: &DbPool) -> Self {
         match self.0 {
             Ok(u) => {
                 // admins can do everything
@@ -255,14 +247,7 @@ impl UserResult {
                     return Self(Ok(u));
                 }
 
-                let is_mod =
-                    blocking(pool, move |conn| Board::board_has_mod(conn, board_id, u.id)).await;
-
-                if is_mod.is_err() {
-                    return Self(Err(TinyBoardsError::from_message(403, "nerd")));
-                };
-
-                let is_mod = is_mod.unwrap();
+                let is_mod = Board::board_has_mod(pool, board_id, u.id).await;
 
                 let inner = match is_mod {
                     Ok(is_mod) => {
@@ -288,7 +273,7 @@ impl UserResult {
 #[tracing::instrument(skip_all)]
 pub async fn get_user_view_from_jwt_opt(
     auth: Option<&str>,
-    pool: &PgPool,
+    pool: &DbPool,
     master_key: &Secret,
 ) -> Result<Option<UserView>, TinyBoardsError> {
     if auth.is_none() {
@@ -310,16 +295,14 @@ pub async fn get_user_view_from_jwt_opt(
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
-    blocking(pool, move |conn| {
-        UserView::from_jwt(conn, token, master_key)
-    })
-    .await?
+
+    UserView::from_jwt(pool, token, master_key).await
 }
 
 #[tracing::instrument(skip_all)]
 pub async fn get_user_view_from_jwt(
     auth: Option<&str>,
-    pool: &PgPool,
+    pool: &DbPool,
     master_key: &Secret,
 ) -> Result<UserView, TinyBoardsError> {
     if auth.is_none() {
@@ -343,15 +326,11 @@ pub async fn get_user_view_from_jwt(
 pub async fn check_registration_application(
     site: &Site,
     user_view: &UserView,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
         let user_id = user_view.user.id;
-        let registration = blocking(pool, move |conn| {
-            RegistrationApplication::find_by_user_id(conn, user_id)
-                .map_err(|_e| TinyBoardsError::from_message(404, "could not find user registration"))
-        })
-        .await??;
+        let registration = RegistrationApplication::find_by_user_id(pool, user_id).await?;
 
         if let Some(deny_reason) = registration.deny_reason {
             let registration_denied_message = &deny_reason;
@@ -367,13 +346,9 @@ pub async fn check_registration_application(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_downvotes_enabled(score: i16, pool: &PgPool) -> Result<(), TinyBoardsError> {
+pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
     if score == -1 {
-        let site = blocking(pool, move |conn| {
-            Site::read_local(conn)
-                .map_err(|_e| TinyBoardsError::from_message(500, "could not read site"))
-        })
-        .await??;
+        let site = Site::read_local(pool).await?;
 
         if !site.enable_downvotes {
             return Err(TinyBoardsError::from_message(403, "downvotes are disabled"));
@@ -385,10 +360,10 @@ pub async fn check_downvotes_enabled(score: i16, pool: &PgPool) -> Result<(), Ti
 #[tracing::instrument(skip_all)]
 pub async fn check_private_instance(
     user: &Option<User>,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
-        let site = blocking(pool, move |conn| Site::read_local(conn)).await?;
+        let site = Site::read_local(pool).await;
 
         if let Ok(site) = site {
             if site.private_instance {
@@ -402,11 +377,9 @@ pub async fn check_private_instance(
 #[tracing::instrument(skip_all)]
 pub async fn check_board_deleted_or_removed(
     board_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let board = blocking(pool, move |conn| Board::read(conn, board_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
+    let board = Board::read(pool, board_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
 
     if board.is_deleted || board.is_banned {
         Err(TinyBoardsError::from_message(404, "board deleted or banned"))
@@ -418,11 +391,9 @@ pub async fn check_board_deleted_or_removed(
 #[tracing::instrument(skip_all)]
 pub async fn check_post_deleted_or_removed(
     post_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let post = blocking(pool, move |conn| Post::read(conn, post_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
+    let post = Post::read(pool, post_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
 
     if post.is_deleted || post.is_removed {
         Err(TinyBoardsError::from_message(404, "post deleted or removed"))
@@ -434,11 +405,9 @@ pub async fn check_post_deleted_or_removed(
 #[tracing::instrument(skip_all)]
 pub async fn check_post_deleted_removed_or_locked(
     post_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let post = blocking(pool, move |conn| Post::read(conn, post_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
+    let post = Post::read(pool, post_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find post"))?;
 
     if post.is_locked {
         Err(TinyBoardsError::from_message(403, "post locked"))
@@ -453,14 +422,10 @@ pub async fn check_post_deleted_removed_or_locked(
 pub async fn check_user_block(
     my_id: i32,
     other_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     
-    let is_blocked = blocking(pool, move |conn| {
-        UserBlock::read(conn, other_id, my_id)
-    })
-    .await?
-    .is_ok();
+    let is_blocked = UserBlock::read(pool, other_id, my_id).await.is_ok();
 
     if is_blocked {
         Err(TinyBoardsError::from_message(405, "user is blocking you"))
@@ -472,11 +437,10 @@ pub async fn check_user_block(
 #[tracing::instrument(skip_all)]
 pub async fn check_comment_deleted_or_removed(
     comment_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    let comment = blocking(pool, move |conn| Comment::read(conn, comment_id))
-        .await?
-        .map_err(|_e| TinyBoardsError::from_message(404, "couldn't find comment"))?;
+
+    let comment = Comment::read(pool, comment_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find comment"))?;
 
     if comment.is_deleted || comment.is_removed {
         Err(TinyBoardsError::from_message(404, "comment deleted or removed"))
@@ -505,14 +469,12 @@ pub fn get_rate_limit_config(rate_limit_settings: &RateLimitSettings) -> RateLim
 
 #[tracing::instrument(skip_all)]
 pub async fn is_mod_or_admin(
-    pool: &PgPool,
+    pool: &DbPool,
     user_id: i32,
     board_id: i32,
 ) -> Result<(), TinyBoardsError> {
-    let is_mod_or_admin = blocking(pool, move |conn| {
-        BoardView::is_mod_or_admin(conn, user_id, board_id)
-    })
-    .await?;
+    let is_mod_or_admin = BoardView::is_mod_or_admin(pool, user_id, board_id).await;
+
     if !is_mod_or_admin {
         return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
     }
@@ -521,14 +483,12 @@ pub async fn is_mod_or_admin(
 
 pub async fn purge_image_posts_for_user(
     banned_user_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
     settings: &Settings,
     client: &ClientWithMiddleware,
 ) -> Result<(), TinyBoardsError> {
-    let posts = blocking(pool, move |conn| {
-        Post::fetch_image_posts_for_creator(conn, banned_user_id)
-    })
-    .await??;
+
+    let posts = Post::fetch_image_posts_for_creator(pool, banned_user_id).await?;
 
     for post in posts {
         if let Some(url) = post.url {
@@ -547,24 +507,19 @@ pub async fn purge_image_posts_for_user(
         }
     }
 
-    blocking(pool, move |conn| {
-        Post::remove_post_images_and_thumbnails_for_creator(conn, banned_user_id)
-    })
-    .await??;
+    Post::remove_post_images_and_thumbnails_for_creator(pool, banned_user_id).await?;
 
     Ok(())
 }
 
 pub async fn purge_image_posts_for_board(
     banned_board_id: i32,
-    pool: &PgPool,
+    pool: &DbPool,
     settings: &Settings,
     client: &ClientWithMiddleware,
 ) -> Result<(), TinyBoardsError> {
-    let posts = blocking(pool, move |conn| {
-        Post::fetch_image_posts_for_board(conn, banned_board_id)
-    })
-    .await??;
+
+    let posts = Post::fetch_image_posts_for_board(pool, banned_board_id).await?;
 
     for post in posts {
         if let Some(url) = post.url {
@@ -583,10 +538,7 @@ pub async fn purge_image_posts_for_board(
         }
     }
 
-    blocking(pool, move |conn| {
-        Post::remove_post_images_and_thumbnails_for_board(conn, banned_board_id)
-    })
-    .await??;
+    Post::remove_post_images_and_thumbnails_for_board(pool, banned_board_id).await?;
 
     Ok(())
   }
@@ -635,7 +587,7 @@ pub async fn purge_image_posts_for_board(
   pub async fn send_verification_email(
     user: &User,
     new_email: &str,
-    pool: &PgPool,
+    pool: &DbPool,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
 
@@ -653,10 +605,7 @@ pub async fn purge_image_posts_for_board(
     );
 
     // add record for pending email verification to the database
-    blocking(pool, move |conn| {
-        EmailVerification::create(conn, &form)
-    })
-    .await??;
+    EmailVerification::create(pool, &form).await?;
 
     let subject = format!("Email Verification for your {} Account", &settings.hostname);
     let body = format!(
@@ -700,13 +649,11 @@ pub async fn send_application_approval_email(
 /// Sends email to admins after a user applies
   pub async fn send_new_applicant_email_to_admins(
     applicant_username: &str,
-    pool: &PgPool,
+    pool: &DbPool,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
-    let admins = blocking(pool, move |conn| {
-        UserSettingsView::list_admins_with_email(conn)
-    })
-    .await??;
+
+    let admins = UserSettingsView::list_admins_with_email(pool).await?;
 
     let application_link = &format!(
         "{}/admin/applications",

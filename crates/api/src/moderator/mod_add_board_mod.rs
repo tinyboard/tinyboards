@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{AddBoardMod, ModActionResponse},
-    utils::{blocking, require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::{
@@ -46,16 +46,10 @@ impl<'des> Perform<'des> for AddBoardMod {
 
         if added {
             // add board moderator status for the targeted user on the targeted board
-            blocking(context.pool(), move |conn| {
-                BoardModerator::create(conn, &form)
-            })
-            .await??;
+            BoardModerator::create(context.pool(), &form).await?;
         } else {
             // remove board moderator status for the targeted user on the targeted board
-            blocking(context.pool(), move |conn| {
-                BoardModerator::remove_board_mod(conn, &form)
-            })
-            .await??;
+            BoardModerator::remove_board_mod(context.pool(), &form).await?;
         }
 
         // log this mod action
@@ -67,10 +61,7 @@ impl<'des> Perform<'des> for AddBoardMod {
         };
 
         // submit to the mod log
-        let mod_action = blocking(context.pool(), move |conn| {
-            ModAddBoardMod::create(conn, &mod_add_board_mod_form)
-        })
-        .await??;
+        let mod_action = ModAddBoardMod::create(context.pool(), &mod_add_board_mod_form).await?;
 
         Ok(ModActionResponse { mod_action })
     }

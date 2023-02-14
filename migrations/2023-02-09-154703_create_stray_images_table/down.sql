@@ -1,0 +1,1 @@
+drop table stray_images cascade;

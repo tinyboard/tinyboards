@@ -1,6 +1,5 @@
 use crate::{
     data::TinyBoardsContext,
-    utils::blocking,  
 };
 use tinyboards_db::{
     models::{
@@ -36,10 +35,8 @@ pub async fn send_notifications(
         .collect::<Vec<&MentionData>>() 
     {
         let mention_name = mention.name.clone();
-        let user_view_res = blocking(context.pool(), move |conn| {
-            UserView::read_from_name(conn, &mention_name)
-        })
-        .await?;
+
+        let user_view_res = UserView::read_from_name(context.pool(), &mention_name).await;
 
         match user_view_res {
             // we only proceed with trying to make a user mention if the user view returned successfully
@@ -55,11 +52,7 @@ pub async fn send_notifications(
 
                 // this might fail softly because comment edits might re-update or replace it
                 // the table's uniqueness will handle the fail
-                blocking(context.pool(), move |conn| {
-                    UserMention::create(conn, &user_mention_form)
-                })
-                .await?
-                .ok();
+                UserMention::create(context.pool(), &user_mention_form).await.ok();
 
             },
             // do nothing if the user view lookup failed
@@ -71,28 +64,17 @@ pub async fn send_notifications(
 
     // send comment reply to parent commenter/OP
     if let Some(parent_comment_id) = comment.parent_id {
-        let parent_comment = blocking(context.pool(), move |conn| {
-            Comment::read(conn, parent_comment_id)
-        })
-        .await??;
-
+        let parent_comment = Comment::read(context.pool(), parent_comment_id).await?;
         let user_id = user.id.clone();
         let parent_creator_id = parent_comment.creator_id.clone();
 
         // only add to recipients if person is not blocked
-        let creator_blocked = blocking(context.pool(), move |conn| {
-            UserBlock::read(conn, user_id, parent_creator_id)
-        })
-        .await?
-        .is_ok();
+        let creator_blocked = UserBlock::read(context.pool(), user_id, parent_creator_id).await.is_ok();
 
         // don't send a notification to yourself dummy
         if parent_comment.creator_id != user.id && !creator_blocked {
-            let user_view = blocking(context.pool(), move |conn| {
-                UserView::read(conn, parent_creator_id)
-            })
-            .await??;
 
+            let user_view = UserView::read(context.pool(), parent_creator_id).await?;
             recipient_ids.push(user_view.user.id);
 
             let comment_reply_form = CommentReplyForm {
@@ -102,11 +84,7 @@ pub async fn send_notifications(
             };
 
             // this needs to fail softly as well
-            blocking(context.pool(), move |conn| {
-                CommentReply::create(conn, &comment_reply_form)
-            })
-            .await?
-            .ok();
+            CommentReply::create(context.pool(), &comment_reply_form).await.ok();
             
         } 
 
@@ -114,18 +92,11 @@ pub async fn send_notifications(
         // if no parent id then send a notification to the OP
         let user_id = user.id.clone();
         let post_creator_id = post.creator_id.clone();
-        let creator_blocked = blocking(context.pool(), move |conn| {
-            UserBlock::read(conn, user_id, post_creator_id)
-        })
-        .await?
-        .is_ok();
+        let creator_blocked = UserBlock::read(context.pool(), user_id, post_creator_id).await.is_ok();
 
         if post.creator_id != user.id && !creator_blocked {
             let creator_id = post.creator_id;
-            let parent_user_view = blocking(context.pool(), move |conn| {
-                UserView::read(conn, creator_id)
-            })
-            .await??;
+            let parent_user_view = UserView::read(context.pool(), creator_id).await?;
 
             let comment_reply_form = CommentReplyForm {
                 recipient_id: Some(parent_user_view.user.id),
@@ -134,11 +105,7 @@ pub async fn send_notifications(
             };
 
             // this needs to fail softly as well
-            blocking(context.pool(), move |conn| {
-                CommentReply::create(conn, &comment_reply_form)
-            })
-            .await?
-            .ok();
+            CommentReply::create(context.pool(), &comment_reply_form).await.ok();
         }
 
     }

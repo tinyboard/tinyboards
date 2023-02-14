@@ -1,36 +1,33 @@
 // Scheduler, and trait for .seconds(), .minutes(), etc.
 use clokwerk::{Scheduler, TimeUnits};
 // Import week days and WeekDay
-use diesel::{sql_query, PgConnection, RunQueryDsl};
+use diesel::{sql_query, PgConnection, Connection, RunQueryDsl};
 use std::{thread, time::Duration};
-use tinyboards_db::utils::DbPool;
 use tinyboards_utils::error::TinyBoardsError;
 use tracing::info;
 
 /// Schedules various cleanup tasks for tinyboards in a background thread
-pub fn setup(pool: DbPool) -> Result<(), TinyBoardsError> {
+pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     let mut scheduler = Scheduler::new();
     let mut frequent_scheduler = Scheduler::new();
 
-    let mut conn = pool
-        .get()
-        .map_err(|_| TinyBoardsError::from_message(500, "error getting db pool"))?;
-    
-    update_banned_when_expired(&mut conn);
-    update_user_aggregates_rep(&mut conn);
+    let mut conn1 = PgConnection::establish(&db_url)
+        .expect("could not establish connection");
+
+    update_banned_when_expired(&mut conn1);
+    update_user_aggregates_rep(&mut conn1);
 
     // On startup, reindex the tables non-concurrently
-    reindex_aggregates_tables(&mut conn, true);
+    reindex_aggregates_tables(&mut conn1, true);
     
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
-        update_banned_when_expired(&mut conn);
-        reindex_aggregates_tables(&mut conn, true);
+        update_banned_when_expired(&mut conn1);
+        reindex_aggregates_tables(&mut conn1, true);
     });
 
-    let mut conn2 = pool
-        .get()
-        .map_err(|_| TinyBoardsError::from_message(500, "error getting db pool"))?;
+    let mut conn2 = PgConnection::establish(&db_url)
+        .expect("could not establish connection");
 
     frequent_scheduler
     .every(TimeUnits::minutes(5))
@@ -49,6 +46,7 @@ pub fn setup(pool: DbPool) -> Result<(), TinyBoardsError> {
 /// Reindex the aggregates tables every one hour
 /// This is necessary because hot_rank is actually a mutable function
 fn reindex_aggregates_tables(conn: &mut PgConnection, concurrently: bool) {
+    
     for table_name in &["post_aggregates", "comment_aggregates", "board_aggregates"] {
         reindex_table(conn, table_name, concurrently);
     }

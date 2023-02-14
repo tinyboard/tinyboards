@@ -1,30 +1,40 @@
 use crate::{
     schema::private_messages::dsl::*,
     models::user::private_messages::{PrivateMessage, PrivateMessageForm},
-    traits::Crud,
+    traits::Crud, utils::{DbPool, get_conn},
 };
 use diesel::{result::Error, *};
+use diesel_async::RunQueryDsl;
 
+#[async_trait::async_trait]
 impl Crud for PrivateMessage {
     type Form = PrivateMessageForm;
     type IdType = i32;
-    fn read(conn: &mut PgConnection, pm_id: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, pm_id: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         private_messages.find(pm_id).first::<Self>(conn)
+        .await
     }
-    fn delete(conn: &mut PgConnection, pm_id: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, pm_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::delete(private_messages.find(pm_id)).execute(conn)
+        .await
     }
-    fn create(conn: &mut PgConnection, form: &PrivateMessageForm) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &PrivateMessageForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         let pm = diesel::insert_into(private_messages)
             .values(form)
-            .get_result::<Self>(conn)?;
+            .get_result::<Self>(conn)
+            .await?;
 
         Ok(pm)
     }
-    fn update(conn: &mut PgConnection, pm_id: i32, form: &PrivateMessageForm) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, pm_id: i32, form: &PrivateMessageForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
         diesel::update(private_messages.find(pm_id))
             .set(form)
             .get_result::<Self>(conn)
+            .await
     }
 
 }
