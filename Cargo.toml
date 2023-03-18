@@ -20,6 +20,7 @@ members = [
     "crates/api",
     "crates/api_common",
     "crates/api_crud",
+    "crates/api_media",
     "crates/utils",
     "crates/db",
     "crates/db_views",
@@ -30,6 +31,7 @@ members = [
 tinyboards_api = { version = "=0.1.0", path="./crates/api" }
 tinyboards_api_common = { version = "=0.1.0", path="./crates/api_common" }
 tinyboards_api_crud = { version = "=0.1.0", path="./crates/api_crud" }
+tinyboards_api_media = { version = "=0.1.0", path="./crates/api_media" }
 tinyboards_utils = { version = "=0.1.0", path="./crates/utils" }
 tinyboards_db = { version = "=0.1.0", path="./crates/db" }
 tinyboards_db_views = { version = "=0.1.0", path="./crates/db_views" }
@@ -104,6 +106,7 @@ actix-multipart = "0.6"
 tinyboards_api = { workspace = true }
 tinyboards_api_crud = { workspace = true }
 tinyboards_api_common = { workspace = true }
+tinyboards_api_media = { workspace = true }
 tinyboards_db = { workspace = true }
 tinyboards_db_views = { workspace = true }
 tinyboards_db_views_mod = { workspace = true }
