@@ -401,15 +401,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    uploads (id) {
-        id -> Int4,
-        filename -> Text,
-        filepath -> Text,
-        uploaded_at -> Timestamp,
-    }
-}
-
-diesel::table! {
     user_aggregates (id) {
         id -> Int4,
         user_id -> Int4,
@@ -606,7 +597,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     site_aggregates,
     site_invite,
     stray_images,
-    uploads,
     user_aggregates,
     user_ban,
     user_blocks,
