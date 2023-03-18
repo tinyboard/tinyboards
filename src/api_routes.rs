@@ -1,6 +1,12 @@
 use actix_web::*;
+use actix_multipart::Multipart;
+use futures::{TryStreamExt, StreamExt};
+use std::io::Write;
 use serde::Deserialize;
-use tinyboards_api::Perform;
+use tinyboards_api::{
+    Perform,
+    media::upload::handle_uploaded_image,
+};
 use tinyboards_api_common::{
     admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::*, applications::*, board::*,
 };
@@ -250,4 +256,46 @@ where
     Request: Deserialize<'des> + PerformCrud<'des> + Send + 'static,
 {
     perform_crud::<Request>(body.into_inner(), data, path, req).await
+}
+
+async fn route_upload_image<'des, Request>(
+    data: web::Data<TinyBoardsContext>,
+    mut payload: Multipart,
+    path: web::Path<Request::Route>, // Define ImageUploadRoute according to your route parameters
+    req: HttpRequest,
+) -> Result<HttpResponse, TinyBoardsError> 
+where
+    Request: Deserialize<'des> + Perform<'des> + Send + 'static
+{
+    while let Ok(Some(mut field)) = payload.try_next().await {
+
+        let content_type = field
+            .content_disposition()
+            .parameters
+            .clone()
+            .into_iter()
+            .find_map(|param| match param {
+                actix_web::http::header::DispositionParam::Filename(filename) => Some(filename),
+                _ => None,
+            })
+            .ok_or(TinyBoardsError::from_message(500, "error parsing file upload."))?;
+
+        let mut image_data = Vec::new();
+        while let Some(chunk) = field.next().await {
+            let chunk = chunk.map_err(|_| TinyBoardsError::from_message(500, "error parsing chunk from multipart payload."))?;
+            image_data.write_all(&chunk).map_err(|_| TinyBoardsError::from_message(500, "error writing image data to chunk."))?;
+        }
+
+        let upload = handle_uploaded_image(data.clone(), image_data, ".png").await?;
+
+        let uploaded_name = upload.filename.clone();
+        let uploaded_url = data.settings().get_protocol_and_hostname();
+
+        let image_url = format!("{}/uploads/{}", uploaded_url, uploaded_name);
+
+        // Process the uploaded image data here and save it to your storage system.
+        // Call a function like `handle_uploaded_image(data, image_data, content_type, path, req).await`
+    }
+
+    Ok(HttpResponse::Ok().finish())
 }

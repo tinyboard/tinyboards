@@ -5,3 +5,4 @@ pub mod secret;
 pub mod comment;
 pub mod site;
 pub mod moderation;
+pub mod media;
