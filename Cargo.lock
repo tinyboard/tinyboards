@@ -3959,6 +3959,7 @@ dependencies = [
  "tinyboards_db_views",
  "tinyboards_db_views_mod",
  "tinyboards_utils",
+ "tokio",
  "tracing",
  "tracing-actix-web",
  "tracing-error",
