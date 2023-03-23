@@ -2,7 +2,7 @@
 
 # NOTE: this is a severely outdated readme, we need to update this at some point because the deployment method has changed a lot 
 
-## Local Installation for Development:
+## Local Installation for Development: 
 
 1. Install Postgres 14 on your OS - https://www.postgresql.org/download/
 
