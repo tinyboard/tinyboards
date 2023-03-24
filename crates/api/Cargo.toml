@@ -24,3 +24,5 @@ bcrypt = { workspace = true }
 tracing = { workspace = true }
 url = { workspace = true }
 actix-multipart = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true }

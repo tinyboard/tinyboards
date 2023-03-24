@@ -113,3 +113,27 @@ pub fn generate_rand_string() -> String {
     .take(18)
     .collect()
 }
+
+pub fn get_file_type(content_type: &str) -> &str {
+
+    let file_type = match content_type {
+      "image/gif" => "gif",
+      "image/jpeg" => "jpeg",
+      "image/webp" => "webp",
+      "image/png" => "png",
+      _ => "invalid",
+    };
+
+    file_type
+}
+
+pub fn is_acceptable_file_type(content_type: &str) -> bool {
+  let acceptable_types = [
+      "image/gif",
+      "image/jpeg",
+      "image/webp",
+      "image/png",
+  ];
+
+  acceptable_types.contains(&content_type)
+}

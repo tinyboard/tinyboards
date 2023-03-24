@@ -30,6 +30,7 @@ services:
       - postgres
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson
+      - uploads:/app/uploads
     networks:
       tinyboards:
         aliases:
@@ -88,3 +89,5 @@ services:
 
 networks:
   tinyboards: {}
+volumes:
+  uploads:

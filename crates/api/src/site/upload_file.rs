@@ -7,8 +7,12 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::models::{site::password_resets::*, user::users::User};
 use tinyboards_db::traits::Crud;
-use tinyboards_utils::{error::TinyBoardsError, utils::generate_rand_string};
+use tinyboards_utils::{error::TinyBoardsError, utils::{generate_rand_string, is_acceptable_file_type, get_file_type}, };
 use futures::{StreamExt, TryStreamExt};
+use tokio::{
+    fs::File,
+    io::AsyncWriteExt,
+};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformUpload<'des> for Multipart {
@@ -35,14 +39,26 @@ impl<'des> PerformUpload<'des> for Multipart {
         while let Some(item) = data.next().await {
             let mut field = item.unwrap();
             let content_disposition = field.content_disposition();
-            let file_name = content_disposition.get_filename().unwrap();
+            let original_file_name = content_disposition.get_filename().unwrap();
+            let mut file_name = String::new();
             let content_type = field.content_type().unwrap().to_string();
 
-            let mut file_bytes: Vec<u8> = Vec::new();
+            if !is_acceptable_file_type(&content_type) {
+                return Err(TinyBoardsError::from_message(500, "invalid file type"));
+            } else {
 
-            while let Some(chunk) = field.next().await {
-                let chunk_data = chunk.unwrap();
-                file_bytes.extend_from_slice(&chunk_data);
+                let mut file_bytes: Vec<u8> = Vec::new();
+    
+                while let Some(chunk) = field.next().await {
+                    let chunk_data = chunk.unwrap();
+                    file_bytes.extend_from_slice(&chunk_data);
+                }
+
+                let file_type = get_file_type(&content_type);
+                let file_name = format!("{}.{}", generate_rand_string(), file_type);
+                let file_path = format!("/app/uploads/{}", file_name);
+                let mut file = File::create(&file_path).await?;
+                file.write_all(&file_bytes).await?;
             }
 
         }

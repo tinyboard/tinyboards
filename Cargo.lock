@@ -3767,6 +3767,7 @@ dependencies = [
  "bcrypt",
  "bigdecimal",
  "diesel",
+ "futures",
  "regex",
  "serde",
  "tinyboards_api_common",
@@ -3774,6 +3775,7 @@ dependencies = [
  "tinyboards_db_views",
  "tinyboards_db_views_mod",
  "tinyboards_utils",
+ "tokio",
  "tracing",
  "url",
 ]
