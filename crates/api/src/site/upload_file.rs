@@ -5,10 +5,10 @@ use tinyboards_api_common::utils::require_user;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
 };
-use tinyboards_db::models::{site::password_resets::*, user::users::User};
+use tinyboards_db::models::{site::uploads::*};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::{error::TinyBoardsError, utils::{generate_rand_string, is_acceptable_file_type, get_file_type}, };
-use futures::{StreamExt, TryStreamExt};
+use futures::StreamExt;
 use tokio::{
     fs::File,
     io::AsyncWriteExt,
@@ -27,20 +27,18 @@ impl<'des> PerformUpload<'des> for Multipart {
         auth: Option<&str>
     ) -> Result<(), TinyBoardsError> {
 
-
         // require there be a logged in user to perform the upload
         let user = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
-
         let mut data = self;
+        let mut uploads = Vec::new();
 
         while let Some(item) = data.next().await {
             let mut field = item.unwrap();
-            let content_disposition = field.content_disposition();
-            let original_file_name = content_disposition.get_filename().unwrap();
-            let mut file_name = String::new();
+            let content_disposition = field.content_disposition().clone();
+            let original_file_name = content_disposition.get_filename().unwrap().clone();
             let content_type = field.content_type().unwrap().to_string();
 
             if !is_acceptable_file_type(&content_type) {
@@ -59,14 +57,20 @@ impl<'des> PerformUpload<'des> for Multipart {
                 let file_path = format!("/app/uploads/{}", file_name);
                 let mut file = File::create(&file_path).await?;
                 file.write_all(&file_bytes).await?;
+
+                let upload_form = UploadForm {
+                    user_id: user.id,
+                    original_name: original_file_name.to_string(),
+                    file_name: file_name.clone(),
+                    file_path: file_path.clone(),
+                };
+
+                let upload = Upload::create(context.pool(), &upload_form).await?;
+
+                uploads.push(format!("{}/{}", context.settings().get_protocol_and_hostname(), upload.file_name.clone()));
             }
-
         }
-        
 
-        // next: send response with the uploaded files url
-
-
-        todo!()
+        Ok(())
     }
 }

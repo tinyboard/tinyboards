@@ -5,7 +5,6 @@ pub mod post;
 pub mod site;
 pub mod user;
 use actix_web::web::Data;
-use actix_multipart::Multipart;
 use tinyboards_utils::TinyBoardsError;
 
 use serde::{Deserialize, Serialize};
