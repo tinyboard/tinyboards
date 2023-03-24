@@ -63,8 +63,7 @@ impl<'des> PerformUpload<'des> for Multipart {
 
         }
         
-        // next: save file_bytes to a locally stored file with a randomized name
-        // next: save file metadata to the database
+
         // next: send response with the uploaded files url
 
 

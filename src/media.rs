@@ -13,7 +13,7 @@ use actix_web::{
 use futures::stream::{Stream, StreamExt};
 use tinyboards_api_common::utils::{get_user_view_from_jwt, require_user, decode_base64_image};
 use tinyboards_api_common::data::TinyBoardsContext;
-use tinyboards_db::{models::site::{site::Site, stray_images::{StrayImage, StrayImageForm}}, traits::Crud};
+use tinyboards_db::{models::site::{site::Site}, traits::Crud};
 use tinyboards_utils::{rate_limit::RateLimitCell, REQWEST_TIMEOUT};
 use reqwest_middleware::{ClientWithMiddleware, RequestBuilder};
 use serde::{Deserialize, Serialize};

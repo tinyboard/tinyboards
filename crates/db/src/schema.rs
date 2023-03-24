@@ -347,17 +347,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    reports (id) {
-        id -> Int4,
-        user_id -> Nullable<Int4>,
-        comment_id -> Nullable<Int4>,
-        post_id -> Nullable<Int4>,
-        reason -> Nullable<Text>,
-        creation_date -> Timestamp,
-    }
-}
-
-diesel::table! {
     secret (id) {
         id -> Int4,
         jwt_secret -> Varchar,
@@ -407,6 +396,17 @@ diesel::table! {
     stray_images (id) {
         id -> Int4,
         img_url -> Text,
+        creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
+    uploads (id) {
+        id -> Int4,
+        user_id -> Int4,
+        original_name -> Text,
+        file_name -> Text,
+        file_path -> Text,
         creation_date -> Timestamp,
     }
 }
@@ -557,11 +557,9 @@ diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> users (creator_id));
-diesel::joinable!(reports -> comments (comment_id));
-diesel::joinable!(reports -> posts (post_id));
-diesel::joinable!(reports -> users (user_id));
 diesel::joinable!(site -> users (creator_id));
 diesel::joinable!(site_aggregates -> site (site_id));
+diesel::joinable!(uploads -> users (user_id));
 diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_ban -> users (user_id));
 diesel::joinable!(user_board_blocks -> boards (board_id));
@@ -606,12 +604,12 @@ diesel::allow_tables_to_appear_in_same_query!(
     posts,
     private_messages,
     registration_applications,
-    reports,
     secret,
     site,
     site_aggregates,
     site_invite,
     stray_images,
+    uploads,
     user_aggregates,
     user_ban,
     user_blocks,
