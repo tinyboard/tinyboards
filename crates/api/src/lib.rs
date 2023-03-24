@@ -5,6 +5,7 @@ pub mod post;
 pub mod site;
 pub mod user;
 use actix_web::web::Data;
+use actix_multipart::Multipart;
 use tinyboards_utils::TinyBoardsError;
 
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,19 @@ pub trait Perform<'des> {
      *   ```
      */
     async fn perform(
+        self,
+        context: &Data<TinyBoardsContext>,
+        path: Self::Route,
+        authorization: Option<&str>,
+    ) -> Result<Self::Response, TinyBoardsError>;
+}
+
+#[async_trait::async_trait(?Send)]
+pub trait PerformUpload<'des> {
+    type Response: Serialize;
+    type Route: Deserialize<'des>;
+
+    async fn perform_upload(
         self,
         context: &Data<TinyBoardsContext>,
         path: Self::Route,
