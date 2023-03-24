@@ -185,3 +185,8 @@ pub struct ExecutePasswordReset {
     pub new_password: String,
     pub new_password_verify: String,
 } 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FileUploadResponse {
+    pub uploads: Vec<String>,
+}

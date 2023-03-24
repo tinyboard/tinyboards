@@ -4,6 +4,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::utils::require_user;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
+    site::FileUploadResponse,
 };
 use tinyboards_db::models::{site::uploads::*};
 use tinyboards_db::traits::Crud;
@@ -17,7 +18,7 @@ use tokio::{
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformUpload<'des> for Multipart {
 
-    type Response = ();
+    type Response = FileUploadResponse;
     type Route = ();
 
     async fn perform_upload(
@@ -25,7 +26,7 @@ impl<'des> PerformUpload<'des> for Multipart {
         context: &Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>
-    ) -> Result<(), TinyBoardsError> {
+    ) -> Result<FileUploadResponse, TinyBoardsError> {
 
         // require there be a logged in user to perform the upload
         let user = require_user(context.pool(), context.master_key(), auth)
@@ -71,6 +72,6 @@ impl<'des> PerformUpload<'des> for Multipart {
             }
         }
 
-        Ok(())
+        Ok(FileUploadResponse { uploads })
     }
 }
