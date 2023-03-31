@@ -16,7 +16,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{models::secret::Secret, utils::{build_db_pool, run_migrations, get_db_url}};
 use tinyboards_server::{
-    api_routes, code_migrations::run_advanced_migrations, init_logging, media,
+    api_routes, code_migrations::run_advanced_migrations, init_logging,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
 };
 use tinyboards_utils::{error::TinyBoardsError, rate_limit::RateLimitCell, settings::SETTINGS};
@@ -102,8 +102,6 @@ async fn main() -> Result<(), TinyBoardsError> {
             .app_data(Data::new(context))
             .app_data(Data::new(rate_limit_cell.clone()))
             .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
-            // the extra routes
-            .configure(|cfg| media::config(cfg, pictrs_client.clone(), &rate_limit_cell))
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?
