@@ -1,7 +1,7 @@
+use actix_multipart::Multipart;
 use actix_web::*;
-// use actix_multipart::*;
 use serde::Deserialize;
-use tinyboards_api::{Perform, /*PerformUpload*/};
+use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
     admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, private_messages::*, applications::*, board::*,
 };
@@ -28,7 +28,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::post().to(route_post::<ValidateSiteInvite>),
             )
             // File Upload
-            //.route("/upload", web::put().to(upload_file::<Multipart>))
+            .route("/upload", web::put().to(upload_file::<Multipart>))
             // Authenticate
             .service(
                 web::scope("/auth")
@@ -231,6 +231,19 @@ where
     Ok(res)
 }
 
+async fn upload_file<'des, Multipart>(
+    data: web::Data<TinyBoardsContext>,
+    payload: Multipart,
+    path: web::Path<Multipart::Route>,
+    req: HttpRequest, 
+) -> Result<HttpResponse, TinyBoardsError> 
+where
+    Multipart: PerformUpload<'des> + 'static,
+{  
+    let result = Multipart::perform_upload(payload, &data, path.into_inner(), req.headers().get("Authorization").and_then(|header| header.to_str().ok())).await?;
+    Ok(HttpResponse::Ok().json(result))
+}
+
 async fn route_get_crud<'des, Request>(
     data: web::Data<TinyBoardsContext>,
     query: web::Query<Request>,
@@ -254,15 +267,3 @@ where
 {
     perform_crud::<Request>(body.into_inner(), data, path, req).await
 }
-
-// async fn upload_file<'des, Request>(
-//     data: web::Data<TinyBoardsContext>,
-//     payload: Multipart,
-//     path: web::Path<Request::Route>,
-//     req: HttpRequest, 
-// ) -> Result<HttpResponse, TinyBoardsError> 
-// where
-//     Request: Deserialize<'des> + PerformUpload<'des> + Send + 'static,
-// {
-//     perform_upload::<Request>().await
-// }
