@@ -83,10 +83,6 @@ async fn main() -> Result<(), TinyBoardsError> {
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build();
 
-    let pictrs_client: ClientWithMiddleware = ClientBuilder::new(reqwest_client.clone())
-        .with(TracingMiddleware::default())
-        .build();
-
     let settings_bind = settings.clone();
     HttpServer::new(move || {
         let context = TinyBoardsContext::create(

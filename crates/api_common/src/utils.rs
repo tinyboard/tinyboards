@@ -30,8 +30,6 @@ use base64::{
     engine::{general_purpose},
 };
 
-use crate::request::purge_image_from_pictrs;
-
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
     let header = Header {
