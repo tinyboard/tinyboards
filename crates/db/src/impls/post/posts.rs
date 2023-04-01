@@ -28,10 +28,10 @@ impl Post {
     ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%/image%";
+        let image_search = "%/media%";
         posts
             .filter(creator_id.eq(for_creator_id))
-            .filter(url.like(pictrs_search))
+            .filter(url.like(image_search))
             .load::<Self>(conn)
             .await
     }
@@ -42,10 +42,10 @@ impl Post {
     ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%/image%";
+        let image_search = "%/media%";
         posts
             .filter(board_id.eq(for_board_id))
-            .filter(url.like(pictrs_search))
+            .filter(url.like(image_search))
             .load::<Self>(conn)
             .await
     }
@@ -57,12 +57,12 @@ impl Post {
     ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%/image%";
+        let image_search = "%/media%";
 
         diesel::update(
             posts
                 .filter(creator_id.eq(for_creator_id))
-                .filter(url.like(pictrs_search)),
+                .filter(url.like(image_search)),
         )
         .set((
             url.eq::<Option<String>>(None),
@@ -79,12 +79,12 @@ impl Post {
     ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
-        let pictrs_search = "%/image%";
+        let image_search = "%/media%";
 
         diesel::update(
             posts
                 .filter(board_id.eq(for_board_id))
-                .filter(url.like(pictrs_search)),
+                .filter(url.like(image_search)),
         )
         .set((
             url.eq::<Option<String>>(None),

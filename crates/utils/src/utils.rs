@@ -137,3 +137,12 @@ pub fn is_acceptable_file_type(content_type: &str) -> bool {
 
   acceptable_types.contains(&content_type)
 }
+
+pub fn extract_img_file_name(i_url: &str) -> Option<String> {
+    // find last "/" position on the string
+    let last_slash_pos = i_url.rfind('/')?;
+    // find the file name based on this
+    let img_file_name = i_url.get((last_slash_pos + 1)..)?;
+    
+    Some(img_file_name.to_string())
+}

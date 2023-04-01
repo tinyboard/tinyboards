@@ -11,6 +11,7 @@ pub struct Upload {
     pub original_name: String,
     pub file_name: String,
     pub file_path: String,
+    pub upload_url: String,
     pub creation_date: NaiveDateTime,
 }
 
@@ -21,4 +22,5 @@ pub struct UploadForm {
     pub original_name: String,
     pub file_name: String,
     pub file_path: String,
+    pub upload_url: String,
 }

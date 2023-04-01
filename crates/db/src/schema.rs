@@ -407,6 +407,7 @@ diesel::table! {
         original_name -> Text,
         file_name -> Text,
         file_path -> Text,
+        upload_url -> Text,
         creation_date -> Timestamp,
     }
 }

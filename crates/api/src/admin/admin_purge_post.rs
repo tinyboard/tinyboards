@@ -4,8 +4,7 @@ use tinyboards_api_common::{
     admin::PurgePost,
     data::TinyBoardsContext,
     moderator::ModActionResponse,
-    request::purge_image_from_pictrs,
-    utils::{require_user},
+    utils::{require_user, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::{
@@ -15,7 +14,6 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
-use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for PurgePost {
@@ -43,18 +41,12 @@ impl<'des> Perform<'des> for PurgePost {
 
         // purge image
         if let Some(url) = post.url {
-            let parsed_url = Url::parse(url.as_str()).unwrap();
-            purge_image_from_pictrs(context.client(), context.settings(), &parsed_url)
-                .await
-                .ok();
+            purge_local_image_by_url(context.pool(), &url).await.ok();
         }
 
         // purge thumbnail
-        if let Some(url) = post.thumbnail_url {
-            let parsed_url = Url::parse(url.as_str()).unwrap();
-            purge_image_from_pictrs(context.client(), context.settings(), &parsed_url)
-                .await
-                .ok();
+        if let Some(thumbnail_url) = post.thumbnail_url {
+            purge_local_image_by_url(context.pool(), &thumbnail_url).await.ok();
         }
 
         // delete post

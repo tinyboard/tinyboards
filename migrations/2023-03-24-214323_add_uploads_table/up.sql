@@ -4,5 +4,6 @@ create table uploads (
     original_name text not null,
     file_name text not null,
     file_path text not null,
+    upload_url text not null,
     creation_date timestamp not null default now()
 );

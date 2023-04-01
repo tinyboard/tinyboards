@@ -4,8 +4,7 @@ use tinyboards_api_common::{
     admin::PurgeUser,
     data::TinyBoardsContext,
     moderator::ModActionResponse,
-    request::purge_image_from_pictrs,
-    utils::{purge_image_posts_for_user, require_user},
+    utils::{purge_local_image_posts_for_user, require_user, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::{
@@ -55,32 +54,18 @@ impl<'des> Perform<'des> for PurgeUser {
 
         // purge user banner
         if let Some(banner) = target_user.banner {
-            purge_image_from_pictrs(
-                context.client(),
-                context.settings(),
-                &Url::parse(banner.as_str()).unwrap(),
-            )
-            .await
-            .ok();
+            purge_local_image_by_url(context.pool(), &banner).await.ok();
         }
 
         // purge user avatar
         if let Some(avatar) = target_user.avatar {
-            purge_image_from_pictrs(
-                context.client(),
-                context.settings(),
-                &Url::parse(avatar.as_str()).unwrap(),
-            )
-            .await
-            .ok();
+            purge_local_image_by_url(context.pool(), &avatar).await.ok();
         }
 
         // purge all submitted media/images from user
-        purge_image_posts_for_user(
+        purge_local_image_posts_for_user(
             target_user_id,
             context.pool(),
-            context.settings(),
-            context.client(),
         )
         .await?;
 

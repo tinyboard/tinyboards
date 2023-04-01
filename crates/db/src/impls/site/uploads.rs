@@ -11,6 +11,14 @@ impl Upload {
             .first::<Self>(conn)
             .await
     }
+
+    pub async fn find_by_url(pool: &DbPool, f_url: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        uploads
+            .filter(upload_url.eq(f_url))
+            .first::<Self>(conn)
+            .await
+    }
 }
 
 
