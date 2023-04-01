@@ -190,3 +190,14 @@ pub struct ExecutePasswordReset {
 pub struct FileUploadResponse {
     pub uploads: Vec<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetFile{}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeleteFile{}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FileNamePath {
+    pub file_name: String,
+}

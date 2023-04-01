@@ -7,4 +7,4 @@ pub mod save_site_settings;
 pub mod validate_invite;
 pub mod password_reset;
 pub mod password_reset_request;
-pub mod upload_file;
+pub mod media;

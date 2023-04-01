@@ -27,8 +27,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),
             )
-            // File Upload
-            .route("/upload", web::put().to(upload_file::<Multipart>))
+            // File Upload / Deletion
+            .service(
+        web::scope("/file")
+                    .route("/upload", web::put().to(upload_file::<Multipart>))
+                    .route("/{file_name}", web::delete().to(route_post::<DeleteFile>))
+            )
+            // File Retrieval
+            .route("/media/{file_name}", web::get().to(route_get::<GetFile>))
             // Authenticate
             .service(
                 web::scope("/auth")
