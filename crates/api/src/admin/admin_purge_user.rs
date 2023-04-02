@@ -14,7 +14,6 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
-use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for PurgeUser {

@@ -1,7 +1,6 @@
 
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use reqwest_middleware::ClientWithMiddleware;
 use sha2::Sha384;
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
@@ -23,7 +22,6 @@ use tinyboards_utils::{
     settings::structs::{RateLimitSettings, Settings},
     email::send_email,
 };
-use url::Url;
 use uuid::Uuid;
 use base64::{
     Engine as _,

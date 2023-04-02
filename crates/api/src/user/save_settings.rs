@@ -4,8 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
-    utils::{get_user_view_from_jwt, require_user, send_verification_email},
-    request::{purge_image_from_pictrs, upload_image_to_pictrs, PictrsUploadResponse},
+    utils::{get_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::site::site::Site,
@@ -13,7 +12,6 @@ use tinyboards_db::{
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
-use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveUserSettings {
@@ -40,55 +38,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let current_banner = user.banner.clone().unwrap_or_default();
         let current_signature = user.signature.clone().unwrap_or_default();
         let hostname_and_protocol = context.settings().get_protocol_and_hostname();
-
-        let mut avatar_upload_response: Option<PictrsUploadResponse> = None;
-        if let Some(avatar) = data.avatar.clone() {
-            
-            if avatar != current_avatar && !avatar.contains(&hostname_and_protocol) {
-                if avatar.contains("base64,") && auth.is_some() {
-                    avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), Some(avatar), None).await?);
-                } else {
-                    avatar_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), None, Some(avatar)).await?);
-                }
-            }
-        }
         
-        let mut banner_upload_response: Option<PictrsUploadResponse> = None;
-        if let Some(banner) = data.banner.clone() {
-            if banner != current_banner && !banner.contains(&hostname_and_protocol) {
-                if banner.contains("base64,") && auth.is_some() {
-                    banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), Some(banner), None).await?);
-                } else {
-                    banner_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), None, Some(banner)).await?);
-                }
-            }
-        }
-
-        let mut signature_upload_response: Option<PictrsUploadResponse> = None;
-        if let Some(signature) = data.signature.clone() {
-            if signature != current_signature && !signature.contains(&hostname_and_protocol) {
-                if signature.contains("base64,") && auth.is_some() {
-                    signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), Some(signature), None).await?);
-                } else {
-                    signature_upload_response = Some(upload_image_to_pictrs(context.client(), context.settings(), None, Some(signature)).await?);
-                }
-            }
-        }
-
-        let avatar = match avatar_upload_response {
-            Some(resp) => diesel_option_overwrite(&Some(resp.url)),
-            None => None,
-        };
-
-        let banner = match banner_upload_response {
-            Some(resp) => diesel_option_overwrite(&Some(resp.url)),
-            None => None,
-        };
-
-        let signature = match signature_upload_response {
-            Some(resp) => diesel_option_overwrite(&Some(resp.url)),
-            None => None,
-        };
+        let avatar = data.avatar;
+        let banner = data.banner;
+        let signature = data.signature;
 
         let bio = diesel_option_overwrite(&data.bio);
         let email_deref = data.email.as_deref().map(str::to_lowercase);
@@ -103,21 +56,21 @@ impl<'des> Perform<'des> for SaveUserSettings {
             None => None,
         };
 
-        if let Some(Some(avatar)) = avatar.clone() {
+        if let Some(avatar) = avatar.clone() {
             if avatar != current_avatar && !avatar.is_empty() && !current_avatar.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_avatar.as_str()).unwrap()).await?;
+                purge_local_image_by_url(context.pool(), &current_avatar).await?;
             }
         };
 
-        if let Some(Some(banner)) = banner.clone() {
+        if let Some(banner) = banner.clone() {
             if banner != current_banner && !banner.is_empty() && !current_banner.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_banner.as_str()).unwrap()).await?;
+                purge_local_image_by_url(context.pool(), &current_banner).await?;
             }
         };
 
-        if let Some(Some(signature)) = signature.clone() {
+        if let Some(signature) = signature.clone() {
             if signature != current_signature && !signature.is_empty() && !current_signature.is_empty() {
-                purge_image_from_pictrs(context.client(), context.settings(), &Url::parse(current_signature.as_str()).unwrap()).await?;
+                purge_local_image_by_url(context.pool(), &current_signature).await?;
             }
         };
 
@@ -156,9 +109,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
             email,
             show_nsfw: data.show_nsfw,
             theme: data.theme.clone(),
-            avatar,
-            signature,
-            banner,
+            avatar: Some(avatar.clone()),
+            signature: Some(signature.clone()),
+            banner: Some(banner.clone()),
             default_listing_type,
             default_sort_type,
             updated,
