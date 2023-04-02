@@ -1,4 +1,5 @@
 use actix_multipart::Multipart;
+use actix_files::Files;
 use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
@@ -34,7 +35,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/{file_name}", web::delete().to(route_post::<DeleteFile>))
             )
             // File Retrieval
-            .route("/media/{file_name}", web::get().to(route_get::<GetFile>))
+            //.route("/media/{file_name}", web::get().to(route_get::<GetFile>))
             // Authenticate
             .service(
                 web::scope("/auth")

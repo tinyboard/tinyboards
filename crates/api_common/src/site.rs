@@ -192,7 +192,12 @@ pub struct FileUploadResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GetFile{}
+pub struct GetFile{
+    pub thumbnail: Option<u32>,
+    pub blur: Option<f32>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeleteFile{}

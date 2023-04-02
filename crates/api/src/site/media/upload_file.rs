@@ -55,7 +55,7 @@ impl<'des> PerformUpload<'des> for Multipart {
 
                 let file_type = get_file_type(&content_type);
                 let file_name = format!("{}.{}", generate_rand_string(), file_type);
-                let file_path = format!("/app/uploads/{}", file_name);
+                let file_path = format!("/home/kroner/uploads/{}", file_name);
                 let upload_url = format!("{}/media/{}", context.settings().get_protocol_and_hostname(), file_name.clone());
                 let mut file = File::create(&file_path).await?;
                 file.write_all(&file_bytes).await?;
@@ -70,7 +70,7 @@ impl<'des> PerformUpload<'des> for Multipart {
 
                 let upload = Upload::create(context.pool(), &upload_form).await?;
 
-                uploads.push(upload_url.clone());
+                uploads.push(upload.upload_url.clone());
             }
         }
 

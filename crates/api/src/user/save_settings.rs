@@ -37,11 +37,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let current_avatar = user.avatar.clone().unwrap_or_default();
         let current_banner = user.banner.clone().unwrap_or_default();
         let current_signature = user.signature.clone().unwrap_or_default();
-        let hostname_and_protocol = context.settings().get_protocol_and_hostname();
         
-        let avatar = data.avatar;
-        let banner = data.banner;
-        let signature = data.signature;
+        let avatar = data.avatar.clone();
+        let banner = data.banner.clone();
+        let signature = data.signature.clone();
 
         let bio = diesel_option_overwrite(&data.bio);
         let email_deref = data.email.as_deref().map(str::to_lowercase);
