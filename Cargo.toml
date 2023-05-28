@@ -114,9 +114,9 @@ bytes = "1.4.0"
 futures-core = { version = "0.3.27", default-features = false }
 pin-project-lite = "0.2.9"
 activitystreams-kinds = "0.3.0"
-axum = { version = "0.6.12", features = ["json", "headers"], default-features = false, optional = true }
-tower = { version = "0.4.13", optional = true }
-hyper = { version = "0.14", optional = true }
+axum = { version = "0.6.12", features = ["json", "headers"], default-features = false }
+tower = { version = "0.4.13" }
+hyper = { version = "0.14" }
 displaydoc = "0.2.3"
 
 [dependencies]

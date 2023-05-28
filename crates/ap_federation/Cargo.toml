@@ -39,11 +39,6 @@ tower = { workspace = true }
 hyper = { workspace = true }
 displaydoc = { workspace = true }
 
-[features]
-default = ["actix-web", "axum"]
-actix-web = ["dep:actix-web"]
-axum = ["dep:axum", "dep:tower", "dep:hyper"]
-
 [dev-dependencies]
 rand = "0.8.5"
 env_logger = "0.10.0"
@@ -52,6 +47,6 @@ axum = { version = "0.6.12", features = ["http1", "tokio", "query"], default-fea
 axum-macros = "0.3.7"
 actix-rt = "2.8.0"
 
-[profile.dev]
-strip = "symbols"
-debug = 0
+# [profile.dev]
+# strip = "symbols"
+# debug = 0
