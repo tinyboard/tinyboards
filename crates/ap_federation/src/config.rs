@@ -87,6 +87,7 @@ impl<T: Clone> FederationConfig<T> {
         FederationConfigBuilder::default()
     }
 
+    #[allow(dead_code)]
     pub(crate) async fn verify_url_and_domain<Activity, Datatype>(
         &self,
         activity: &Activity,

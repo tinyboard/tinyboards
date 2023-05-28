@@ -88,10 +88,12 @@ pub(crate) async fn sign_request(
         .await
 }
 
+#[allow(dead_code)]
 static CONFIG2: Lazy<http_signature_normalization::Config> =
     Lazy::new(http_signature_normalization::Config::new);
 
 /// Verifies the HTTP signature on an incoming inbox request.
+#[allow(dead_code)]
 pub(crate) fn verify_signature<'a, H>(
     headers: H,
     method: &Method,
@@ -138,10 +140,12 @@ struct DigestPart {
     #[allow(dead_code)]
     pub algorithm: String,
     /// The hashsum
+    #[allow(dead_code)]
     pub digest: String,
 }
 
 impl DigestPart {
+    #[allow(dead_code)]
     fn try_from_header(h: &HeaderValue) -> Option<Vec<DigestPart>> {
         let h = h.to_str().ok()?.split(';').next()?;
         let v: Vec<_> = h
@@ -166,6 +170,7 @@ impl DigestPart {
 }
 
 /// Verify body of an inbox request against the hash provided in `Digest` header.
+#[allow(dead_code)]
 pub(crate) fn verify_inbox_hash(
     digest_header: Option<&HeaderValue>,
     body: &[u8],
