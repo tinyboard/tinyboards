@@ -26,7 +26,7 @@ static IMG_TAG_REGEX: Lazy<Regex> = Lazy::new(|| {
 
 static YT_REGEX: Lazy<Regex> = Lazy::new(|| {
   Regex::new(
-    r#"(?P<a>https?://|http://)(?P<b>www\.)?(?P<c>youtube\.com/watch\?v=|youtube\.com/user/[a-zA-Z0-9_]+#p/a/u/[a-zA-Z0-9_]+/|youtube\.com/v/|youtube\.com/watch\?v=|youtube\.com/embed/|youtu\.be/|youtube\.com/shorts/)(?P<yt_code>[a-zA-Z0-9_]+)(?P<end>[^\s]*)"#)
+    r#"(?P<a>https?://|http://)(?P<b>www\.)?(?P<c>youtube\.com/watch\?v=|youtube\.com/user/[a-zA-Z0-9_]+#p/a/@[a-zA-Z0-9_]+/|youtube\.com/v/|youtube\.com/watch\?v=|youtube\.com/embed/|youtu\.be/|youtube\.com/shorts/)(?P<yt_code>[a-zA-Z0-9_]+)(?P<end>[^\s]*)"#)
     .expect("compile yt link regex")
 });
 
