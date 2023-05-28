@@ -1,7 +1,3 @@
-//! Utilities for fetching data from other servers
-//!
-#![doc = include_str!("../../docs/07_fetching_data.md")]
-
 use crate::{config::Data, error::Error, reqwest_shim::ResponseExt, FEDERATION_CONTENT_TYPE};
 use http::StatusCode;
 use serde::de::DeserializeOwned;

@@ -1,7 +1,3 @@
-//! Queue for signing and sending outgoing activities with retry
-//!
-#![doc = include_str!("../docs/09_sending_activities.md")]
-
 use crate::{
     config::Data,
     error::Error,

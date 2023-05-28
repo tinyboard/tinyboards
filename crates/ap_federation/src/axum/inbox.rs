@@ -1,7 +1,3 @@
-//! Handles incoming activities, verifying HTTP signatures and other checks
-//!
-#![doc = include_str!("../../docs/08_receiving_activities.md")]
-
 use crate::{
     config::Data,
     error::Error,
