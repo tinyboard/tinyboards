@@ -25,10 +25,10 @@ impl BoardView {
     pub async fn read(
         pool: &DbPool,
         board_id: i32,
-        user_id: Option<i32>,
+        person_id: Option<i32>,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_id_join = user_id.unwrap_or(-1);
+        let person_id_join = person_id.unwrap_or(-1);
 
         let (board, counts, subscriber, blocked) = boards::table
             .find(board_id)
@@ -36,12 +36,12 @@ impl BoardView {
             .left_join(
                 board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::user_id.eq(user_id_join))),
+                    .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
                 user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::user_id.eq(user_id_join))),
+                    .and(user_board_blocks::person_id.eq(person_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
@@ -60,34 +60,34 @@ impl BoardView {
         })
     }
 
-    pub async fn is_admin(pool: &DbPool, user_id: i32) -> Result<bool, Error> {
+    pub async fn is_admin(pool: &DbPool, person_id: i32) -> Result<bool, Error> {
         let res = UserView::admins(pool)
             .await
             .map(|v| v.into_iter().map(|a| a.user.id).collect::<Vec<i32>>())
             .unwrap_or_default()
-            .contains(&user_id);
+            .contains(&person_id);
 
         Ok(res)
     }
 
-    pub async fn is_mod_or_admin(pool: &DbPool, user_id: i32, board_id: i32) -> bool {
-        // check board moderators for user_id
+    pub async fn is_mod_or_admin(pool: &DbPool, person_id: i32, board_id: i32) -> bool {
+        // check board moderators for person_id
         let is_mod = BoardModeratorView::for_board(pool, board_id)
             .await    
             .map(|v| v.into_iter().map(|m| m.moderator.id).collect::<Vec<i32>>())
             .unwrap_or_default()
-            .contains(&user_id);
+            .contains(&person_id);
 
         if is_mod {
             return true;
         }
 
-        // check list of admins for user_id
+        // check list of admins for person_id
         UserView::admins(pool)
             .await
             .map(|v| v.into_iter().map(|a| a.user.id).collect::<Vec<i32>>())
             .unwrap_or_default()
-            .contains(&user_id)
+            .contains(&person_id)
     }
 }
 
@@ -113,20 +113,20 @@ pub struct BoardQueryResponse {
 impl<'a> BoardQuery<'a> {
     pub async fn list(self) -> Result<BoardQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
-        let user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
+        let person_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
         let mut query = boards::table
             .inner_join(board_aggregates::table)
-            .left_join(users::table.on(users::id.eq(user_id_join)))
+            .left_join(users::table.on(users::id.eq(person_id_join)))
             .left_join(
                 board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::user_id.eq(user_id_join))),
+                    .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
                 user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::user_id.eq(user_id_join))),
+                    .and(user_board_blocks::person_id.eq(person_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
@@ -138,16 +138,16 @@ impl<'a> BoardQuery<'a> {
 
         let count_query = boards::table
             .inner_join(board_aggregates::table)
-            .left_join(users::table.on(users::id.eq(user_id_join)))
+            .left_join(users::table.on(users::id.eq(person_id_join)))
             .left_join(
                 board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::user_id.eq(user_id_join))),
+                    .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
                 user_board_blocks::table.on(boards::id
                     .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::user_id.eq(user_id_join))),
+                    .and(user_board_blocks::person_id.eq(person_id_join))),
             )
             .select((BoardSafe::safe_columns_tuple(),))
             .into_boxed();
@@ -188,13 +188,13 @@ impl<'a> BoardQuery<'a> {
 
         if let Some(listing_type) = self.listing_type {
             query = match listing_type {
-                ListingType::Subscribed => query.filter(board_subscriptions::user_id.is_not_null()),
+                ListingType::Subscribed => query.filter(board_subscriptions::person_id.is_not_null()),
                 ListingType::All => query,
             };
         }
 
         if self.user.is_some() {
-            query = query.filter(user_board_blocks::user_id.is_null());
+            query = query.filter(user_board_blocks::person_id.is_null());
             query = query.filter(boards::is_nsfw.eq(false).or(users::show_nsfw.eq(true)));
         } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
             query = query.filter(boards::is_nsfw.eq(false));

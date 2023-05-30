@@ -21,7 +21,7 @@ pub struct PurgeBoard {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PurgeUser {
-    pub user_id: i32,
+    pub person_id: i32,
     pub reason: Option<String>,
 }
 

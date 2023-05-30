@@ -32,7 +32,7 @@ impl RegistrationApplicationView {
             admin,
         ) = registration_applications::table
         .find(app_id)
-        .inner_join(users::table.on(registration_applications::user_id.eq(users::id)))
+        .inner_join(users::table.on(registration_applications::person_id.eq(users::id)))
         .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
         .order_by(registration_applications::published.desc())
         .select((
@@ -75,7 +75,7 @@ impl<'a> ApplicationQuery<'a> {
         
         let user_alias = diesel::alias!(users as users_alias);
         let query = registration_applications::table
-            .inner_join(users::table.on(registration_applications::user_id.eq(users::id)))
+            .inner_join(users::table.on(registration_applications::person_id.eq(users::id)))
             .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
             .order_by(registration_applications::published.desc())
             .select((
@@ -88,7 +88,7 @@ impl<'a> ApplicationQuery<'a> {
 
 
         let count_query = registration_applications::table
-            .inner_join(users::table.on(registration_applications::user_id.eq(users::id)))
+            .inner_join(users::table.on(registration_applications::person_id.eq(users::id)))
             .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
             .into_boxed();
 

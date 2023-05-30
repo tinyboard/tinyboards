@@ -89,11 +89,11 @@ impl User {
     }
     pub async fn update_ban(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         new_banned: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(user_id))
+        diesel::update(users.find(person_id))
             .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -101,11 +101,11 @@ impl User {
 
     pub async fn update_passhash(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         new_passhash: String,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(user_id))
+        diesel::update(users.find(person_id))
             .set((passhash.eq(new_passhash), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -113,11 +113,11 @@ impl User {
 
     pub async fn update_is_application_accepted(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         new_is_application_accepted: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(user_id))
+        diesel::update(users.find(person_id))
             .set((is_application_accepted.eq(new_is_application_accepted), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -135,12 +135,12 @@ impl User {
 
     pub async fn update_admin(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         new_admin: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
-        diesel::update(users.find(user_id))
+        diesel::update(users.find(person_id))
             .set((is_admin.eq(new_admin), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -181,11 +181,11 @@ impl User {
             .await
     }
 
-    pub async fn update_chat_id(pool: &DbPool, user_id: i32, new_chat_id: String) -> Result<usize, Error> {
+    pub async fn update_chat_id(pool: &DbPool, person_id: i32, new_chat_id: String) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::users::dsl::*;
         diesel::update(users)
-            .filter(id.eq(user_id))
+            .filter(id.eq(person_id))
             .set((chat_id.eq(new_chat_id), updated.eq(naive_now())))
             .execute(conn)
             .await
@@ -233,11 +233,11 @@ impl User {
 
     pub async fn update_settings(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         form: &UserForm,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(user_id))
+        diesel::update(users.find(person_id))
             .set(form)
             .get_result::<Self>(conn)
             .await
@@ -285,14 +285,14 @@ impl Crud for User {
     type Form = UserForm;
     type IdType = i32;
 
-    async fn read(pool: &DbPool, user_id: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, person_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        users.find(user_id).first::<Self>(conn)
+        users.find(person_id).first::<Self>(conn)
         .await
     }
-    async fn delete(pool: &DbPool, user_id: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, person_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(users.find(user_id)).execute(conn)
+        diesel::delete(users.find(person_id)).execute(conn)
         .await
     }
     async fn create(pool: &DbPool, form: &UserForm) -> Result<Self, Error> {
@@ -304,9 +304,9 @@ impl Crud for User {
 
         Ok(local_user)
     }
-    async fn update(pool: &DbPool, user_id: i32, form: &UserForm) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, person_id: i32, form: &UserForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(user_id))
+        diesel::update(users.find(person_id))
             .set(form)
             .get_result::<Self>(conn)
             .await

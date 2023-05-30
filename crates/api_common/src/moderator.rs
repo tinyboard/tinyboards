@@ -14,7 +14,7 @@ pub struct StickyPost {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanUser {
-    pub target_user_id: i32,
+    pub target_person_id: i32,
     pub banned: bool,
     pub expires: Option<NaiveDateTime>,
     pub reason: Option<String>,
@@ -22,7 +22,7 @@ pub struct BanUser {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanFromBoard {
-    pub target_user_id: i32,
+    pub target_person_id: i32,
     pub board_id: i32,
     pub banned: bool,
     pub expires: Option<NaiveDateTime>,
@@ -60,12 +60,12 @@ pub struct BanBoard {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddAdmin {
     pub added: bool,
-    pub added_user_id: i32,
+    pub added_person_id: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddBoardMod {
     pub added: bool,
-    pub added_user_id: i32,
+    pub added_person_id: i32,
     pub added_board_id: i32,
 }

@@ -37,7 +37,7 @@ impl<'des> Perform<'des> for Search {
         // get the search type
         let search_type = map_to_search_type(params.kind.as_deref());
 
-        let user_id = user.as_ref().map(|u| u.id);
+        let person_id = user.as_ref().map(|u| u.id);
         let is_admin = user.as_ref().map(|u| u.is_admin);
 
         let mut posts = Vec::new();
@@ -94,7 +94,7 @@ impl<'des> Perform<'des> for Search {
                     .search_term(search_term)
                     .board_id(board_id)
                     .creator_id(creator_id)
-                    .user_id(user_id)
+                    .person_id(person_id)
                     .page(page)
                     .limit(limit)
                     .build()

@@ -5,9 +5,9 @@ use crate::{
 use diesel::{result::Error, *};
 
 impl UserAggregates {
-    pub fn read(conn: &mut PgConnection, user_id: i32) -> Result<Self, Error> {
+    pub fn read(conn: &mut PgConnection, person_id: i32) -> Result<Self, Error> {
         user_aggregates::table
-            .filter(user_aggregates::user_id.eq(user_id))
+            .filter(user_aggregates::person_id.eq(person_id))
             .first::<Self>(conn)
     }
 }

@@ -14,7 +14,7 @@ impl Saveable for PostSaved {
         use crate::schema::user_post_save::dsl::*;
         insert_into(user_post_save)
             .values(form)
-            .on_conflict((post_id, user_id))
+            .on_conflict((post_id, person_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -28,7 +28,7 @@ impl Saveable for PostSaved {
         diesel::delete(
             user_post_save
                 .filter(post_id.eq(form.post_id))
-                .filter(user_id.eq(form.user_id)),
+                .filter(person_id.eq(form.person_id)),
         )
         .execute(conn)
         .await

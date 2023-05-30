@@ -13,13 +13,13 @@ impl Board {
     pub async fn board_has_mod(
         pool: &DbPool,
         board_id: i32,
-        user_id: i32,
+        person_id: i32,
     ) -> Result<bool, Error> {
         let conn = &mut get_conn(pool).await?;
         let mod_id = board_mods::table
             .select(board_mods::id)
             .filter(board_mods::board_id.eq(board_id))
-            .filter(board_mods::user_id.eq(user_id))
+            .filter(board_mods::person_id.eq(person_id))
             .first::<i32>(conn)
             .await
             .optional();
@@ -31,13 +31,13 @@ impl Board {
     pub async fn board_has_ban(
         pool: &DbPool,
         board_id: i32,
-        user_id: i32,
+        person_id: i32,
     ) -> Result<bool, Error> {
         let conn = &mut get_conn(pool).await?;
         let ban_id = board_user_bans::table
             .select(board_user_bans::id)
             .filter(board_user_bans::board_id.eq(board_id))
-            .filter(board_user_bans::user_id.eq(user_id))
+            .filter(board_user_bans::person_id.eq(person_id))
             .filter(
                 board_user_bans::expires
                     .is_null()
@@ -149,10 +149,10 @@ impl Bannable for BoardUserBan {
 
     async fn ban(pool: &DbPool, ban_form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
+        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, person_id};
         insert_into(board_user_bans)
             .values(ban_form)
-            .on_conflict((board_id, user_id))
+            .on_conflict((board_id, person_id))
             .do_update()
             .set(ban_form)
             .get_result::<Self>(conn)
@@ -161,11 +161,11 @@ impl Bannable for BoardUserBan {
 
     async fn unban(pool: &DbPool, ban_form: &Self::Form) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
+        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, person_id};
         diesel::delete(
             board_user_bans
                 .filter(board_id.eq(ban_form.board_id))
-                .filter(user_id.eq(ban_form.user_id)),
+                .filter(person_id.eq(ban_form.person_id)),
         )
         .execute(conn)
         .await

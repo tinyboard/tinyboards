@@ -30,7 +30,7 @@ impl<'des> Perform<'des> for SaveComment {
 
         let saved_form = CommentSavedForm {
             comment_id: path.comment_id,
-            user_id: user_view.user.id,
+            person_id: user_view.user.id,
         };
 
         if data.save {
@@ -45,8 +45,8 @@ impl<'des> Perform<'des> for SaveComment {
         }
 
         let comment_id = path.comment_id;
-        let user_id = user_view.user.id;
-        let comment_view = CommentView::read(context.pool(), comment_id, Some(user_id)).await?;
+        let person_id = user_view.user.id;
+        let comment_view = CommentView::read(context.pool(), comment_id, Some(person_id)).await?;
 
         Ok(CommentResponse { comment_view })
     }

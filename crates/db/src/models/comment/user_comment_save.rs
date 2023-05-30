@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct CommentSaved {
     pub id: i32,
     pub comment_id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub creation_date: NaiveDateTime,
 }
 
@@ -16,5 +16,5 @@ pub struct CommentSaved {
 #[diesel(table_name = user_comment_save)]
 pub struct CommentSavedForm {
     pub comment_id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
 }

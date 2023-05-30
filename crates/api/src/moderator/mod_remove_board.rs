@@ -49,7 +49,7 @@ impl<'des> Perform<'des> for BanBoard {
 
         // form for submitting remove action to mod log
         let remove_board_form = ModRemoveBoardForm {
-            mod_user_id: user.id,
+            mod_person_id: user.id,
             board_id: board_id.clone(),
             reason: Some(reason),
             removed: Some(Some(banned)),

@@ -55,7 +55,7 @@ pub struct PostAggregates {
 #[diesel(belongs_to(crate::models::user::users::User))]
 pub struct UserAggregates {
     pub id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub post_count: i64,
     pub post_score: i64,
     pub comment_count: i64,

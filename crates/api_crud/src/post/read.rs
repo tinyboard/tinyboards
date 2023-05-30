@@ -31,14 +31,14 @@ impl<'des> PerformCrud<'des> for GetPost {
         // check to see if instance is set to private before listing post
         check_private_instance(&user, context.pool()).await?;
 
-        let user_id = match user {
+        let person_id = match user {
             Some(ref user) => Some(user.id),
             None => None,
         };
 
         let post_id = path.post_id;
 
-        let mut post_view = PostView::read(context.pool(), post_id, user_id).await?;
+        let mut post_view = PostView::read(context.pool(), post_id, person_id).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
             post_view.hide_if_removed_or_deleted(user.as_ref());
@@ -49,7 +49,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         // mark read here
 
         let board_id = post_view.board.id;
-        let board_view = BoardView::read(context.pool(), board_id, user_id).await?;
+        let board_view = BoardView::read(context.pool(), board_id, person_id).await?;
 
         // blank out deleted or removed info here
 

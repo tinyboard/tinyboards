@@ -25,7 +25,7 @@ impl<'des> Perform<'des> for BanUser {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanUser = &self;
-        let target_user_id = data.target_user_id;
+        let target_person_id = data.target_person_id;
         let banned = data.banned;
         let reason = &data.reason;
         let expires = data.expires;
@@ -36,12 +36,12 @@ impl<'des> Perform<'des> for BanUser {
             .unwrap()?;
 
         // update the user in the database to be banned
-        User::update_ban(context.pool(), target_user_id.clone(), banned.clone()).await?;
+        User::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
-            mod_user_id: user.id,
-            other_user_id: target_user_id.clone(),
+            mod_person_id: user.id,
+            other_person_id: target_person_id.clone(),
             banned: Some(Some(banned)),
             expires: Some(expires),
             reason: Some(reason.clone()),

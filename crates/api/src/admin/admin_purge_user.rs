@@ -28,7 +28,7 @@ impl<'des> Perform<'des> for PurgeUser {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &PurgeUser = &self;
-        let target_user_id = data.user_id;
+        let target_person_id = data.person_id;
 
         let settings = SETTINGS.to_owned();
 
@@ -37,7 +37,7 @@ impl<'des> Perform<'des> for PurgeUser {
             .require_admin()
             .unwrap()?;
 
-        let target_user = User::read(context.pool(), target_user_id.clone()).await?;
+        let target_user = User::read(context.pool(), target_person_id.clone()).await?;
 
         if target_user
             .name
@@ -63,19 +63,19 @@ impl<'des> Perform<'des> for PurgeUser {
 
         // purge all submitted media/images from user
         purge_local_image_posts_for_user(
-            target_user_id,
+            target_person_id,
             context.pool(),
         )
         .await?;
 
         // delete user
-        User::delete(context.pool(), target_user_id).await?;
+        User::delete(context.pool(), target_person_id).await?;
 
         let reason = data.reason.clone();
 
         let form = AdminPurgeUserForm {
             admin_id: user.id,
-            user_id: target_user_id.clone(),
+            person_id: target_person_id.clone(),
             reason: Some(reason),
         };
 

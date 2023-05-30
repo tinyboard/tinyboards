@@ -17,11 +17,11 @@ impl ModLockPostView {
     pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let user_alias = diesel::alias!(users as user_1);
-        let mod_id_join = params.mod_user_id.unwrap_or(-1);
+        let mod_id_join = params.mod_person_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
-        let mod_names_join = mod_lock_post::mod_user_id
+        let mod_names_join = mod_lock_post::mod_person_id
             .eq(users::id)
             .and(show_mod_names_expr.or(users::id.eq(mod_id_join)));
 
@@ -38,16 +38,16 @@ impl ModLockPostView {
             ))
             .into_boxed();
 
-        if let Some(mod_user_id) = params.mod_user_id {
-            query = query.filter(mod_lock_post::mod_user_id.eq(mod_user_id));
+        if let Some(mod_person_id) = params.mod_person_id {
+            query = query.filter(mod_lock_post::mod_person_id.eq(mod_person_id));
         };
 
         if let Some(board_id) = params.board_id {
             query = query.filter(posts::board_id.eq(board_id));
         };
 
-        if let Some(other_user_id) = params.other_user_id {
-            query = query.filter(user_alias.field(users::id).eq(other_user_id));
+        if let Some(other_person_id) = params.other_person_id {
+            query = query.filter(user_alias.field(users::id).eq(other_person_id));
         };
 
         let (limit, offset) = limit_and_offset(params.page, params.limit)?;

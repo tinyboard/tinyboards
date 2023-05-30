@@ -33,11 +33,11 @@ impl<'des> Perform<'des> for PasswordResetRequest {
         } else {
 
             let user = user_res.unwrap();
-            let user_id = user.id;
+            let person_id = user.id;
             let reset_token = generate_rand_string();
             
             let form = PasswordResetForm {
-                user_id,
+                person_id,
                 reset_token,
             };
             // create the password reset in the database

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = user_board_blocks)]
 pub struct BoardBlock {
     pub id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub board_id: i32,
     pub creation_date: NaiveDateTime,
 }
@@ -15,6 +15,6 @@ pub struct BoardBlock {
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
 #[diesel(table_name = user_board_blocks)]
 pub struct BoardBlockForm {
-    pub user_id: i32,
+    pub person_id: i32,
     pub board_id: i32,
 }

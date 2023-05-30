@@ -23,11 +23,11 @@ type UserViewTuple = (UserSafe, UserAggregates);
 impl UserView {
     pub async fn read_opt(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
     ) -> Result<Option<Self>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         let user_view_tuple = users::table
-            .find(user_id)
+            .find(person_id)
             .inner_join(user_aggregates::table)
             .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
             .first::<UserViewTuple>(conn)
@@ -38,8 +38,8 @@ impl UserView {
         Ok(user_view_tuple.map(|(user, counts)| Self { user, counts }))
     }
 
-    pub async fn read(pool: &DbPool, user_id: i32) -> Result<Self, TinyBoardsError> {
-        match Self::read_opt(pool, user_id).await {
+    pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
+        match Self::read_opt(pool, person_id).await {
             Ok(opt) => match opt {
                 Some(u) => Ok(u),
                 None => Err(TinyBoardsError::from_message(404, "no user view found")),
@@ -124,15 +124,15 @@ impl UserView {
 
 impl LoggedInUserView {
     
-    pub async fn read(pool: &DbPool, user_id: i32) -> Result<Self, TinyBoardsError> {
+    pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
 
-        let user_view = UserView::read(pool, user_id)
+        let user_view = UserView::read(pool, person_id)
             .await    
             .map_err(|e| TinyBoardsError::from(e))?;
 
-        let mentions = UserMentionView::get_unread_mentions(pool, user_id).await?;
+        let mentions = UserMentionView::get_unread_mentions(pool, person_id).await?;
 
-        let replies = CommentReplyView::get_unread_replies(pool, user_id).await?;
+        let replies = CommentReplyView::get_unread_replies(pool, person_id).await?;
 
         Ok( LoggedInUserView { 
             user: user_view.user, 
@@ -147,10 +147,10 @@ impl LoggedInUserView {
 type UserSettingsViewTuple = (UserSettings, UserAggregates);
 
 impl UserSettingsView {
-    pub async fn read(pool: &DbPool, user_id: i32) -> Result<Self, Error> {
+    pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let (settings, counts) = users::table
-            .find(user_id)
+            .find(person_id)
             .inner_join(user_aggregates::table)
             .select((
                 UserSettings::safe_columns_tuple(),
@@ -167,7 +167,7 @@ impl UserSettingsView {
         let res = users::table
             .filter(users::is_admin.eq(true))
             .filter(users::email.is_not_null())
-            .inner_join(user_aggregates::table.on(users::id.eq(user_aggregates::user_id)))
+            .inner_join(user_aggregates::table.on(users::id.eq(user_aggregates::person_id)))
             .select((
                 UserSettings::safe_columns_tuple(),
                 user_aggregates::all_columns,

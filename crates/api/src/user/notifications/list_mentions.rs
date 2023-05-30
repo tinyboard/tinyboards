@@ -38,12 +38,12 @@ impl<'des> Perform<'des> for GetUserMentions {
             let page = data.page;
             let limit = data.limit;
             let unread_only = data.unread_only;
-            let user_id = Some(user.id);
+            let person_id = Some(user.id);
             
             let resp = UserMentionQuery::builder()
                 .pool(context.pool())
-                .recipient_id(user_id)
-                .user_id(user_id)
+                .recipient_id(person_id)
+                .person_id(person_id)
                 .sort(Some(sort))
                 .unread_only(unread_only)
                 .page(page)

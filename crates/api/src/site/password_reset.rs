@@ -35,7 +35,7 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
             return Err(TinyBoardsError::from_message(400, "passwords did not match"));
         }
 
-        let user = User::read(context.pool(), reset_request.user_id.clone()).await?;
+        let user = User::read(context.pool(), reset_request.person_id.clone()).await?;
 
         let equals_old_password = verify_password(&user.passhash, &new_password);
 

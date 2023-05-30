@@ -58,7 +58,7 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
         } else {
             // if we are denying the application, update the app in the DB with admin who denied it and reason
             let form = RegistrationApplicationForm {
-                user_id: app.application.user_id.clone(),
+                person_id: app.application.person_id.clone(),
                 answer: Some(app.application.answer.clone()),
                 deny_reason: Some(reason),
                 admin_id: Some(Some(user.id.clone())),

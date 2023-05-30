@@ -38,7 +38,7 @@ pub struct GetFeed {
     pub sort: Option<String>,
     pub creator_id: Option<i32>,
     pub board_id: Option<i32>,
-    pub user_id: Option<i32>,
+    pub person_id: Option<i32>,
     pub search: Option<String>,
     pub saved_only: Option<bool>,
     pub is_nsfw: Option<bool>,
@@ -79,13 +79,13 @@ impl Message {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetModLog {
-    pub mod_user_id: Option<i32>,
+    pub mod_person_id: Option<i32>,
     pub board_id: Option<i32>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
     #[serde(rename = "type")]
     pub kind: Option<String>,
-    pub other_user_id: Option<i32>,
+    pub other_person_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

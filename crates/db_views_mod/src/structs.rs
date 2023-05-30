@@ -118,8 +118,8 @@ pub struct AdminPurgePostView {
 #[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct ModLogParams {
     pub board_id: Option<i32>,
-    pub mod_user_id: Option<i32>,
-    pub other_user_id: Option<i32>,
+    pub mod_person_id: Option<i32>,
+    pub other_person_id: Option<i32>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
     pub hide_modlog_names: bool,

@@ -27,7 +27,7 @@ impl BoardModeratorView {
         Ok(Self::from_tuple_to_vec(res))
     }
 
-    pub async fn for_user(pool: &DbPool, user_id: i32) -> Result<Vec<Self>, Error> {
+    pub async fn for_user(pool: &DbPool, person_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let res = board_mods::table
             .inner_join(boards::table)
@@ -36,7 +36,7 @@ impl BoardModeratorView {
                 BoardSafe::safe_columns_tuple(),
                 UserSafe::safe_columns_tuple(),
             ))
-            .filter(board_mods::user_id.eq(user_id))
+            .filter(board_mods::person_id.eq(person_id))
             .filter(boards::is_deleted.eq(false))
             .filter(boards::is_banned.eq(false))
             .order_by(board_mods::creation_date)

@@ -99,7 +99,7 @@ impl<'des> PerformCrud<'des> for Register {
         // if site is in application mode, add the application to the database
         if site.require_application {
             let form = RegistrationApplicationForm {
-                user_id: inserted_user.id,
+                person_id: inserted_user.id,
                 answer: data.answer.clone(),
                 ..RegistrationApplicationForm::default()
             };

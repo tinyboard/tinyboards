@@ -25,14 +25,14 @@ impl<'des> Perform<'des> for GetUnreadCount {
         .await?
         .user;
 
-    let user_id = user.id;
+    let person_id = user.id;
 
 
-    let replies = CommentReplyView::get_unread_replies(context.pool(), user_id).await?;
+    let replies = CommentReplyView::get_unread_replies(context.pool(), person_id).await?;
     
-    let mentions  = UserMentionView::get_unread_mentions(context.pool(), user_id).await?;
+    let mentions  = UserMentionView::get_unread_mentions(context.pool(), person_id).await?;
 
-    let messages = PrivateMessageView::get_unread_message_count(context.pool(), user_id).await?;
+    let messages = PrivateMessageView::get_unread_message_count(context.pool(), person_id).await?;
 
     Ok(GetUnreadCountResponse {
         replies,

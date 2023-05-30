@@ -5,6 +5,6 @@ use serde::{Deserialize, Serialize};
 pub struct PostRead {
     pub id: i32,
     pub post_id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub creation_date: chrono::NaiveDateTime,
 }

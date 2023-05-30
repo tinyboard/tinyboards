@@ -65,11 +65,11 @@ pub async fn send_notifications(
     // send comment reply to parent commenter/OP
     if let Some(parent_comment_id) = comment.parent_id {
         let parent_comment = Comment::read(context.pool(), parent_comment_id).await?;
-        let user_id = user.id.clone();
+        let person_id = user.id.clone();
         let parent_creator_id = parent_comment.creator_id.clone();
 
         // only add to recipients if person is not blocked
-        let creator_blocked = UserBlock::read(context.pool(), user_id, parent_creator_id).await.is_ok();
+        let creator_blocked = UserBlock::read(context.pool(), person_id, parent_creator_id).await.is_ok();
 
         // don't send a notification to yourself dummy
         if parent_comment.creator_id != user.id && !creator_blocked {
@@ -90,9 +90,9 @@ pub async fn send_notifications(
 
     } else {
         // if no parent id then send a notification to the OP
-        let user_id = user.id.clone();
+        let person_id = user.id.clone();
         let post_creator_id = post.creator_id.clone();
-        let creator_blocked = UserBlock::read(context.pool(), user_id, post_creator_id).await.is_ok();
+        let creator_blocked = UserBlock::read(context.pool(), person_id, post_creator_id).await.is_ok();
 
         if post.creator_id != user.id && !creator_blocked {
             let creator_id = post.creator_id;

@@ -51,13 +51,13 @@ impl<'des> Perform<'des> for CreatePostVote {
         if !is_board_banned {
             let vote_form = PostVoteForm {
                 post_id: path.post_id,
-                user_id: user.id,
+                person_id: user.id,
                 score: data.score,
             };
 
             // remove any existing votes first
-            let user_id = user.id;
-            PostVote::remove(context.pool(), user_id, post_id).await?;
+            let person_id = user.id;
+            PostVote::remove(context.pool(), person_id, post_id).await?;
 
             let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);
 
@@ -66,13 +66,13 @@ impl<'des> Perform<'des> for CreatePostVote {
                 PostVote::vote(context.pool(), &cloned_form).await?;
             } else {
                 let cloned_form = vote_form.clone();
-                PostVote::remove(context.pool(), cloned_form.user_id, cloned_form.post_id).await?;
+                PostVote::remove(context.pool(), cloned_form.person_id, cloned_form.post_id).await?;
             }
 
             // mark the post as read here
 
             // grab the post view here for the response
-            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.user_id)).await?;
+            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.person_id)).await?;
 
             Ok(PostResponse { post_view })
         } else {

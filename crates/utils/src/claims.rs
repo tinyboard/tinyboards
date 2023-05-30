@@ -7,7 +7,7 @@ type Jwt = String;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
-    /// user_id, standard claim.
+    /// person_id, standard claim.
     pub sub: i32,
     pub iss: String,
     /// Time when this tokenn was issued as a UNIX-timestamp in seconds
@@ -23,9 +23,9 @@ impl Claims {
         Ok(decode::<Claims>(jwt, &key, &validation)?)
     }
 
-    pub fn jwt(user_id: i32, jwt_secret: &str, hostname: &str) -> Result<Jwt, TinyBoardsError> {
+    pub fn jwt(person_id: i32, jwt_secret: &str, hostname: &str) -> Result<Jwt, TinyBoardsError> {
         let claims = Claims {
-            sub: user_id,
+            sub: person_id,
             iss: hostname.to_string(),
             iat: Utc::now().timestamp(),
         };

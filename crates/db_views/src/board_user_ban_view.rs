@@ -12,7 +12,7 @@ type BoardUserBanViewTuple = (BoardSafe, UserSafe);
 impl BoardUserBanView {
     pub async fn get(
         pool: &DbPool,
-        from_user_id: i32,
+        from_person_id: i32,
         from_board_id: i32,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -24,7 +24,7 @@ impl BoardUserBanView {
                 UserSafe::safe_columns_tuple(),
             ))
             .filter(board_user_bans::board_id.eq(from_board_id))
-            .filter(board_user_bans::user_id.eq(from_user_id))
+            .filter(board_user_bans::person_id.eq(from_person_id))
             .filter(
                 board_user_bans::expires
                     .is_null()

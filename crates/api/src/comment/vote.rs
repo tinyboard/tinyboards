@@ -53,7 +53,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
         if !is_board_banned {
             let vote_form = CommentVoteForm {
                 comment_id: path.comment_id,
-                user_id: user.id,
+                person_id: user.id,
                 score: data.score,
             };
 
@@ -67,7 +67,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
                 CommentVote::vote(context.pool(), &cloned_form).await?;
             } else {
                 let cloned_form = vote_form.clone();
-                CommentVote::remove(context.pool(), cloned_form.user_id, cloned_form.comment_id).await?;
+                CommentVote::remove(context.pool(), cloned_form.person_id, cloned_form.comment_id).await?;
             }
         }
 

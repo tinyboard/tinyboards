@@ -39,7 +39,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         // check if instance is private before listing comments
         check_private_instance(&user, context.pool()).await?;
 
-        let user_id = match user {
+        let person_id = match user {
             Some(ref user) => Some(user.id),
             None => None,
         };
@@ -83,7 +83,7 @@ impl<'des> PerformCrud<'des> for ListComments {
             .search_term(search_term)
             .saved_only(saved_only)
             .show_deleted_and_removed(show_deleted_and_removed)
-            .user_id(user_id)
+            .person_id(person_id)
             .page(page)
             .limit(limit)
             .build()

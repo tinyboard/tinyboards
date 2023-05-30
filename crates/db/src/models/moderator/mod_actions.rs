@@ -18,8 +18,8 @@ use crate::schema::{
 #[diesel(table_name = mod_add_board)]
 pub struct ModAddBoard {
     pub id: i32,
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub board_id: i32,
     pub removed: Option<bool>,
     pub when_: NaiveDateTime,
@@ -28,8 +28,8 @@ pub struct ModAddBoard {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_add_board)]
 pub struct ModAddBoardForm {
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub board_id: i32,
     pub removed: Option<Option<bool>>,
 }
@@ -38,8 +38,8 @@ pub struct ModAddBoardForm {
 #[diesel(table_name = mod_add_admin)]
 pub struct ModAddAdmin {
     pub id: i32,
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub removed: Option<bool>,
     pub when_: NaiveDateTime,
 }
@@ -47,8 +47,8 @@ pub struct ModAddAdmin {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_add_admin)]
 pub struct ModAddAdminForm {
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub removed: Option<Option<bool>>,
 }
 
@@ -56,8 +56,8 @@ pub struct ModAddAdminForm {
 #[diesel(table_name = mod_add_board_mod)]
 pub struct ModAddBoardMod {
     pub id: i32,
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub board_id: i32,
     pub removed: Option<bool>,
     pub when_: NaiveDateTime,
@@ -66,8 +66,8 @@ pub struct ModAddBoardMod {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_add_board_mod)]
 pub struct ModAddBoardModForm {
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub board_id: i32,
     pub removed: Option<Option<bool>>,
 }
@@ -76,8 +76,8 @@ pub struct ModAddBoardModForm {
 #[diesel(table_name = mod_ban_from_board)]
 pub struct ModBanFromBoard {
     pub id: i32,
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub board_id: i32,
     pub reason: Option<String>,
     pub banned: Option<bool>,
@@ -88,8 +88,8 @@ pub struct ModBanFromBoard {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_ban_from_board)]
 pub struct ModBanFromBoardForm {
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub board_id: i32,
     pub reason: Option<Option<String>>,
     pub banned: Option<Option<bool>>,
@@ -100,8 +100,8 @@ pub struct ModBanFromBoardForm {
 #[diesel(table_name = mod_ban)]
 pub struct ModBan {
     pub id: i32,
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub reason: Option<String>,
     pub banned: Option<bool>,
     pub expires: Option<NaiveDateTime>,
@@ -111,8 +111,8 @@ pub struct ModBan {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_ban)]
 pub struct ModBanForm {
-    pub mod_user_id: i32,
-    pub other_user_id: i32,
+    pub mod_person_id: i32,
+    pub other_person_id: i32,
     pub reason: Option<Option<String>>,
     pub banned: Option<Option<bool>>,
     pub expires: Option<Option<NaiveDateTime>>,
@@ -122,7 +122,7 @@ pub struct ModBanForm {
 #[diesel(table_name = mod_lock_post)]
 pub struct ModLockPost {
     pub id: i32,
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub post_id: i32,
     pub locked: Option<bool>,
     pub when_: NaiveDateTime,
@@ -131,7 +131,7 @@ pub struct ModLockPost {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_lock_post)]
 pub struct ModLockPostForm {
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub post_id: i32,
     pub locked: Option<Option<bool>>,
 }
@@ -140,7 +140,7 @@ pub struct ModLockPostForm {
 #[diesel(table_name = mod_remove_board)]
 pub struct ModRemoveBoard {
     pub id: i32,
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub board_id: i32,
     pub reason: Option<String>,
     pub removed: Option<bool>,
@@ -150,7 +150,7 @@ pub struct ModRemoveBoard {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_remove_board)]
 pub struct ModRemoveBoardForm {
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub board_id: i32,
     pub reason: Option<Option<String>>,
     pub removed: Option<Option<bool>>,
@@ -160,7 +160,7 @@ pub struct ModRemoveBoardForm {
 #[diesel(table_name = mod_remove_comment)]
 pub struct ModRemoveComment {
     pub id: i32,
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub comment_id: i32,
     pub reason: Option<String>,
     pub removed: Option<bool>,
@@ -170,7 +170,7 @@ pub struct ModRemoveComment {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_remove_comment)]
 pub struct ModRemoveCommentForm {
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub comment_id: i32,
     pub reason: Option<Option<String>>,
     pub removed: Option<Option<bool>>,
@@ -180,7 +180,7 @@ pub struct ModRemoveCommentForm {
 #[diesel(table_name = mod_remove_post)]
 pub struct ModRemovePost {
     pub id: i32,
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub post_id: i32,
     pub reason: Option<String>,
     pub removed: Option<bool>,
@@ -190,7 +190,7 @@ pub struct ModRemovePost {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_remove_post)]
 pub struct ModRemovePostForm {
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub post_id: i32,
     pub reason: Option<Option<String>>,
     pub removed: Option<Option<bool>>,
@@ -200,7 +200,7 @@ pub struct ModRemovePostForm {
 #[diesel(table_name = mod_sticky_post)]
 pub struct ModStickyPost {
     pub id: i32,
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub post_id: i32,
     pub stickied: Option<bool>,
     pub when_: NaiveDateTime,
@@ -209,7 +209,7 @@ pub struct ModStickyPost {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = mod_sticky_post)]
 pub struct ModStickyPostForm {
-    pub mod_user_id: i32,
+    pub mod_person_id: i32,
     pub post_id: i32,
     pub stickied: Option<Option<bool>>,
 }

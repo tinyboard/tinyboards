@@ -55,7 +55,7 @@ pub trait Voteable {
         Self: Sized;
     async fn remove(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         item_id: Self::IdType,
     ) -> Result<usize, TinyBoardsError>
     where

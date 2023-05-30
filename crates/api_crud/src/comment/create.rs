@@ -109,7 +109,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
-            user_id: user.id,
+            person_id: user.id,
             comment_id: new_comment.id,
             score: 1,
         };

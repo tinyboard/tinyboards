@@ -16,7 +16,7 @@ impl Saveable for CommentSaved {
         let conn = &mut get_conn(pool).await?;
         diesel::insert_into(user_comment_save)
             .values(form)
-            .on_conflict((comment_id, user_id))
+            .on_conflict((comment_id, person_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -29,7 +29,7 @@ impl Saveable for CommentSaved {
         diesel::delete(
             user_comment_save
                 .filter(comment_id.eq(form.comment_id))
-                .filter(user_id.eq(form.user_id)),
+                .filter(person_id.eq(form.person_id)),
         )
         .execute(conn)
         .await

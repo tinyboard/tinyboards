@@ -36,9 +36,9 @@ impl<'des> Perform<'des> for VerifyEmail {
             ..UserForm::default()
         };
 
-        let user_id = verification.user_id.clone();
+        let person_id = verification.person_id.clone();
 
-        let updated_user = User::update(context.pool(), user_id, &form).await?;
+        let updated_user = User::update(context.pool(), person_id, &form).await?;
 
         send_email_verification_success(&updated_user, &context.settings())?;
 

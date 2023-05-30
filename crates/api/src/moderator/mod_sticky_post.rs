@@ -44,7 +44,7 @@ impl<'des> Perform<'des> for StickyPost {
 
         // form for submitting post sticky action to the mod log
         let sticky_post_form = ModStickyPostForm {
-            mod_user_id: user.id,
+            mod_person_id: user.id,
             post_id: post_id.clone(),
             stickied: Some(Some(stickied.clone())),
         };

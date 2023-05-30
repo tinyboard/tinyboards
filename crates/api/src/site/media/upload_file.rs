@@ -63,7 +63,7 @@ impl<'des> PerformUpload<'des> for Multipart {
                 file.write_all(&file_bytes).await?;
 
                 let upload_form = UploadForm {
-                    user_id: user.id,
+                    person_id: user.id,
                     original_name: original_file_name.to_string(),
                     file_name: file_name.clone(),
                     file_path: file_path.clone(),

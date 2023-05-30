@@ -325,8 +325,8 @@ pub async fn check_registration_application(
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
-        let user_id = user_view.user.id;
-        let registration = RegistrationApplication::find_by_user_id(pool, user_id).await?;
+        let person_id = user_view.user.id;
+        let registration = RegistrationApplication::find_by_person_id(pool, person_id).await?;
 
         if let Some(deny_reason) = registration.deny_reason {
             let registration_denied_message = &deny_reason;
@@ -466,10 +466,10 @@ pub fn get_rate_limit_config(rate_limit_settings: &RateLimitSettings) -> RateLim
 #[tracing::instrument(skip_all)]
 pub async fn is_mod_or_admin(
     pool: &DbPool,
-    user_id: i32,
+    person_id: i32,
     board_id: i32,
 ) -> Result<(), TinyBoardsError> {
-    let is_mod_or_admin = BoardView::is_mod_or_admin(pool, user_id, board_id).await;
+    let is_mod_or_admin = BoardView::is_mod_or_admin(pool, person_id, board_id).await;
 
     if !is_mod_or_admin {
         return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
@@ -493,11 +493,11 @@ pub async fn purge_local_image_by_url(
 }
 
 pub async fn purge_local_image_posts_for_user(
-    banned_user_id: i32,
+    banned_person_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
 
-    let posts = Post::fetch_image_posts_for_creator(pool, banned_user_id).await?;
+    let posts = Post::fetch_image_posts_for_creator(pool, banned_person_id).await?;
 
     for post in posts {
         if let Some(url) = post.url {
@@ -509,7 +509,7 @@ pub async fn purge_local_image_posts_for_user(
         }
     }
 
-    Post::remove_post_images_and_thumbnails_for_creator(pool, banned_user_id).await?;
+    Post::remove_post_images_and_thumbnails_for_creator(pool, banned_person_id).await?;
 
     Ok(())
 }
@@ -584,7 +584,7 @@ pub async fn purge_local_image_posts_for_board(
   ) -> Result<(), TinyBoardsError> {
 
     let form = EmailVerificationForm {
-        user_id: user.id,
+        person_id: user.id,
         email: new_email.to_string(),
         verification_code: Uuid::new_v4().to_string(),
     };

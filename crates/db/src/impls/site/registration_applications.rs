@@ -48,10 +48,10 @@ impl Crud for RegistrationApplication {
 }
 
 impl RegistrationApplication {
-    pub async fn find_by_user_id(pool: &DbPool, user_id_: i32) -> Result<Self, Error> {
+    pub async fn find_by_person_id(pool: &DbPool, person_id_: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         registration_applications
-            .filter(user_id.eq(user_id_))
+            .filter(person_id.eq(person_id_))
             .first::<Self>(conn)
             .await
     }

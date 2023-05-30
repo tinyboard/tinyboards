@@ -61,7 +61,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         // auto upvote own post
         let post_vote = PostVoteForm {
             post_id: published_post.id,
-            user_id: user.id,
+            person_id: user.id,
             score: 1,
         };
 

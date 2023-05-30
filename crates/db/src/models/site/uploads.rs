@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = uploads)]
 pub struct Upload {
     pub id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub original_name: String,
     pub file_name: String,
     pub file_path: String,
@@ -18,7 +18,7 @@ pub struct Upload {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = uploads)]
 pub struct UploadForm {
-    pub user_id: i32,
+    pub person_id: i32,
     pub original_name: String,
     pub file_name: String,
     pub file_path: String,

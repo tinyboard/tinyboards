@@ -30,7 +30,7 @@ impl<'des> Perform<'des> for SavePost {
 
         let saved_form = PostSavedForm {
             post_id: path.post_id,
-            user_id: user_view.user.id,
+            person_id: user_view.user.id,
         };
 
         if data.save {
@@ -40,8 +40,8 @@ impl<'des> Perform<'des> for SavePost {
         }
 
         let post_id = path.post_id;
-        let user_id = user_view.user.id;
-        let post_view = PostView::read(context.pool(), post_id, Some(user_id)).await?;
+        let person_id = user_view.user.id;
+        let post_view = PostView::read(context.pool(), post_id, Some(person_id)).await?;
 
         Ok(PostResponse { post_view })
     }

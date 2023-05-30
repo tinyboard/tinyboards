@@ -17,7 +17,7 @@ impl Voteable for CommentVote {
         use crate::schema::comment_votes::dsl::*;
         diesel::insert_into(comment_votes)
             .values(form)
-            .on_conflict((comment_id, user_id))
+            .on_conflict((comment_id, person_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -25,13 +25,13 @@ impl Voteable for CommentVote {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not vote on comment"))
     }
 
-    async fn remove(pool: &DbPool, user_id: i32, cid: i32) -> Result<usize, TinyBoardsError> {
+    async fn remove(pool: &DbPool, person_id: i32, cid: i32) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comment_votes::dsl;
         diesel::delete(
             dsl::comment_votes
                 .filter(dsl::comment_id.eq(cid))
-                .filter(dsl::user_id.eq(user_id)),
+                .filter(dsl::person_id.eq(person_id)),
         )
         .execute(conn)
         .await

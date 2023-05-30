@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct BoardSubscriber {
     pub id: i32,
     pub board_id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub creation_date: NaiveDateTime,
     pub pending: Option<bool>,
 }
@@ -17,6 +17,6 @@ pub struct BoardSubscriber {
 #[diesel(table_name = board_subscriptions)]
 pub struct BoardSubscriberForm {
     pub board_id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub pending: Option<bool>,
 }

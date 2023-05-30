@@ -18,8 +18,8 @@ impl Post {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit posts"))
     }
 
-    pub fn is_post_creator(user_id: i32, post_creator_id: i32) -> bool {
-        user_id == post_creator_id
+    pub fn is_post_creator(person_id: i32, post_creator_id: i32) -> bool {
+        person_id == post_creator_id
     }
 
     pub async fn fetch_image_posts_for_creator(
@@ -221,7 +221,7 @@ impl Moderateable for Post {
 
         // form for submitting remove action to mod log
         let remove_post_form = ModRemovePostForm {
-            mod_user_id: admin_id.unwrap_or(1),
+            mod_person_id: admin_id.unwrap_or(1),
             post_id: self.id,
             reason: Some(reason),
             removed: Some(Some(true)),
@@ -245,7 +245,7 @@ impl Moderateable for Post {
 
         // form for submitting remove action to mod log
         let remove_post_form = ModRemovePostForm {
-            mod_user_id: admin_id.unwrap_or(1),
+            mod_person_id: admin_id.unwrap_or(1),
             post_id: self.id,
             reason: None,
             removed: Some(Some(false)),
@@ -265,7 +265,7 @@ impl Moderateable for Post {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_user_id: admin_id.unwrap_or(1),
+            mod_person_id: admin_id.unwrap_or(1),
             post_id: self.id,
             locked: Some(Some(true)),
         };
@@ -287,7 +287,7 @@ impl Moderateable for Post {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_user_id: admin_id.unwrap_or(1),
+            mod_person_id: admin_id.unwrap_or(1),
             post_id: self.id,
             locked: Some(Some(false)),
         };

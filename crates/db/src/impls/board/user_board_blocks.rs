@@ -11,12 +11,12 @@ use diesel_async::RunQueryDsl;
 impl BoardBlock {
     pub async fn read(
         pool: &DbPool,
-        for_user_id: i32,
+        for_person_id: i32,
         for_board_id: i32,
     ) -> Result<Self, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         user_board_blocks
-            .filter(user_id.eq(for_user_id))
+            .filter(person_id.eq(for_person_id))
             .filter(board_id.eq(for_board_id))
             .first::<Self>(conn)
             .await
@@ -31,7 +31,7 @@ impl Blockable for BoardBlock {
         let conn = &mut get_conn(pool).await?;
         diesel::insert_into(user_board_blocks)
             .values(form)
-            .on_conflict((user_id, board_id))
+            .on_conflict((person_id, board_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -43,7 +43,7 @@ impl Blockable for BoardBlock {
         let conn = &mut get_conn(pool).await?;
         diesel::delete(
             user_board_blocks
-                .filter(user_id.eq(form.user_id))
+                .filter(person_id.eq(form.person_id))
                 .filter(board_id.eq(form.board_id)),
         )
         .execute(conn)

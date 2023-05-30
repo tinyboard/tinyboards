@@ -29,7 +29,7 @@ impl<'des> Perform<'des> for BanFromBoard {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanFromBoard = &self;
 
-        let target_user_id = data.target_user_id;
+        let target_person_id = data.target_person_id;
         let board_id = data.board_id;
         let reason = data.reason.clone();
         let expires = data.expires;
@@ -44,7 +44,7 @@ impl<'des> Perform<'des> for BanFromBoard {
 
         let board_user_ban_form = BoardUserBanForm {
             board_id: board_id.clone(),
-            user_id: target_user_id.clone(),
+            person_id: target_person_id.clone(),
             expires: expires.clone(),
         };
 
@@ -55,7 +55,7 @@ impl<'des> Perform<'des> for BanFromBoard {
             // also unsubscribe them from board, if subbed
             let sub_form = BoardSubscriberForm {
                 board_id: board_id.clone(),
-                user_id: target_user_id.clone(),
+                person_id: target_person_id.clone(),
                 pending: None,
             };
             BoardSubscriber::unsubscribe(context.pool(), &sub_form).await?;
@@ -67,8 +67,8 @@ impl<'des> Perform<'des> for BanFromBoard {
 
         // mod log form
         let ban_from_board_form = ModBanFromBoardForm {
-            mod_user_id: user.id,
-            other_user_id: target_user_id,
+            mod_person_id: user.id,
+            other_person_id: target_person_id,
             board_id,
             reason: Some(reason),
             banned: Some(Some(banned)),

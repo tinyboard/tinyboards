@@ -7,6 +7,6 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = user_ban)]
 pub struct UserBan {
     pub id: i32,
-    pub user_id: i32,
+    pub person_id: i32,
     pub creation_date: NaiveDateTime,
 }
