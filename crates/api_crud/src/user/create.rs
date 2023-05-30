@@ -11,7 +11,7 @@ use tinyboards_api_common::{
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
 use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
-use tinyboards_db::models::user::users::{User, UserForm};
+use tinyboards_db::models::local_user::users::{User, UserForm};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
 use tinyboards_utils::utils::generate_rand_string;

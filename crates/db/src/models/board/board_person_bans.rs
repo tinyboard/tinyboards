@@ -1,10 +1,10 @@
-use crate::schema::board_user_bans;
+use crate::schema::board_person_bans;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-#[diesel(table_name = board_user_bans)]
+#[diesel(table_name = board_person_bans)]
 pub struct BoardUserBan {
     pub id: i32,
     pub board_id: i32,
@@ -14,7 +14,7 @@ pub struct BoardUserBan {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
-#[diesel(table_name = board_user_bans)]
+#[diesel(table_name = board_person_bans)]
 pub struct BoardUserBanForm {
     pub board_id: i32,
     pub person_id: i32,

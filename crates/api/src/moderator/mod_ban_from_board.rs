@@ -8,7 +8,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::board::{
         board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
-        board_user_bans::{BoardUserBan, BoardUserBanForm},
+        board_person_bans::{BoardUserBan, BoardUserBanForm},
     },
     models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
     traits::{Bannable, Crud, Subscribeable},

@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::models::user::users::User;
+use tinyboards_db::models::local_user::users::User;
 use tinyboards_db_views::structs::CommentView;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

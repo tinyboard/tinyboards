@@ -5,8 +5,8 @@ use tinyboards_db::{
     models::{
         comment::comments::Comment,
         comment::comment_reply::{CommentReply, CommentReplyForm},
-        user::{users::User, user_blocks::UserBlock},
-        user::user_mentions::{UserMention, UserMentionForm},
+        local_user::{users::User, user_blocks::UserBlock},
+        local_user::person_mentions::{UserMention, UserMentionForm},
         post::posts::Post,
     },
     traits::Crud,

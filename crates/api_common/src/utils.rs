@@ -10,7 +10,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        user::{users::User, user_blocks::UserBlock},
+        local_user::{users::User, user_blocks::UserBlock},
     },
     traits::Crud, SiteMode, 
     utils::DbPool,

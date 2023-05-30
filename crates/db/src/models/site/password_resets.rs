@@ -12,9 +12,10 @@ pub struct PasswordReset {
     pub creation_date: NaiveDateTime,
 }
 
+// TODO - rename local_person_id to local_user_id in migration
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = password_resets)]
 pub struct PasswordResetForm {
-    pub person_id: i32,
+    pub local_person_id: i32,
     pub reset_token: String,
 }

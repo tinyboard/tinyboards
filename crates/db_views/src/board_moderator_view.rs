@@ -1,7 +1,7 @@
 use crate::structs::BoardModeratorView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    models::{board::boards::BoardSafe, user::users::UserSafe},
+    models::{board::boards::BoardSafe, local_user::users::UserSafe},
     schema::{board_mods, boards, users},
     traits::{ToSafe, ViewToVec}, utils::{get_conn, DbPool},
 };

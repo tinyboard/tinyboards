@@ -1,7 +1,7 @@
 use crate::schema::user_comment_save::dsl::*;
 use crate::utils::{DbPool, get_conn};
 use crate::{
-    models::comment::user_comment_save::{CommentSaved, CommentSavedForm},
+    models::comment::comment_saved::{CommentSaved, CommentSavedForm},
     traits::Saveable,
 };
 use diesel::prelude::*;

@@ -7,7 +7,7 @@ use tinyboards_api_common::{
     },
     data::TinyBoardsContext,
 };
-use tinyboards_db::models::user::users::User;
+use tinyboards_db::models::local_user::users::User;
 use tinyboards_db_views::{private_message_view::PrivateMessageQuery, structs::PrivateMessageView};
 use tinyboards_utils::{TinyBoardsError};
 

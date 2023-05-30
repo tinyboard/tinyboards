@@ -2,7 +2,7 @@ use tinyboards_db::{
     models::{
         board::boards::{Board, BoardForm},
         site::site::{Site, SiteForm},
-        user::users::{User, UserForm},
+        local_user::users::{User, UserForm},
     },
     traits::Crud,
     utils::{naive_now, DbPool},

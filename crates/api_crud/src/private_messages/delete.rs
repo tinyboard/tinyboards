@@ -9,7 +9,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        user::private_messages::{PrivateMessage, PrivateMessageForm},
+        local_user::private_messages::{PrivateMessage, PrivateMessageForm},
     },
     traits::Crud, utils::naive_now,
 };

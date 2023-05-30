@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::site::email_verification::EmailVerification,
-    models::user::users::{User, UserForm},
+    models::local_user::users::{User, UserForm},
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;

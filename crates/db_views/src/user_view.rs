@@ -3,7 +3,7 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::UserAggregates,
     //map_to_user_sort_type,
-    models::user::users::{UserSafe, UserSettings},
+    models::local_user::users::{UserSafe, UserSettings},
     schema::{user_aggregates, users},
     traits::{ToSafe, ViewToVec},
     utils::{functions::lower, fuzzy_search, limit_and_offset, get_conn, DbPool},

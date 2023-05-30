@@ -4,13 +4,13 @@ use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
         board::board_subscriptions::BoardSubscriber,
-        board::board_user_bans::BoardUserBan,
+        board::board_person_bans::BoardUserBan,
         board::boards::BoardSafe,
         post::posts::Post,
-        post::user_post_read::PostRead,
-        post::user_post_save::PostSaved,
+        post::post_read::PostRead,
+        post::post_saved::PostSaved,
         //user::user::User,
-        user::{
+        local_user::{
             user_blocks::UserBlock,
             users::{User, UserSafe},
         },

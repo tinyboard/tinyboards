@@ -4,7 +4,7 @@ use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
-use crate::models::user::users::{User, UserForm, UserSafe};
+use crate::models::local_user::users::{User, UserForm, UserSafe};
 use crate::schema::users::dsl::*;
 use crate::traits::Crud;
 use crate::utils::{naive_now, fuzzy_search, DbPool, get_conn};
@@ -315,7 +315,7 @@ impl Crud for User {
 
 pub mod safe_type {
     use crate::{
-        models::user::users::{UserSafe, UserSettings},
+        models::local_user::users::{UserSafe, UserSettings},
         schema::users::*,
         traits::ToSafe,
     };

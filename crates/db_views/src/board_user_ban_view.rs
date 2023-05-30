@@ -1,7 +1,7 @@
 use crate::structs::BoardUserBanView;
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
-    models::{board::boards::BoardSafe, user::users::UserSafe},
+    models::{board::boards::BoardSafe, local_user::users::UserSafe},
     schema::{board_user_bans, boards, users},
     traits::ToSafe, utils::{get_conn, DbPool},
 };

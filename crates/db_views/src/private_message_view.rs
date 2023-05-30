@@ -1,8 +1,8 @@
 use crate::structs::PrivateMessageView;
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    models::user::private_messages::{PrivateMessage},
-    models::user::users::UserSafe,
+    models::local_user::private_messages::{PrivateMessage},
+    models::local_user::users::UserSafe,
     schema::{users, private_messages},
     traits::{ToSafe, ViewToVec}, utils::{limit_and_offset, get_conn, DbPool},
 };

@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm}, user::users::User,
+        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm}, local_user::users::User,
     },
     traits::Crud,
 };

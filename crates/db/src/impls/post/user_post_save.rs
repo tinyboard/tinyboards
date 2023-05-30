@@ -1,5 +1,5 @@
 use crate::{
-    models::post::user_post_save::{PostSaved, PostSavedForm},
+    models::post::post_saved::{PostSaved, PostSavedForm},
     traits::Saveable, utils::{get_conn, DbPool},
 };
 use diesel::{insert_into, prelude::*};

@@ -9,7 +9,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{
         moderator::admin_actions::{AdminPurgeUser, AdminPurgeUserForm},
-        user::users::User,
+        local_user::users::User,
     },
     traits::Crud,
 };

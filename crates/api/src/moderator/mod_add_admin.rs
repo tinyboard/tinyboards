@@ -8,7 +8,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{
         moderator::mod_actions::{ModAddAdmin, ModAddAdminForm},
-        user::users::User,
+        local_user::users::User,
     },
     traits::Crud,
 };

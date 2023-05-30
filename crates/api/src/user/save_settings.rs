@@ -8,7 +8,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::site::site::Site,
-    models::user::users::{User, UserForm},
+    models::local_user::users::{User, UserForm},
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};

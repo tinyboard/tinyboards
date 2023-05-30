@@ -1,7 +1,7 @@
 use crate::structs::{ModAddAdminView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    models::{moderator::mod_actions::ModAddAdmin, user::users::UserSafe},
+    models::{moderator::mod_actions::ModAddAdmin, local_user::users::UserSafe},
     schema::{mod_add_admin, users},
     traits::{ToSafe, ViewToVec},
     utils::{limit_and_offset, DbPool, get_conn},

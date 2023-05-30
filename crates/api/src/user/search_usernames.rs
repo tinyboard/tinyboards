@@ -7,7 +7,7 @@ use tinyboards_api_common::{
         require_user,
     },
 };
-use tinyboards_db::models::user::users::User;
+use tinyboards_db::models::local_user::users::User;
 use tinyboards_utils::{error::TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]

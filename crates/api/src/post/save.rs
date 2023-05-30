@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{get_user_view_from_jwt},
 };
 use tinyboards_db::{
-    models::post::user_post_save::{PostSaved, PostSavedForm},
+    models::post::post_saved::{PostSaved, PostSavedForm},
     traits::Saveable,
 };
 use tinyboards_db_views::structs::PostView;

@@ -1,6 +1,6 @@
 use crate::{
     schema::private_messages::dsl::*,
-    models::user::private_messages::{PrivateMessage, PrivateMessageForm},
+    models::local_user::private_messages::{PrivateMessage, PrivateMessageForm},
     traits::Crud, utils::{DbPool, get_conn},
 };
 use diesel::{result::Error, *};

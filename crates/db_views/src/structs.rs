@@ -8,8 +8,8 @@ use tinyboards_db::{
         comment::{comments::Comment, comment_reply::CommentReply},
         post::posts::Post,
         site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication},
-        user::{
-            user_mentions::UserMention,
+        local_user::{
+            person_mentions::UserMention,
             users::{UserSafe, UserSettings}, private_messages::PrivateMessage,
         },
     },

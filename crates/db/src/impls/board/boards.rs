@@ -1,6 +1,6 @@
 use crate::schema::{board_mods, board_user_bans, boards::dsl::*};
 use crate::{
-    models::board::board_user_bans::{BoardUserBan, BoardUserBanForm},
+    models::board::board_person_bans::{BoardUserBan, BoardUserBanForm},
     models::board::boards::{Board, BoardForm},
     traits::{Bannable, Crud},
     utils::{get_conn, DbPool, naive_now},

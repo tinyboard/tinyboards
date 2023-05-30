@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{get_user_view_from_jwt},
 };
 use tinyboards_db::{
-    models::comment::user_comment_save::{CommentSaved, CommentSavedForm},
+    models::comment::comment_saved::{CommentSaved, CommentSavedForm},
     traits::Saveable,
 };
 use tinyboards_db_views::structs::CommentView;

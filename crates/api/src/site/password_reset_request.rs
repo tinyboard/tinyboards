@@ -7,7 +7,7 @@ use tinyboards_api_common::{
         send_password_reset_email,
     },
 };
-use tinyboards_db::models::{site::password_resets::*, user::users::User};
+use tinyboards_db::models::{site::password_resets::*, local_user::users::User};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::{error::TinyBoardsError, utils::generate_rand_string};
 

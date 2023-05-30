@@ -2,7 +2,7 @@ use crate::structs::{RegistrationApplicationView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
-        site::registration_applications::RegistrationApplication, user::users::{UserSafe, UserSettings},
+        site::registration_applications::RegistrationApplication, local_user::users::{UserSafe, UserSettings},
     },
     schema::{users, registration_applications},
     traits::{ViewToVec, ToSafe},

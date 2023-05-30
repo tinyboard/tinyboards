@@ -1,7 +1,7 @@
 use crate::structs::{AdminPurgeBoardView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    models::{moderator::admin_actions::AdminPurgeBoard, user::users::UserSafe},
+    models::{moderator::admin_actions::AdminPurgeBoard, local_user::users::UserSafe},
     schema::{admin_purge_board, users},
     traits::{ToSafe, ViewToVec},
     utils::{limit_and_offset, DbPool, get_conn},

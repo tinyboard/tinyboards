@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
-    models::user::users::User,
+    models::local_user::users::User,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;

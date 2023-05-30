@@ -1,7 +1,7 @@
 use crate::schema::user_blocks::dsl::*;
 use crate::utils::{get_conn, DbPool};
 use crate::{
-    models::user::user_blocks::{UserBlock, UserBlockForm},
+    models::local_user::user_blocks::{UserBlock, UserBlockForm},
     traits::Blockable,
 };
 use diesel::prelude::*;

@@ -2,7 +2,7 @@ use crate::structs::{ModAddBoardView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
-        board::boards::BoardSafe, moderator::mod_actions::ModAddBoard, user::users::UserSafe,
+        board::boards::BoardSafe, moderator::mod_actions::ModAddBoard, local_user::users::UserSafe,
     },
     schema::{boards, mod_add_board, users},
     traits::{ToSafe, ViewToVec},
