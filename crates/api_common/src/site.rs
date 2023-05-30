@@ -185,3 +185,24 @@ pub struct ExecutePasswordReset {
     pub new_password: String,
     pub new_password_verify: String,
 } 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FileUploadResponse {
+    pub uploads: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetFile{
+    pub thumbnail: Option<u32>,
+    pub blur: Option<f32>,
+    pub width: Option<u32>,
+    pub height: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct DeleteFile{}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FileNamePath {
+    pub file_name: String,
+}

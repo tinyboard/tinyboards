@@ -28,3 +28,16 @@ pub trait Perform<'des> {
         authorization: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError>;
 }
+
+#[async_trait::async_trait(?Send)]
+pub trait PerformUpload<'des> {
+    type Response: Serialize;
+    type Route: Deserialize<'des>;
+
+    async fn perform_upload(
+        self,
+        context: &Data<TinyBoardsContext>,
+        path: Self::Route,
+        authorization: Option<&str>,
+    ) -> Result<Self::Response, TinyBoardsError>;
+}

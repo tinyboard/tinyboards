@@ -16,9 +16,6 @@ pub struct Settings {
   pub rate_limit: Option<RateLimitSettings>,
   #[default(Default::default())]
   pub captcha: CaptchaConfig,
-  /// Image server configuration.
-  #[default(Some(Default::default()))]
-  pub(crate) pictrs: Option<PictrsConfig>,
   /// Email sending configuration. All options except login/password are mandatory
   #[default(None)]
   #[doku(example = "Some(Default::default())")]
@@ -59,19 +56,6 @@ pub struct Settings {
   #[default("admin")]
   #[doku(example = "admin")]
   pub owner_name: String,
-}
-
-#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
-#[serde(default)]
-pub struct PictrsConfig {
-  /// Address where pictrs is available (for image hosting)
-  #[default(Url::parse("http://pictrs:8080").expect("parse pictrs url"))]
-  #[doku(example = "http://pictrs:8080")]
-  pub url: Url,
-
-  /// Set a custom pictrs API key. ( Required for deleting images )
-  #[default(None)]
-  pub api_key: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]

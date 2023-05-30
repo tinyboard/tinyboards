@@ -30,13 +30,13 @@ services:
       - postgres
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson
+      - uploads:/app/uploads
     networks:
       tinyboards:
         aliases:
           - tinyboards-be
     depends_on:
       - postgres
-      - pictrs
   tinyboards-fe:
     image: tinyboards-fe
     ports:
@@ -53,23 +53,6 @@ services:
           - tinyboards-fe
     depends_on:
       - tinyboards
-  pictrs:
-    image: asonix/pictrs:0.4.0-beta.7
-    # needs to match the pictrs url in the config hjson
-    hostname: pictrs
-    ports:
-      - "0.0.0.0:8080:8080"
-    networks:
-      tinyboards:
-        aliases:
-          - pictrs
-    # note: API_KEY needs to match the pictrs api key set in the config hjson
-    environment:
-      - PICTRS__SERVER__API_KEY=API_KEY
-    user: root
-    volumes:
-      - ./volumes/pictrs:/mnt
-    restart: always
   postgres:
     image: postgres:14-alpine
     ports:
@@ -90,3 +73,5 @@ services:
 
 networks:
   tinyboards: {}
+volumes:
+  uploads:

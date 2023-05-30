@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     admin::PurgeBoard,
     data::TinyBoardsContext,
     moderator::ModActionResponse,
-    utils::{purge_image_posts_for_board, require_user},
+    utils::{purge_local_image_posts_for_board, require_user},
 };
 use tinyboards_db::{
     models::{
@@ -45,11 +45,9 @@ impl<'des> Perform<'des> for PurgeBoard {
         // TODO - add in purging of board banner/icon
 
         // purge image posts for board
-        purge_image_posts_for_board(
+        purge_local_image_posts_for_board(
             target_board_id,
             context.pool(),
-            context.settings(),
-            context.client(),
         )
         .await?;
 

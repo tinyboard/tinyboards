@@ -1,16 +1,15 @@
 
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use reqwest_middleware::ClientWithMiddleware;
 use sha2::Sha384;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
         board::boards::Board,
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
-        site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}},
+        site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
         user::{users::User, user_blocks::UserBlock},
     },
     traits::Crud, SiteMode, 
@@ -23,14 +22,11 @@ use tinyboards_utils::{
     settings::structs::{RateLimitSettings, Settings},
     email::send_email,
 };
-use url::Url;
 use uuid::Uuid;
 use base64::{
     Engine as _,
     engine::{general_purpose},
 };
-
-use crate::request::purge_image_from_pictrs;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -481,29 +477,35 @@ pub async fn is_mod_or_admin(
     Ok(())
 }
 
-pub async fn purge_image_posts_for_user(
+pub async fn purge_local_image_by_url(
+    pool: &DbPool,
+    img_url: &str,
+) -> Result<(), TinyBoardsError> {
+
+    // get the file by URL
+    let file = Upload::find_by_url(pool, img_url).await?;
+    // remove file from local disk
+    fs::remove_file(file.file_path.clone())?;
+    // delete DB entry
+    Upload::delete(pool, file.id.clone()).await?;
+
+    Ok(())
+}
+
+pub async fn purge_local_image_posts_for_user(
     banned_user_id: i32,
     pool: &DbPool,
-    settings: &Settings,
-    client: &ClientWithMiddleware,
 ) -> Result<(), TinyBoardsError> {
 
     let posts = Post::fetch_image_posts_for_creator(pool, banned_user_id).await?;
 
     for post in posts {
         if let Some(url) = post.url {
-            purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap())
-                .await
-                .ok();
+
+            purge_local_image_by_url(pool, &url).await.ok();
         }
         if let Some(thumbnail_url) = post.thumbnail_url {
-            purge_image_from_pictrs(
-                client,
-                settings,
-                &Url::parse(thumbnail_url.as_str()).unwrap(),
-            )
-            .await
-            .ok();
+            purge_local_image_by_url(pool, &thumbnail_url).await.ok();
         }
     }
 
@@ -512,29 +514,19 @@ pub async fn purge_image_posts_for_user(
     Ok(())
 }
 
-pub async fn purge_image_posts_for_board(
+pub async fn purge_local_image_posts_for_board(
     banned_board_id: i32,
     pool: &DbPool,
-    settings: &Settings,
-    client: &ClientWithMiddleware,
 ) -> Result<(), TinyBoardsError> {
 
     let posts = Post::fetch_image_posts_for_board(pool, banned_board_id).await?;
 
     for post in posts {
         if let Some(url) = post.url {
-            purge_image_from_pictrs(client, settings, &Url::parse(url.as_str()).unwrap())
-                .await
-                .ok();
+            purge_local_image_by_url(pool, &url).await.ok();
         }
         if let Some(thumbnail_url) = post.thumbnail_url {
-            purge_image_from_pictrs(
-                client,
-                settings,
-                &Url::parse(thumbnail_url.as_str()).unwrap(),
-            )
-            .await
-            .ok();
+            purge_local_image_by_url(pool, &thumbnail_url).await.ok();
         }
     }
 

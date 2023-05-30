@@ -26,7 +26,7 @@ static IMG_TAG_REGEX: Lazy<Regex> = Lazy::new(|| {
 
 static YT_REGEX: Lazy<Regex> = Lazy::new(|| {
   Regex::new(
-    r#"(?P<a>https?://|http://)(?P<b>www\.)?(?P<c>youtube\.com/watch\?v=|youtube\.com/user/[a-zA-Z0-9_]+#p/a/u/[a-zA-Z0-9_]+/|youtube\.com/v/|youtube\.com/watch\?v=|youtube\.com/embed/|youtu\.be/|youtube\.com/shorts/)(?P<yt_code>[a-zA-Z0-9_]+)(?P<end>[^\s]*)"#)
+    r#"(?P<a>https?://|http://)(?P<b>www\.)?(?P<c>youtube\.com/watch\?v=|youtube\.com/user/[a-zA-Z0-9_]+#p/a/@[a-zA-Z0-9_]+/|youtube\.com/v/|youtube\.com/watch\?v=|youtube\.com/embed/|youtu\.be/|youtube\.com/shorts/)(?P<yt_code>[a-zA-Z0-9_]+)(?P<end>[^\s]*)"#)
     .expect("compile yt link regex")
 });
 
@@ -112,4 +112,37 @@ pub fn generate_rand_string() -> String {
     .map(char::from)
     .take(18)
     .collect()
+}
+
+pub fn get_file_type(content_type: &str) -> &str {
+
+    let file_type = match content_type {
+      "image/gif" => "gif",
+      "image/jpeg" => "jpeg",
+      "image/webp" => "webp",
+      "image/png" => "png",
+      _ => "invalid",
+    };
+
+    file_type
+}
+
+pub fn is_acceptable_file_type(content_type: &str) -> bool {
+  let acceptable_types = [
+      "image/gif",
+      "image/jpeg",
+      "image/webp",
+      "image/png",
+  ];
+
+  acceptable_types.contains(&content_type)
+}
+
+pub fn extract_img_file_name(i_url: &str) -> Option<String> {
+    // find last "/" position on the string
+    let last_slash_pos = i_url.rfind('/')?;
+    // find the file name based on this
+    let img_file_name = i_url.get((last_slash_pos + 1)..)?;
+    
+    Some(img_file_name.to_string())
 }
