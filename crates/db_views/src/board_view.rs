@@ -4,7 +4,7 @@ use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
         board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
-        board::user_board_blocks::BoardBlock, local_user::users::User,
+        board::person_board_blocks::BoardBlock, local_user::users::User,
     },
     schema::{board_aggregates, board_subscriptions, boards, user_board_blocks, users},
     traits::{ToSafe, ViewToVec},

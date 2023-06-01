@@ -5,7 +5,7 @@ use tinyboards_api_common::{
   user::{GetUnreadCount, GetUnreadCountResponse},
   utils::{get_user_view_from_jwt},
 };
-use tinyboards_db_views::structs::{CommentReplyView, UserMentionView, PrivateMessageView};
+use tinyboards_db_views::structs::{CommentReplyView, UserMentionView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -32,13 +32,10 @@ impl<'des> Perform<'des> for GetUnreadCount {
     
     let mentions  = UserMentionView::get_unread_mentions(context.pool(), person_id).await?;
 
-    let messages = PrivateMessageView::get_unread_message_count(context.pool(), person_id).await?;
-
     Ok(GetUnreadCountResponse {
         replies,
         mentions,
-        messages,
-        total_count: replies + mentions + messages,
+        total_count: replies + mentions,
     })
   }
 }

@@ -1,6 +1,6 @@
 use crate::schema::user_board_blocks::dsl::*;
 use crate::{
-    models::board::user_board_blocks::{BoardBlock, BoardBlockForm},
+    models::board::person_board_blocks::{BoardBlock, BoardBlockForm},
     traits::Blockable,
     utils::{get_conn, DbPool},
 };

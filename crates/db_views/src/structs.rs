@@ -10,7 +10,7 @@ use tinyboards_db::{
         site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication},
         local_user::{
             person_mentions::UserMention,
-            users::{UserSafe, UserSettings}, private_messages::PrivateMessage,
+            users::{UserSafe, UserSettings}, 
         },
     },
     SubscribedType,
@@ -143,13 +143,6 @@ pub struct CommentReplyView {
     pub saved: bool,                     // Left join to CommentSaved
     pub creator_blocked: bool,           // Left join to PersonBlock
     pub my_vote: Option<i16>,            // Left join to CommentLike
-}
-
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct PrivateMessageView {
-    pub private_message: PrivateMessage,
-    pub creator: UserSafe,
-    pub recipient: UserSafe,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]

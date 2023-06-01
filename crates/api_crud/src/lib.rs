@@ -7,7 +7,6 @@ pub mod board;
 pub mod comment;
 pub mod post;
 pub mod user;
-pub mod private_messages;
 pub mod invite;
 pub mod applications;
 

@@ -21,7 +21,7 @@ impl LocalUser {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::local_user::dsl::*;
 
-        let local_user = if let Some(emailaddr) = emailaddr {
+        let user = if let Some(emailaddr) = emailaddr {
             local_user
                 .select(id)
                 .filter(name.ilike(username))
@@ -29,7 +29,7 @@ impl LocalUser {
                 .first::<i32>(conn)
                 .await
         } else {
-            users
+            local_user
                 .select(id)
                 .filter(name.ilike(username))
                 .first::<i32>(conn)
@@ -73,14 +73,14 @@ impl LocalUser {
         master_key: String,
     ) -> Result<Option<Self>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
+        use crate::schema::local_user::dsl::*;
 
         let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.as_bytes()).unwrap();
         let claims: BTreeMap<String, String> = token.verify_with_key(&key)?;
 
         let uid = claims["uid"].parse::<i32>()?;
 
-        users
+        local_user
             .filter(id.eq(uid))
             .first::<Self>(conn)
             .await
@@ -89,11 +89,11 @@ impl LocalUser {
     }
     pub async fn update_ban(
         pool: &DbPool,
-        person_id: i32,
+        p_id: i32,
         new_banned: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(person_id))
+        diesel::update(local_user.find(p_id))
             .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -315,8 +315,9 @@ impl Crud for User {
 
 pub mod safe_type {
     use crate::{
-        models::local_user::users::{UserSafe, UserSettings},
-        schema::users::*,
+        models::person::person::{Person, PersonSafe},
+        schema::person::*,
+        schema::local_user::*,
         traits::ToSafe,
     };
 

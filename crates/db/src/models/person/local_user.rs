@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = local_user)]
 pub struct LocalUser {
     pub id: i32,
+    pub name: String,
     pub person_id: i32,
     pub passhash: String,
     pub email: Option<String>,
@@ -27,6 +28,7 @@ pub struct LocalUser {
 #[diesel(table_name = local_user)]
 pub struct LocalUserSettings {
     pub id: i32,
+    pub name: String,
     pub person_id: i32,
     pub email: Option<String>,
     pub show_nsfw: bool,
@@ -42,6 +44,7 @@ pub struct LocalUserSettings {
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
 #[diesel(table_name = local_user)]
 pub struct LocalUserForm {
+    pub name: Option<String>,
     pub person_id: Option<i32>,
     pub passhash: Option<String>,
     pub email: Option<Option<String>>,
