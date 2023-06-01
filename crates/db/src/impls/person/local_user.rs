@@ -4,25 +4,25 @@ use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
-use crate::models::local_user::users::{User, UserForm, UserSafe};
-use crate::schema::users::dsl::*;
+use crate::models::person::local_user::{LocalUser, LocalUserForm, LocalUserSettings};
+use crate::schema::local_user::dsl::*;
 use crate::traits::Crud;
 use crate::utils::{naive_now, fuzzy_search, DbPool, get_conn};
 use diesel::{prelude::*, result::Error};
 use tinyboards_utils::{hash_password, TinyBoardsError};
 use diesel_async::RunQueryDsl;
 
-impl User {
+impl LocalUser {
     pub async fn check_name_and_email(
         pool: &DbPool,
         username: &str,
         emailaddr: &Option<String>,
     ) -> Result<(), TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
+        use crate::schema::local_user::dsl::*;
 
-        let user = if let Some(emailaddr) = emailaddr {
-            users
+        let local_user = if let Some(emailaddr) = emailaddr {
+            local_user
                 .select(id)
                 .filter(name.ilike(username))
                 .or_filter(email.ilike(emailaddr))

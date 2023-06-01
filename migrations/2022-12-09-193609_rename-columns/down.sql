@@ -50,7 +50,7 @@ alter table comment rename column edited_date to updated;
 alter table comment_vote rename column creation_date to published;
 alter table comment_saved rename column creation_date to published;
 
-alter table private_message rename column is_deleted to is_deleted;
+alter table private_message rename column is_deleted to deleted;
 alter table private_message rename column creation_date to published;
 alter table private_message rename column edited_date to updated;
 

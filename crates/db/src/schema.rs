@@ -34,7 +34,7 @@ diesel::table! {
     admin_purge_user (id) {
         id -> Int4,
         admin_id -> Int4,
-        person_id -> Int4,
+        user_id -> Int4,
         reason -> Nullable<Text>,
         when_ -> Timestamp,
     }
@@ -166,7 +166,7 @@ diesel::table! {
 diesel::table! {
     email_verification (id) {
         id -> Int4,
-        person_id -> Int4,
+        user_id -> Int4,
         email -> Text,
         verification_code -> Text,
         created -> Timestamp,
@@ -176,6 +176,7 @@ diesel::table! {
 diesel::table! {
     local_user (id) {
         id -> Int4,
+        name -> Text,
         person_id -> Int4,
         passhash -> Text,
         email -> Nullable<Text>,
@@ -196,8 +197,8 @@ diesel::table! {
 diesel::table! {
     mod_add_admin (id) {
         id -> Int4,
-        mod_person_id -> Int4,
-        other_person_id -> Int4,
+        mod_user_id -> Int4,
+        other_user_id -> Int4,
         removed -> Nullable<Bool>,
         when_ -> Timestamp,
     }
@@ -308,7 +309,7 @@ diesel::table! {
         id -> Int4,
         reset_token -> Text,
         creation_date -> Timestamp,
-        local_person_id -> Int4,
+        local_user_id -> Int4,
     }
 }
 
@@ -449,7 +450,7 @@ diesel::table! {
 diesel::table! {
     registration_applications (id) {
         id -> Int4,
-        person_id -> Int4,
+        user_id -> Int4,
         answer -> Text,
         admin_id -> Nullable<Int4>,
         deny_reason -> Nullable<Text>,
@@ -514,7 +515,7 @@ diesel::table! {
 diesel::table! {
     uploads (id) {
         id -> Int4,
-        person_id -> Int4,
+        user_id -> Int4,
         original_name -> Text,
         file_name -> Text,
         file_path -> Text,
@@ -526,7 +527,7 @@ diesel::table! {
 diesel::table! {
     user_blocks (id) {
         id -> Int4,
-        person_id -> Int4,
+        user_id -> Int4,
         target_id -> Int4,
         creation_date -> Timestamp,
     }
@@ -535,7 +536,7 @@ diesel::table! {
 diesel::table! {
     user_board_blocks (id) {
         id -> Int4,
-        person_id -> Int4,
+        user_id -> Int4,
         board_id -> Int4,
         creation_date -> Timestamp,
     }
@@ -564,7 +565,7 @@ diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> person (person_id));
 diesel::joinable!(comments -> person (creator_id));
 diesel::joinable!(comments -> posts (post_id));
-diesel::joinable!(email_verification -> person (person_id));
+diesel::joinable!(email_verification -> person (user_id));
 diesel::joinable!(local_user -> person (person_id));
 diesel::joinable!(mod_add_board -> boards (board_id));
 diesel::joinable!(mod_add_board_mod -> boards (board_id));
@@ -579,7 +580,7 @@ diesel::joinable!(mod_remove_post -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> posts (post_id));
 diesel::joinable!(mod_sticky_post -> person (mod_person_id));
 diesel::joinable!(mod_sticky_post -> posts (post_id));
-diesel::joinable!(password_resets -> local_user (local_person_id));
+diesel::joinable!(password_resets -> local_user (local_user_id));
 diesel::joinable!(person_aggregates -> person (person_id));
 diesel::joinable!(person_ban -> person (person_id));
 diesel::joinable!(person_mentions -> comments (comment_id));
@@ -595,9 +596,9 @@ diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> person (creator_id));
 diesel::joinable!(site -> person (creator_id));
 diesel::joinable!(site_aggregates -> site (site_id));
-diesel::joinable!(uploads -> person (person_id));
+diesel::joinable!(uploads -> person (user_id));
 diesel::joinable!(user_board_blocks -> boards (board_id));
-diesel::joinable!(user_board_blocks -> person (person_id));
+diesel::joinable!(user_board_blocks -> person (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     admin_purge_board,

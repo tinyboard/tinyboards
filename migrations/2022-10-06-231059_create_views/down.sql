@@ -1,7 +1,7 @@
-drop view site_view;
-drop view board_user_ban_view;
-drop view board_subscriber_view;
-drop view board_moderator_view;
-drop view board_view;
-drop view post_view;
-drop function hot_rank;
+drop view if exists site_view;
+drop view if exists board_user_ban_view;
+drop view if exists board_subscriber_view;
+drop view if exists board_moderator_view;
+drop view if exists board_view;
+drop view if exists post_view;
+drop function if exists hot_rank;

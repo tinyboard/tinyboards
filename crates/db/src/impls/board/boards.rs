@@ -1,4 +1,4 @@
-use crate::schema::{board_mods, board_user_bans, boards::dsl::*};
+use crate::schema::{board_mods, board_person_bans, boards::dsl::*};
 use crate::{
     models::board::board_person_bans::{BoardUserBan, BoardUserBanForm},
     models::board::boards::{Board, BoardForm},
@@ -34,14 +34,14 @@ impl Board {
         person_id: i32,
     ) -> Result<bool, Error> {
         let conn = &mut get_conn(pool).await?;
-        let ban_id = board_user_bans::table
-            .select(board_user_bans::id)
-            .filter(board_user_bans::board_id.eq(board_id))
-            .filter(board_user_bans::person_id.eq(person_id))
+        let ban_id = board_person_bans::table
+            .select(board_person_bans::id)
+            .filter(board_person_bans::board_id.eq(board_id))
+            .filter(board_person_bans::person_id.eq(person_id))
             .filter(
-                board_user_bans::expires
+                board_person_bans::expires
                     .is_null()
-                    .or(board_user_bans::expires.gt(now)),
+                    .or(board_person_bans::expires.gt(now)),
             )
             .first::<i32>(conn)
             .await
@@ -149,8 +149,8 @@ impl Bannable for BoardUserBan {
 
     async fn ban(pool: &DbPool, ban_form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, person_id};
-        insert_into(board_user_bans)
+        use crate::schema::board_person_bans::dsl::{board_id, board_person_bans, person_id};
+        insert_into(board_person_bans)
             .values(ban_form)
             .on_conflict((board_id, person_id))
             .do_update()
@@ -161,9 +161,9 @@ impl Bannable for BoardUserBan {
 
     async fn unban(pool: &DbPool, ban_form: &Self::Form) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, person_id};
+        use crate::schema::board_person_bans::dsl::{board_id, board_person_bans, person_id};
         diesel::delete(
-            board_user_bans
+            board_person_bans
                 .filter(board_id.eq(ban_form.board_id))
                 .filter(person_id.eq(ban_form.person_id)),
         )

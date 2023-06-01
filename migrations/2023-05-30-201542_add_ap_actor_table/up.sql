@@ -34,6 +34,7 @@ alter table users rename to person;
 -- create a new local_user table
 create table local_user(
     id serial primary key,
+    name text not null default '',
     person_id int references person on update cascade on delete cascade not null,
     passhash text not null,
     email text unique,
@@ -54,6 +55,7 @@ create table local_user(
 -- copy any local users into new table
 insert into local_user
 (
+    name,
     person_id,
     passhash,
     email,
@@ -68,6 +70,7 @@ insert into local_user
     email_verified
 )
 select
+    name,
     id,
     passhash,
     email,

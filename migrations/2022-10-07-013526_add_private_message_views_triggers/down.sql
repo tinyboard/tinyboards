@@ -1,6 +1,6 @@
 -- Drop the triggers
-drop trigger refresh_private_message on private_message;
-drop function refresh_private_message();
+drop trigger if exists refresh_private_message on private_message;
+drop function if exists refresh_private_message();
 
 -- Drop the view
-drop view private_message_view cascade;
+drop view if exists private_message_view cascade;

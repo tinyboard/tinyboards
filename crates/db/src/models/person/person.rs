@@ -58,8 +58,6 @@ pub struct PersonSafe {
 pub struct PersonForm {
     pub name: Option<String>,
     pub display_name: Option<Option<String>>,
-    pub passhash: Option<String>,
-    pub email: Option<String>,
     pub login_nonce: Option<Option<i32>>,
     pub is_banned: Option<bool>,
     pub updated: Option<NaiveDateTime>,

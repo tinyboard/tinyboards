@@ -1,5 +1,5 @@
 use crate::{
-    models::local_user::person_mentions::{UserMention, UserMentionForm},
+    models::person::person_mentions::{UserMention, UserMentionForm},
     traits::Crud, utils::{get_conn, DbPool},
 };
 use diesel::{result::Error, QueryDsl};

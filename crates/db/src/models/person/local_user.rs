@@ -1,5 +1,4 @@
 use crate::schema::local_user;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 

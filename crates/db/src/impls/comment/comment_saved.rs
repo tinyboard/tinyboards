@@ -1,4 +1,4 @@
-use crate::schema::user_comment_save::dsl::*;
+use crate::schema::comment_saved::dsl::*;
 use crate::utils::{DbPool, get_conn};
 use crate::{
     models::comment::comment_saved::{CommentSaved, CommentSavedForm},
@@ -14,7 +14,7 @@ impl Saveable for CommentSaved {
 
     async fn save(pool: &DbPool, form: &CommentSavedForm) -> Result<Self, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        diesel::insert_into(user_comment_save)
+        diesel::insert_into(comment_saved)
             .values(form)
             .on_conflict((comment_id, person_id))
             .do_update()
@@ -27,7 +27,7 @@ impl Saveable for CommentSaved {
     async fn unsave(pool: &DbPool, form: &CommentSavedForm) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         diesel::delete(
-            user_comment_save
+            comment_saved
                 .filter(comment_id.eq(form.comment_id))
                 .filter(person_id.eq(form.person_id)),
         )

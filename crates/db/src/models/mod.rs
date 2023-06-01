@@ -4,4 +4,4 @@ pub mod moderator;
 pub mod post;
 pub mod secret;
 pub mod site;
-pub mod local_user;
+pub mod person;

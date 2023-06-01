@@ -11,8 +11,8 @@ impl Saveable for PostSaved {
     type Form = PostSavedForm;
     async fn save(pool: &DbPool, form: &PostSavedForm) -> Result<Self, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::user_post_save::dsl::*;
-        insert_into(user_post_save)
+        use crate::schema::post_saved::dsl::*;
+        insert_into(post_saved)
             .values(form)
             .on_conflict((post_id, person_id))
             .do_update()
@@ -24,9 +24,9 @@ impl Saveable for PostSaved {
 
     async fn unsave(pool: &DbPool, form: &PostSavedForm) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::user_post_save::dsl::*;
+        use crate::schema::post_saved::dsl::*;
         diesel::delete(
-            user_post_save
+            post_saved
                 .filter(post_id.eq(form.post_id))
                 .filter(person_id.eq(form.person_id)),
         )
