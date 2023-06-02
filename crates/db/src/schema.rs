@@ -181,6 +181,9 @@ diesel::table! {
         passhash -> Text,
         email -> Nullable<Text>,
         is_admin -> Bool,
+        is_banned -> Bool,
+        is_deleted -> Bool,
+        unban_date -> Nullable<Timestamp>,
         show_nsfw -> Bool,
         show_bots -> Bool,
         theme -> Text,
@@ -191,6 +194,8 @@ diesel::table! {
         accepted_application -> Bool,
         is_application_accepted -> Bool,
         email_verified -> Bool,
+        updated -> Nullable<Timestamp>,
+        creation_date -> Timestamp,
     }
 }
 

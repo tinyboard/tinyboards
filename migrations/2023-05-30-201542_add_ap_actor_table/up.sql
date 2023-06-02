@@ -39,6 +39,9 @@ create table local_user(
     passhash text not null,
     email text unique,
     is_admin boolean not null default false,
+    is_banned boolean not null default false,
+    is_deleted boolean not null default false,
+    unban_date timestamp,
     show_nsfw boolean not null default false,
     show_bots boolean not null default true,
     theme text default '' not null,
@@ -49,6 +52,8 @@ create table local_user(
     accepted_application boolean not null default false,
     is_application_accepted boolean not null default false,
     email_verified boolean not null default false,
+    updated timestamp,
+    creation_date timestamp not null default now(),
     unique (person_id)
 );
 

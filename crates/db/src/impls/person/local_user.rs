@@ -4,7 +4,7 @@ use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 
-use crate::models::person::local_user::{LocalUser, LocalUserForm, LocalUserSettings};
+use crate::models::person::local_user::{LocalUser, LocalUserForm, LocalUserSafe};
 use crate::schema::local_user::dsl::*;
 use crate::traits::Crud;
 use crate::utils::{naive_now, fuzzy_search, DbPool, get_conn};
@@ -87,13 +87,14 @@ impl LocalUser {
             .optional()
             .map_err(|e| TinyBoardsError::from_error_message(e, 401, "error getting user from jwt"))
     }
+
     pub async fn update_ban(
         pool: &DbPool,
-        p_id: i32,
+        id_: i32,
         new_banned: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(local_user.find(p_id))
+        diesel::update(local_user.find(id_))
             .set((is_banned.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -101,11 +102,11 @@ impl LocalUser {
 
     pub async fn update_passhash(
         pool: &DbPool,
-        person_id: i32,
+        id_: i32,
         new_passhash: String,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(person_id))
+        diesel::update(local_user.find(id_))
             .set((passhash.eq(new_passhash), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -113,11 +114,11 @@ impl LocalUser {
 
     pub async fn update_is_application_accepted(
         pool: &DbPool,
-        person_id: i32,
+        id_: i32,
         new_is_application_accepted: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(person_id))
+        diesel::update(local_user.find(id_))
             .set((is_application_accepted.eq(new_is_application_accepted), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -128,19 +129,19 @@ impl LocalUser {
         query: &str
     ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        users.filter(name.ilike(fuzzy_search(query))).load(conn)
+        use crate::schema::local_user::dsl::*;
+        local_user.filter(name.ilike(fuzzy_search(query))).load(conn)
         .await
     }
 
     pub async fn update_admin(
         pool: &DbPool,
-        person_id: i32,
+        id_: i32,
         new_admin: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        diesel::update(users.find(person_id))
+        use crate::schema::local_user::dsl::*;
+        diesel::update(local_user.find(id_))
             .set((is_admin.eq(new_admin), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
@@ -148,9 +149,9 @@ impl LocalUser {
 
     pub async fn get_by_name(pool: &DbPool, username: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
+        use crate::schema::local_user::dsl::*;
         // sanitization could be better
-        users
+        local_user
             .filter(
                 name.ilike(
                     username
@@ -163,38 +164,10 @@ impl LocalUser {
             .await
     }
 
-    pub async fn get_users_by_chat_id(pool: &DbPool, c_id: String) -> Result<Vec<Self>, Error> {
-        let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        users
-            .filter(chat_id.eq(c_id))
-            .load::<Self>(conn)
-            .await
-    }
-
-    pub async fn get_user_by_chat_id(pool: &DbPool, c_id: String) -> Result<Self, Error> {
-        let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        users
-            .filter(chat_id.eq(c_id))
-            .first::<Self>(conn)
-            .await
-    }
-
-    pub async fn update_chat_id(pool: &DbPool, person_id: i32, new_chat_id: String) -> Result<usize, Error> {
-        let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        diesel::update(users)
-            .filter(id.eq(person_id))
-            .set((chat_id.eq(new_chat_id), updated.eq(naive_now())))
-            .execute(conn)
-            .await
-    }
-
     pub async fn get_by_email(pool: &DbPool, email_addr: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        users
+        use crate::schema::local_user::dsl::*;
+        local_user
             .filter(
                 email.ilike(
                     email_addr
@@ -207,13 +180,13 @@ impl LocalUser {
             .await
     }
 
-    pub async fn register(pool: &DbPool, form: UserForm) -> Result<Self, TinyBoardsError> {
-        Self::check_name_and_email(pool, &form.name.clone().unwrap_or_default(), &form.email).await?;
+    pub async fn register(pool: &DbPool, form: LocalUserForm) -> Result<Self, TinyBoardsError> {
+        Self::check_name_and_email(pool, &form.name.clone().unwrap_or_default(), &form.email.unwrap()).await?;
 
         let unencrypted = form.passhash.unwrap();
 
         // hash the password here
-        let form = UserForm {
+        let form = LocalUserForm {
             passhash: Some(hash_password(unencrypted)),
             ..form
         };
@@ -233,11 +206,11 @@ impl LocalUser {
 
     pub async fn update_settings(
         pool: &DbPool,
-        person_id: i32,
-        form: &UserForm,
+        id_: i32,
+        form: &LocalUserForm,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(person_id))
+        diesel::update(local_user.find(id_))
             .set(form)
             .get_result::<Self>(conn)
             .await
@@ -246,67 +219,62 @@ impl LocalUser {
     /// accept all users that are unaccepted, NOTE: this is only called when toggling application mode on/off
     pub async fn accept_all_applications(pool: &DbPool) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::users::dsl::*;
-        diesel::update(users)
+        use crate::schema::local_user::dsl::*;
+        diesel::update(local_user)
             .filter(is_application_accepted.eq(false))
             .set((is_application_accepted.eq(true), updated.eq(naive_now())))
             .execute(conn)
             .await
     }
 
-    pub fn into_safe(self) -> UserSafe {
-        UserSafe {
+    pub fn into_safe(self) -> LocalUserSafe {
+        LocalUserSafe {
             id: self.id,
             name: self.name,
-            preferred_name: self.preferred_name,
             is_admin: self.is_admin,
             is_banned: self.is_banned,
+            is_deleted: self.is_deleted,
             creation_date: self.creation_date,
             updated: self.updated,
+            unban_date: self.unban_date,
             theme: self.theme,
             default_sort_type: self.default_sort_type,
             default_listing_type: self.default_listing_type,
-            avatar: self.avatar,
-            signature: self.signature,
-            email: self.email,
             email_notifications_enabled: self.email_notifications_enabled,
             show_nsfw: self.show_nsfw,
-            is_deleted: self.is_deleted,
-            unban_date: self.unban_date,
-            banner: self.banner,
-            bio: self.bio,
+            show_bots: self.show_bots,
             is_application_accepted: self.is_application_accepted,
         }
     }
 }
 
 #[async_trait::async_trait]
-impl Crud for User {
-    type Form = UserForm;
+impl Crud for LocalUser {
+    type Form = LocalUserForm;
     type IdType = i32;
 
-    async fn read(pool: &DbPool, person_id: i32) -> Result<Self, Error> {
+    async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        users.find(person_id).first::<Self>(conn)
+        local_user.find(id_).first::<Self>(conn)
         .await
     }
-    async fn delete(pool: &DbPool, person_id: i32) -> Result<usize, Error> {
+    async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(users.find(person_id)).execute(conn)
+        diesel::delete(local_user.find(id_)).execute(conn)
         .await
     }
-    async fn create(pool: &DbPool, form: &UserForm) -> Result<Self, Error> {
+    async fn create(pool: &DbPool, form: &LocalUserForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let local_user = diesel::insert_into(users)
+        let new_local_user = diesel::insert_into(local_user)
             .values(form)
             .get_result::<Self>(conn)
             .await?;
 
-        Ok(local_user)
+        Ok(new_local_user)
     }
-    async fn update(pool: &DbPool, person_id: i32, form: &UserForm) -> Result<Self, Error> {
+    async fn update(pool: &DbPool, id_: i32, form: &LocalUserForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(users.find(person_id))
+        diesel::update(local_user.find(id_))
             .set(form)
             .get_result::<Self>(conn)
             .await
@@ -315,8 +283,7 @@ impl Crud for User {
 
 pub mod safe_type {
     use crate::{
-        models::person::person::{Person, PersonSafe},
-        schema::person::*,
+        models::person::local_user::{LocalUserSettings, LocalUserSafe},
         schema::local_user::*,
         traits::ToSafe,
     };
@@ -324,7 +291,6 @@ pub mod safe_type {
     type Columns = (
         id,
         name,
-        preferred_name,
         is_admin,
         is_banned,
         creation_date,
@@ -332,15 +298,11 @@ pub mod safe_type {
         theme,
         default_sort_type,
         default_listing_type,
-        avatar,
-        signature,
         email,
         email_notifications_enabled,
         show_nsfw,
         is_deleted,
         unban_date,
-        banner,
-        bio,
         is_application_accepted,
     );
 
@@ -353,20 +315,15 @@ pub mod safe_type {
         default_sort_type,
         default_listing_type,
         email_notifications_enabled,
-        avatar,
-        signature,
-        banner,
-        bio,
     );
 
-    impl ToSafe for UserSafe {
+    impl ToSafe for LocalUserSafe {
         type SafeColumns = Columns;
 
         fn safe_columns_tuple() -> Self::SafeColumns {
             (
                 id,
                 name,
-                preferred_name,
                 is_admin,
                 is_banned,
                 creation_date,
@@ -374,21 +331,17 @@ pub mod safe_type {
                 theme,
                 default_sort_type,
                 default_listing_type,
-                avatar,
-                signature,
                 email,
                 email_notifications_enabled,
                 show_nsfw,
                 is_deleted,
                 unban_date,
-                banner,
-                bio,
                 is_application_accepted,
             )
         }
     }
 
-    impl ToSafe for UserSettings {
+    impl ToSafe for LocalUserSettings {
         type SafeColumns = SettingColumns;
 
         fn safe_columns_tuple() -> Self::SafeColumns {
@@ -401,10 +354,6 @@ pub mod safe_type {
                 default_sort_type,
                 default_listing_type,
                 email_notifications_enabled,
-                avatar,
-                signature,
-                banner,
-                bio,
             )
         }
     }
