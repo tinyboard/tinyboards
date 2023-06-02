@@ -1,4 +1,4 @@
-use crate::schema::user_board_blocks::dsl::*;
+use crate::schema::person_board_blocks::dsl::*;
 use crate::{
     models::board::person_board_blocks::{BoardBlock, BoardBlockForm},
     traits::Blockable,
@@ -15,7 +15,7 @@ impl BoardBlock {
         for_board_id: i32,
     ) -> Result<Self, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        user_board_blocks
+        person_board_blocks
             .filter(person_id.eq(for_person_id))
             .filter(board_id.eq(for_board_id))
             .first::<Self>(conn)
@@ -29,7 +29,7 @@ impl Blockable for BoardBlock {
     type Form = BoardBlockForm;
     async fn block(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        diesel::insert_into(user_board_blocks)
+        diesel::insert_into(person_board_blocks)
             .values(form)
             .on_conflict((person_id, board_id))
             .do_update()
@@ -42,7 +42,7 @@ impl Blockable for BoardBlock {
     async fn unblock(pool: &DbPool, form: &Self::Form) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         diesel::delete(
-            user_board_blocks
+            person_board_blocks
                 .filter(person_id.eq(form.person_id))
                 .filter(board_id.eq(form.board_id)),
         )

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = board_person_bans)]
-pub struct BoardUserBan {
+pub struct BoardPersonBan {
     pub id: i32,
     pub board_id: i32,
     pub person_id: i32,
@@ -15,7 +15,7 @@ pub struct BoardUserBan {
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Insertable, AsChangeset)]
 #[diesel(table_name = board_person_bans)]
-pub struct BoardUserBanForm {
+pub struct BoardPersonBanForm {
     pub board_id: i32,
     pub person_id: i32,
     pub expires: Option<NaiveDateTime>,

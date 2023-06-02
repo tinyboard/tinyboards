@@ -1,6 +1,6 @@
 use crate::schema::{board_mods, board_person_bans, boards::dsl::*};
 use crate::{
-    models::board::board_person_bans::{BoardUserBan, BoardUserBanForm},
+    models::board::board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     models::board::boards::{Board, BoardForm},
     traits::{Bannable, Crud},
     utils::{get_conn, DbPool, naive_now},
@@ -144,8 +144,8 @@ impl Crud for Board {
 }
 
 #[async_trait::async_trait]
-impl Bannable for BoardUserBan {
-    type Form = BoardUserBanForm;
+impl Bannable for BoardPersonBan {
+    type Form = BoardPersonBanForm;
 
     async fn ban(pool: &DbPool, ban_form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
