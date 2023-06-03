@@ -163,6 +163,15 @@ impl LocalUser {
             .await
     }
 
+    pub async fn get_by_person_id(pool: &DbPool, id_: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::local_user::dsl::*;
+        local_user
+            .filter(person_id.eq(id_))
+            .first::<Self>(conn)
+            .await
+    }
+
     pub async fn get_by_email(pool: &DbPool, email_addr: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::local_user::dsl::*;

@@ -4,9 +4,9 @@ use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
         board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
-        board::person_board_blocks::BoardBlock, person::person::*,
+        board::person_board_blocks::BoardBlock, person::person::*, person::local_user::*,
     },
-    schema::{board_aggregates, board_subscriptions, boards, person_board_blocks, person},
+    schema::{board_aggregates, board_subscriptions, boards, person_board_blocks, person, local_user},
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
     ListingType, SortType,
@@ -61,9 +61,9 @@ impl BoardView {
     }
 
     pub async fn is_admin(pool: &DbPool, person_id: i32) -> Result<bool, Error> {
-        let res = UserView::admins(pool)
+        let res = PersonView::admins(pool)
             .await
-            .map(|v| v.into_iter().map(|a| a.user.id).collect::<Vec<i32>>())
+            .map(|v| v.into_iter().map(|a| a.person.id).collect::<Vec<i32>>())
             .unwrap_or_default()
             .contains(&person_id);
 
@@ -83,9 +83,9 @@ impl BoardView {
         }
 
         // check list of admins for person_id
-        UserView::admins(pool)
+        PersonView::admins(pool)
             .await
-            .map(|v| v.into_iter().map(|a| a.user.id).collect::<Vec<i32>>())
+            .map(|v| v.into_iter().map(|a| a.person.id).collect::<Vec<i32>>())
             .unwrap_or_default()
             .contains(&person_id)
     }
@@ -115,9 +115,12 @@ impl<'a> BoardQuery<'a> {
         let conn = &mut get_conn(self.pool).await?;
         let person_id_join = self.person.map(|l| l.id).unwrap_or(-1);
 
+        let l_user = LocalUser::get_by_person_id(self.pool, person_id_join.clone()).await?;
+
         let mut query = boards::table
             .inner_join(board_aggregates::table)
             .left_join(person::table.on(person::id.eq(person_id_join)))
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .left_join(
                 board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
@@ -195,8 +198,8 @@ impl<'a> BoardQuery<'a> {
 
         if self.person.is_some() {
             query = query.filter(person_board_blocks::person_id.is_null());
-            query = query.filter(boards::is_nsfw.eq(false).or(person::show_nsfw.eq(true)));
-        } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
+            query = query.filter(boards::is_nsfw.eq(false).or(local_user::show_nsfw.eq(true)));
+        } else if !l_user.show_nsfw {
             query = query.filter(boards::is_nsfw.eq(false));
         }
 
