@@ -13,6 +13,7 @@ use tinyboards_db::{
         post::posts::Post,
         person::person_blocks::*,
         person::person::*,
+        person::local_user::*,
     },
     schema::{
         board_subscriptions, board_person_bans, boards, comment_aggregates, comment_votes, comments,
@@ -274,13 +275,16 @@ impl CommentView {
 
             comments_vec.append(&mut comments);
         }
-
-        // hide deleted/removed info
-        for cv in comments_vec
-            .iter_mut()
-            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
-        {
-            cv.hide_if_removed_or_deleted(person);
+        
+        if person_id.is_some() {
+            let l_user = LocalUser::get_by_person_id(pool, person_id.unwrap()).await?;
+            // hide deleted/removed info
+            for cv in comments_vec
+                .iter_mut()
+                .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
+            {
+                cv.hide_if_removed_or_deleted(Some(&l_user));
+            }
         }
 
         Ok(CommentQueryResponse {
@@ -546,7 +550,7 @@ impl DeleteableOrRemoveable for CommentView {
                 match local_user {
                     Some(local_user) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.is_removed && local_user.id == self.comment.creator_id)
+                        !(self.comment.is_removed && local_user.person_id == self.comment.creator_id)
                     }
                     None => true,
                 }
@@ -573,8 +577,8 @@ impl DeleteableOrRemoveable for CommentView {
 
         let blank_out_post = {
             if self.post.is_deleted || self.post.is_removed {
-                match user {
-                    Some(user) => !(self.post.is_removed && user.id == self.post.creator_id),
+                match local_user {
+                    Some(local_user) => !(self.post.is_removed && local_user.person_id == self.post.creator_id),
                     None => true,
                 }
             } else {
