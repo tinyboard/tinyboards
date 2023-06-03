@@ -533,20 +533,20 @@ impl<'a> CommentQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for CommentView {
-    fn hide_if_removed_or_deleted(&mut self, person: Option<&User>) {
+    fn hide_if_removed_or_deleted(&mut self, local_user: Option<&LocalUser>) {
         // if the user is admin, nothing is being removed
-        if let Some(user) = user {
-            if user.is_admin {
+        if let Some(local_user) = local_user {
+            if local_user.is_admin {
                 return;
             }
         }
 
         let blank_out_comment = {
             if self.comment.is_removed || self.comment.is_deleted {
-                match user {
-                    Some(user) => {
+                match local_user {
+                    Some(local_user) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.is_removed && user.id == self.comment.creator_id)
+                        !(self.comment.is_removed && local_user.id == self.comment.creator_id)
                     }
                     None => true,
                 }

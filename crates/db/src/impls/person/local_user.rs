@@ -318,6 +318,7 @@ pub mod safe_type {
         default_listing_type,
         email_notifications_enabled,
         lang,
+        updated,
     );
 
     impl ToSafe for LocalUserSafe {
@@ -359,6 +360,7 @@ pub mod safe_type {
                 default_listing_type,
                 email_notifications_enabled,
                 lang,
+                updated,
             )
         }
     }

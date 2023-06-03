@@ -26,7 +26,8 @@ pub struct PersonView {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LoggedInUserView {
-    pub user: PersonSafe,
+    pub person: PersonSafe,
+    pub settings: Option<LocalUserSettings>,
     pub counts: PersonAggregates,
     pub unread_notifications: i64,
 }

@@ -35,7 +35,6 @@ pub struct LocalUser {
 pub struct LocalUserSettings {
     pub id: i32,
     pub name: String,
-    pub person_id: i32,
     pub email: Option<String>,
     pub show_nsfw: bool,
     pub show_bots: bool,
@@ -44,6 +43,7 @@ pub struct LocalUserSettings {
     pub default_listing_type: i16,
     pub email_notifications_enabled: bool,
     pub lang: String,
+    pub updated: Option<NaiveDateTime>,
 }
 
 

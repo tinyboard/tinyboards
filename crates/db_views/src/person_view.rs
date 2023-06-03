@@ -71,14 +71,15 @@ impl PersonView {
 
     pub async fn read_from_name(pool: &DbPool, name: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let (user, counts) = person::table
+        let (person, settings, counts) = person::table
             .filter(person::name.eq(name))
-            .inner_join(user_aggregates::table)
-            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .first::<PersonViewTuple>(conn)
             .await?;
 
-        Ok(Self { user, counts })
+        Ok(Self { person, settings, counts })
     }
 
     pub async fn find_by_email_or_name(
@@ -86,41 +87,46 @@ impl PersonView {
         name_or_email: &str,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let (user, counts) = person::table
-            .inner_join(user_aggregates::table)
+        let (person, settings, counts) = person::table
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .filter(
                 lower(person::name)
                     .eq(lower(name_or_email))
-                    .or(person::email.eq(name_or_email)),
+                    .or(local_user::email.eq(name_or_email)),
             )
-            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)
+            .filter(person::local.eq(true))
+            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .first::<PersonViewTuple>(conn)
             .await?;
 
-        Ok(Self { user, counts })
+        Ok(Self { person, settings, counts })
     }
 
     pub async fn find_by_email(pool: &DbPool, from_email: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let (user, counts) = person::table
-            .inner_join(user_aggregates::table)
-            .filter(person::email.eq(from_email))
-            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)
+        let (person, settings, counts) = person::table
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .filter(local_user::email.eq(from_email).and(person::local.eq(true)))
+            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .first::<PersonViewTuple>(conn)
             .await?;
 
-        Ok(Self { user, counts })
+        Ok(Self { person, settings, counts })
     }
 
     pub async fn admins(pool: &DbPool) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let admins = person::table
-            .inner_join(user_aggregates::table)
-            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .filter(person::is_admin.eq(true))
-            .filter(person::is_deleted.eq(false))
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .filter(person::local.eq(true))
+            .filter(local_user::is_admin.eq(true))
+            .filter(local_user::is_deleted.eq(false))
             .order_by(person::creation_date)
-            .load::<UserViewTuple>(conn)
+            .load::<PersonViewTuple>(conn)
             .await?;
 
         Ok(Self::from_tuple_to_vec(admins))
@@ -132,17 +138,18 @@ impl LoggedInUserView {
     
     pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
 
-        let user_view = UserView::read(pool, person_id)
+        let person_view = PersonView::read(pool, person_id)
             .await    
             .map_err(|e| TinyBoardsError::from(e))?;
 
-        let mentions = UserMentionView::get_unread_mentions(pool, person_id).await?;
+        let mentions = PersonMentionView::get_unread_mentions(pool, person_id).await?;
 
         let replies = CommentReplyView::get_unread_replies(pool, person_id).await?;
 
         Ok( LoggedInUserView { 
-            user: user_view.user, 
-            counts: user_view.counts, 
+            person: person_view.person, 
+            settings: person_view.settings,
+            counts: person_view.counts, 
             unread_notifications: mentions + replies 
         })
 
@@ -150,19 +157,21 @@ impl LoggedInUserView {
 
 }
 
-type UserSettingsViewTuple = (UserSettings, UserAggregates);
+type LocalUserSettingsViewTuple = (LocalUserSettings, PersonAggregates);
 
-impl UserSettingsView {
+impl LocalUserSettingsView {
     pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let (settings, counts) = person::table
             .find(person_id)
-            .inner_join(user_aggregates::table)
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .filter(person::local.eq(true))
             .select((
-                UserSettings::safe_columns_tuple(),
-                user_aggregates::all_columns,
+                LocalUserSettings::safe_columns_tuple(),
+                person_aggregates::all_columns,
             ))
-            .first::<UserSettingsViewTuple>(conn)
+            .first::<LocalUserSettingsViewTuple>(conn)
             .await?;
 
         Ok(Self { settings, counts })
@@ -170,23 +179,23 @@ impl UserSettingsView {
 
     pub async fn list_admins_with_email(pool: &DbPool) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
-        let res = person::table
-            .filter(person::is_admin.eq(true))
-            .filter(person::email.is_not_null())
-            .inner_join(user_aggregates::table.on(person::id.eq(user_aggregates::person_id)))
+        let res = local_user::table
+            .filter(local_user::is_admin.eq(true))
+            .filter(local_user::email.is_not_null())
+            .inner_join(person_aggregates::table.on(local_user::person_id.eq(person_aggregates::person_id)))
             .select((
-                UserSettings::safe_columns_tuple(),
-                user_aggregates::all_columns,
+                LocalUserSettings::safe_columns_tuple(),
+                person_aggregates::all_columns,
             ))
-            .load::<UserSettingsViewTuple>(conn)
+            .load::<LocalUserSettingsViewTuple>(conn)
             .await?;
 
-            Ok(UserSettingsView::from_tuple_to_vec(res))
+            Ok(LocalUserSettingsView::from_tuple_to_vec(res))
     }
 }
 
-impl ViewToVec for UserSettingsView {
-    type DbTuple = UserSettingsViewTuple;
+impl ViewToVec for LocalUserSettingsView {
+    type DbTuple = LocalUserSettingsViewTuple;
     fn from_tuple_to_vec(items: Vec<Self::DbTuple>) -> Vec<Self> {
         items
             .into_iter()
@@ -198,14 +207,15 @@ impl ViewToVec for UserSettingsView {
     }
 }
 
-impl ViewToVec for UserView {
-    type DbTuple = UserViewTuple;
+impl ViewToVec for PersonView {
+    type DbTuple = PersonViewTuple;
     fn from_tuple_to_vec(items: Vec<Self::DbTuple>) -> Vec<Self> {
         items
             .into_iter()
             .map(|a| Self {
-                user: a.0,
-                counts: a.1,
+                person: a.0,
+                settings: a.1,
+                counts: a.2,
             })
             .collect::<Vec<Self>>()
     }
@@ -213,7 +223,7 @@ impl ViewToVec for UserView {
 
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
-pub struct UserQuery<'a> {
+pub struct PersonQuery<'a> {
     #[builder(!default)]
     pool: &'a DbPool,
     sort: Option<UserSortType>,
@@ -226,33 +236,35 @@ pub struct UserQuery<'a> {
 }
 
 #[derive(Default, Clone)]
-pub struct UserQueryResponse {
-    pub person: Vec<UserView>,
+pub struct PersonQueryResponse {
+    pub person: Vec<PersonView>,
     pub count: i64,
 }
 
-impl<'a> UserQuery<'a> {
-    pub async fn list(self) -> Result<UserQueryResponse, Error> {
+impl<'a> PersonQuery<'a> {
+    pub async fn list(self) -> Result<PersonQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
         let mut query = person::table
-            .inner_join(user_aggregates::table)
-            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
             .into_boxed();
 
         query = match self.sort.unwrap_or(UserSortType::MostRep) {
             UserSortType::New => query.then_order_by(person::creation_date.desc()),
             UserSortType::Old => query.then_order_by(person::creation_date.asc()),
             UserSortType::MostRep => query
-                .then_order_by(user_aggregates::rep.desc()),
-            UserSortType::MostPosts => query.then_order_by(user_aggregates::post_count.desc()),
+                .then_order_by(person_aggregates::rep.desc()),
+            UserSortType::MostPosts => query.then_order_by(person_aggregates::post_count.desc()),
             UserSortType::MostComments => {
-                query.then_order_by(user_aggregates::comment_count.desc())
+                query.then_order_by(person_aggregates::comment_count.desc())
             }
         };
 
         let mut count_query = person::table
-            .inner_join(user_aggregates::table)
-            .select(UserSafe::safe_columns_tuple())
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .select(PersonSafe::safe_columns_tuple())
             .filter(person::is_deleted.eq(false))
             .filter(person::is_banned.eq(false))
             .into_boxed();
@@ -268,13 +280,13 @@ impl<'a> UserQuery<'a> {
         };
 
         if let Some(is_admin) = self.is_admin {
-            query = query.filter(person::is_admin.eq(is_admin));
-            count_query = count_query.filter(person::is_admin.eq(is_admin));
+            query = query.filter(local_user::is_admin.eq(is_admin));
+            count_query = count_query.filter(local_user::is_admin.eq(is_admin));
         };
 
         if self.approved_only.unwrap_or(false) {
-            query = query.filter(person::is_application_accepted.eq(true));
-            count_query = count_query.filter(person::is_application_accepted.eq(true));
+            query = query.filter(local_user::is_application_accepted.eq(true));
+            count_query = count_query.filter(local_user::is_application_accepted.eq(true));
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -285,11 +297,11 @@ impl<'a> UserQuery<'a> {
             .filter(person::is_deleted.eq(false))
             .filter(person::is_banned.eq(false));
 
-        let res = query.load::<UserViewTuple>(conn).await?;
+        let res = query.load::<PersonViewTuple>(conn).await?;
 
         let person = UserView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(conn).await?;
 
-        Ok(UserQueryResponse { person, count })
+        Ok(PersonQueryResponse { person, count })
     }
 }
