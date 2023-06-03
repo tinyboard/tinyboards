@@ -9,15 +9,13 @@ use tinyboards_db::{
         post::posts::Post,
         post::post_read::PostRead,
         post::post_saved::PostSaved,
-        //user::user::User,
-        local_user::{
-            user_blocks::UserBlock,
-            person::{User, UserSafe},
-        },
+        person::person_blocks::PersonBlock,
+        person::person::*,
+        person::local_user::*,
     },
     schema::{
-        board_subscriptions, board_user_bans, boards, post_aggregates, post_votes, posts,
-        user_blocks, user_board_blocks, user_post_read, user_post_save, person,
+        board_subscriptions, board_person_bans, boards, post_aggregates, post_votes, posts,
+        person_blocks, person_board_blocks, post_read, post_saved, person,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
@@ -27,14 +25,14 @@ use typed_builder::TypedBuilder;
 
 type PostViewTuple = (
     Post,
-    UserSafe,
+    PersonSafe,
     BoardSafe,
-    Option<BoardUserBan>,
+    Option<BoardPersonBan>,
     PostAggregates,
     Option<BoardSubscriber>,
     Option<PostSaved>,
     Option<PostRead>,
-    Option<UserBlock>,
+    Option<PersonBlock>,
     Option<i16>,
 );
 use diesel_async::RunQueryDsl;
@@ -65,13 +63,13 @@ impl PostView {
             .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
-                board_user_bans::table.on(posts::board_id
-                    .eq(board_user_bans::board_id)
-                    .and(board_user_bans::person_id.eq(posts::creator_id))
+                board_person_bans::table.on(posts::board_id
+                    .eq(board_person_bans::board_id)
+                    .and(board_person_bans::person_id.eq(posts::creator_id))
                     .and(
-                        board_user_bans::expires
+                        board_person_bans::expires
                             .is_null()
-                            .or(board_user_bans::expires.gt(now)),
+                            .or(board_person_bans::expires.gt(now)),
                     )),
             )
             .inner_join(post_aggregates::table)
@@ -81,19 +79,19 @@ impl PostView {
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_post_save::table.on(posts::id
-                    .eq(user_post_save::post_id)
-                    .and(user_post_save::person_id.eq(person_id_join))),
+                post_saved::table.on(posts::id
+                    .eq(post_saved::post_id)
+                    .and(post_saved::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_post_read::table.on(posts::id
-                    .eq(user_post_read::post_id)
-                    .and(user_post_read::person_id.eq(person_id_join))),
+                post_read::table.on(posts::id
+                    .eq(post_read::post_id)
+                    .and(post_read::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_blocks::table.on(posts::creator_id
-                    .eq(user_blocks::target_id)
-                    .and(user_blocks::person_id.eq(person_id_join))),
+                person_blocks::table.on(posts::creator_id
+                    .eq(person_blocks::target_id)
+                    .and(person_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
                 post_votes::table.on(posts::id
@@ -102,14 +100,14 @@ impl PostView {
             )
             .select((
                 posts::all_columns,
-                UserSafe::safe_columns_tuple(),
+                PersonSafe::safe_columns_tuple(),
                 BoardSafe::safe_columns_tuple(),
-                board_user_bans::all_columns.nullable(),
+                board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
                 board_subscriptions::all_columns.nullable(),
-                user_post_save::all_columns.nullable(),
-                user_post_read::all_columns.nullable(),
-                user_blocks::all_columns.nullable(),
+                post_saved::all_columns.nullable(),
+                post_read::all_columns.nullable(),
+                person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
             ))
             .first::<PostViewTuple>(conn)
@@ -149,7 +147,7 @@ pub struct PostQuery<'a> {
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,
-    user: Option<&'a User>,
+    person: Option<&'a Person>,
     show_nsfw: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -166,8 +164,8 @@ impl<'a> PostQuery<'a> {
         let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
-        let person_id_join = match self.user {
-            Some(user) => user.id,
+        let person_id_join = match self.person {
+            Some(person) => person.id,
             None => -1,
         };
 
@@ -175,13 +173,13 @@ impl<'a> PostQuery<'a> {
             .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
-                board_user_bans::table.on(posts::board_id
-                    .eq(board_user_bans::board_id)
-                    .and(board_user_bans::person_id.eq(posts::creator_id))
+                board_person_bans::table.on(posts::board_id
+                    .eq(board_person_bans::board_id)
+                    .and(board_person_bans::person_id.eq(posts::creator_id))
                     .and(
-                        board_user_bans::expires
+                        board_person_bans::expires
                             .is_null()
-                            .or(board_user_bans::expires.gt(now)),
+                            .or(board_person_bans::expires.gt(now)),
                     )),
             )
             .inner_join(post_aggregates::table)
@@ -191,24 +189,24 @@ impl<'a> PostQuery<'a> {
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_post_save::table.on(posts::id
-                    .eq(user_post_save::post_id)
-                    .and(user_post_save::person_id.eq(person_id_join))),
+                post_saved::table.on(posts::id
+                    .eq(post_saved::post_id)
+                    .and(post_saved::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_post_read::table.on(posts::id
-                    .eq(user_post_read::post_id)
-                    .and(user_post_read::person_id.eq(person_id_join))),
+                post_read::table.on(posts::id
+                    .eq(post_read::post_id)
+                    .and(post_read::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_blocks::table.on(posts::creator_id
-                    .eq(user_blocks::target_id)
-                    .and(user_blocks::person_id.eq(person_id_join))),
+                person_blocks::table.on(posts::creator_id
+                    .eq(person_blocks::target_id)
+                    .and(person_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(boards::id
-                    .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::person_id.eq(person_id_join))),
+                person_board_blocks::table.on(boards::id
+                    .eq(person_board_blocks::board_id)
+                    .and(person_board_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
                 post_votes::table.on(posts::id
@@ -217,14 +215,14 @@ impl<'a> PostQuery<'a> {
             )
             .select((
                 posts::all_columns,
-                UserSafe::safe_columns_tuple(),
+                PersonSafe::safe_columns_tuple(),
                 BoardSafe::safe_columns_tuple(),
-                board_user_bans::all_columns.nullable(),
+                board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
                 board_subscriptions::all_columns.nullable(),
-                user_post_save::all_columns.nullable(),
-                user_post_read::all_columns.nullable(),
-                user_blocks::all_columns.nullable(),
+                post_saved::all_columns.nullable(),
+                post_read::all_columns.nullable(),
+                person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
             ))
             .into_boxed();
@@ -233,13 +231,13 @@ impl<'a> PostQuery<'a> {
             .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
-                board_user_bans::table.on(posts::board_id
-                    .eq(board_user_bans::board_id)
-                    .and(board_user_bans::person_id.eq(posts::creator_id))
+                board_person_bans::table.on(posts::board_id
+                    .eq(board_person_bans::board_id)
+                    .and(board_person_bans::person_id.eq(posts::creator_id))
                     .and(
-                        board_user_bans::expires
+                        board_person_bans::expires
                             .is_null()
-                            .or(board_user_bans::expires.gt(now)),
+                            .or(board_person_bans::expires.gt(now)),
                     )),
             )
             .inner_join(post_aggregates::table)
@@ -249,24 +247,24 @@ impl<'a> PostQuery<'a> {
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_post_save::table.on(posts::id
-                    .eq(user_post_save::post_id)
-                    .and(user_post_save::person_id.eq(person_id_join))),
+                post_saved::table.on(posts::id
+                    .eq(post_saved::post_id)
+                    .and(post_saved::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_post_read::table.on(posts::id
-                    .eq(user_post_read::post_id)
-                    .and(user_post_read::person_id.eq(person_id_join))),
+                post_read::table.on(posts::id
+                    .eq(post_read::post_id)
+                    .and(post_read::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_blocks::table.on(posts::creator_id
-                    .eq(user_blocks::target_id)
-                    .and(user_blocks::person_id.eq(person_id_join))),
+                person_blocks::table.on(posts::creator_id
+                    .eq(person_blocks::target_id)
+                    .and(person_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(boards::id
-                    .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::person_id.eq(person_id_join))),
+                person_board_blocks::table.on(boards::id
+                    .eq(person_board_blocks::board_id)
+                    .and(person_board_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
                 post_votes::table.on(posts::id
@@ -325,7 +323,7 @@ impl<'a> PostQuery<'a> {
         }
 
         if self.saved_only.unwrap_or(false) {
-            query = query.filter(user_post_save::id.is_not_null());
+            query = query.filter(post_saved::id.is_not_null());
         }
 
         // if show_nsfw is NOT TRUE, then we filter is_nsfw posts from query
@@ -334,9 +332,9 @@ impl<'a> PostQuery<'a> {
         }
 
         // filter posts from blocked boards and person
-        if self.user.is_some() {
-            query = query.filter(user_board_blocks::person_id.is_null());
-            query = query.filter(user_blocks::person_id.is_null());
+        if self.person.is_some() {
+            query = query.filter(person_board_blocks::person_id.is_null());
+            query = query.filter(person_blocks::person_id.is_null());
         }
 
         // sticky posts on top
@@ -402,19 +400,19 @@ impl<'a> PostQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for PostView {
-    fn hide_if_removed_or_deleted(&mut self, user: Option<&User>) {
+    fn hide_if_removed_or_deleted(&mut self, local_user: Option<&LocalUser>) {
         /*if !(self.post.is_deleted || self.post.is_removed) {
             return self;
         }*/
 
-        if let Some(user) = user {
+        if let Some(local_user) = local_user {
             // admins see everything
-            if user.is_admin {
+            if local_user.is_admin {
                 return;
             }
 
             // person can see their own removed content
-            if self.post.is_removed && user.id == self.post.creator_id {
+            if self.post.is_removed && local_user.id == self.post.creator_id {
                 return;
             }
         }
