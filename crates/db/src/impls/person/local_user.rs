@@ -1,4 +1,3 @@
-
 use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
@@ -181,13 +180,15 @@ impl LocalUser {
     }
 
     pub async fn register(pool: &DbPool, form: LocalUserForm) -> Result<Self, TinyBoardsError> {
-        Self::check_name_and_email(pool, &form.name.clone().unwrap_or_default(), &form.email.unwrap()).await?;
+        let email_addr = &form.email.unwrap();
+        Self::check_name_and_email(pool, &form.name.clone().unwrap_or_default(), &email_addr.clone()).await?;
 
         let unencrypted = form.passhash.unwrap();
 
         // hash the password here
         let form = LocalUserForm {
             passhash: Some(hash_password(unencrypted)),
+            email: Some(email_addr.clone()),
             ..form
         };
 

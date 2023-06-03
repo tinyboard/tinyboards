@@ -12,12 +12,12 @@ use tinyboards_db::{
         //user::user::User,
         local_user::{
             user_blocks::UserBlock,
-            users::{User, UserSafe},
+            person::{User, UserSafe},
         },
     },
     schema::{
         board_subscriptions, board_user_bans, boards, post_aggregates, post_votes, posts,
-        user_blocks, user_board_blocks, user_post_read, user_post_save, users,
+        user_blocks, user_board_blocks, user_post_read, user_post_save, person,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
@@ -62,7 +62,7 @@ impl PostView {
             post_vote,
         ) = posts::table
             .find(post_id)
-            .inner_join(users::table)
+            .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
                 board_user_bans::table.on(posts::board_id
@@ -172,7 +172,7 @@ impl<'a> PostQuery<'a> {
         };
 
         let mut query = posts::table
-            .inner_join(users::table)
+            .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
                 board_user_bans::table.on(posts::board_id
@@ -230,7 +230,7 @@ impl<'a> PostQuery<'a> {
             .into_boxed();
 
         let count_query = posts::table
-            .inner_join(users::table)
+            .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
                 board_user_bans::table.on(posts::board_id
@@ -333,7 +333,7 @@ impl<'a> PostQuery<'a> {
             query = query.filter(posts::is_nsfw.eq(false));
         }
 
-        // filter posts from blocked boards and users
+        // filter posts from blocked boards and person
         if self.user.is_some() {
             query = query.filter(user_board_blocks::person_id.is_null());
             query = query.filter(user_blocks::person_id.is_null());
@@ -413,7 +413,7 @@ impl DeleteableOrRemoveable for PostView {
                 return;
             }
 
-            // users can see their own removed content
+            // person can see their own removed content
             if self.post.is_removed && user.id == self.post.creator_id {
                 return;
             }

@@ -2,9 +2,9 @@ use crate::structs::{RegistrationApplicationView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
-        site::registration_applications::RegistrationApplication, local_user::users::{UserSafe, UserSettings},
+        site::registration_applications::RegistrationApplication, local_user::person::{UserSafe, UserSettings},
     },
-    schema::{users, registration_applications},
+    schema::{person, registration_applications},
     traits::{ViewToVec, ToSafe},
     utils::{limit_and_offset, get_conn, DbPool},
 };
@@ -24,7 +24,7 @@ impl RegistrationApplicationView {
         app_id: i32,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_alias = diesel::alias!(users as users_alias);
+        let user_alias = diesel::alias!(person as users_alias);
         let (
             application,
             applicant_settings,
@@ -32,8 +32,8 @@ impl RegistrationApplicationView {
             admin,
         ) = registration_applications::table
         .find(app_id)
-        .inner_join(users::table.on(registration_applications::person_id.eq(users::id)))
-        .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
+        .inner_join(person::table.on(registration_applications::person_id.eq(person::id)))
+        .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(person::id).nullable())))
         .order_by(registration_applications::published.desc())
         .select((
             registration_applications::all_columns,
@@ -73,10 +73,10 @@ impl<'a> ApplicationQuery<'a> {
     pub async fn list(self) -> Result<ApplicationQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
         
-        let user_alias = diesel::alias!(users as users_alias);
+        let user_alias = diesel::alias!(person as users_alias);
         let query = registration_applications::table
-            .inner_join(users::table.on(registration_applications::person_id.eq(users::id)))
-            .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
+            .inner_join(person::table.on(registration_applications::person_id.eq(person::id)))
+            .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(person::id).nullable())))
             .order_by(registration_applications::published.desc())
             .select((
                 registration_applications::all_columns,
@@ -88,8 +88,8 @@ impl<'a> ApplicationQuery<'a> {
 
 
         let count_query = registration_applications::table
-            .inner_join(users::table.on(registration_applications::person_id.eq(users::id)))
-            .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(users::id).nullable())))
+            .inner_join(person::table.on(registration_applications::person_id.eq(person::id)))
+            .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(person::id).nullable())))
             .into_boxed();
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;

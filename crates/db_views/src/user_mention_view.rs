@@ -6,11 +6,11 @@ use tinyboards_db::{
         board::board_subscriptions::BoardSubscriber, board::board_person_bans::BoardUserBan,
         board::boards::BoardSafe, comment::comments::Comment,
         comment::comment_saved::CommentSaved, post::posts::Post, local_user::user_blocks::UserBlock,
-        local_user::person_mentions::UserMention, local_user::users::UserSafe,
+        local_user::person_mentions::UserMention, person::person::PersonSafe,
     },
     schema::{
         board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,
-        posts, user_blocks, user_comment_save, user_mentions, users,
+        posts, user_blocks, user_comment_save, user_mentions, person,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, limit_and_offset, get_conn, DbPool},
@@ -41,7 +41,7 @@ impl UserMentionView {
         person_id: Option<i32>,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_alias = diesel::alias!(users as user_1);
+        let user_alias = diesel::alias!(person as user_1);
 
         let person_id_join = person_id.unwrap_or(-1);
 
@@ -61,7 +61,7 @@ impl UserMentionView {
         ) = user_mentions::table
             .find(user_mention_id)
             .inner_join(comments::table)
-            .inner_join(users::table.on(comments::creator_id.eq(users::id)))
+            .inner_join(person::table.on(comments::creator_id.eq(person::id)))
             .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(user_alias)
@@ -185,13 +185,13 @@ impl<'a> UserMentionQuery<'a> {
         let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
-        let user_alias = diesel::alias!(users as user_1);
+        let user_alias = diesel::alias!(person as user_1);
 
         let person_id_join = self.person_id.unwrap_or(-1);
 
         let mut query = user_mentions::table
             .inner_join(comments::table)
-            .inner_join(users::table.on(comments::creator_id.eq(users::id)))
+            .inner_join(person::table.on(comments::creator_id.eq(person::id)))
             .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(user_alias)
@@ -246,7 +246,7 @@ impl<'a> UserMentionQuery<'a> {
 
         let mut count_query = user_mentions::table
         .inner_join(comments::table)
-        .inner_join(users::table.on(comments::creator_id.eq(users::id)))
+        .inner_join(person::table.on(comments::creator_id.eq(person::id)))
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
         .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
         .inner_join(user_alias)

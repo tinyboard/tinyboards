@@ -38,7 +38,7 @@ pub struct PersonSafe {
     pub display_name: Option<String>,
     pub is_banned: bool,
     pub local: bool,
-    pub actor_id: Option<String>,
+    pub actor_id: String,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub avatar: Option<String>,
@@ -50,6 +50,7 @@ pub struct PersonSafe {
     pub inbox_url: String,
     pub shared_inbox_url: Option<String>,
     pub bot_account: bool,
+    pub last_refreshed_date: NaiveDateTime,
 }
 
 

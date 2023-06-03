@@ -2,15 +2,15 @@ use crate::structs::{ModLogParams, ModRemoveBoardView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
-        board::boards::BoardSafe, moderator::mod_actions::ModRemoveBoard, local_user::users::UserSafe,
+        board::boards::BoardSafe, moderator::mod_actions::ModRemoveBoard, person::person::PersonSafe,
     },
-    schema::{boards, mod_remove_board, users},
+    schema::{boards, mod_remove_board, person},
     traits::{ToSafe, ViewToVec},
     utils::{limit_and_offset, DbPool, get_conn},
 };
 use diesel_async::RunQueryDsl;
 
-type ModRemoveBoardViewTuple = (ModRemoveBoard, Option<UserSafe>, BoardSafe);
+type ModRemoveBoardViewTuple = (ModRemoveBoard, Option<PersonSafe>, BoardSafe);
 
 impl ModRemoveBoardView {
     pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -20,15 +20,15 @@ impl ModRemoveBoardView {
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
         let mod_names_join = mod_remove_board::mod_person_id
-            .eq(users::id)
-            .and(show_mod_names_expr.or(users::id.eq(mod_id_join)));
+            .eq(person::id)
+            .and(show_mod_names_expr.or(person::id.eq(mod_id_join)));
 
         let mut query = mod_remove_board::table
-            .left_join(users::table.on(mod_names_join))
+            .left_join(person::table.on(mod_names_join))
             .inner_join(boards::table)
             .select((
                 mod_remove_board::all_columns,
-                UserSafe::safe_columns_tuple().nullable(),
+                PersonSafe::safe_columns_tuple().nullable(),
                 BoardSafe::safe_columns_tuple(),
             ))
             .into_boxed();

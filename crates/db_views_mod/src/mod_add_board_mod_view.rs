@@ -1,36 +1,36 @@
 use crate::structs::{ModAddBoardModView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    models::{moderator::mod_actions::ModAddBoardMod, local_user::users::UserSafe},
-    schema::{mod_add_board_mod, users},
+    models::{moderator::mod_actions::ModAddBoardMod, person::person::PersonSafe},
+    schema::{mod_add_board_mod, person},
     traits::{ToSafe, ViewToVec},
     utils::{limit_and_offset, DbPool, get_conn},
 };
 use diesel_async::RunQueryDsl;
 
-type ModAddBoardModViewTuple = (ModAddBoardMod, Option<UserSafe>, UserSafe);
+type ModAddBoardModViewTuple = (ModAddBoardMod, Option<PersonSafe>, PersonSafe);
 
 impl ModAddBoardModView {
     pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_alias = diesel::alias!(users as user_1);
+        let person_alias = diesel::alias!(person as person_1);
         let mod_id_join = params.mod_person_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
         let mod_names_join = mod_add_board_mod::mod_person_id
-            .eq(users::id)
-            .and(show_mod_names_expr.or(users::id.eq(mod_id_join)));
+            .eq(person::id)
+            .and(show_mod_names_expr.or(person::id.eq(mod_id_join)));
 
         let mut query = mod_add_board_mod::table
-            .left_join(users::table.on(mod_names_join))
+            .left_join(person::table.on(mod_names_join))
             .inner_join(
-                user_alias.on(mod_add_board_mod::other_person_id.eq(user_alias.field(users::id))),
+                person_alias.on(mod_add_board_mod::other_person_id.eq(person_alias.field(person::id))),
             )
             .select((
                 mod_add_board_mod::all_columns,
-                UserSafe::safe_columns_tuple().nullable(),
-                user_alias.fields(UserSafe::safe_columns_tuple()),
+                PersonSafe::safe_columns_tuple().nullable(),
+                person_alias.fields(PersonSafe::safe_columns_tuple()),
             ))
             .into_boxed();
 

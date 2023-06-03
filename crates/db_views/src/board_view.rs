@@ -4,9 +4,9 @@ use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
         board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
-        board::person_board_blocks::BoardBlock, local_user::users::User,
+        board::person_board_blocks::BoardBlock, person::person::*,
     },
-    schema::{board_aggregates, board_subscriptions, boards, user_board_blocks, users},
+    schema::{board_aggregates, board_subscriptions, boards, person_board_blocks, person},
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
     ListingType, SortType,
@@ -39,15 +39,15 @@ impl BoardView {
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(boards::id
-                    .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::person_id.eq(person_id_join))),
+                person_board_blocks::table.on(boards::id
+                    .eq(person_board_blocks::board_id)
+                    .and(person_board_blocks::person_id.eq(person_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
                 board_subscriptions::all_columns.nullable(),
-                user_board_blocks::all_columns.nullable(),
+                person_board_blocks::all_columns.nullable(),
             ))
             .first::<BoardViewTuple>(conn)
             .await?;
@@ -98,7 +98,7 @@ pub struct BoardQuery<'a> {
     pool: &'a DbPool,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
-    user: Option<&'a User>,
+    person: Option<&'a Person>,
     search_term: Option<String>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -113,41 +113,41 @@ pub struct BoardQueryResponse {
 impl<'a> BoardQuery<'a> {
     pub async fn list(self) -> Result<BoardQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
-        let person_id_join = self.user.map(|l| l.id).unwrap_or(-1);
+        let person_id_join = self.person.map(|l| l.id).unwrap_or(-1);
 
         let mut query = boards::table
             .inner_join(board_aggregates::table)
-            .left_join(users::table.on(users::id.eq(person_id_join)))
+            .left_join(person::table.on(person::id.eq(person_id_join)))
             .left_join(
                 board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(boards::id
-                    .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::person_id.eq(person_id_join))),
+                person_board_blocks::table.on(boards::id
+                    .eq(person_board_blocks::board_id)
+                    .and(person_board_blocks::person_id.eq(person_id_join))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
                 board_subscriptions::all_columns.nullable(),
-                user_board_blocks::all_columns.nullable(),
+                person_board_blocks::all_columns.nullable(),
             ))
             .into_boxed();
 
         let count_query = boards::table
             .inner_join(board_aggregates::table)
-            .left_join(users::table.on(users::id.eq(person_id_join)))
+            .left_join(person::table.on(person::id.eq(person_id_join)))
             .left_join(
                 board_subscriptions::table.on(boards::id
                     .eq(board_subscriptions::board_id)
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_board_blocks::table.on(boards::id
-                    .eq(user_board_blocks::board_id)
-                    .and(user_board_blocks::person_id.eq(person_id_join))),
+                person_board_blocks::table.on(boards::id
+                    .eq(person_board_blocks::board_id)
+                    .and(person_board_blocks::person_id.eq(person_id_join))),
             )
             .select((BoardSafe::safe_columns_tuple(),))
             .into_boxed();
@@ -193,9 +193,9 @@ impl<'a> BoardQuery<'a> {
             };
         }
 
-        if self.user.is_some() {
-            query = query.filter(user_board_blocks::person_id.is_null());
-            query = query.filter(boards::is_nsfw.eq(false).or(users::show_nsfw.eq(true)));
+        if self.person.is_some() {
+            query = query.filter(person_board_blocks::person_id.is_null());
+            query = query.filter(boards::is_nsfw.eq(false).or(person::show_nsfw.eq(true)));
         } else if !self.user.map(|l| l.show_nsfw).unwrap_or(false) {
             query = query.filter(boards::is_nsfw.eq(false));
         }

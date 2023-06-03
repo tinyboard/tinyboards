@@ -1,14 +1,14 @@
 use crate::structs::{AdminPurgeCommentView, ModLogParams};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    models::{moderator::admin_actions::AdminPurgeComment, local_user::users::UserSafe},
-    schema::{admin_purge_comment, users},
+    models::{moderator::admin_actions::AdminPurgeComment, person::person::PersonSafe},
+    schema::{admin_purge_comment, person},
     traits::{ToSafe, ViewToVec},
     utils::{limit_and_offset, DbPool, get_conn},
 };
 use diesel_async::RunQueryDsl;
 
-type AdminPurgeCommentViewTuple = (AdminPurgeComment, Option<UserSafe>);
+type AdminPurgeCommentViewTuple = (AdminPurgeComment, Option<PersonSafe>);
 
 impl AdminPurgeCommentView {
     pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
@@ -18,14 +18,14 @@ impl AdminPurgeCommentView {
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
         let admin_names_join = admin_purge_comment::admin_id
-            .eq(users::id)
-            .and(show_mod_names_expr.or(users::id.eq(admin_person_id_join)));
+            .eq(person::id)
+            .and(show_mod_names_expr.or(person::id.eq(admin_person_id_join)));
 
         let mut query = admin_purge_comment::table
-            .left_join(users::table.on(admin_names_join))
+            .left_join(person::table.on(admin_names_join))
             .select((
                 admin_purge_comment::all_columns,
-                UserSafe::safe_columns_tuple().nullable(),
+                PersonSafe::safe_columns_tuple().nullable(),
             ))
             .into_boxed();
 
