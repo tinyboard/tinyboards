@@ -1,16 +1,16 @@
-use crate::structs::UserMentionView;
+use crate::structs::PersonMentionView;
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board_subscriptions::BoardSubscriber, board::board_person_bans::BoardUserBan,
+        board::board_subscriptions::BoardSubscriber, board::board_person_bans::BoardPersonBan,
         board::boards::BoardSafe, comment::comments::Comment,
-        comment::comment_saved::CommentSaved, post::posts::Post, local_user::user_blocks::UserBlock,
-        local_user::person_mentions::UserMention, person::person::PersonSafe,
+        comment::comment_saved::CommentSaved, post::posts::Post, person::person_blocks::PersonBlock,
+        person::person_mentions::PersonMention, person::person::PersonSafe,
     },
     schema::{
-        board_subscriptions, board_user_bans, boards, comment_aggregates, comment_votes, comments,
-        posts, user_blocks, user_comment_save, user_mentions, person,
+        board_subscriptions, board_person_bans, boards, comment_aggregates, comment_votes, comments,
+        posts, person_blocks, comment_saved, person_mentions, person,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, limit_and_offset, get_conn, DbPool},
@@ -18,35 +18,35 @@ use tinyboards_db::{
 };
 use typed_builder::TypedBuilder;
 
-type UserMentionViewTuple = (
-    UserMention,
+type PersonMentionViewTuple = (
+    PersonMention,
     Comment,
-    UserSafe,
+    PersonSafe,
     Post,
     BoardSafe,
-    UserSafe,
+    PersonSafe,
     CommentAggregates,
-    Option<BoardUserBan>,
+    Option<BoardPersonBan>,
     Option<BoardSubscriber>,
     Option<CommentSaved>,
-    Option<UserBlock>,
+    Option<PersonBlock>,
     Option<i16>,
 );
 use diesel_async::RunQueryDsl;
 
-impl UserMentionView {
+impl PersonMentionView {
     pub async fn read(
         pool: &DbPool,
         user_mention_id: i32,
         person_id: Option<i32>,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_alias = diesel::alias!(person as user_1);
+        let person_alias = diesel::alias!(person as person_1);
 
         let person_id_join = person_id.unwrap_or(-1);
 
         let (
-            user_mention,
+            person_mention,
             comment,
             creator,
             post,
@@ -58,24 +58,24 @@ impl UserMentionView {
             saved,
             creator_blocked,
             my_vote,
-        ) = user_mentions::table
+        ) = person_mentions::table
             .find(user_mention_id)
             .inner_join(comments::table)
             .inner_join(person::table.on(comments::creator_id.eq(person::id)))
             .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
-            .inner_join(user_alias)
+            .inner_join(person_alias)
             .inner_join(
                 comment_aggregates::table.on(comments::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_user_bans::table.on(boards::id
-                    .eq(board_user_bans::board_id)
-                    .and(board_user_bans::person_id.eq(comments::creator_id))
+                board_person_bans::table.on(boards::id
+                    .eq(board_person_bans::board_id)
+                    .and(board_person_bans::person_id.eq(comments::creator_id))
                     .and(
-                        board_user_bans::expires
+                        board_person_bans::expires
                             .is_null()
-                            .or(board_user_bans::expires.gt(now)),
+                            .or(board_person_bans::expires.gt(now)),
                     )),
             )
             .left_join(
@@ -84,14 +84,14 @@ impl UserMentionView {
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_comment_save::table.on(comments::id
-                    .eq(user_comment_save::comment_id)
-                    .and(user_comment_save::person_id.eq(person_id_join))),
+                comment_saved::table.on(comments::id
+                    .eq(comment_saved::comment_id)
+                    .and(comment_saved::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_blocks::table.on(comments::creator_id
-                    .eq(user_blocks::target_id)
-                    .and(user_blocks::person_id.eq(person_id_join))),
+                person_blocks::table.on(comments::creator_id
+                    .eq(person_blocks::target_id)
+                    .and(person_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
                 comment_votes::table.on(comments::id
@@ -99,24 +99,24 @@ impl UserMentionView {
                     .and(comment_votes::person_id.eq(person_id_join))),
             )
             .select((
-                user_mentions::all_columns,
+                person_mentions::all_columns,
                 comments::all_columns,
-                UserSafe::safe_columns_tuple(),
+                PersonSafe::safe_columns_tuple(),
                 posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
-                user_alias.fields(UserSafe::safe_columns_tuple()),
+                person_alias.fields(PersonSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
-                board_user_bans::all_columns.nullable(),
+                board_person_bans::all_columns.nullable(),
                 board_subscriptions::all_columns.nullable(),
-                user_comment_save::all_columns.nullable(),
-                user_blocks::all_columns.nullable(),
+                comment_saved::all_columns.nullable(),
+                person_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
             ))
-            .first::<UserMentionViewTuple>(conn)
+            .first::<PersonMentionViewTuple>(conn)
             .await?;
 
-        Ok(UserMentionView {
-            user_mention,
+        Ok(PersonMentionView {
+            person_mention,
             comment,
             creator,
             post,
@@ -136,13 +136,13 @@ impl UserMentionView {
         let conn = &mut get_conn(pool).await?;
         use diesel::dsl::*;
 
-        user_mentions::table
+        person_mentions::table
             .inner_join(comments::table)
-            .filter(user_mentions::recipient_id.eq(person_id))
-            .filter(user_mentions::read.eq(false))
+            .filter(person_mentions::recipient_id.eq(person_id))
+            .filter(person_mentions::read.eq(false))
             .filter(comments::is_deleted.eq(false))
             .filter(comments::is_removed.eq(false))
-            .select(count(user_mentions::id))
+            .select(count(person_mentions::id))
             .first::<i64>(conn)
             .await
     }
@@ -150,10 +150,10 @@ impl UserMentionView {
     /// Marks all unread as read for a user
     pub async fn mark_all_mentions_as_read(pool: &DbPool, person_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(user_mentions::table)
-            .filter(user_mentions::read.eq(false))
-            .filter(user_mentions::recipient_id.eq(person_id))
-            .set(user_mentions::read.eq(true))
+        diesel::update(person_mentions::table)
+            .filter(person_mentions::read.eq(false))
+            .filter(person_mentions::recipient_id.eq(person_id))
+            .set(person_mentions::read.eq(true))
             .execute(conn)
             .await
     }
@@ -162,7 +162,7 @@ impl UserMentionView {
 
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
-pub struct UserMentionQuery<'a> {
+pub struct PersonMentionQuery<'a> {
     #[builder(!default)]
     pool: &'a DbPool,
     person_id: Option<i32>,
@@ -174,38 +174,38 @@ pub struct UserMentionQuery<'a> {
 }
 
 #[derive(Default, Clone)]
-pub struct UserMentionQueryResponse {
-    pub mentions: Vec<UserMentionView>,
+pub struct PersonMentionQueryResponse {
+    pub mentions: Vec<PersonMentionView>,
     pub count: i64,
     pub unread: i64,
 }
 
-impl<'a> UserMentionQuery<'a> {
-    pub async fn list(self) -> Result<UserMentionQueryResponse, Error> {
+impl<'a> PersonMentionQuery<'a> {
+    pub async fn list(self) -> Result<PersonMentionQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
-        let user_alias = diesel::alias!(person as user_1);
+        let person_alias = diesel::alias!(person as person_1);
 
         let person_id_join = self.person_id.unwrap_or(-1);
 
-        let mut query = user_mentions::table
+        let mut query = person_mentions::table
             .inner_join(comments::table)
             .inner_join(person::table.on(comments::creator_id.eq(person::id)))
             .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
-            .inner_join(user_alias)
+            .inner_join(person_alias)
             .inner_join(
                 comment_aggregates::table.on(comments::id.eq(comment_aggregates::comment_id)),
             )
             .left_join(
-                board_user_bans::table.on(boards::id
-                    .eq(board_user_bans::board_id)
-                    .and(board_user_bans::person_id.eq(comments::creator_id))
+                board_person_bans::table.on(boards::id
+                    .eq(board_person_bans::board_id)
+                    .and(board_person_bans::person_id.eq(comments::creator_id))
                     .and(
-                        board_user_bans::expires
+                        board_person_bans::expires
                             .is_null()
-                            .or(board_user_bans::expires.gt(now)),
+                            .or(board_person_bans::expires.gt(now)),
                     )),
             )
             .left_join(
@@ -214,14 +214,14 @@ impl<'a> UserMentionQuery<'a> {
                     .and(board_subscriptions::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_comment_save::table.on(comments::id
-                    .eq(user_comment_save::comment_id)
-                    .and(user_comment_save::person_id.eq(person_id_join))),
+                comment_saved::table.on(comments::id
+                    .eq(comment_saved::comment_id)
+                    .and(comment_saved::person_id.eq(person_id_join))),
             )
             .left_join(
-                user_blocks::table.on(comments::creator_id
-                    .eq(user_blocks::target_id)
-                    .and(user_blocks::person_id.eq(person_id_join))),
+                person_blocks::table.on(comments::creator_id
+                    .eq(person_blocks::target_id)
+                    .and(person_blocks::person_id.eq(person_id_join))),
             )
             .left_join(
                 comment_votes::table.on(comments::id
@@ -229,40 +229,40 @@ impl<'a> UserMentionQuery<'a> {
                     .and(comment_votes::person_id.eq(person_id_join))),
             )
             .select((
-                user_mentions::all_columns,
+                person_mentions::all_columns,
                 comments::all_columns,
-                UserSafe::safe_columns_tuple(),
+                PersonSafe::safe_columns_tuple(),
                 posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
-                user_alias.fields(UserSafe::safe_columns_tuple()),
+                person_alias.fields(PersonSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
-                board_user_bans::all_columns.nullable(),
+                board_person_bans::all_columns.nullable(),
                 board_subscriptions::all_columns.nullable(),
-                user_comment_save::all_columns.nullable(),
-                user_blocks::all_columns.nullable(),
+                comment_saved::all_columns.nullable(),
+                person_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
             ))
             .into_boxed();
 
-        let mut count_query = user_mentions::table
+        let mut count_query = person_mentions::table
         .inner_join(comments::table)
         .inner_join(person::table.on(comments::creator_id.eq(person::id)))
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
         .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
-        .inner_join(user_alias)
+        .inner_join(person_alias)
         .inner_join(
             comment_aggregates::table.on(comments::id.eq(comment_aggregates::comment_id)),
         )
         .into_boxed();
         
         if let Some(recipient_id) = self.recipient_id {
-            query = query.filter(user_mentions::recipient_id.eq(recipient_id));
-            count_query = count_query.filter(user_mentions::recipient_id.eq(recipient_id));
+            query = query.filter(person_mentions::recipient_id.eq(recipient_id));
+            count_query = count_query.filter(person_mentions::recipient_id.eq(recipient_id));
         }
 
         if self.unread_only.unwrap_or(false) {
-            query = query.filter(user_mentions::read.eq(false));
-            count_query = count_query.filter(user_mentions::read.eq(false));
+            query = query.filter(person_mentions::read.eq(false));
+            count_query = count_query.filter(person_mentions::read.eq(false));
         }
 
         query = match self.sort {
@@ -286,24 +286,24 @@ impl<'a> UserMentionQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .load::<UserMentionViewTuple>(conn)
+            .load::<PersonMentionViewTuple>(conn)
             .await?;
 
-        let mentions = UserMentionView::from_tuple_to_vec(res);
+        let mentions = PersonMentionView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(conn).await?;
-        let unread = UserMentionView::get_unread_mentions(self.pool, person_id_join).await?;
+        let unread = PersonMentionView::get_unread_mentions(self.pool, person_id_join).await?;
 
-        Ok(UserMentionQueryResponse { mentions, count, unread })
+        Ok(PersonMentionQueryResponse { mentions, count, unread })
     }
 }
 
-impl ViewToVec for UserMentionView {
-    type DbTuple = UserMentionViewTuple;
+impl ViewToVec for PersonMentionView {
+    type DbTuple = PersonMentionViewTuple;
     fn from_tuple_to_vec(items: Vec<Self::DbTuple>) -> Vec<Self> {
         items
             .into_iter()
             .map(|a| Self {
-                user_mention: a.0,
+                person_mention: a.0,
                 comment: a.1,
                 creator: a.2,
                 post: a.3,

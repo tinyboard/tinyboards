@@ -1,10 +1,11 @@
-use crate::structs::{LoggedInUserView, UserSettingsView, UserView, UserMentionView, CommentReplyView};
+use crate::structs::{LoggedInUserView, LocalUserSettingsView, PersonView, PersonMentionView, CommentReplyView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
-    aggregates::structs::UserAggregates,
+    aggregates::structs::PersonAggregates,
     //map_to_user_sort_type,
-    models::local_user::person::{UserSafe, UserSettings},
-    schema::{user_aggregates, person},
+    models::person::local_user::*,
+    models::person::person::*,
+    schema::{person_aggregates, person, local_user},
     traits::{ToSafe, ViewToVec},
     utils::{functions::lower, fuzzy_search, limit_and_offset, get_conn, DbPool},
     UserSortType,
@@ -18,24 +19,29 @@ use std::collections::BTreeMap;
 use typed_builder::TypedBuilder;
 use diesel_async::RunQueryDsl;
 
-type UserViewTuple = (UserSafe, UserAggregates);
+type PersonViewTuple = (PersonSafe, Option<LocalUserSettings>, PersonAggregates);
 
-impl UserView {
+impl PersonView {
     pub async fn read_opt(
         pool: &DbPool,
         person_id: i32,
     ) -> Result<Option<Self>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
-        let user_view_tuple = person::table
+        let person_view_tuple = person::table
             .find(person_id)
-            .inner_join(user_aggregates::table)
-            .select((UserSafe::safe_columns_tuple(), user_aggregates::all_columns))
-            .first::<UserViewTuple>(conn)
+            .inner_join(person_aggregates::table)
+            .left_join(
+                local_user::table.on(
+                    person::id.eq(local_user::person_id)
+                )
+            )
+            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .first::<PersonViewTuple>(conn)
             .await
             .optional()
             .map_err(|e| TinyBoardsError::from(e))?;
 
-        Ok(user_view_tuple.map(|(user, counts)| Self { user, counts }))
+        Ok(person_view_tuple.map(|(person, settings, counts)| Self { person, settings, counts }))
     }
 
     pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {

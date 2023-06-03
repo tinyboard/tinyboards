@@ -189,7 +189,7 @@ diesel::table! {
         theme -> Text,
         default_sort_type -> Int2,
         default_listing_type -> Int2,
-        lang -> Varchar,
+        lang -> Text,
         email_notifications_enabled -> Bool,
         accepted_application -> Bool,
         is_application_accepted -> Bool,

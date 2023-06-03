@@ -18,8 +18,9 @@ use tinyboards_db::{
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UserView {
-    pub user: PersonSafe,
+pub struct PersonView {
+    pub person: PersonSafe,
+    pub settings: Option<LocalUserSettings>,
     pub counts: PersonAggregates,
 }
 
@@ -150,6 +151,6 @@ pub struct CommentReplyView {
 pub struct RegistrationApplicationView {
   pub application: RegistrationApplication,
   pub applicant_settings: LocalUserSettings,
-  pub applicant: PersonSafe,
-  pub admin: Option<PersonSafe>,
+  pub applicant: LocalUserSafe,
+  pub admin: Option<LocalUserSafe>,
 }

@@ -10,7 +10,7 @@ use tinyboards_db::{
     ListingType, SearchType, SortType,
 };
 use tinyboards_db_views::{
-    board_view::BoardQuery, comment_view::CommentQuery, post_view::PostQuery, user_view::UserQuery,
+    board_view::BoardQuery, comment_view::CommentQuery, post_view::PostQuery, person_view::UserQuery,
 };
 use tinyboards_utils::error::TinyBoardsError;
 

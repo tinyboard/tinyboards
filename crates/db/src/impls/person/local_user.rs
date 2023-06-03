@@ -312,10 +312,12 @@ pub mod safe_type {
         name,
         email,
         show_nsfw,
+        show_bots,
         theme,
         default_sort_type,
         default_listing_type,
         email_notifications_enabled,
+        lang,
     );
 
     impl ToSafe for LocalUserSafe {
@@ -351,10 +353,12 @@ pub mod safe_type {
                 name,
                 email,
                 show_nsfw,
+                show_bots,
                 theme,
                 default_sort_type,
                 default_listing_type,
                 email_notifications_enabled,
+                lang,
             )
         }
     }

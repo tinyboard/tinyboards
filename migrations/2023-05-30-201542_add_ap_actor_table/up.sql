@@ -47,7 +47,7 @@ create table local_user(
     theme text default '' not null,
     default_sort_type smallint not null default 0,
     default_listing_type smallint not null default 1,
-    lang character varying(20) not null default 'browser'::character varying,
+    lang text not null default 'browser',
     email_notifications_enabled boolean not null default false,
     accepted_application boolean not null default false,
     is_application_accepted boolean not null default false,

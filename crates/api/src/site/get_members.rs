@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     site::{GetMembers, GetMembersResponse},
     utils::{check_private_instance, load_user_opt},
 };
-use tinyboards_db_views::user_view::UserQuery;
+use tinyboards_db_views::person_view::UserQuery;
 use tinyboards_utils::error::TinyBoardsError;
 use tinyboards_db::{UserSortType, map_to_user_sort_type};
 

@@ -1,4 +1,4 @@
-use crate::structs::{BoardModeratorView, BoardView, UserView};
+use crate::structs::{BoardModeratorView, BoardView, PersonView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,

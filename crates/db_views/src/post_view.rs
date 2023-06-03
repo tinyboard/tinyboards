@@ -4,7 +4,7 @@ use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
         board::board_subscriptions::BoardSubscriber,
-        board::board_person_bans::BoardUserBan,
+        board::board_person_bans::BoardPersonBan,
         board::boards::BoardSafe,
         post::posts::Post,
         post::post_read::PostRead,

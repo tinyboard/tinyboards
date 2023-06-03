@@ -9,7 +9,7 @@ use tinyboards_db::{
     map_to_comment_sort_type,
     CommentSortType
 };
-use tinyboards_db_views::user_mention_view::UserMentionQuery;
+use tinyboards_db_views::person_mention_view::UserMentionQuery;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
