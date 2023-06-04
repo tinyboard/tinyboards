@@ -253,7 +253,7 @@ impl LocalUser {
             email_notifications_enabled: self.email_notifications_enabled,
             show_nsfw: self.show_nsfw,
             show_bots: self.show_bots,
-            is_application_accepted: self.is_application_accepted,
+            is_application_accepted,
         }
     }
 }
@@ -303,16 +303,16 @@ pub mod safe_type {
         name,
         is_admin,
         is_banned,
+        is_deleted,
         creation_date,
         updated,
+        unban_date,
         theme,
         default_sort_type,
         default_listing_type,
-        email,
         email_notifications_enabled,
         show_nsfw,
-        is_deleted,
-        unban_date,
+        show_bots,
         is_application_accepted,
     );
 
@@ -339,16 +339,16 @@ pub mod safe_type {
                 name,
                 is_admin,
                 is_banned,
+                is_deleted,
                 creation_date,
                 updated,
+                unban_date,
                 theme,
                 default_sort_type,
                 default_listing_type,
-                email,
                 email_notifications_enabled,
                 show_nsfw,
-                is_deleted,
-                unban_date,
+                show_bots,
                 is_application_accepted,
             )
         }

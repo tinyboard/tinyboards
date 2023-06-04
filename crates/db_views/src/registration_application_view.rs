@@ -24,7 +24,7 @@ impl RegistrationApplicationView {
         app_id: i32,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_alias = diesel::alias!(local_user as users_alias);
+        let local_user_alias = diesel::alias!(local_user as local_user_alias);
         let (
             application,
             applicant_settings,
@@ -33,13 +33,13 @@ impl RegistrationApplicationView {
         ) = registration_applications::table
         .find(app_id)
         .inner_join(local_user::table.on(registration_applications::person_id.eq(local_user::person_id)))
-        .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(local_user::person_id).nullable())))
+        .left_join(local_user_alias.on(registration_applications::admin_id.eq(local_user_alias.field(local_user::person_id).nullable())))
         .order_by(registration_applications::published.desc())
         .select((
             registration_applications::all_columns,
             LocalUserSettings::safe_columns_tuple(),
             LocalUserSafe::safe_columns_tuple(),
-            user_alias.fields(LocalUserSafe::safe_columns_tuple()).nullable(),
+            local_user_alias.fields(LocalUserSafe::safe_columns_tuple()).nullable(),
         ))
         .first::<RegistrationApplicationViewTuple>(conn)
         .await?;

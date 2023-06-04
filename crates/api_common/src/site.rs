@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::SiteMode;
-use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, UserView};
+use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView};
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
     ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
@@ -29,7 +29,7 @@ pub struct SearchResponse {
     pub comments: Vec<CommentView>,
     pub posts: Vec<PostView>,
     pub boards: Vec<BoardView>,
-    pub users: Vec<UserView>,
+    pub users: Vec<PersonView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -57,7 +57,7 @@ pub struct GetMembers {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetMembersResponse {
-    pub members: Vec<UserView>,
+    pub members: Vec<PersonView>,
     pub total_count: i64,
 }
 

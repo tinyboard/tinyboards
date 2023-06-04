@@ -10,12 +10,12 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        local_user::{users::User, user_blocks::UserBlock},
+        person::{local_user::*, person_blocks::*},
     },
     traits::Crud, SiteMode, 
     utils::DbPool,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView, UserSettingsView};
+use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, PersonView, LocalUserSettingsView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
@@ -83,8 +83,8 @@ pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
 }
 
 // less typing !!
-type UResultOpt = Result<Option<User>, TinyBoardsError>;
-type UResult = Result<User, TinyBoardsError>;
+type UResultOpt = Result<Option<LocalUser>, TinyBoardsError>;
+type UResult = Result<LocalUser, TinyBoardsError>;
 
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
 pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
@@ -107,7 +107,7 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
-    User::from_jwt(pool, token, master_key).await
+    LocalUser::from_jwt(pool, token, master_key).await
 }
 
 /**
@@ -218,7 +218,7 @@ impl UserResult {
                     return Self(Ok(u));
                 }
                 
-                let is_banned = BoardUserBanView::get(pool, u.id, board_id)
+                let is_banned = BoardPersonBanView::get(pool, u.id, board_id)
                     .await
                     .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
 
@@ -271,7 +271,7 @@ pub async fn get_user_view_from_jwt_opt(
     auth: Option<&str>,
     pool: &DbPool,
     master_key: &Secret,
-) -> Result<Option<UserView>, TinyBoardsError> {
+) -> Result<Option<LocalUser>, TinyBoardsError> {
     if auth.is_none() {
         return Ok(None);
     }
@@ -292,7 +292,7 @@ pub async fn get_user_view_from_jwt_opt(
     let master_key = master_key.jwt.clone();
 
 
-    UserView::from_jwt(pool, token, master_key).await
+    LocalUser::from_jwt(pool, token, master_key).await
 }
 
 #[tracing::instrument(skip_all)]
@@ -300,7 +300,7 @@ pub async fn get_user_view_from_jwt(
     auth: Option<&str>,
     pool: &DbPool,
     master_key: &Secret,
-) -> Result<UserView, TinyBoardsError> {
+) -> Result<LocalUser, TinyBoardsError> {
     if auth.is_none() {
         return Err(TinyBoardsError::from_message(
             401,

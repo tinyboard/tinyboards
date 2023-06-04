@@ -162,10 +162,11 @@ type LocalUserSettingsViewTuple = (LocalUserSettings, PersonAggregates);
 impl LocalUserSettingsView {
     pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
+
         let (settings, counts) = person::table
             .find(person_id)
             .inner_join(person_aggregates::table)
-            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .inner_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .filter(person::local.eq(true))
             .select((
                 LocalUserSettings::safe_columns_tuple(),
@@ -299,7 +300,7 @@ impl<'a> PersonQuery<'a> {
 
         let res = query.load::<PersonViewTuple>(conn).await?;
 
-        let person = UserView::from_tuple_to_vec(res);
+        let person = PersonView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(PersonQueryResponse { person, count })
