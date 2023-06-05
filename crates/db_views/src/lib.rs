@@ -6,6 +6,7 @@ pub mod post_view;
 pub mod structs;
 pub mod person_mention_view;
 pub mod person_view;
+pub mod local_user_view;
 pub mod site_invite_view;
 pub mod site_view;
 pub mod comment_reply_view;

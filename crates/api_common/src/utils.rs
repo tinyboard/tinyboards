@@ -15,7 +15,7 @@ use tinyboards_db::{
     traits::Crud, SiteMode, 
     utils::DbPool,
 };
-use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, PersonView, LocalUserSettingsView};
+use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, PersonView, LocalUserSettingsView, LocalUserView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
@@ -321,11 +321,11 @@ pub async fn get_user_view_from_jwt(
 #[tracing::instrument(skip_all)]
 pub async fn check_registration_application(
     site: &Site,
-    user_view: &UserView,
+    local_user_view: &LocalUserView,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
-        let person_id = user_view.user.id;
+    if site.require_application && !local_user_view.local_user.is_admin && !local_user_view.local_user.is_application_accepted {
+        let person_id = local_user_view.local_user.person_id;
         let registration = RegistrationApplication::find_by_person_id(pool, person_id).await?;
 
         if let Some(deny_reason) = registration.deny_reason {
@@ -355,7 +355,7 @@ pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), Ti
 
 #[tracing::instrument(skip_all)]
 pub async fn check_private_instance(
-    user: &Option<User>,
+    user: &Option<LocalUser>,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
@@ -415,13 +415,13 @@ pub async fn check_post_deleted_removed_or_locked(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_user_block(
+pub async fn check_person_block(
     my_id: i32,
     other_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     
-    let is_blocked = UserBlock::read(pool, other_id, my_id).await.is_ok();
+    let is_blocked = PersonBlock::read(pool, other_id, my_id).await.is_ok();
 
     if is_blocked {
         Err(TinyBoardsError::from_message(405, "user is blocking you"))
@@ -577,7 +577,7 @@ pub async fn purge_local_image_posts_for_board(
 
   /// Send a verification email
   pub async fn send_verification_email(
-    user: &User,
+    user: &LocalUser,
     new_email: &str,
     pool: &DbPool,
     settings: &Settings,
@@ -616,7 +616,7 @@ pub async fn purge_local_image_posts_for_board(
 
   /// Send a verification success email
   pub fn send_email_verification_success(
-    user: &User,
+    user: &LocalUser,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
     let email = &user.email.clone().expect("email");
@@ -645,7 +645,7 @@ pub async fn send_application_approval_email(
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
 
-    let admins = UserSettingsView::list_admins_with_email(pool).await?;
+    let admins = LocalUserSettingsView::list_admins_with_email(pool).await?;
 
     let application_link = &format!(
         "{}/admin/applications",

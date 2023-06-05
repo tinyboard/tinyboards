@@ -240,6 +240,7 @@ impl LocalUser {
     pub fn into_safe(self) -> LocalUserSafe {
         LocalUserSafe {
             id: self.id,
+            person_id: self.person_id,
             name: self.name,
             is_admin: self.is_admin,
             is_banned: self.is_banned,
@@ -253,7 +254,7 @@ impl LocalUser {
             email_notifications_enabled: self.email_notifications_enabled,
             show_nsfw: self.show_nsfw,
             show_bots: self.show_bots,
-            is_application_accepted,
+            is_application_accepted: self.is_application_accepted,
         }
     }
 }
@@ -300,6 +301,7 @@ pub mod safe_type {
 
     type Columns = (
         id,
+        person_id,
         name,
         is_admin,
         is_banned,
@@ -336,6 +338,7 @@ pub mod safe_type {
         fn safe_columns_tuple() -> Self::SafeColumns {
             (
                 id,
+                person_id,
                 name,
                 is_admin,
                 is_banned,

@@ -76,6 +76,7 @@ pub struct LocalUserForm {
 #[diesel(table_name = local_user)]
 pub struct LocalUserSafe {
     pub id: i32,
+    pub person_id: i32,
     pub name: String,
     pub is_admin: bool,
     pub is_banned: bool,

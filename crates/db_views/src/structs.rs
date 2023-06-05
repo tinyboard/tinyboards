@@ -18,6 +18,12 @@ use tinyboards_db::{
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LocalUserView {
+    pub local_user: LocalUserSafe,
+    pub counts: PersonAggregates,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PersonView {
     pub person: PersonSafe,
     pub settings: Option<LocalUserSettings>,
