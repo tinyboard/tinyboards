@@ -28,7 +28,7 @@ impl<'des> Perform<'des> for CreatePostVote {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &CreatePostVote = &self;
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .unwrap()?;
@@ -46,17 +46,17 @@ impl<'des> Perform<'des> for CreatePostVote {
         check_board_deleted_or_removed(post.board_id, context.pool()).await?;
 
         // check if user is banned from board
-        let is_board_banned = Board::board_has_ban(context.pool(), post.board_id, user.id).await?;
+        let is_board_banned = Board::board_has_ban(context.pool(), post.board_id, view.person.id).await?;
 
         if !is_board_banned {
             let vote_form = PostVoteForm {
                 post_id: path.post_id,
-                person_id: user.id,
+                person_id: view.person.id,
                 score: data.score,
             };
 
             // remove any existing votes first
-            let person_id = user.id;
+            let person_id = view.person.id;
             PostVote::remove(context.pool(), person_id, post_id).await?;
 
             let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);

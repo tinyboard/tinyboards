@@ -3,13 +3,13 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetUserMentions, GetUserMentionsResponse},
-    utils::{get_user_view_from_jwt},
+    utils::{get_local_user_view_from_jwt},
 };
 use tinyboards_db::{
     map_to_comment_sort_type,
     CommentSortType
 };
-use tinyboards_db_views::person_mention_view::UserMentionQuery;
+use tinyboards_db_views::person_mention_view::PersonMentionQuery;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -26,10 +26,10 @@ impl<'des> Perform<'des> for GetUserMentions {
     ) -> Result<GetUserMentionsResponse, TinyBoardsError> {
             let data: &GetUserMentions = &self;
             
-            let user =
-            get_user_view_from_jwt(auth, context.pool(), context.master_key())
+            let person =
+            get_local_user_view_from_jwt(auth, context.pool(), context.master_key())
             .await?
-            .user;
+            .person;
         
             let sort = match data.sort.as_ref() {
                 Some(sort) => map_to_comment_sort_type(Some(&sort.to_lowercase())),
@@ -38,9 +38,9 @@ impl<'des> Perform<'des> for GetUserMentions {
             let page = data.page;
             let limit = data.limit;
             let unread_only = data.unread_only;
-            let person_id = Some(user.id);
+            let person_id = Some(person.id);
             
-            let resp = UserMentionQuery::builder()
+            let resp = PersonMentionQuery::builder()
                 .pool(context.pool())
                 .recipient_id(person_id)
                 .person_id(person_id)

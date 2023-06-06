@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     user::{GetCommentReplies, GetCommentRepliesResponse},
-    utils::{get_user_view_from_jwt},
+    utils::{get_local_user_view_from_jwt},
 };
 use tinyboards_db::{
     map_to_comment_sort_type,
@@ -26,10 +26,10 @@ impl<'des> Perform<'des> for GetCommentReplies {
     ) -> Result<GetCommentRepliesResponse, TinyBoardsError> {
             let data: &GetCommentReplies = &self;
 
-            let user =
-            get_user_view_from_jwt(auth, context.pool(), context.master_key())
+            let person =
+            get_local_user_view_from_jwt(auth, context.pool(), context.master_key())
             .await?
-            .user;
+            .person;
         
             let sort = match data.sort.as_ref() {
                 Some(sort) => map_to_comment_sort_type(Some(&sort.to_lowercase())),
@@ -38,7 +38,7 @@ impl<'des> Perform<'des> for GetCommentReplies {
             let page = data.page;
             let limit = data.limit;
             let unread_only = data.unread_only;
-            let person_id = Some(user.id);
+            let person_id = Some(person.id);
             
             let resp = CommentReplyQuery::builder()
                 .pool(context.pool())

@@ -7,7 +7,7 @@ use tinyboards_api_common::{
         send_password_reset_success_email,
     },
 };
-use tinyboards_db::models::{site::password_resets::PasswordReset, local_user::users::User};
+use tinyboards_db::models::{site::password_resets::PasswordReset, person::local_user::LocalUser};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::{error::TinyBoardsError, hash_password, passhash::verify_password};
 

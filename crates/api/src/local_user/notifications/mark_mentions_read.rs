@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     user::MarkAllMentionsRead,
     utils::{require_user},
 };
-use tinyboards_db_views::{structs::UserMentionView};
+use tinyboards_db_views::{structs::PersonMentionView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -21,11 +21,11 @@ impl<'des> Perform<'des> for MarkAllMentionsRead {
         auth: Option<&str>
     ) -> Result<(), TinyBoardsError> {
             
-            let user = require_user(context.pool(), context.master_key(), auth)
+            let view = require_user(context.pool(), context.master_key(), auth)
                 .await
                 .unwrap()?;
             
-            UserMentionView::mark_all_mentions_as_read(context.pool(), user.id).await?;
+            PersonMentionView::mark_all_mentions_as_read(context.pool(), view.person.id).await?;
 
             Ok(())
     }

@@ -29,7 +29,7 @@ impl<'des> Perform<'des> for PurgeComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &PurgeComment = &self;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -41,7 +41,7 @@ impl<'des> Perform<'des> for PurgeComment {
         Comment::delete(context.pool(), target_comment_id).await?;
 
         let form = AdminPurgeCommentForm {
-            admin_id: user.id,
+            admin_id: view.person.id,
             comment_id: target_comment_id,
             reason: Some(reason),
         };

@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{get_current_site_mode, require_user},
 };
 use tinyboards_db::{
-    models::{site::site::{Site, SiteForm}, local_user::users::User},
+    models::{site::site::{Site, SiteForm}, person::local_user::LocalUser},
     traits::Crud,
     utils::naive_now,
     SiteMode,

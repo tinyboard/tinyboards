@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
     user::{LoginResponse, SaveUserSettings},
-    utils::{get_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
+    utils::{get_local_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::site::site::Site,

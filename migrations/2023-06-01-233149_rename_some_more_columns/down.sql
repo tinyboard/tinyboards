@@ -4,10 +4,10 @@ alter table user_blocks rename person_id to user_id;
 alter table user_board_blocks rename person_id to user_id;
 alter table uploads rename person_id to user_id;
 alter table registration_applications rename person_id to user_id;
-alter table email_verification rename person_id to user_id;
 alter table admin_purge_user rename person_id to user_id;
 alter table mod_add_admin rename mod_person_id to mod_user_id;
 alter table mod_add_admin rename other_person_id to other_user_id;
+alter table email_verification rename local_user_id to user_id;
 
 create table private_messages(
     id serial primary key,

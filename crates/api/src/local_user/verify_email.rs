@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::site::email_verification::EmailVerification,
-    models::local_user::users::{User, UserForm},
+    models::person::local_user::*,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -30,15 +30,15 @@ impl<'des> Perform<'des> for VerifyEmail {
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 404, "could not find verification token"))?;
 
-        let form = UserForm {
+        let form = LocalUserForm {
             email_verified: Some(true),
-            email: Some(verification.email),
-            ..UserForm::default()
+            email: Some(Some(verification.email)),
+            ..LocalUserForm::default()
         };
 
-        let person_id = verification.person_id.clone();
+        let local_user_id = verification.local_user_id.clone();
 
-        let updated_user = User::update(context.pool(), person_id, &form).await?;
+        let updated_user = LocalUser::update(context.pool(), local_user_id, &form).await?;
 
         send_email_verification_success(&updated_user, &context.settings())?;
 

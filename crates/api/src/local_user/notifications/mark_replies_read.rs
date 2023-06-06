@@ -21,11 +21,11 @@ impl<'des> Perform<'des> for MarkAllRepliesRead {
         auth: Option<&str>
     ) -> Result<(), TinyBoardsError> {
             
-            let user = require_user(context.pool(), context.master_key(), auth)
+            let view = require_user(context.pool(), context.master_key(), auth)
                 .await
                 .unwrap()?;
             
-            CommentReplyView::mark_all_replies_as_read(context.pool(), user.id).await?;
+            CommentReplyView::mark_all_replies_as_read(context.pool(), view.person.id).await?;
 
             Ok(())
     }

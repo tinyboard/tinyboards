@@ -29,7 +29,7 @@ impl<'des> Perform<'des> for PurgeBoard {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &PurgeBoard = &self;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -55,7 +55,7 @@ impl<'des> Perform<'des> for PurgeBoard {
         Board::delete(context.pool(), target_board_id).await?;
 
         let form = AdminPurgeBoardForm {
-            admin_id: user.id,
+            admin_id: view.person.id,
             board_id: target_board_id,
             reason: Some(reason),
         };

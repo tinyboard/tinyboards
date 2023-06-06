@@ -5,8 +5,8 @@ use tinyboards_api_common::{
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::{require_user},
 };
-use tinyboards_db::models::local_user::users::User;
-use tinyboards_db_views::structs::{LoggedInUserView, UserView};
+use tinyboards_db::models::person::local_user::LocalUser;
+use tinyboards_db_views::structs::{LoggedInUserView, LocalUserView};
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 
 #[async_trait::async_trait(?Send)]
@@ -21,11 +21,11 @@ impl<'des> Perform<'des> for GetLoggedInUser {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
-        let logged_in_view = LoggedInUserView::read(context.pool(), user.id).await?;
+        let logged_in_view = LoggedInUserView::read(context.pool(), view.person.id).await?;
 
         Ok(logged_in_view)
     }
@@ -44,60 +44,60 @@ impl<'des> Perform<'des> for Profile {
     ) -> Result<Self::Response, TinyBoardsError> {
         let rcopy = route.clone();
 
-        let user = User::get_by_name(context.pool(), &rcopy.username).await?;
+        let local_user_view = LocalUserView::get_by_name(context.pool(), &rcopy.username).await?;
 
         let settings = SETTINGS.to_owned();
         let domain = settings.hostname;
-        let id = user.id;
-        let avatar_url = user.avatar.unwrap_or("".to_string());
-        let bio = user.bio.unwrap_or("".to_string());
-        let banner_url = user.banner.unwrap_or("".to_string());
+        let id = local_user_view.local_user.id;
+        let avatar_url = local_user_view.person.avatar.unwrap_or("".to_string());
+        let bio = local_user_view.person.bio.unwrap_or("".to_string());
+        let banner_url = local_user_view.person.banner.unwrap_or("".to_string());
         let url = format!(
             "https://{domain}/api/v1/users/{name}",
             domain = &domain,
-            name = &user.name
+            name = &local_user_view.person.name
         );
         let html_url = format!(
             "https://{domain}/@{name}",
             domain = &domain,
-            name = &user.name
+            name = &local_user_view.person.name
         );
         let saved_url = format!(
             "https://{domain}/api/v1/users/{name}/saved",
             domain = &domain,
-            name = &user.name
+            name = &local_user_view.person.name
         );
         let posts_url = format!(
             "https://{domain}/api/v1/users/{name}/posts",
             domain = &domain,
-            name = &user.name
+            name = &local_user_view.person.name
         );
         let comments_url = format!(
             "https://{domain}/api/v1/users/{name}/comments",
             domain = &domain,
-            name = &user.name
+            name = &local_user_view.person.name
         );
         let mut _user_type = String::new();
-        if user.is_admin {
+        if local_user_view.local_user.is_admin {
             _user_type = String::from("Admin");
         } else {
             _user_type = String::from("User");
         }
-        let is_admin = user.is_admin;
-        let display_name = user.preferred_name.unwrap_or(user.name);
+        let is_admin = local_user_view.local_user.is_admin;
+        let display_name = local_user_view.person.display_name.unwrap_or(local_user_view.person.name);
 
         let rcopy2 = route.clone();
-        let view = UserView::read_from_name(context.pool(), &rcopy2.username).await?;
+        let view = LocalUserView::get_by_name(context.pool(), &rcopy2.username).await?;
 
         let rep = view.counts.rep;
         let posts_count = view.counts.post_count;
         let posts_score = view.counts.post_score;
         let comments_count = view.counts.comment_count;
         let comments_score = view.counts.comment_score;
-        let created_at = user.creation_date;
-        let updated_at = user.updated;
-        let is_banned = user.is_banned;
-        let is_deleted = user.is_deleted;
+        let created_at = view.local_user.creation_date;
+        let updated_at = view.local_user.updated;
+        let is_banned = view.local_user.is_banned;
+        let is_deleted = view.local_user.is_deleted;
         let username = route.clone().username;
 
         Ok(ProfileResponse {

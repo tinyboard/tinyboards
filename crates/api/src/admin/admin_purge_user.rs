@@ -9,7 +9,8 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{
         moderator::admin_actions::{AdminPurgeUser, AdminPurgeUserForm},
-        local_user::users::User,
+        person::local_user::LocalUser,
+        person::person::Person,
     },
     traits::Crud,
 };
@@ -32,12 +33,13 @@ impl<'des> Perform<'des> for PurgeUser {
 
         let settings = SETTINGS.to_owned();
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
 
-        let target_user = User::read(context.pool(), target_person_id.clone()).await?;
+        let target_user = LocalUser::get_by_person_id(context.pool(), target_person_id.clone()).await?;
+        let target_person = Person::read(context.pool(), target_person_id.clone()).await?;
 
         if target_user
             .name
@@ -52,12 +54,12 @@ impl<'des> Perform<'des> for PurgeUser {
         }
 
         // purge user banner
-        if let Some(banner) = target_user.banner {
+        if let Some(banner) = target_person.banner {
             purge_local_image_by_url(context.pool(), &banner).await.ok();
         }
 
         // purge user avatar
-        if let Some(avatar) = target_user.avatar {
+        if let Some(avatar) = target_person.avatar {
             purge_local_image_by_url(context.pool(), &avatar).await.ok();
         }
 
@@ -68,13 +70,14 @@ impl<'des> Perform<'des> for PurgeUser {
         )
         .await?;
 
-        // delete user
-        User::delete(context.pool(), target_person_id).await?;
+        // delete person & local user
+        Person::delete(context.pool(), target_person_id).await?;
+        LocalUser::delete(context.pool(), target_user.id.clone()).await?;
 
         let reason = data.reason.clone();
 
         let form = AdminPurgeUserForm {
-            admin_id: user.id,
+            admin_id: view.person.id,
             person_id: target_person_id.clone(),
             reason: Some(reason),
         };

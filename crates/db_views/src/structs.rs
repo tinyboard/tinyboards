@@ -19,7 +19,8 @@ use tinyboards_db::{
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LocalUserView {
-    pub local_user: LocalUserSafe,
+    pub local_user: LocalUser,
+    pub person: Person,
     pub counts: PersonAggregates,
 }
 

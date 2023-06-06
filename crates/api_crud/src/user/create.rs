@@ -1,4 +1,5 @@
 use crate::PerformCrud;
+use tinyboards_ap_federation::http_signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use regex::Regex;
 use tinyboards_api_common::data::TinyBoardsContext;
@@ -6,8 +7,9 @@ use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
 use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Register, SignupResponse},
-    utils::{send_verification_email},
+    utils::{send_verification_email, generate_inbox_url, generate_shared_inbox_url, generate_local_apud_endpoint, EndpointType},
 };
+use tinyboards_db::models::person::person::PersonForm;
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
 use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
@@ -71,7 +73,25 @@ impl<'des> PerformCrud<'des> for Register {
 
         // captcha logic here (when we implement captcha)
 
-        // generate apub actor_keypair here whenever we get to implementing federation
+        let actor_keypair = generate_actor_keypair()?;
+
+        let actor_id = generate_local_apud_endpoint(
+            EndpointType::Person, 
+            &data.username, 
+            &context.settings().get_protocol_and_hostname()
+        )?;
+
+        // now we need to create both a local_user and a person (for apub)
+        let person_form = PersonForm {
+            name: &data.username.clone(),
+            actor_id: Some(actor_id.clone()),
+            private_key: Some(actor_keypair.private_key),
+            public_key: Some(actor_keypair.public_key),
+            inbox_url: Some(generate_inbox_url(&actor_id)?),
+            shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
+            ..PersonForm::default()
+            // todo - add instance_id in later
+        };
 
         let user_form = UserForm {
             name: Some(data.username.clone()),

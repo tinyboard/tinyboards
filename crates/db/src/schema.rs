@@ -166,7 +166,7 @@ diesel::table! {
 diesel::table! {
     email_verification (id) {
         id -> Int4,
-        person_id -> Int4,
+        local_user_id -> Int4,
         email -> Text,
         verification_code -> Text,
         created -> Timestamp,
@@ -556,7 +556,7 @@ diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> person (person_id));
 diesel::joinable!(comments -> person (creator_id));
 diesel::joinable!(comments -> posts (post_id));
-diesel::joinable!(email_verification -> person (person_id));
+diesel::joinable!(email_verification -> person (local_user_id));
 diesel::joinable!(local_user -> person (person_id));
 diesel::joinable!(mod_add_board -> boards (board_id));
 diesel::joinable!(mod_add_board_mod -> boards (board_id));

@@ -206,14 +206,6 @@ impl LocalUser {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create user"))
     }
 
-    pub fn has_active_ban(&self) -> bool {
-        if let Some(expires_) = self.unban_date {
-            self.is_banned && expires_.gt(&chrono::prelude::Utc::now().naive_utc())
-        } else {
-            self.is_banned
-        }
-    }
-
     pub async fn update_settings(
         pool: &DbPool,
         id_: i32,

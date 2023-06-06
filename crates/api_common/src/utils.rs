@@ -1,7 +1,9 @@
 
 use hmac::{Hmac, Mac};
+use anyhow::Context;
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use sha2::Sha384;
+use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
@@ -14,13 +16,14 @@ use tinyboards_db::{
     },
     traits::Crud, SiteMode, 
     utils::DbPool,
+    newtypes::DbUrl,
 };
 use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, PersonView, LocalUserSettingsView, LocalUserView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
     settings::structs::{RateLimitSettings, Settings},
-    email::send_email,
+    email::send_email, location_info,
 };
 use uuid::Uuid;
 use base64::{
@@ -83,8 +86,8 @@ pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
 }
 
 // less typing !!
-type UResultOpt = Result<Option<LocalUser>, TinyBoardsError>;
-type UResult = Result<LocalUser, TinyBoardsError>;
+type UResultOpt = Result<Option<LocalUserView>, TinyBoardsError>;
+type UResult = Result<LocalUserView, TinyBoardsError>;
 
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
 pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
@@ -107,7 +110,11 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
-    LocalUser::from_jwt(pool, token, master_key).await
+    let local_user = LocalUser::from_jwt(pool, token, master_key).await?.unwrap();
+    let view = LocalUserView::read(pool, local_user.id).await?;
+
+    Ok(Some(view))
+
 }
 
 /**
@@ -134,7 +141,7 @@ impl From<UResultOpt> for UserResult {
         let u_res = match r {
             Ok(u) => match u {
                 Some(u) => {
-                    if u.is_deleted {
+                    if u.local_user.is_deleted {
                         Err(TinyBoardsError::from_message(
                             401,
                             "you need to be logged in to do this",
@@ -159,7 +166,7 @@ impl From<UResult> for UserResult {
     fn from(r: UResult) -> Self {
         Self(match r {
             Ok(u) => {
-                if u.is_deleted {
+                if u.local_user.is_deleted {
                     Err(TinyBoardsError::from_message(
                         401,
                         "you need to be logged in to do this",
@@ -181,7 +188,7 @@ impl UserResult {
     pub fn not_banned(self) -> Self {
         match self.0 {
             Ok(u) => {
-                return Self(if u.has_active_ban() {
+                return Self(if u.local_user.is_banned {
                     Err(TinyBoardsError::from_message(
                         403,
                         "you are banned from the site",
@@ -197,7 +204,7 @@ impl UserResult {
     pub fn require_admin(self) -> Self {
         Self(match self.0 {
             Ok(u) => {
-                if u.is_admin {
+                if u.local_user.is_admin {
                     Ok(u)
                 } else {
                     Err(TinyBoardsError::from_message(
@@ -214,11 +221,11 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // skip this check for admins :))))
-                if u.is_admin {
+                if u.local_user.is_admin {
                     return Self(Ok(u));
                 }
                 
-                let is_banned = BoardPersonBanView::get(pool, u.id, board_id)
+                let is_banned = BoardPersonBanView::get(pool, u.person.id, board_id)
                     .await
                     .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
 
@@ -239,11 +246,11 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // admins can do everything
-                if u.is_admin {
+                if u.local_user.is_admin {
                     return Self(Ok(u));
                 }
 
-                let is_mod = Board::board_has_mod(pool, board_id, u.id).await;
+                let is_mod = Board::board_has_mod(pool, board_id, u.person.id).await;
 
                 let inner = match is_mod {
                     Ok(is_mod) => {
@@ -267,11 +274,11 @@ impl UserResult {
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn get_user_view_from_jwt_opt(
+pub async fn get_local_user_view_from_jwt_opt(
     auth: Option<&str>,
     pool: &DbPool,
     master_key: &Secret,
-) -> Result<Option<LocalUser>, TinyBoardsError> {
+) -> Result<Option<LocalUserView>, TinyBoardsError> {
     if auth.is_none() {
         return Ok(None);
     }
@@ -292,15 +299,19 @@ pub async fn get_user_view_from_jwt_opt(
     let master_key = master_key.jwt.clone();
 
 
-    LocalUser::from_jwt(pool, token, master_key).await
+    let local_user = LocalUser::from_jwt(pool, token, master_key).await?.unwrap();
+
+    let local_user_view = LocalUserView::read(pool, local_user.id.clone()).await?;
+
+    Ok(Some(local_user_view))
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn get_user_view_from_jwt(
+pub async fn get_local_user_view_from_jwt(
     auth: Option<&str>,
     pool: &DbPool,
     master_key: &Secret,
-) -> Result<LocalUser, TinyBoardsError> {
+) -> Result<LocalUserView, TinyBoardsError> {
     if auth.is_none() {
         return Err(TinyBoardsError::from_message(
             401,
@@ -308,9 +319,9 @@ pub async fn get_user_view_from_jwt(
         ));
     }
 
-    let user_view = get_user_view_from_jwt_opt(auth, pool, master_key).await?;
-    match user_view {
-        Some(user_view) => Ok(user_view),
+    let local_user_view = get_local_user_view_from_jwt_opt(auth, pool, master_key).await?;
+    match local_user_view {
+        Some(local_user_view) => Ok(local_user_view),
         None => Err(TinyBoardsError::from_message(
             401,
             "you need to be logged in to do that",
@@ -577,14 +588,14 @@ pub async fn purge_local_image_posts_for_board(
 
   /// Send a verification email
   pub async fn send_verification_email(
-    user: &LocalUser,
+    local_user: &LocalUser,
     new_email: &str,
     pool: &DbPool,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
 
     let form = EmailVerificationForm {
-        person_id: user.id,
+        local_user_id: local_user.id,
         email: new_email.to_string(),
         verification_code: Uuid::new_v4().to_string(),
     };
@@ -714,4 +725,54 @@ pub async fn send_application_approval_email(
     let file_name = format!("image.{}", img_fmt_string.unwrap());
 
     Ok((bytes, file_name))
+  }
+
+  pub enum EndpointType {
+    Board,
+    Person,
+    Post,
+    Comment,
+  }
+
+  pub fn generate_local_apud_endpoint(
+    endpoint_type: EndpointType,
+    name: &str,
+    domain: &str,
+  ) -> Result<DbUrl, ParseError> {
+    let point = match endpoint_type {
+        EndpointType::Board => "+",
+        EndpointType::Comment => "comment",
+        EndpointType::Post => "post",
+        EndpointType::Person => "@",
+    };
+
+    Ok(Url::parse(&format!("{domain}/{point}/{name}"))?.into())
+  }
+
+  pub fn generate_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/inbox"))?.into())
+  }
+
+  pub fn generate_outbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/outbox"))?.into())
+  }
+
+  pub fn generate_subscribers_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/subscribers"))?.into())
+  }
+
+  pub fn generate_shared_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, TinyBoardsError> {
+    let actor_id: Url = actor_id.clone().into();
+    let url = format!(
+        "{}://{}{}/inbox",
+        &actor_id.scheme(),
+        &actor_id.host_str().context(location_info!())?,
+        if let Some(port) = actor_id.port() {
+            format!(":{}", port)
+        } else {
+            String::new()
+        },
+    );
+
+    Ok(Url::parse(&url)?.into())
   }

@@ -148,6 +148,8 @@ pub struct PostQuery<'a> {
     url_search: Option<String>,
     saved_only: Option<bool>,
     person: Option<&'a Person>,
+    // todo - add in filtering to the query based upon local_user
+    local_user: Option<&'a LocalUser>,
     show_nsfw: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
