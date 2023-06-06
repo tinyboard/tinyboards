@@ -55,4 +55,26 @@ impl LocalUserView {
         Ok(Self { local_user, person, counts })
 
     }
+
+    pub async fn get_by_email(pool: &DbPool, email_addr: &str) -> Result<Self, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+        
+        
+        let (local_user, person, counts) = local_user::table
+            .inner_join(person::table.on(local_user::person_id.eq(person::id)))
+            .inner_join(person_aggregates::table.on(person::id.eq(person_aggregates::person_id)))
+            .filter(local_user::email.ilike(email_addr.replace(' ', "").replace('%', "\\%").replace('_', "\\_")))
+            .select((
+                local_user::all_columns,
+                person::all_columns,
+                person_aggregates::all_columns,
+            ))
+            .first::<LocalUserViewTuple>(conn)
+            .await
+            .map_err(|e| TinyBoardsError::from(e))?;
+
+        Ok(Self { local_user, person, counts })
+    }
+
+
 }

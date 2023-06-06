@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     user::{Login, LoginResponse},
 };
 use tinyboards_db::models::{person::local_user::LocalUser, site::site::Site};
-use tinyboards_db_views::structs::UserView;
+use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
 #[async_trait::async_trait(?Send)]
@@ -22,27 +22,27 @@ impl<'des> Perform<'des> for Login {
         _: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
                   
-        let user = if self.username_or_email.contains('@') {
-            User::get_by_email(context.pool(), &self.username_or_email).await
+        let view = if self.username_or_email.contains('@') {
+            LocalUserView::get_by_email(context.pool(), &self.username_or_email).await
         } else {
-            User::get_by_name(context.pool(), &self.username_or_email).await
+            LocalUserView::get_by_name(context.pool(), &self.username_or_email).await
         }?;
 
-        let user_view: UserView = UserView::read(context.pool(), user.id).await?;
+        let local_user_view: LocalUserView = LocalUserView::read(context.pool(), view.local_user.id).await?;
 
         let site = Site::read_local(context.pool()).await?;
 
-        if site.require_application == true && user.is_application_accepted == false {
+        if site.require_application == true && local_user_view.local_user.is_application_accepted == false {
             return Err(TinyBoardsError::from_message(401, "login failed - application not accepted"));
         }
 
-        if !verify_password(&user.passhash, &self.password) {
+        if !verify_password(&local_user_view.local_user.passhash, &self.password) {
             return Err(TinyBoardsError::from_message(400, "login failed"));
         }
 
         Ok(LoginResponse {
-            jwt: Sensitive::new(user.get_jwt(&context.master_key().jwt)),
-            user: user_view,
+            jwt: Sensitive::new(local_user_view.local_user.get_jwt(&context.master_key().jwt)),
+            user: local_user_view,
         })
     }
 }

@@ -21,14 +21,14 @@ impl<'des> Perform<'des> for RemoveObject {
     ) -> Result<Self::Response, TinyBoardsError> {
         let target_object = get_moderateable_object(context.pool(), &self.target_fullname).await?;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .require_board_mod(target_object.get_board_id(), context.pool())
             .await
             .unwrap()?;
 
-        target_object.remove(Some(user.id), self.reason, context.pool()).await?;
+        target_object.remove(Some(view.person.id), self.reason, context.pool()).await?;
 
         Ok(Message::new("Removed!"))
     }
@@ -47,14 +47,14 @@ impl<'des> Perform<'des> for ApproveObject {
     ) -> Result<Self::Response, TinyBoardsError> {
         let target_object = get_moderateable_object(context.pool(), &self.target_fullname).await?;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .require_board_mod(target_object.get_board_id(), context.pool())
             .await
             .unwrap()?;
 
-        target_object.approve(Some(user.id), context.pool()).await?;
+        target_object.approve(Some(view.person.id), context.pool()).await?;
 
         Ok(Message::new("Approved!"))
     }

@@ -7,8 +7,8 @@ use tinyboards_api_common::{
     utils::{get_local_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{
-    models::site::site::Site,
-    models::local_user::users::{User, UserForm},
+    models::{site::site::Site, person::person::PersonForm},
+    models::person::{local_user::*, person::Person},
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
@@ -27,16 +27,16 @@ impl<'des> Perform<'des> for SaveUserSettings {
     ) -> Result<LoginResponse, TinyBoardsError> {
         let data: &SaveUserSettings = &self;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
         let site = Site::read_local(context.pool()).await?;
         
         // delete old images if new images applied
-        let current_avatar = user.avatar.clone().unwrap_or_default();
-        let current_banner = user.banner.clone().unwrap_or_default();
-        let current_signature = user.signature.clone().unwrap_or_default();
+        let current_avatar = view.person.avatar.clone().unwrap_or_default();
+        let current_banner = view.person.banner.clone().unwrap_or_default();
+        let current_signature = view.person.signature.clone().unwrap_or_default();
         
         let avatar = data.avatar.clone();
         let banner = data.banner.clone();
@@ -76,12 +76,12 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // send a new verification email if email gets changed and email verification is required
         if site.email_verification_required {
             if let Some(ref email) = email {
-                let previous_email = match user.email {
+                let previous_email = match view.local_user.email {
                     Some(ref email) => String::from(email),
                     None => String::from(""),
                 };
                 if previous_email.ne(email) {
-                    send_verification_email(&user, email, context.pool(), context.settings())
+                    send_verification_email(&view.local_user, email, context.pool(), context.settings())
                         .await?;
                 }
             }
@@ -103,33 +103,46 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // grabbing the current timestamp for the update
         let updated = Some(naive_now());
 
-        let update_form = UserForm {
+        let person_form = PersonForm {
             bio,
-            email,
-            show_nsfw: data.show_nsfw,
-            theme: data.theme.clone(),
             avatar: Some(avatar.clone()),
             signature: Some(signature.clone()),
             banner: Some(banner.clone()),
-            default_listing_type,
-            default_sort_type,
-            updated,
-            ..UserForm::default()
+            updated: updated,
+            ..PersonForm::default()
         };
 
-        // perform settings update
-        User::update_settings(context.pool(), user.id, &update_form)
+        let local_user_form = LocalUserForm {
+            email: Some(email),
+            show_nsfw: data.show_nsfw,
+            theme: data.theme.clone(),
+            default_listing_type,
+            default_sort_type,
+            updated: Some(updated.clone()),
+            ..LocalUserForm::default()
+        };
+
+        // perform settings update for local_user
+        LocalUser::update_settings(context.pool(), view.local_user.id, &local_user_form)
             .await
-            .map_err(|_| TinyBoardsError::from_message(500, "could not update user settings"))?;
+            .map_err(|_| TinyBoardsError::from_message(500, "could not update local user settings"))?;
+
+        // perform settings update for person
+        Person::update_settings(context.pool(), view.person.id, &person_form)
+            .await
+            .map_err(|_| TinyBoardsError::from_message(500, "could not update person settings"))?;
+
 
         let updated_user_view =
-            get_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+            get_local_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
 
         let new_jwt = Claims::jwt(
-            updated_user_view.user.id,
+            updated_user_view.local_user.id,
             &context.master_key().jwt,
             &context.settings().hostname,
         )?;
+        
+        // TODO: look into this response, are we really wanting to return the entire local user view (has all fields from Person and LocalUser)
 
         // return the jwt
         Ok(LoginResponse {

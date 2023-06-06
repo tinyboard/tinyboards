@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     site::{GetMembers, GetMembersResponse},
     utils::{check_private_instance, load_user_opt},
 };
-use tinyboards_db_views::person_view::UserQuery;
+use tinyboards_db_views::person_view::PersonQuery;
 use tinyboards_utils::error::TinyBoardsError;
 use tinyboards_db::{UserSortType, map_to_user_sort_type};
 
@@ -24,10 +24,10 @@ impl<'des> Perform<'des> for GetMembers {
         let params: &Self = &self;
 
         // get optional user view (don't need to be logged in)
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let view = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if members should be shown or not
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&Some(view.unwrap().local_user), context.pool()).await?;
 
         let sort = match params.sort.as_ref() {
             Some(sort) => map_to_user_sort_type(Some(&sort.to_lowercase())),
@@ -39,7 +39,7 @@ impl<'des> Perform<'des> for GetMembers {
         let is_admin = params.is_admin;
         let is_banned = params.is_banned;
 
-        let response = UserQuery::builder()
+        let response = PersonQuery::builder()
             .pool(context.pool())
             .sort(Some(sort))
             .is_admin(is_admin)
@@ -51,7 +51,7 @@ impl<'des> Perform<'des> for GetMembers {
             .list()
             .await?;
 
-        let members = response.users;
+        let members = response.persons;
         let total_count = response.count;
 
         Ok(GetMembersResponse { members, total_count })

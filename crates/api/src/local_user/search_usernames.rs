@@ -7,7 +7,7 @@ use tinyboards_api_common::{
         require_user,
     },
 };
-use tinyboards_db::models::person::local_user::LocalUser;
+use tinyboards_db::models::person::person::Person;
 use tinyboards_utils::{error::TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
@@ -25,13 +25,13 @@ impl<'des> Perform<'des> for SearchNames {
 
         require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
 
-        let user_info = User::search_by_name(context.pool(), &self.q).await?;
+        let person_info = Person::search_by_name(context.pool(), &self.q).await?;
 
         let mut users: Vec<UsernameInfo> = Vec::new();
 
-        for user in user_info
+        for person in person_info
             .into_iter() {
-                users.push(UsernameInfo { name: user.name, avatar: user.avatar, chat_id: user.chat_id });
+                users.push(UsernameInfo { name: person.name, avatar: person.avatar });
         }
 
         Ok( SearchNamesResponse { users } )

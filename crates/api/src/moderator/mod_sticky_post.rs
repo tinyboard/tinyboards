@@ -33,7 +33,7 @@ impl<'des> Perform<'des> for StickyPost {
         let orig_post = Post::read(context.pool(), post_id.clone()).await?;
 
         // require a mod/admin for this action
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_board_mod(orig_post.board_id, context.pool())
             .await
@@ -44,7 +44,7 @@ impl<'des> Perform<'des> for StickyPost {
 
         // form for submitting post sticky action to the mod log
         let sticky_post_form = ModStickyPostForm {
-            mod_person_id: user.id,
+            mod_person_id: view.person.id,
             post_id: post_id.clone(),
             stickied: Some(Some(stickied.clone())),
         };

@@ -8,7 +8,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::board::{
         board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
-        board_person_bans::{BoardUserBan, BoardUserBanForm},
+        board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     },
     models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
     traits::{Bannable, Crud, Subscribeable},
@@ -36,13 +36,13 @@ impl<'des> Perform<'des> for BanFromBoard {
         let banned = data.banned;
 
         // require board moderator (at least) to perform this action
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_board_mod(board_id.clone(), context.pool())
             .await
             .unwrap()?;
 
-        let board_user_ban_form = BoardUserBanForm {
+        let board_user_ban_form = BoardPersonBanForm {
             board_id: board_id.clone(),
             person_id: target_person_id.clone(),
             expires: expires.clone(),
@@ -50,7 +50,7 @@ impl<'des> Perform<'des> for BanFromBoard {
 
         if banned {
             // ban user from board
-            BoardUserBan::ban(context.pool(), &board_user_ban_form).await?;
+            BoardPersonBan::ban(context.pool(), &board_user_ban_form).await?;
 
             // also unsubscribe them from board, if subbed
             let sub_form = BoardSubscriberForm {
@@ -62,12 +62,12 @@ impl<'des> Perform<'des> for BanFromBoard {
        
         } else {
             // unban user from board
-            BoardUserBan::unban(context.pool(), &board_user_ban_form).await?;
+            BoardPersonBan::unban(context.pool(), &board_user_ban_form).await?;
         }
 
         // mod log form
         let ban_from_board_form = ModBanFromBoardForm {
-            mod_person_id: user.id,
+            mod_person_id: view.person.id,
             other_person_id: target_person_id,
             board_id,
             reason: Some(reason),

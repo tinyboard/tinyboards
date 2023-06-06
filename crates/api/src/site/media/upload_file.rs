@@ -29,7 +29,7 @@ impl<'des> PerformUpload<'des> for Multipart {
     ) -> Result<FileUploadResponse, TinyBoardsError> {
 
         // require there be a logged in user to perform the upload
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
@@ -63,7 +63,7 @@ impl<'des> PerformUpload<'des> for Multipart {
                 file.write_all(&file_bytes).await?;
 
                 let upload_form = UploadForm {
-                    person_id: user.id,
+                    person_id: view.person.id,
                     original_name: original_file_name.to_string(),
                     file_name: file_name.clone(),
                     file_path: file_path.clone(),

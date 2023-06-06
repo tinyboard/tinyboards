@@ -76,7 +76,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         // we need to toggle all unaccepted users to accepted after toggling app mode on/off
         if let Some(require_application) = require_application {
             if require_application != current_require_app {
-                User::accept_all_applications(context.pool()).await?;
+                LocalUser::accept_all_applications(context.pool()).await?;
             }
         }
 

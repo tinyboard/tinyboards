@@ -238,7 +238,7 @@ pub struct PersonQuery<'a> {
 
 #[derive(Default, Clone)]
 pub struct PersonQueryResponse {
-    pub person: Vec<PersonView>,
+    pub persons: Vec<PersonView>,
     pub count: i64,
 }
 
@@ -300,9 +300,9 @@ impl<'a> PersonQuery<'a> {
 
         let res = query.load::<PersonViewTuple>(conn).await?;
 
-        let person = PersonView::from_tuple_to_vec(res);
+        let persons = PersonView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(conn).await?;
 
-        Ok(PersonQueryResponse { person, count })
+        Ok(PersonQueryResponse { persons, count })
     }
 }

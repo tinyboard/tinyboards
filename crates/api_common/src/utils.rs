@@ -613,13 +613,13 @@ pub async fn purge_local_image_posts_for_board(
     let subject = format!("Email Verification for your {} Account", &settings.hostname);
     let body = format!(
         "Thank you {} for registering for an account at {}. Please click the link below in order to verify your email: \n\n {}", 
-        &user.name, 
+        &local_user.name, 
         &settings.hostname,
         &verify_link
     );
 
     // send email
-    send_email(&subject, new_email, &user.name, &body, settings)?;
+    send_email(&subject, new_email, &local_user.name, &body, settings)?;
 
     Ok(())
   }

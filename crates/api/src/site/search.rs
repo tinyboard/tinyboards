@@ -10,7 +10,7 @@ use tinyboards_db::{
     ListingType, SearchType, SortType,
 };
 use tinyboards_db_views::{
-    board_view::BoardQuery, comment_view::CommentQuery, post_view::PostQuery, person_view::UserQuery,
+    board_view::BoardQuery, comment_view::CommentQuery, post_view::PostQuery, person_view::PersonQuery,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -29,16 +29,16 @@ impl<'des> Perform<'des> for Search {
         let params: &Self = &self;
 
         // get optional user view
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let view = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // search should not function on private instances if you are not authed
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&Some(view.unwrap().local_user), context.pool()).await?;
 
         // get the search type
         let search_type = map_to_search_type(params.kind.as_deref());
 
-        let person_id = user.as_ref().map(|u| u.id);
-        let is_admin = user.as_ref().map(|u| u.is_admin);
+        let person_id = Some(view.unwrap().person.id.clone());
+        let is_admin = Some(view.unwrap().local_user.is_admin.clone());
 
         let mut posts = Vec::new();
         let mut comments = Vec::new();
@@ -64,6 +64,7 @@ impl<'des> Perform<'des> for Search {
 
         let board_id = params.board_id.clone();
         let creator_id = params.creator_id.clone();
+        let person = Some(&view.unwrap().person.clone());
 
         match search_type {
             SearchType::Post => {
@@ -74,7 +75,7 @@ impl<'des> Perform<'des> for Search {
                     .listing_type(Some(listing_type))
                     .board_id(board_id)
                     .creator_id(creator_id)
-                    .user(user.as_ref())
+                    .person(person)
                     .search_term(search_term)
                     .url_search(url_search)
                     .page(page)
@@ -108,7 +109,7 @@ impl<'des> Perform<'des> for Search {
                     .pool(context.pool())
                     .listing_type(Some(listing_type))
                     .sort(Some(sort))
-                    .user(user.as_ref())
+                    .person(person)
                     .search_term(search_term)
                     .page(page)
                     .limit(limit)
@@ -118,8 +119,8 @@ impl<'des> Perform<'des> for Search {
 
                 boards = response.boards
             }
-            SearchType::User => {
-                let response = UserQuery::builder()
+            SearchType::Person => {
+                let response = PersonQuery::builder()
                 .pool(context.pool())
                 .search_term(search_term)
                 .page(page)
@@ -128,7 +129,7 @@ impl<'des> Perform<'des> for Search {
                 .list()
                 .await?;
 
-                users = response.users
+                users = response.persons
             }
         };
 

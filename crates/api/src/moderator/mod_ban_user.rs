@@ -30,17 +30,17 @@ impl<'des> Perform<'des> for BanUser {
         let reason = &data.reason;
         let expires = data.expires;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
 
         // update the user in the database to be banned
-        User::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
+        LocalUser::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
-            mod_person_id: user.id,
+            mod_person_id: view.person.id,
             other_person_id: target_person_id.clone(),
             banned: Some(Some(banned)),
             expires: Some(expires),

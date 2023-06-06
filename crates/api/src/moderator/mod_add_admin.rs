@@ -30,7 +30,7 @@ impl<'des> Perform<'des> for AddAdmin {
 
         // require admin to add new admin
         // TODO - reconfigure this logic to only allow site owner to add new admin
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -39,11 +39,11 @@ impl<'des> Perform<'des> for AddAdmin {
         let added_person_id = data.added_person_id;
 
         // update added user to be an admin
-        User::update_admin(context.pool(), added_person_id.clone(), added.clone()).await?;
+        LocalUser::update_admin(context.pool(), added_person_id.clone(), added.clone()).await?;
 
         // log this mod action
         let mod_add_admin_form = ModAddAdminForm {
-            mod_person_id: user.id,
+            mod_person_id: view.person.id,
             other_person_id: added_person_id.clone(),
             removed: Some(Some(!added.clone())),
         };
