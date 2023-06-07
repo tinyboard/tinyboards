@@ -117,6 +117,31 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
 
 }
 
+pub async fn load_local_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUser>, TinyBoardsError> {
+    if auth.is_none() {
+        return Ok(None);
+    };
+
+    // here it is safe to unwrap, because the above check ensures that `auth` isn't None here
+    let auth = auth.unwrap();
+    if auth.is_empty() {
+        return Ok(None);
+    }
+
+    if !auth.starts_with("Bearer ") {
+        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
+    }
+    // Reference to the string stored in `auth` skipping the `Bearer ` part
+    // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
+    // maybe there's a better solution to this but I feel like this is too memory-consuming.
+    let token = String::from(&auth[7..]);
+    let master_key = master_key.jwt.clone();
+
+    let local_user = LocalUser::from_jwt(pool, token, master_key).await?;
+
+    Ok(local_user)  
+}
+
 /**
  A newtype-ish wrapper around UResult with additional methods to make adding additional requirements (enforce lack of site ban, etc) easier.
  Call `unwrap` to get a regular Result.

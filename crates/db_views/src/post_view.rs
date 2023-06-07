@@ -1,4 +1,4 @@
-use crate::{structs::PostView, DeleteableOrRemoveable};
+use crate::{structs::{PostView, LocalUserView}, DeleteableOrRemoveable};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
@@ -147,9 +147,7 @@ pub struct PostQuery<'a> {
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,
-    person: Option<&'a Person>,
-    // todo - add in filtering to the query based upon local_user
-    local_user: Option<&'a LocalUser>,
+    user: Option<&'a LocalUser>,
     show_nsfw: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -166,8 +164,8 @@ impl<'a> PostQuery<'a> {
         let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
-        let person_id_join = match self.person {
-            Some(person) => person.id,
+        let person_id_join = match self.user {
+            Some(user) => user.person_id,
             None => -1,
         };
 
@@ -334,7 +332,7 @@ impl<'a> PostQuery<'a> {
         }
 
         // filter posts from blocked boards and person
-        if self.person.is_some() {
+        if self.user.is_some() {
             query = query.filter(person_board_blocks::person_id.is_null());
             query = query.filter(person_blocks::person_id.is_null());
         }

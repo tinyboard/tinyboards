@@ -1,7 +1,7 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::{PersonView, LocalUserSettingsView, PersonMentionView, CommentReplyView, LocalUserView};
+use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LocalUserView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {

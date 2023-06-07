@@ -1,4 +1,4 @@
-use crate::structs::{BoardModeratorView, BoardView, PersonView};
+use crate::structs::{BoardModeratorView, BoardView, PersonView, LocalUserView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
@@ -98,7 +98,7 @@ pub struct BoardQuery<'a> {
     pool: &'a DbPool,
     listing_type: Option<ListingType>,
     sort: Option<SortType>,
-    person: Option<&'a Person>,
+    user: Option<&'a LocalUser>,
     search_term: Option<String>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -113,7 +113,14 @@ pub struct BoardQueryResponse {
 impl<'a> BoardQuery<'a> {
     pub async fn list(self) -> Result<BoardQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
-        let person_id_join = self.person.map(|l| l.id).unwrap_or(-1);
+
+
+        let mut person_id_join = -1;
+
+        if self.user.is_some() {
+            person_id_join = self.user.unwrap().person_id;
+        }
+        
 
         let l_user = LocalUser::get_by_person_id(self.pool, person_id_join.clone()).await?;
 
@@ -196,7 +203,7 @@ impl<'a> BoardQuery<'a> {
             };
         }
 
-        if self.person.is_some() {
+        if self.user.is_some() {
             query = query.filter(person_board_blocks::person_id.is_null());
             query = query.filter(boards::is_nsfw.eq(false).or(local_user::show_nsfw.eq(true)));
         } else if !l_user.show_nsfw {
