@@ -5,7 +5,6 @@ use tinyboards_api_common::{
     user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::{require_user},
 };
-use tinyboards_db::models::person::local_user::LocalUser;
 use tinyboards_db_views::structs::{LoggedInUserView, LocalUserView};
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 

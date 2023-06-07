@@ -1,4 +1,4 @@
-use crate::{structs::{PostView, LocalUserView}, DeleteableOrRemoveable};
+use crate::{structs::PostView, DeleteableOrRemoveable};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,

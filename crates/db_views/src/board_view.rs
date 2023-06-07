@@ -1,10 +1,10 @@
-use crate::structs::{BoardModeratorView, BoardView, PersonView, LocalUserView};
+use crate::structs::{BoardModeratorView, BoardView, PersonView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
         board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
-        board::person_board_blocks::BoardBlock, person::person::*, person::local_user::*,
+        board::person_board_blocks::BoardBlock, person::local_user::*,
     },
     schema::{board_aggregates, board_subscriptions, boards, person_board_blocks, person, local_user},
     traits::{ToSafe, ViewToVec},

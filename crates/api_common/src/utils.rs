@@ -18,7 +18,7 @@ use tinyboards_db::{
     utils::DbPool,
     newtypes::DbUrl,
 };
-use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, PersonView, LocalUserSettingsView, LocalUserView};
+use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 

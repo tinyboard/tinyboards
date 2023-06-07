@@ -1,13 +1,12 @@
 use crate::structs::LocalUserView;
-use diesel::{result::Error, *};
+use diesel::{/*result::Error,*/ *};
 use tinyboards_db::{
     models::person::local_user::*,
     models::person::person::*,
     schema::{local_user, person, person_aggregates},
     aggregates::structs::PersonAggregates,
-    traits::{ViewToVec, ToSafe},
-    utils::{fuzzy_search, limit_and_offset, get_conn, DbPool},
-    UserSortType,
+    //traits::{ViewToVec, ToSafe},
+    utils::{get_conn, DbPool},
 };
 
 use tinyboards_utils::TinyBoardsError;
