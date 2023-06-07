@@ -22,7 +22,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &DeletePost = &self;
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
@@ -36,7 +36,7 @@ impl<'des> PerformCrud<'des> for DeletePost {
             ));
         }
 
-        if !Post::is_post_creator(user.id, orig_post.creator_id) {
+        if !Post::is_post_creator(view.person.id, orig_post.creator_id) {
             return Err(TinyBoardsError::from_message(403, "post edit not allowed"));
         }
 

@@ -3931,6 +3931,7 @@ dependencies = [
  "reqwest-tracing",
  "serde",
  "serde_json",
+ "tinyboards_ap_federation",
  "tinyboards_api",
  "tinyboards_api_common",
  "tinyboards_api_crud",

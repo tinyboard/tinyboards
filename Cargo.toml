@@ -120,6 +120,7 @@ hyper = { version = "0.14" }
 displaydoc = "0.2.3"
 
 [dependencies]
+tinyboards_ap_federation = { workspace = true }
 tinyboards_api = { workspace = true }
 tinyboards_api_crud = { workspace = true }
 tinyboards_api_common = { workspace = true }

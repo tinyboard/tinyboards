@@ -29,7 +29,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         let data: SubmitPost = self;
         let board_id = data.board_id.unwrap_or(1);
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .not_banned_from_board(board_id, context.pool())
@@ -50,7 +50,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             image: data.image,
             body: Some(body), // once told me, the world was gonna roll me
             body_html: body_html,
-            creator_id: Some(user.id),
+            creator_id: Some(view.person.id),
             board_id: Some(board_id),
             is_nsfw: Some(data.is_nsfw),
             ..PostForm::default()
@@ -61,13 +61,13 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         // auto upvote own post
         let post_vote = PostVoteForm {
             post_id: published_post.id,
-            person_id: user.id,
+            person_id: view.person.id,
             score: 1,
         };
 
         PostVote::vote(context.pool(), &post_vote).await?;
 
-        let post_view = PostView::read(context.pool(), published_post.id, Some(user.id)).await?;
+        let post_view = PostView::read(context.pool(), published_post.id, Some(view.person.id)).await?;
 
         Ok(PostResponse { post_view })
     }

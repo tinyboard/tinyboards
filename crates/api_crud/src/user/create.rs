@@ -13,10 +13,10 @@ use tinyboards_db::models::person::person::PersonForm;
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
 use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
-use tinyboards_db::models::local_user::users::{User, UserForm};
+use tinyboards_db::models::person::local_user::*;
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
-use tinyboards_utils::utils::generate_rand_string;
+//use tinyboards_utils::utils::generate_rand_string;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
@@ -83,23 +83,21 @@ impl<'des> PerformCrud<'des> for Register {
 
         // now we need to create both a local_user and a person (for apub)
         let person_form = PersonForm {
-            name: &data.username.clone(),
-            actor_id: Some(actor_id.clone()),
-            private_key: Some(actor_keypair.private_key),
-            public_key: Some(actor_keypair.public_key),
-            inbox_url: Some(generate_inbox_url(&actor_id)?),
-            shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
+            name: Some(data.username.clone()),
+            actor_id: Some(actor_id.to_string().clone()),
+            private_key: Some(Some(actor_keypair.private_key)),
+            public_key: Some(Some(actor_keypair.public_key)),
+            inbox_url: Some(generate_inbox_url(&actor_id)?.to_string()),
+            shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?.to_string())),
             ..PersonForm::default()
             // todo - add instance_id in later
         };
 
-        let user_form = UserForm {
+        let user_form = LocalUserForm {
             name: Some(data.username.clone()),
-            email: data.email,
+            email: Some(data.email),
             passhash: Some(data.password.unpack()),
-            avatar: Some(site.default_avatar),
-            chat_id: Some(generate_rand_string()),
-            ..UserForm::default()
+            ..LocalUserForm::default()
         };
 
         let mut invite = None;
@@ -109,7 +107,7 @@ impl<'des> PerformCrud<'des> for Register {
             invite = Some(SiteInvite::read_for_token(context.pool(), &invite_token.unwrap()).await?); // (if the invite token is valid there will be a entry in the db for it)
         }
 
-        let inserted_user = User::register(context.pool(), user_form).await?;
+        let inserted_user = LocalUser::register(context.pool(), user_form).await?;
 
         // if the user was invited, invalidate the invite token here by removing from db
         if site.invite_only {

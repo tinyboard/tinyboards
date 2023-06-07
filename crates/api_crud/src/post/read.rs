@@ -3,13 +3,13 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_local_user_opt},
 };
 
 use tinyboards_utils::TinyBoardsError;
 
 use tinyboards_db_views::{
-    structs::{BoardModeratorView, BoardView, PostView, UserView},
+    structs::{BoardModeratorView, BoardView, PostView, PersonView},
     DeleteableOrRemoveable,
 };
 
@@ -26,13 +26,13 @@ impl<'des> PerformCrud<'des> for GetPost {
     ) -> Result<GetPostResponse, TinyBoardsError> {
         let _data = self;
 
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check to see if instance is set to private before listing post
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&local_user, context.pool()).await?;
 
-        let person_id = match user {
-            Some(ref user) => Some(user.id),
+        let person_id = match local_user {
+            Some(ref local_user) => Some(local_user.id),
             None => None,
         };
 
@@ -41,7 +41,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         let mut post_view = PostView::read(context.pool(), post_id, person_id).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
-            post_view.hide_if_removed_or_deleted(user.as_ref());
+            post_view.hide_if_removed_or_deleted(local_user.as_ref());
         }
 
         let _post_id = post_view.post.id;
@@ -55,7 +55,7 @@ impl<'des> PerformCrud<'des> for GetPost {
 
         let moderators = BoardModeratorView::for_board(context.pool(), board_id).await?;
         
-        let author = UserView::read(context.pool(), post_view.post.creator_id).await?;
+        let author = PersonView::read(context.pool(), post_view.post.creator_id).await?;
 
         let author_counts = author.counts;
         

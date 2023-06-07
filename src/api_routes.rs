@@ -1,5 +1,4 @@
 use actix_multipart::Multipart;
-use actix_files::Files;
 use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};

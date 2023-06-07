@@ -29,7 +29,7 @@ impl<'des> PerformCrud<'des> for EditPost {
         auth: Option<&str>,
     ) -> Result<PostResponse, TinyBoardsError> {
         let data: &EditPost = &self;
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .unwrap()?;
@@ -41,7 +41,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         check_post_deleted_removed_or_locked(orig_post.post.id, context.pool()).await?;
 
-        if user.id != orig_post.post.creator_id {
+        if view.person.id != orig_post.post.creator_id {
             return Err(TinyBoardsError::from_message(403, "post edit not allowed"));
         }
 

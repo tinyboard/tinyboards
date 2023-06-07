@@ -3,7 +3,7 @@ use actix_web::web;
 use tinyboards_api_common::{
     comment::{CommentIdPath, GetComment, ListCommentsResponse},
     data::TinyBoardsContext,
-    utils::{check_private_instance, load_user_opt},
+    utils::{check_private_instance, require_user},
 };
 use tinyboards_db::{map_to_comment_sort_type, CommentSortType};
 use tinyboards_db_views::structs::CommentView;
@@ -22,10 +22,13 @@ impl<'des> PerformCrud<'des> for GetComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data = self;
 
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let view = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .not_banned()
+            .unwrap()?;
 
         // check if the instance is private before listing comments
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&Some(view.local_user), context.pool()).await?;
 
         //let person_id = user.as_ref().map(|u| u.id);
         let comment_id = path.comment_id;
@@ -36,7 +39,7 @@ impl<'des> PerformCrud<'des> for GetComment {
             None => CommentSortType::Hot,
         };
 
-        let comment_query_response = CommentView::get_comment_with_replies(context.pool(), comment_id, Some(sort), user.as_ref(), comment_context, data.post).await?;
+        let comment_query_response = CommentView::get_comment_with_replies(context.pool(), comment_id, Some(sort), Some(&view.person), comment_context, data.post).await?;
 
         Ok(ListCommentsResponse {
             comments: comment_query_response.comments,

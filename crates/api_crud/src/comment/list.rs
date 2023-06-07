@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::{ListComments, ListCommentsResponse},
     data::TinyBoardsContext,
     post::{GetPostComments, PostIdPath},
-    utils::{check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_local_user_opt},
 };
 use tinyboards_db::{
     map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post, CommentSortType,
@@ -34,13 +34,13 @@ impl<'des> PerformCrud<'des> for ListComments {
     ) -> Result<ListCommentsResponse, TinyBoardsError> {
         let data: ListComments = self;
 
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if instance is private before listing comments
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&local_user, context.pool()).await?;
 
-        let person_id = match user {
-            Some(ref user) => Some(user.id),
+        let person_id = match local_user {
+            Some(ref local_user) => Some(local_user.id),
             None => None,
         };
 
@@ -99,7 +99,7 @@ impl<'des> PerformCrud<'des> for ListComments {
             .iter_mut()
             .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
-            cv.hide_if_removed_or_deleted(user.as_ref());
+            cv.hide_if_removed_or_deleted(local_user.as_ref());
         }
 
         if let Format::Tree = format {
@@ -125,10 +125,10 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if instance is private before listing comments
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&local_user, context.pool()).await?;
 
         // check if post exists
         if Post::check_if_exists(context.pool(), path.post_id)
@@ -156,7 +156,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
             .iter_mut()
             .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
-            cv.hide_if_removed_or_deleted(user.as_ref());
+            cv.hide_if_removed_or_deleted(local_user.as_ref());
         }
 
         let comments = CommentView::into_tree(comments, None);

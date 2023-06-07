@@ -38,7 +38,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         let post = Post::read(context.pool(), data.post_id).await?;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .not_banned_from_board(post.board_id, context.pool())
@@ -80,7 +80,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             }
 
             if (parent_comment.is_removed || parent_comment.is_deleted || parent_comment.is_locked)
-                && !user.is_admin
+                && !view.local_user.is_admin
             {
                 return Err(TinyBoardsError::from_message(
                     403,
@@ -95,7 +95,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
         
         let new_comment = CommentForm {
-            creator_id: user.id,
+            creator_id: view.person.id,
             body: Some(data.body),
             body_html,
             post_id: data.post_id,
@@ -109,14 +109,14 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
-            person_id: user.id,
+            person_id: view.person.id,
             comment_id: new_comment.id,
             score: 1,
         };
 
         CommentVote::vote(context.pool(), &comment_vote).await?;
 
-        let new_comment = CommentView::read(context.pool(), new_comment.id, Some(user.id)).await?;
+        let new_comment = CommentView::read(context.pool(), new_comment.id, Some(view.person.id)).await?;
 
 
         // send notifications
@@ -124,7 +124,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         let _recipient_ids = send_notifications(
             mentions, 
             &new_comment.comment, 
-            &user, 
+            &view.person, 
             &post, 
             context
         )
