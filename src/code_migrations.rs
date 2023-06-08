@@ -103,15 +103,9 @@ async fn initialize_local_site_and_admin_user(
 
         let site_form = SiteForm {
             name: Some(setup.site_name.clone()),
+            description: None,
             creator_id: Some(inserted_admin_person.id),
             updated: Some(Some(naive_now())),
-            enable_downvotes: Some(true),
-            enable_nsfw: Some(true),
-            email_verification_required: Some(false),
-            open_registration: Some(true),
-            require_application: Some(false),
-            invite_only: Some(false),
-            private_instance: Some(false),
             ..SiteForm::default()
         };
 

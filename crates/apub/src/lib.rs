@@ -9,9 +9,23 @@ use tinyboards_db::{
 };
 
 pub mod api;
+pub mod objects;
 
 
 pub const FEDERATION_HTTP_FETCH_LIMIT: u32 = 50;
+
+#[derive(Clone)]
+pub(crate) struct LocalSiteData {
+  local_site: Option<LocalSite>,
+  allowed_instances: Vec<Instance>,
+  blocked_instances: Vec<Instance>,
+}
+
+// pub(crate) fn check_ap_id_valid_with_strictness(
+//     ap_id: &Url,
+//     is_strict: bool,
+
+// )
 
 /// Store an activity in the database (sent or received).
 ///
