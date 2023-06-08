@@ -7,8 +7,8 @@ use tinyboards_api_common::{
     utils::{get_local_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{
-    models::{site::site::Site, person::person::PersonForm},
-    models::person::{local_user::*, person::Person},
+    models::{person::person::PersonForm},
+    models::{person::{local_user::*, person::Person}, apub::local_site::LocalSite},
     utils::{diesel_option_overwrite, naive_now},
 };
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
@@ -31,7 +31,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             .await
             .unwrap()?;
 
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read_local(context.pool()).await?;
         
         // delete old images if new images applied
         let current_avatar = view.person.avatar.clone().unwrap_or_default();
@@ -74,7 +74,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         };
 
         // send a new verification email if email gets changed and email verification is required
-        if site.email_verification_required {
+        if site.require_email_verification {
             if let Some(ref email) = email {
                 let previous_email = match view.local_user.email {
                     Some(ref email) => String::from(email),
@@ -87,7 +87,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             }
         }
 
-        if email.is_none() && site.email_verification_required {
+        if email.is_none() && site.require_email_verification {
             return Err(TinyBoardsError::from_message(400, "email required"));
         }
 

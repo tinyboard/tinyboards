@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Login, LoginResponse},
 };
-use tinyboards_db::models::{site::site::Site};
+use tinyboards_db::models::{apub::local_site::LocalSite};
 use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
@@ -30,7 +30,7 @@ impl<'des> Perform<'des> for Login {
 
         let local_user_view: LocalUserView = LocalUserView::read(context.pool(), view.local_user.id).await?;
 
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read_local(context.pool()).await?;
 
         if site.require_application == true && local_user_view.local_user.is_application_accepted == false {
             return Err(TinyBoardsError::from_message(401, "login failed - application not accepted"));

@@ -4,7 +4,7 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_utils::TinyBoardsError;
 use url::Url;
 use tinyboards_db::{
-    models::apub::activity::*,
+    models::apub::{activity::*, local_site::LocalSite, instance::Instance},
     traits::Crud,
 };
 

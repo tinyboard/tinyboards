@@ -11,8 +11,8 @@ use tinyboards_db::{
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
-        site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        person::{local_user::*, person_blocks::*},
+        site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
+        person::{local_user::*, person_blocks::*}, apub::local_site::LocalSite,
     },
     traits::Crud, SiteMode, 
     utils::DbPool,
@@ -356,7 +356,7 @@ pub async fn get_local_user_view_from_jwt(
 
 #[tracing::instrument(skip_all)]
 pub async fn check_registration_application(
-    site: &Site,
+    site: &LocalSite,
     local_user_view: &LocalUserView,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
@@ -380,7 +380,7 @@ pub async fn check_registration_application(
 #[tracing::instrument(skip_all)]
 pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
     if score == -1 {
-        let site = Site::read_local(pool).await?;
+        let site = LocalSite::read_local(pool).await?;
 
         if !site.enable_downvotes {
             return Err(TinyBoardsError::from_message(403, "downvotes are disabled"));
@@ -395,7 +395,7 @@ pub async fn check_private_instance(
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
-        let site = Site::read_local(pool).await;
+        let site = LocalSite::read_local(pool).await;
 
         if let Ok(site) = site {
             if site.private_instance {
@@ -700,7 +700,7 @@ pub async fn send_application_approval_email(
 
 
 /// gets current site mode
-  pub fn get_current_site_mode(site: &Site, site_mode: &Option<SiteMode>) -> SiteMode {
+  pub fn get_current_site_mode(site: &LocalSite, site_mode: &Option<SiteMode>) -> SiteMode {
     let mut current_mode = match site_mode {
         Some(SiteMode::OpenMode) => SiteMode::OpenMode,
         Some(SiteMode::ApplicationMode) => SiteMode::ApplicationMode,

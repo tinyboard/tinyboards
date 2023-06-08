@@ -44,3 +44,12 @@ impl Crud for LocalSite {
         .await
     }
 }
+
+impl LocalSite {
+    pub async fn read_local(pool: &DbPool) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::local_site::dsl::*;
+        local_site.order_by(id).first::<Self>(conn)
+        .await
+    }
+}

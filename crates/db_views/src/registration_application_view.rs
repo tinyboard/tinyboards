@@ -34,7 +34,7 @@ impl RegistrationApplicationView {
         .find(app_id)
         .inner_join(local_user::table.on(registration_applications::person_id.eq(local_user::person_id)))
         .left_join(local_user_alias.on(registration_applications::admin_id.eq(local_user_alias.field(local_user::person_id).nullable())))
-        .order_by(registration_applications::published.desc())
+        .order_by(registration_applications::creation_date.desc())
         .select((
             registration_applications::all_columns,
             LocalUserSettings::safe_columns_tuple(),
@@ -77,7 +77,7 @@ impl<'a> ApplicationQuery<'a> {
         let query = registration_applications::table
             .inner_join(local_user::table.on(registration_applications::person_id.eq(local_user::person_id)))
             .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(local_user::person_id).nullable())))
-            .order_by(registration_applications::published.desc())
+            .order_by(registration_applications::creation_date.desc())
             .select((
                 registration_applications::all_columns,
                 LocalUserSettings::safe_columns_tuple(),

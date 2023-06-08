@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     site::{GetSiteSettings, GetSiteSettingsResponse},
 };
 use tinyboards_db::{
-    models::site::site::Site, SiteMode
+    models::{apub::local_site::LocalSite}, SiteMode
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -22,7 +22,7 @@ impl<'des> Perform<'des> for GetSiteSettings {
         _: Option<&str>,
     ) -> Result<GetSiteSettingsResponse, TinyBoardsError> {
 
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read_local(context.pool()).await?;
         
         let mut site_mode = SiteMode::OpenMode;
 
@@ -36,14 +36,12 @@ impl<'des> Perform<'des> for GetSiteSettings {
 
             
         Ok(GetSiteSettingsResponse {
-            name: site.name,
-            description: site.description.unwrap_or_default(),
             site_mode,
             enable_downvotes: site.enable_downvotes,
             enable_nsfw: site.enable_nsfw,
             application_question: site.application_question.unwrap_or_default(),
             private_instance: site.private_instance,
-            email_verification_required: site.email_verification_required,
+            require_email_verification: site.require_email_verification,
             default_avatar: site.default_avatar.unwrap_or_default(),            
         })
     }

@@ -110,27 +110,23 @@ pub struct GetSiteSettings {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetSiteSettingsResponse {
-    pub name: String,
-    pub description: String,
     pub site_mode: SiteMode,
     pub enable_downvotes: bool,
     pub enable_nsfw: bool,
     pub application_question: String,
     pub private_instance: bool,
-    pub email_verification_required: bool,
+    pub require_email_verification: bool,
     pub default_avatar: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SaveSiteSettings {
-    pub name: Option<String>,
-    pub description: Option<String>,
     pub site_mode: Option<SiteMode>,
     pub enable_downvotes: Option<bool>,
     pub enable_nsfw: Option<bool>,
     pub application_question: Option<String>,
     pub private_instance: Option<bool>,
-    pub email_verification_required: Option<bool>,
+    pub require_email_verification: Option<bool>,
     pub default_avatar: Option<String>,
 }
 

@@ -1,4 +1,5 @@
 use crate::PerformCrud;
+use tinyboards_db::models::apub::local_site::LocalSite;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use regex::Regex;
@@ -11,7 +12,6 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::models::person::person::*;
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
-use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::models::person::local_user::*;
 use tinyboards_db::traits::Crud;
@@ -33,7 +33,7 @@ impl<'des> PerformCrud<'des> for Register {
 
         let invite_token = data.invite_token.clone();
 
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read_local(context.pool()).await?;
 
         // some email verification logic here?
         if !site.open_registration && site.invite_only && data.invite_token.is_none() {
@@ -64,7 +64,7 @@ impl<'des> PerformCrud<'des> for Register {
             ));
         }
 
-        if site.email_verification_required && data.email.is_none() {
+        if site.require_email_verification && data.email.is_none() {
             return Err(TinyBoardsError::from_message(
                 400,
                 "email verification is required, please provide an email",
@@ -153,7 +153,7 @@ impl<'des> PerformCrud<'des> for Register {
         let email = inserted_local_user.email.clone().unwrap_or_default();
 
         // send a verification email if email verification is required
-        if site.email_verification_required {
+        if site.require_email_verification {
             send_verification_email(&inserted_local_user, &email, context.pool(), context.settings())
                 .await?;
         }

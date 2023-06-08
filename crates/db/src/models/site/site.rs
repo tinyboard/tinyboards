@@ -12,6 +12,7 @@ pub struct Site {
     pub creator_id: i32,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub actor_id: String,
     pub instance_id: i32,
 }
 
@@ -22,5 +23,6 @@ pub struct SiteForm {
     pub description: Option<String>,
     pub creator_id: Option<i32>,
     pub updated: Option<Option<NaiveDateTime>>,
+    pub actor_id: Option<String>,
     pub instance_id: Option<i32>,
 }

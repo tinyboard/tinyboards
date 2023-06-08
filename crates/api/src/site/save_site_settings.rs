@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{get_current_site_mode, require_user},
 };
 use tinyboards_db::{
-    models::{site::site::{Site, SiteForm}, person::local_user::LocalUser},
+    models::{person::local_user::LocalUser, apub::local_site::{LocalSite, LocalSiteForm}},
     traits::Crud,
     utils::naive_now,
     SiteMode,
@@ -33,25 +33,17 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             .require_admin()
             .unwrap()?;
 
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read_local(context.pool()).await?;
 
         let current_require_app = site.require_application;
 
-        let name = data.name.clone();
-        let description = data.description.clone();
         let site_mode = data.site_mode;
         let enable_downvotes = data.enable_downvotes;
         let enable_nsfw = data.enable_nsfw;
         let application_question = data.application_question.clone();
         let private_instance = data.private_instance;
-        let email_verification_required = data.email_verification_required;
+        let email_verification_required = data.require_email_verification;
         let default_avatar = data.default_avatar.clone();
-
-        if let Some(description) = &description {
-            if description.chars().count() > 500 {
-                return Err(TinyBoardsError::from_message(400, "description too long"));
-            }
-        }
 
         if let Some(application_question) = &application_question {
             if application_question.chars().count() > 300 {
@@ -87,34 +79,30 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             None => Some(site.invite_only),
         };
 
-        let form = SiteForm {
-            name,
-            description,
+        let form = LocalSiteForm {
             enable_downvotes,
             open_registration,
             enable_nsfw,
             require_application,
             application_question: Some(application_question),
             private_instance,
-            email_verification_required,
+            require_email_verification: email_verification_required,
             invite_only,
             default_avatar: Some(default_avatar),
-            updated: Some(Some(naive_now())),
-            ..SiteForm::default()
+            updated: Some(naive_now()),
+            ..LocalSiteForm::default()
         };
 
         // perform settings update
-        let updated_site = Site::update(context.pool(), site.id, &form).await?;
+        let updated_site = LocalSite::update(context.pool(), site.id, &form).await?;
 
         Ok(GetSiteSettingsResponse {
-            name: updated_site.name,
-            description: updated_site.description.unwrap_or_default(),
             site_mode: get_current_site_mode(&site, &site_mode),
             enable_downvotes: updated_site.enable_downvotes,
             enable_nsfw: updated_site.enable_nsfw,
             application_question: updated_site.application_question.unwrap_or_default(),
             private_instance: updated_site.private_instance,
-            email_verification_required: updated_site.email_verification_required,
+            require_email_verification: updated_site.require_email_verification,
             default_avatar: updated_site.default_avatar.unwrap_or_default(),
         })
     }

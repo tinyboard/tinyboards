@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{InviteToken, ValidateSiteInvite},
 };
-use tinyboards_db::models::site::{site::Site, site_invite::SiteInvite};
+use tinyboards_db::models::{site::{site_invite::SiteInvite}, apub::local_site::LocalSite};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -21,7 +21,7 @@ impl<'des> Perform<'des> for ValidateSiteInvite {
     ) -> Result<(), TinyBoardsError> {
         let token = path.invite_token.clone();
 
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read_local(context.pool()).await?;
 
         if !site.invite_only {
             return Err(TinyBoardsError::from_message(
