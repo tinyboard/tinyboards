@@ -1,4 +1,4 @@
-use crate::{schema::activity, newtypes::DbUrl};
+use crate::schema::activity;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

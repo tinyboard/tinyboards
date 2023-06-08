@@ -27,6 +27,7 @@ pub struct Person {
     pub shared_inbox_url: Option<String>,
     pub bot_account: bool,
     pub last_refreshed_date: NaiveDateTime,
+    pub instance_id: i32,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -76,4 +77,5 @@ pub struct PersonForm {
     pub shared_inbox_url: Option<Option<String>>,
     pub bot_account: Option<bool>,
     pub last_refreshed_date: Option<NaiveDateTime>,
+    pub instance_id: Option<i32>,
 }

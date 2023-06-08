@@ -12,6 +12,7 @@ pub struct Site {
     pub creator_id: i32,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub instance_id: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -21,4 +22,5 @@ pub struct SiteForm {
     pub description: Option<String>,
     pub creator_id: Option<i32>,
     pub updated: Option<Option<NaiveDateTime>>,
+    pub instance_id: Option<i32>,
 }

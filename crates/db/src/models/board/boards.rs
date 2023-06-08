@@ -25,6 +25,7 @@ pub struct Board {
     pub inbox_url: String,
     pub shared_inbox_url: Option<String>,
     pub last_refreshed_date: NaiveDateTime,
+    pub instance_id: i32,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -47,6 +48,7 @@ pub struct BoardForm {
     pub inbox_url: Option<String>,
     pub shared_inbox_url: Option<Option<String>>,
     pub last_refreshed_date: Option<NaiveDateTime>,
+    pub instance_id: Option<i32>,
 }
 
 /// A safe representation of board, without the sensitive info
