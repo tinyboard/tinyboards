@@ -1,3 +1,4 @@
+select 'this is a placeholder for now';
 --create or replace function generate_unique_changeme()
 --returns text language sql
 --as $$

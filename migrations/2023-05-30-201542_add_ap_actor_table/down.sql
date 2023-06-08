@@ -1,1 +1,1 @@
--- This file should undo anything in `up.sql`
+select 'this is a placeholder for now';
