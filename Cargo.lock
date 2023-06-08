@@ -3736,46 +3736,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42657b1a6f4d817cda8e7a0ace261fe0cc946cf3a80314390b22cc61ae080792"
 
 [[package]]
-name = "tinyboards_ap_federation"
-version = "0.1.0"
-dependencies = [
- "activitystreams-kinds",
- "actix-rt",
- "actix-web",
- "anyhow",
- "async-trait",
- "axum 0.6.18",
- "background-jobs",
- "base64 0.21.0",
- "bytes",
- "chrono",
- "derive_builder",
- "displaydoc",
- "dyn-clone",
- "enum_delegate",
- "futures-core",
- "http",
- "http-signature-normalization",
- "http-signature-normalization-reqwest",
- "httpdate",
- "hyper",
- "itertools",
- "once_cell",
- "openssl",
- "pin-project-lite",
- "regex",
- "reqwest",
- "reqwest-middleware",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "tower",
- "tracing",
- "url",
-]
-
-[[package]]
 name = "tinyboards_api"
 version = "0.1.0"
 dependencies = [
@@ -3839,11 +3799,11 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "tinyboards_ap_federation",
  "tinyboards_api",
  "tinyboards_api_common",
  "tinyboards_db",
  "tinyboards_db_views",
+ "tinyboards_federation",
  "tinyboards_utils",
  "tracing",
  "url",
@@ -3906,6 +3866,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyboards_federation"
+version = "0.1.0"
+dependencies = [
+ "activitystreams-kinds",
+ "actix-rt",
+ "actix-web",
+ "anyhow",
+ "async-trait",
+ "axum 0.6.18",
+ "background-jobs",
+ "base64 0.21.0",
+ "bytes",
+ "chrono",
+ "derive_builder",
+ "displaydoc",
+ "dyn-clone",
+ "enum_delegate",
+ "futures-core",
+ "http",
+ "http-signature-normalization",
+ "http-signature-normalization-reqwest",
+ "httpdate",
+ "hyper",
+ "itertools",
+ "once_cell",
+ "openssl",
+ "pin-project-lite",
+ "regex",
+ "reqwest",
+ "reqwest-middleware",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "tower",
+ "tracing",
+ "url",
+]
+
+[[package]]
 name = "tinyboards_server"
 version = "0.1.0"
 dependencies = [
@@ -3931,13 +3931,13 @@ dependencies = [
  "reqwest-tracing",
  "serde",
  "serde_json",
- "tinyboards_ap_federation",
  "tinyboards_api",
  "tinyboards_api_common",
  "tinyboards_api_crud",
  "tinyboards_db",
  "tinyboards_db_views",
  "tinyboards_db_views_mod",
+ "tinyboards_federation",
  "tinyboards_utils",
  "tokio",
  "tracing",
