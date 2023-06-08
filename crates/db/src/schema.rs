@@ -455,7 +455,7 @@ diesel::table! {
     person_ban (id) {
         id -> Int4,
         person_id -> Int4,
-        published -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -483,7 +483,7 @@ diesel::table! {
         recipient_id -> Int4,
         comment_id -> Int4,
         read -> Bool,
-        published -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -558,7 +558,7 @@ diesel::table! {
         answer -> Text,
         admin_id -> Nullable<Int4>,
         deny_reason -> Nullable<Text>,
-        published -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -575,7 +575,7 @@ diesel::table! {
         name -> Varchar,
         description -> Nullable<Text>,
         creator_id -> Int4,
-        published -> Timestamp,
+        creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
         actor_id -> Text,
         instance_id -> Int4,
