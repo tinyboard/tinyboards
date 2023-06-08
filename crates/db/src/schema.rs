@@ -1,6 +1,18 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    activity (id) {
+        id -> Int4,
+        ap_id -> Text,
+        data -> Jsonb,
+        local -> Bool,
+        sensitive -> Bool,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     admin_purge_board (id) {
         id -> Int4,
         admin_id -> Int4,
@@ -592,6 +604,7 @@ diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(uploads -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    activity,
     admin_purge_board,
     admin_purge_comment,
     admin_purge_post,
