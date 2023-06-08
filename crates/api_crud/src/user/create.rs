@@ -9,7 +9,7 @@ use tinyboards_api_common::{
     user::{Register, SignupResponse},
     utils::{send_verification_email, generate_inbox_url, generate_shared_inbox_url, generate_local_apud_endpoint, EndpointType},
 };
-use tinyboards_db::models::person::person::PersonForm;
+use tinyboards_db::models::person::person::*;
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
 use tinyboards_db::models::site::site::Site;
 use tinyboards_db::models::site::site_invite::SiteInvite;
@@ -93,7 +93,10 @@ impl<'des> PerformCrud<'des> for Register {
             // todo - add instance_id in later
         };
 
-        let user_form = LocalUserForm {
+        let person = Person::create(context.pool(), &person_form).await?;
+
+
+        let local_user_form = LocalUserForm {
             name: Some(data.username.clone()),
             email: Some(data.email),
             passhash: Some(data.password.unpack()),
@@ -107,7 +110,23 @@ impl<'des> PerformCrud<'des> for Register {
             invite = Some(SiteInvite::read_for_token(context.pool(), &invite_token.unwrap()).await?); // (if the invite token is valid there will be a entry in the db for it)
         }
 
-        let inserted_user = LocalUser::register(context.pool(), user_form).await?;
+        let inserted_local_user = match LocalUser::create(context.pool(), &local_user_form).await {
+            Ok(lu) => lu,
+            Err(e) => {
+                let err_type = if e.to_string() == "duplicate key value violates unique constraint \"local_user_email_key\"" {
+                    "email_already_exists"
+                } else {
+                    "user_already_exists"
+                };
+
+                // if local_user creation failed then delete the person
+                Person::delete(context.pool(), person.id).await?;
+
+                return Err(TinyBoardsError::from_error_message(e, 500, err_type));
+            }
+        };
+
+        //let inserted_user = LocalUser::register(context.pool(), user_form).await?;
 
         // if the user was invited, invalidate the invite token here by removing from db
         if site.invite_only {
@@ -117,7 +136,7 @@ impl<'des> PerformCrud<'des> for Register {
         // if site is in application mode, add the application to the database
         if site.require_application {
             let form = RegistrationApplicationForm {
-                person_id: inserted_user.id,
+                person_id: person.id,
                 answer: data.answer.clone(),
                 ..RegistrationApplicationForm::default()
             };
@@ -131,17 +150,17 @@ impl<'des> PerformCrud<'des> for Register {
             .await?;
         }
 
-        let email = inserted_user.email.clone().unwrap_or_default();
+        let email = inserted_local_user.email.clone().unwrap_or_default();
 
         // send a verification email if email verification is required
         if site.email_verification_required {
-            send_verification_email(&inserted_user, &email, context.pool(), context.settings())
+            send_verification_email(&inserted_local_user, &email, context.pool(), context.settings())
                 .await?;
         }
 
         let mut response = SignupResponse {
             jwt: Some(Sensitive::new(
-                inserted_user.get_jwt(context.master_key().jwt.as_ref()),
+                inserted_local_user.get_jwt(context.master_key().jwt.as_ref()),
             )),
             registration_created: false,
             verify_email_sent: false,
