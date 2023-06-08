@@ -14,7 +14,7 @@ use tinyboards_api_common::utils::{
     generate_shared_inbox_url,
     EndpointType,
 };
-use tinyboards_ap_federation::http_signatures::generate_actor_keypair;
+use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::{
     error::TinyBoardsError, passhash::hash_password, settings::structs::Settings,
 };

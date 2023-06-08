@@ -9,7 +9,7 @@ tinyboards_db = { workspace = true }
 tinyboards_db_views = { workspace = true }
 tinyboards_api = { workspace = true }
 tinyboards_api_common = { workspace = true }
-tinyboards_ap_federation = { workspace = true }
+tinyboards_federation = { workspace = true }
 bcrypt = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }

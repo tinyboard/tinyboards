@@ -1,5 +1,5 @@
 use crate::PerformCrud;
-use tinyboards_ap_federation::http_signatures::generate_actor_keypair;
+use tinyboards_federation::http_signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use regex::Regex;
 use tinyboards_api_common::data::TinyBoardsContext;
