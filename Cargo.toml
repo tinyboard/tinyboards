@@ -28,6 +28,7 @@ members = [
 ]
 
 [workspace.dependencies]
+tinyboards_apub = { version = "=0.1.0", path="./crates/apub" }
 tinyboards_federation = { version = "=0.1.0", path="./crates/federation"}
 tinyboards_api = { version = "=0.1.0", path="./crates/api" }
 tinyboards_api_common = { version = "=0.1.0", path="./crates/api_common" }
@@ -120,6 +121,7 @@ hyper = { version = "0.14" }
 displaydoc = "0.2.3"
 
 [dependencies]
+tinyboards_apub = { workspace = true }
 tinyboards_federation = { workspace = true }
 tinyboards_api = { workspace = true }
 tinyboards_api_crud = { workspace = true }

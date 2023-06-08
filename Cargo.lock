@@ -3811,6 +3811,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyboards_apub"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "diesel",
+ "tinyboards_api_common",
+ "tinyboards_db",
+ "tinyboards_db_views",
+ "tinyboards_db_views_mod",
+ "tinyboards_federation",
+ "tinyboards_utils",
+]
+
+[[package]]
 name = "tinyboards_db"
 version = "0.1.0"
 dependencies = [
@@ -3934,6 +3948,7 @@ dependencies = [
  "tinyboards_api",
  "tinyboards_api_common",
  "tinyboards_api_crud",
+ "tinyboards_apub",
  "tinyboards_db",
  "tinyboards_db_views",
  "tinyboards_db_views_mod",
