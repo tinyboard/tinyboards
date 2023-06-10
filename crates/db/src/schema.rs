@@ -216,8 +216,8 @@ diesel::table! {
 diesel::table! {
     language (id) {
         id -> Int4,
-        code -> Nullable<Text>,
-        name -> Nullable<Text>,
+        code -> Text,
+        name -> Text,
     }
 }
 
@@ -304,8 +304,8 @@ diesel::table! {
 diesel::table! {
     local_user_language (id) {
         id -> Int4,
-        local_user_id -> Nullable<Int4>,
-        language_id -> Nullable<Int4>,
+        local_user_id -> Int4,
+        language_id -> Int4,
     }
 }
 

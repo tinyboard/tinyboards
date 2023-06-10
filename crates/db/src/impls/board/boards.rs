@@ -1,8 +1,10 @@
-use crate::schema::{board_mods, board_person_bans, boards::dsl::*};
+use crate::newtypes::DbUrl;
+use crate::schema::{board_mods, board_person_bans, boards, instance};
+use crate::utils::functions::lower;
 use crate::{
     models::board::board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     models::board::boards::{Board, BoardForm},
-    traits::{Bannable, Crud},
+    traits::{Bannable, Crud, ApubActor},
     utils::{get_conn, DbPool, naive_now},
 };
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
@@ -117,17 +119,17 @@ impl Crud for Board {
 
     async fn read(pool: &DbPool, board_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        boards.find(board_id).first::<Self>(conn)
+        boards::table.find(board_id).first::<Self>(conn)
         .await
     }
     async fn delete(pool: &DbPool, board_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(boards.find(board_id)).execute(conn)
+        diesel::delete(boards::table.find(board_id)).execute(conn)
         .await
     }
     async fn create(pool: &DbPool, form: &BoardForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let new_board = diesel::insert_into(boards)
+        let new_board = diesel::insert_into(boards::table)
             .values(form)
             .get_result::<Self>(conn)
             .await?;
@@ -136,7 +138,7 @@ impl Crud for Board {
     }
     async fn update(pool: &DbPool, board_id: i32, form: &BoardForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(boards.find(board_id))
+        diesel::update(boards::table.find(board_id))
             .set(form)
             .get_result::<Self>(conn)
             .await
@@ -170,4 +172,51 @@ impl Bannable for BoardPersonBan {
         .execute(conn)
         .await
     }
+}
+
+#[async_trait::async_trait]
+impl ApubActor for Board {
+    async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        Ok(
+          boards::table
+            .filter(boards::actor_id.eq(object_id.to_string()))
+            .first::<Board>(conn)
+            .await
+            .ok()
+            .map(Into::into),
+        )
+      }
+    
+      async fn read_from_name(
+        pool: &DbPool,
+        board_name: &str,
+        include_deleted: bool,
+      ) -> Result<Board, Error> {
+        let conn = &mut get_conn(pool).await?;
+        let mut q = boards::table
+          .into_boxed()
+          .filter(boards::local.eq(true))
+          .filter(lower(boards::name).eq(board_name.to_lowercase()));
+        if !include_deleted {
+          q = q
+            .filter(boards::is_deleted.eq(false));
+        }
+        q.first::<Self>(conn).await
+      }
+    
+      async fn read_from_name_and_domain(
+        pool: &DbPool,
+        board_name: &str,
+        for_domain: &str,
+      ) -> Result<Board, Error> {
+        let conn = &mut get_conn(pool).await?;
+        boards::table
+          .inner_join(instance::table)
+          .filter(lower(boards::name).eq(board_name.to_lowercase()))
+          .filter(instance::domain.eq(for_domain))
+          .select(boards::all_columns)
+          .first::<Self>(conn)
+          .await
+      } 
 }

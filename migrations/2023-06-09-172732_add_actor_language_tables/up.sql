@@ -1,13 +1,13 @@
 create table language(
     id serial primary key,
-    code text,
-    name text
+    code text not null,
+    name text not null
 );
 
 create table local_user_language(
     id serial primary key,
-    local_user_id int references local_user on update cascade on delete cascade,
-    language_id int references language on update cascade on delete cascade,
+    local_user_id int references local_user on update cascade on delete cascade not null,
+    language_id int references language on update cascade on delete cascade not null,
     unique(local_user_id, language_id)
 );
 

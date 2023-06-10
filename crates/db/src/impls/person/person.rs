@@ -1,8 +1,8 @@
 use crate::{
     models::person::person::{Person, PersonForm},
-    schema::person::dsl::*,
-    traits::{Crud},
-    utils::{fuzzy_search, DbPool, get_conn},
+    schema::{person, instance},
+    traits::{Crud, ApubActor},
+    utils::{fuzzy_search, DbPool, get_conn, functions::lower}, newtypes::DbUrl,
 };
 
 use diesel::{prelude::*, result::Error};
@@ -26,7 +26,7 @@ impl Person {
         form: &PersonForm,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(person.find(id_))
+        diesel::update(person::table.find(id_))
             .set(form)
             .get_result::<Self>(conn)
             .await
@@ -41,17 +41,17 @@ impl Crud for Person {
 
     async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        person.find(id_).first::<Self>(conn)
+        person::table.find(id_).first::<Self>(conn)
         .await
     }
     async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(person.find(id_)).execute(conn)
+        diesel::delete(person::table.find(id_)).execute(conn)
         .await
     }
     async fn create(pool: &DbPool, form: &PersonForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let new_person = diesel::insert_into(person)
+        let new_person = diesel::insert_into(person::table)
             .values(form)
             .get_result::<Self>(conn)
             .await?;
@@ -60,7 +60,7 @@ impl Crud for Person {
     }
     async fn update(pool: &DbPool, id_: i32, form: &PersonForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::update(person.find(id_))
+        diesel::update(person::table.find(id_))
             .set(form)
             .get_result::<Self>(conn)
             .await
@@ -121,4 +121,52 @@ pub mod safe_type {
             )
         }
     }
+}
+
+#[async_trait::async_trait]
+impl ApubActor for Person {
+    async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        Ok(person::table
+            .into_boxed()
+            .filter(person::is_deleted.eq(false))
+            .filter(person::actor_id.eq(object_id.to_string()))
+            .first::<Person>(conn)
+            .await
+            .ok()
+            .map(Into::into)
+        )
+    }
+
+    async fn read_from_name(
+        pool: &DbPool,
+        from_name: &str,
+        include_deleted: bool,
+      ) -> Result<Person, Error> {
+        let conn = &mut get_conn(pool).await?;
+        let mut q = person::table
+          .into_boxed()
+          .filter(person::local.eq(true))
+          .filter(lower(person::name).eq(from_name.to_lowercase()));
+        if !include_deleted {
+          q = q.filter(person::is_deleted.eq(false))
+        }
+        q.first::<Self>(conn).await
+      }
+    
+      async fn read_from_name_and_domain(
+        pool: &DbPool,
+        person_name: &str,
+        for_domain: &str,
+      ) -> Result<Person, Error> {
+        let conn = &mut get_conn(pool).await?;
+    
+        person::table
+          .inner_join(instance::table)
+          .filter(lower(person::name).eq(person_name.to_lowercase()))
+          .filter(instance::domain.eq(for_domain))
+          .select(person::all_columns)
+          .first::<Self>(conn)
+          .await
+      }
 }
