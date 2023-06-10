@@ -1,3 +1,9 @@
+use tinyboards_federation::{
+  fetch::collection_id::CollectionId,
+  fetch::object_id::ObjectId,
+  traits::Collection,
+  traits::Object,
+};
 //use diesel_ltree::Ltree;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -79,11 +85,6 @@ pub struct CommentReplyId(i32);
 #[cfg_attr(feature = "full", diesel(sql_type = diesel::sql_types::Text))]
 pub struct DbUrl(pub(crate) Url);
 
-/*#[derive(Serialize, Deserialize)]
-#[serde(remote = "Ltree")]
-/// Do remote derivation for the Ltree struct
-pub struct LtreeDef(pub String);*/
-
 impl Display for DbUrl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         self.to_owned().0.fmt(f)
@@ -109,4 +110,19 @@ impl Deref for DbUrl {
     fn deref(&self) -> &Self::Target {
         &self.0
     }
+}
+
+impl<T> From<DbUrl> for ObjectId<T> 
+where
+    T: Object + Send + 'static,
+    for<'de2> <T as Object>::Kind: Deserialize<'de2>,
+{
+    fn from(value: DbUrl) -> Self {
+        let url: Url = value.into();
+        ObjectId::from(url)
+    }
+}
+
+impl Default for DbUrl {
+    fn default() -> Self { DbUrl(Url::parse("").ok().unwrap()) }
 }

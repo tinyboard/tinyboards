@@ -4035,6 +4035,7 @@ dependencies = [
  "sha2",
  "strum",
  "strum_macros",
+ "tinyboards_federation",
  "tinyboards_utils",
  "tracing",
  "url",
