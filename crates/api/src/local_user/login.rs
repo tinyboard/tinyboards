@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Login, LoginResponse},
 };
-use tinyboards_db::models::{apub::local_site::LocalSite};
+use tinyboards_db::models::{site::local_site::LocalSite};
 use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 

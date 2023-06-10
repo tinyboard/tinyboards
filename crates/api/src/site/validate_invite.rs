@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{InviteToken, ValidateSiteInvite},
 };
-use tinyboards_db::models::{site::{site_invite::SiteInvite}, apub::local_site::LocalSite};
+use tinyboards_db::models::{site::{site_invite::SiteInvite}, site::local_site::LocalSite};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]

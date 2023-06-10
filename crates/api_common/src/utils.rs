@@ -12,7 +12,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        person::{local_user::*, person_blocks::*}, apub::local_site::LocalSite,
+        person::{local_user::*, person_blocks::*}, site::local_site::LocalSite,
     },
     traits::Crud, SiteMode, 
     utils::DbPool,

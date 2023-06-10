@@ -20,7 +20,7 @@ pub struct LocalUser {
     pub theme: String,
     pub default_sort_type: i16,
     pub default_listing_type: i16,
-    pub lang: String,
+    pub interface_language: String,
     pub email_notifications_enabled: bool,
     pub accepted_application: bool,
     pub is_application_accepted: bool,
@@ -42,7 +42,7 @@ pub struct LocalUserSettings {
     pub default_sort_type: i16,
     pub default_listing_type: i16,
     pub email_notifications_enabled: bool,
-    pub lang: String,
+    pub interface_language: String,
     pub updated: Option<NaiveDateTime>,
 }
 
@@ -63,7 +63,7 @@ pub struct LocalUserForm {
     pub theme: Option<String>,
     pub default_sort_type: Option<i16>,
     pub default_listing_type: Option<i16>,
-    pub lang: Option<String>,
+    pub interface_language: Option<String>,
     pub email_notifications_enabled: Option<bool>,
     pub accepted_application: Option<bool>,
     pub is_application_accepted: Option<bool>,

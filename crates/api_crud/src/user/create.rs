@@ -1,5 +1,5 @@
 use crate::PerformCrud;
-use tinyboards_db::models::apub::local_site::LocalSite;
+use tinyboards_db::models::site::local_site::LocalSite;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use regex::Regex;
@@ -16,7 +16,6 @@ use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::models::person::local_user::*;
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
-//use tinyboards_utils::utils::generate_rand_string;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {

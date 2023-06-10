@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        site::site_invite::{SiteInvite, SiteInviteForm}, apub::local_site::LocalSite,
+        site::site_invite::{SiteInvite, SiteInviteForm}, site::local_site::LocalSite,
     },
     traits::Crud,
 };

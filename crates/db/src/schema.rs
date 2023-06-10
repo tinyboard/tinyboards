@@ -214,6 +214,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    language (id) {
+        id -> Int4,
+        code -> Nullable<Text>,
+        name -> Nullable<Text>,
+    }
+}
+
+diesel::table! {
     local_site (id) {
         id -> Int4,
         site_id -> Int4,
@@ -283,13 +291,21 @@ diesel::table! {
         theme -> Text,
         default_sort_type -> Int2,
         default_listing_type -> Int2,
-        lang -> Text,
+        interface_language -> Text,
         email_notifications_enabled -> Bool,
         accepted_application -> Bool,
         is_application_accepted -> Bool,
         email_verified -> Bool,
         updated -> Nullable<Timestamp>,
         creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
+    local_user_language (id) {
+        id -> Int4,
+        local_user_id -> Nullable<Int4>,
+        language_id -> Nullable<Int4>,
     }
 }
 
@@ -548,6 +564,7 @@ diesel::table! {
         is_stickied -> Bool,
         updated -> Nullable<Timestamp>,
         image -> Nullable<Text>,
+        language_id -> Int4,
     }
 }
 
@@ -651,6 +668,8 @@ diesel::joinable!(federation_blocklist -> instance (instance_id));
 diesel::joinable!(local_site -> site (site_id));
 diesel::joinable!(local_site_rate_limit -> local_site (local_site_id));
 diesel::joinable!(local_user -> person (person_id));
+diesel::joinable!(local_user_language -> language (language_id));
+diesel::joinable!(local_user_language -> local_user (local_user_id));
 diesel::joinable!(mod_add_board -> boards (board_id));
 diesel::joinable!(mod_add_board_mod -> boards (board_id));
 diesel::joinable!(mod_ban_from_board -> boards (board_id));
@@ -680,6 +699,7 @@ diesel::joinable!(post_saved -> posts (post_id));
 diesel::joinable!(post_votes -> person (person_id));
 diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(posts -> boards (board_id));
+diesel::joinable!(posts -> language (language_id));
 diesel::joinable!(posts -> person (creator_id));
 diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site -> person (creator_id));
@@ -706,9 +726,11 @@ diesel::allow_tables_to_appear_in_same_query!(
     federation_allowlist,
     federation_blocklist,
     instance,
+    language,
     local_site,
     local_site_rate_limit,
     local_user,
+    local_user_language,
     mod_add_admin,
     mod_add_board,
     mod_add_board_mod,

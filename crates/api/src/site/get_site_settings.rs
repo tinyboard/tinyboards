@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     site::{GetSiteSettings, GetSiteSettingsResponse},
 };
 use tinyboards_db::{
-    models::{apub::local_site::LocalSite}, SiteMode
+    models::{site::local_site::LocalSite}, SiteMode
 };
 use tinyboards_utils::error::TinyBoardsError;
 

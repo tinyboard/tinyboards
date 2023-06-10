@@ -320,7 +320,7 @@ pub mod safe_type {
         default_sort_type,
         default_listing_type,
         email_notifications_enabled,
-        lang,
+        interface_language,
         updated,
     );
 
@@ -363,7 +363,7 @@ pub mod safe_type {
                 default_sort_type,
                 default_listing_type,
                 email_notifications_enabled,
-                lang,
+                interface_language,
                 updated,
             )
         }

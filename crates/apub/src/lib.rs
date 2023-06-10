@@ -4,12 +4,14 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_utils::{TinyBoardsError, settings::structs::Settings};
 use url::Url;
 use tinyboards_db::{
-    models::apub::{activity::*, local_site::LocalSite, instance::Instance, federation_allowlist::FederationAllowList},
+    models::apub::{activity::*, instance::Instance},
+    models::site::local_site::LocalSite,
     traits::Crud, utils::DbPool,
 };
 
 pub mod api;
 pub mod objects;
+pub mod protocol;
 
 
 pub const FEDERATION_HTTP_FETCH_LIMIT: u32 = 50;
