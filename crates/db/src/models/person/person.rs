@@ -12,7 +12,6 @@ pub struct Person {
     pub id: i32,
     pub name: String,
     pub display_name: Option<String>,
-    pub login_nonce: Option<i32>,
     pub is_banned: bool,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
@@ -63,7 +62,6 @@ pub struct PersonSafe {
 pub struct PersonForm {
     pub name: Option<String>,
     pub display_name: Option<Option<String>>,
-    pub login_nonce: Option<Option<i32>>,
     pub is_banned: Option<bool>,
     pub updated: Option<NaiveDateTime>,
     pub avatar: Option<Option<DbUrl>>,

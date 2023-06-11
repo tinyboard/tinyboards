@@ -83,11 +83,11 @@ impl<'des> PerformCrud<'des> for Register {
         // now we need to create both a local_user and a person (for apub)
         let person_form = PersonForm {
             name: Some(data.username.clone()),
-            actor_id: Some(actor_id.to_string().clone()),
+            actor_id: Some(actor_id.clone()),
             private_key: Some(Some(actor_keypair.private_key)),
             public_key: Some(Some(actor_keypair.public_key)),
-            inbox_url: Some(generate_inbox_url(&actor_id)?.to_string()),
-            shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?.to_string())),
+            inbox_url: Some(generate_inbox_url(&actor_id)?),
+            shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?)),
             ..PersonForm::default()
             // todo - add instance_id in later
         };

@@ -433,7 +433,6 @@ diesel::table! {
         id -> Int4,
         name -> Varchar,
         display_name -> Nullable<Varchar>,
-        login_nonce -> Nullable<Int4>,
         is_banned -> Bool,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,

@@ -55,7 +55,6 @@ impl LocalUser {
 
         let mut claims = BTreeMap::new();
         claims.insert("uid", self.id.to_string());
-        //claims.insert("login_nonce", self.login_nonce.to_string());
 
         let token = Token::new(header, claims)
             .sign_with_key(&key)

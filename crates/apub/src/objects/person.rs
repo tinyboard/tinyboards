@@ -53,6 +53,18 @@ impl Object for ApubPerson {
     }
 
     #[tracing::instrument(skip_all)]
+    async fn read_from_id(
+        object_id: Url,
+        context: &Data<Self::DataType>
+    ) -> Result<Option<Self>, TinyBoardsError> {
+        Ok(
+            DbPerson::read_from_apub_id(context.pool(), &object_id.into())
+            .await?
+            .map(Into::into)
+        )
+    }
+
+    #[tracing::instrument(skip_all)]
     async fn delete(self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
         let form = PersonForm { is_deleted: Some(true), ..PersonForm::default() };
         DbPerson::update(context.pool(), self.id, &form).await?;
@@ -80,15 +92,54 @@ impl Object for ApubPerson {
             published: Some(convert_datetime(self.creation_date)),
             outbox: generate_outbox_url(&self.actor_id)?.into(),
             endpoints: self.shared_inbox_url.clone().map(|s| Endpoints {
-                shared_inbox: Url::parse(&s).ok().unwrap(),
+                shared_inbox: Url::parse(&s.to_string()).ok().unwrap(),
             }),
             public_key: self.public_key(),
             updated: self.updated.map(convert_datetime),
-            inbox: Url::parse(&self.inbox_url.clone()).ok().unwrap().into(),
+            inbox: Url::parse(&self.inbox_url.to_string()).ok().unwrap(),
         };
 
         Ok(person)
     }
+
+    #[tracing::instrument(skip_all)]
+    async fn verify(
+        person: &Person,
+        expected_domain: &Url,
+        context: &Data<Self::DataType>
+    ) -> Result<(), TinyBoardsError> {
+        let local_site_data = fetch_local_site_data(context.pool()).await?;
+
+        verify_domains_match(person.id.inner(), expected_domain)?;
+        check_ap_id_valid_with_strictness(
+            person.id.inner(), 
+            false, 
+            &local_site_data, 
+            context.settings(),
+        )?;
+
+        Ok(())
+    }
+
+    #[tracing::instrument(skip_all)]
+    async fn from_json(
+        person: Person,
+        context: &Data<Self::DataType>, 
+    ) -> Result<ApubPerson, TinyBoardsError> {
+        // let instance_id = fetch_instance_actor_for_object(&person.id, context).await?;
+        
+        // Some users have `name: ""`, need to convert that to `None`
+        let display_name = person.name.filter(|n| !n.is_empty());
+
+        let person_form = PersonForm {
+            name: person.preferred_username,
+            display_name,
+            is_banned: None,
+            
+        };
+    
+    }
+
 }
 
 impl Actor for ApubPerson {
@@ -97,11 +148,11 @@ impl Actor for ApubPerson {
     }
 
     fn public_key_pem(&self) -> &str {
-        &self.public_key
+        &self.public_key.unwrap()
     }
 
     fn private_key_pem(&self) -> Option<String> {
-        &self.private_key.clone()
+        self.private_key.clone()
     }
 
     fn inbox(&self) -> Url {

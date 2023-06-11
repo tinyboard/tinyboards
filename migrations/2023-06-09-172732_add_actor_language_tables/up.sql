@@ -200,3 +200,7 @@ insert into language(code, name) values ('yo', 'Yorùbá');
 insert into language(code, name) values ('za', 'Saɯ cueŋƅ');
 insert into language(code, name) values ('zh', '中文');
 insert into language(code, name) values ('zu', 'isiZulu');
+
+
+-- don't need this column
+alter table person drop column login_nonce;
