@@ -48,9 +48,9 @@ impl<'des> Perform<'des> for Profile {
         let settings = SETTINGS.to_owned();
         let domain = settings.hostname;
         let id = local_user_view.local_user.id;
-        let avatar_url = local_user_view.person.avatar.unwrap_or("".to_string());
+        let avatar_url = local_user_view.person.avatar.unwrap();
         let bio = local_user_view.person.bio.unwrap_or("".to_string());
-        let banner_url = local_user_view.person.banner.unwrap_or("".to_string());
+        let banner_url = local_user_view.person.banner.unwrap();
         let url = format!(
             "https://{domain}/api/v1/users/{name}",
             domain = &domain,

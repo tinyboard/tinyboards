@@ -1,6 +1,7 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use tinyboards_db::newtypes::DbUrl;
 use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LocalUserView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -38,8 +39,8 @@ pub struct ProfileResponse {
     pub username: String,
     pub bio: String,
     pub id: i32,
-    pub avatar_url: String,
-    pub banner_url: String,
+    pub avatar_url: DbUrl,
+    pub banner_url: DbUrl,
     pub url: String,
     pub html_url: String,
     pub saved_url: String,
@@ -91,9 +92,9 @@ pub struct SaveUserSettings {
     pub theme: Option<String>,
     pub default_sort_type: Option<i16>,
     pub default_listing_type: Option<i16>,
-    pub avatar: Option<String>,
-    pub signature: Option<String>,
-    pub banner: Option<String>,
+    pub avatar: Option<DbUrl>,
+    pub signature: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
     pub email: Option<String>,
     pub bio: Option<String>,
 }
@@ -173,7 +174,7 @@ pub struct MarkAllRepliesRead {}
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UsernameInfo {
     pub name: String,
-    pub avatar: Option<String>,
+    pub avatar: Option<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
