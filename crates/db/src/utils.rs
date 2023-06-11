@@ -1,7 +1,7 @@
 use crate::{newtypes::DbUrl, CommentSortType, SortType};
 use diesel::{
     result::{Error as DieselError, Error::QueryBuilderError},
-    PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::{Backend, HasRawValue}, deserialize::FromSql,
+    PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::{Backend}, deserialize::FromSql,
 };
 use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
 use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};
@@ -205,9 +205,9 @@ impl ToSql<Text, Pg> for DbUrl {
   where
     String: FromSql<Text, DB>,
   {
-    fn from_sql(value: <DB as HasRawValue<'_>>::RawValue) -> diesel::deserialize::Result<Self> {
+    fn from_sql(value: DB::RawValue<'_>) -> diesel::deserialize::Result<Self> {
       let str = String::from_sql(value)?;
-      Ok(DbUrl(Url::parse(&str)?))
+      Ok(DbUrl(Box::new(Url::parse(&str)?)))
     }
   }
   
@@ -217,6 +217,7 @@ impl ToSql<Text, Pg> for DbUrl {
     for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
   {
     fn from(id: ObjectId<Kind>) -> Self {
-      DbUrl(id.into())
+      DbUrl(Box::new(id.into()))
     }
   }
+  

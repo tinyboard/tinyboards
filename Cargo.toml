@@ -38,8 +38,8 @@ tinyboards_db = { version = "=0.1.0", path="./crates/db" }
 tinyboards_db_views = { version = "=0.1.0", path="./crates/db_views" }
 tinyboards_db_views_mod = { version = "=0.1.0", path="./crates/db_views_mod" }
 base64 = "0.21.0"
-diesel = { version = "2.0.2", features = ["postgres", "r2d2", "serde_json", "chrono"] }
-diesel-async = "0.1.1"
+diesel = { version = "2.1.0", features = ["postgres", "r2d2", "serde_json", "chrono"] }
+diesel-async = "0.3.1"
 diesel_migrations = "2.0.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = { version = "1.0.91", features = ["preserve_order"] }
@@ -61,7 +61,7 @@ bcrypt = "0.13.0"
 chrono = { version = "0.4.23", features = ["serde"], default-features = false }
 uuid = "1.3.0"
 async-trait = "0.1.58"
-anyhow = "1.0.68"
+anyhow = "1.0.60"
 typed-builder = "0.12.0"
 tokio = "1.25.0"
 sha2 = "0.10.6"

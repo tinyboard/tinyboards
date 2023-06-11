@@ -25,3 +25,4 @@ actix-web = { workspace = true }
 tracing = { workspace = true }
 bb8 = { workspace = true }
 serde_json = { workspace = true }
+serde_with = { workspace = true }

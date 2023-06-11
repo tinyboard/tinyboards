@@ -80,15 +80,36 @@ impl Object for ApubPerson {
             published: Some(convert_datetime(self.creation_date)),
             outbox: generate_outbox_url(&self.actor_id)?.into(),
             endpoints: self.shared_inbox_url.clone().map(|s| Endpoints {
-                shared_inbox: s.into(),
+                shared_inbox: Url::parse(&s).ok().unwrap(),
             }),
             public_key: self.public_key(),
             updated: self.updated.map(convert_datetime),
-            inbox: self.inbox_url.clone().into(),
+            inbox: Url::parse(&self.inbox_url.clone()).ok().unwrap().into(),
         };
 
         Ok(person)
     }
 }
 
+impl Actor for ApubPerson {
+    fn id(&self) -> Url {
+        self.actor_id.inner().clone()
+    }
+
+    fn public_key_pem(&self) -> &str {
+        &self.public_key
+    }
+
+    fn private_key_pem(&self) -> Option<String> {
+        &self.private_key.clone()
+    }
+
+    fn inbox(&self) -> Url {
+        self.inbox_url.clone().into()
+    }
+
+    fn shared_inbox(&self) -> Option<Url> {
+        self.shared_inbox_url.clone().map(Into::into)
+    }
+}
 

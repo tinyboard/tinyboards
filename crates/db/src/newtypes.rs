@@ -12,6 +12,7 @@ use std::{
     ops::Deref,
 };
 use url::Url;
+use diesel::{AsExpression, FromSqlRow};
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
 #[cfg_attr(feature = "full", derive(DieselNewType))]
@@ -80,49 +81,85 @@ pub struct PrivateMessageReportId(i32);
 pub struct CommentReplyId(i32);
 
 #[repr(transparent)]
-#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug)]
-#[cfg_attr(feature = "full", derive(AsExpression, FromSqlRow))]
-#[cfg_attr(feature = "full", diesel(sql_type = diesel::sql_types::Text))]
-pub struct DbUrl(pub(crate) Url);
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, AsExpression, FromSqlRow)]
+#[diesel(sql_type = diesel::sql_types::Text)]
+pub struct DbUrl(pub(crate) Box<Url>);
 
-impl Display for DbUrl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.to_owned().0.fmt(f)
-    }
-}
-
-#[allow(clippy::from_over_into)]
-impl Into<DbUrl> for Url {
-    fn into(self) -> DbUrl {
-        DbUrl(self)
-    }
-}
-#[allow(clippy::from_over_into)]
-impl Into<Url> for DbUrl {
-    fn into(self) -> Url {
-        self.0
-    }
-}
-
-impl Deref for DbUrl {
-    type Target = Url;
-
-    fn deref(&self) -> &Self::Target {
+impl DbUrl {
+    pub fn inner(&self) -> &Url {
         &self.0
     }
 }
 
-impl<T> From<DbUrl> for ObjectId<T> 
-where
-    T: Object + Send + 'static,
-    for<'de2> <T as Object>::Kind: Deserialize<'de2>,
-{
-    fn from(value: DbUrl) -> Self {
-        let url: Url = value.into();
-        ObjectId::from(url)
+impl Display for DbUrl {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+      self.clone().0.fmt(f)
     }
+  }
+
+// the project doesnt compile with From
+#[allow(clippy::from_over_into)]
+impl Into<DbUrl> for Url {
+  fn into(self) -> DbUrl {
+    DbUrl(Box::new(self))
+  }
+}
+#[allow(clippy::from_over_into)]
+impl Into<Url> for DbUrl {
+  fn into(self) -> Url {
+    *self.0
+  }
+}
+#[allow(clippy::from_over_into)]
+impl Into<DbUrl> for String {
+  fn into(self) -> DbUrl {
+    DbUrl(Box::new(Url::parse(&self).ok().unwrap()))
+  }
+}
+
+impl<T> From<DbUrl> for ObjectId<T>
+where
+  T: Object + Send + 'static,
+  for<'de2> <T as Object>::Kind: Deserialize<'de2>,
+{
+  fn from(value: DbUrl) -> Self {
+    let url: Url = value.into();
+    ObjectId::from(url)
+  }
+}
+
+impl<T> From<DbUrl> for CollectionId<T>
+where
+  T: Collection + Send + 'static,
+  for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
+{
+  fn from(value: DbUrl) -> Self {
+    let url: Url = value.into();
+    CollectionId::from(url)
+  }
+}
+
+impl<T> From<CollectionId<T>> for DbUrl
+where
+  T: Collection,
+  for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
+{
+  fn from(value: CollectionId<T>) -> Self {
+    let url: Url = value.into();
+    url.into()
+  }
+}
+
+impl Deref for DbUrl {
+  type Target = Url;
+
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
 }
 
 impl Default for DbUrl {
-    fn default() -> Self { DbUrl(Url::parse("").ok().unwrap()) }
+  fn default() -> Self {
+      DbUrl(Box::new(Url::parse("").ok().unwrap()))
+  }
 }
