@@ -204,3 +204,6 @@ insert into language(code, name) values ('zu', 'isiZulu');
 
 -- don't need this column
 alter table person drop column login_nonce;
+
+-- need the is_admin column though
+alter table person add column is_admin boolean default false not null;

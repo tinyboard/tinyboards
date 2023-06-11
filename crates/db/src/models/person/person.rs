@@ -30,6 +30,7 @@ pub struct Person {
     pub bot_account: bool,
     pub last_refreshed_date: NaiveDateTime,
     pub instance_id: i32,
+    pub is_admin: bool,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -54,6 +55,7 @@ pub struct PersonSafe {
     pub shared_inbox_url: Option<DbUrl>,
     pub bot_account: bool,
     pub last_refreshed_date: NaiveDateTime,
+    pub is_admin: bool,
 }
 
 
@@ -63,6 +65,7 @@ pub struct PersonForm {
     pub name: Option<String>,
     pub display_name: Option<Option<String>>,
     pub is_banned: Option<bool>,
+    pub is_admin: Option<bool>,
     pub updated: Option<NaiveDateTime>,
     pub avatar: Option<Option<DbUrl>>,
     pub signature: Option<Option<DbUrl>>,
@@ -79,4 +82,5 @@ pub struct PersonForm {
     pub bot_account: Option<bool>,
     pub last_refreshed_date: Option<NaiveDateTime>,
     pub instance_id: Option<i32>,
+    pub creation_date: Option<NaiveDateTime>,
 }

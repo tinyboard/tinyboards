@@ -77,11 +77,11 @@ async fn initialize_local_site_and_admin_user(
         // make the admin person form
         let person_admin_form = PersonForm {
             name: Some(setup.admin_username.clone()),
-            actor_id: Some(actor_id.to_string().clone()),
+            actor_id: Some(actor_id.clone()),
             private_key: Some(Some(admin_keypair.private_key)),
             public_key: Some(Some(admin_keypair.public_key)),
-            inbox_url: Some(generate_inbox_url(&actor_id)?.to_string()),
-            shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?.to_string())),
+            inbox_url: Some(generate_inbox_url(&actor_id)?),
+            shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?)),
             ..PersonForm::default()
         };
 

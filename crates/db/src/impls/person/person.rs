@@ -93,6 +93,7 @@ pub mod safe_type {
         shared_inbox_url,
         bot_account,
         last_refreshed_date,
+        is_admin,
     );
 
     impl ToSafe for PersonSafe {
@@ -118,6 +119,7 @@ pub mod safe_type {
                 shared_inbox_url,
                 bot_account,
                 last_refreshed_date,
+                is_admin,
             )
         }
     }

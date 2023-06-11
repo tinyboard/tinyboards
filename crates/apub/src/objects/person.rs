@@ -2,6 +2,7 @@ use crate::{
     check_ap_id_valid_with_strictness,
     fetch_local_site_data, 
     protocol::{objects::{person::{Person, UserTypes}, Endpoints}, ImageObject, Source},
+    objects::{/*instance::fetch_instance_actor_for_object,*/ read_from_string_or_source_opt},
 };
 use tinyboards_federation::{
     config::Data,
@@ -84,7 +85,7 @@ impl Object for ApubPerson {
             id: self.actor_id.clone().into(),
             preferred_username: self.name.clone(),
             name: self.display_name.clone(),
-            summary: Some(self.bio.map(|b| parse_markdown(b.as_str())).unwrap_or_else(|| None).unwrap_or_else(|| String::new())),
+            summary: Some(self.bio.as_ref().map(|b| parse_markdown(b.as_str())).unwrap_or_else(|| None).unwrap_or_else(|| String::new())),
             source: self.bio.clone().map(Source::new),
             icon: self.avatar.clone().map(ImageObject::new),
             image: self.banner.clone().map(ImageObject::new),
@@ -129,15 +130,34 @@ impl Object for ApubPerson {
         // let instance_id = fetch_instance_actor_for_object(&person.id, context).await?;
         
         // Some users have `name: ""`, need to convert that to `None`
-        let display_name = person.name.filter(|n| !n.is_empty());
+        let display_name = Some(person.name.filter(|n| !n.is_empty()));
 
         let person_form = PersonForm {
-            name: person.preferred_username,
+            name: Some(person.preferred_username),
             display_name,
             is_banned: None,
-            
+            is_deleted: Some(false),
+            avatar: Some(person.icon.map(|i| i.url.into())),
+            banner: Some(person.image.map(|i| i.url.into())),
+            creation_date: person.published.map(|u| u.naive_local()),
+            updated: person.updated.map(|u| u.naive_local()),
+            actor_id: Some(person.id.into()),
+            bio: Some(read_from_string_or_source_opt(&person.summary, &None, &person.source)),
+            local: Some(false),
+            is_admin: Some(false),
+            bot_account: Some(person.kind == UserTypes::Service),
+            private_key: None,
+            public_key: Some(Some(person.public_key.public_key_pem)),
+            last_refreshed_date: Some(naive_now()),
+            inbox_url: Some(person.inbox.into()),
+            shared_inbox_url: Some(person.endpoints.map(|e| e.shared_inbox.into())),
+            //instance_id
+            ..PersonForm::default()
         };
-    
+        
+        let person = DbPerson::create(context.pool(), &person_form).await?;
+        
+        Ok(person.into())
     }
 
 }
@@ -148,7 +168,7 @@ impl Actor for ApubPerson {
     }
 
     fn public_key_pem(&self) -> &str {
-        &self.public_key.unwrap()
+        &self.public_key.as_ref().unwrap()
     }
 
     fn private_key_pem(&self) -> Option<String> {
