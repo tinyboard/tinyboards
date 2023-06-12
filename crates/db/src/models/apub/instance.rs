@@ -15,6 +15,6 @@ pub struct Instance {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = instance)]
 pub struct InstanceForm {
-    pub domain: String,
+    pub domain: Option<String>,
     pub updated: Option<NaiveDateTime>,
 }

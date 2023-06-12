@@ -85,12 +85,6 @@ pub struct CommentReplyId(i32);
 #[diesel(sql_type = diesel::sql_types::Text)]
 pub struct DbUrl(pub(crate) Box<Url>);
 
-impl DbUrl {
-    pub fn inner(&self) -> &Url {
-        &self.0
-    }
-}
-
 impl Display for DbUrl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
       self.clone().0.fmt(f)
@@ -161,5 +155,11 @@ impl Deref for DbUrl {
 impl Default for DbUrl {
   fn default() -> Self {
       DbUrl(Box::new(Url::parse("").ok().unwrap()))
+  }
+}
+
+impl DbUrl {
+  pub fn inner(&self) -> &Url {
+    &self.0
   }
 }

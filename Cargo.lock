@@ -4073,6 +4073,7 @@ dependencies = [
  "strum_macros",
  "tinyboards_federation",
  "tinyboards_utils",
+ "tokio",
  "tracing",
  "url",
 ]

@@ -101,10 +101,11 @@ async fn initialize_local_site_and_admin_user(
         // make the default board
         Board::create(pool, &default_board_form).await?;
 
+        // TODO - update this to make a site and a local_site
+
         let site_form = SiteForm {
             name: Some(setup.site_name.clone()),
             description: None,
-            creator_id: Some(inserted_admin_person.id),
             updated: Some(Some(naive_now())),
             ..SiteForm::default()
         };

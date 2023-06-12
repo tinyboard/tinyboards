@@ -74,12 +74,15 @@ impl LanguageTag {
     pub(crate) async fn to_language_id_multiple(
         langs: Vec<Self>,
         pool: &DbPool,
-    ) -> Result<Vec<Option<i32>>, TinyBoardsError> {
+    ) -> Result<Vec<i32>, TinyBoardsError> {
         let mut language_ids = Vec::new();
 
         for l in langs {
             let id = l.identifier;
-            language_ids.push(Language::read_id_from_code(pool, Some(&id)).await?);
+            let lang = Language::read_id_from_code(pool, Some(&id)).await?; 
+            if lang.is_some() {
+                language_ids.push(lang.unwrap());
+            }
         }
 
         Ok(language_ids)
