@@ -220,4 +220,3 @@ impl ToSql<Text, Pg> for DbUrl {
       DbUrl(Box::new(id.into()))
     }
   }
-  

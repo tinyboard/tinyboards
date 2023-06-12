@@ -9,6 +9,7 @@ use url::Url;
 
 pub(crate) mod instance;
 pub(crate) mod person;
+pub(crate) mod group;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Endpoints {

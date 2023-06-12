@@ -64,6 +64,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    board_language (id) {
+        id -> Int4,
+        board_id -> Int4,
+        language_id -> Int4,
+    }
+}
+
+diesel::table! {
     board_mods (id) {
         id -> Int4,
         board_id -> Int4,
@@ -95,7 +103,9 @@ diesel::table! {
 diesel::table! {
     boards (id) {
         id -> Int4,
+        #[max_length = 50]
         name -> Varchar,
+        #[max_length = 150]
         title -> Varchar,
         description -> Nullable<Text>,
         creator_id -> Int4,
@@ -248,6 +258,7 @@ diesel::table! {
         federation_http_fetch_retry_limit -> Int4,
         federation_worker_count -> Int4,
         captcha_enabled -> Bool,
+        #[max_length = 255]
         captcha_difficulty -> Varchar,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
@@ -431,7 +442,9 @@ diesel::table! {
 diesel::table! {
     person (id) {
         id -> Int4,
+        #[max_length = 30]
         name -> Varchar,
+        #[max_length = 30]
         display_name -> Nullable<Varchar>,
         is_banned -> Bool,
         creation_date -> Timestamp,
@@ -547,7 +560,9 @@ diesel::table! {
 diesel::table! {
     posts (id) {
         id -> Int4,
+        #[max_length = 200]
         title -> Varchar,
+        #[max_length = 10]
         type_ -> Varchar,
         url -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
@@ -589,6 +604,7 @@ diesel::table! {
 diesel::table! {
     site (id) {
         id -> Int4,
+        #[max_length = 20]
         name -> Varchar,
         description -> Nullable<Text>,
         creator_id -> Int4,
@@ -619,6 +635,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    site_language (id) {
+        id -> Int4,
+        site_id -> Int4,
+        language_id -> Int4,
+    }
+}
+
+diesel::table! {
     stray_images (id) {
         id -> Int4,
         img_url -> Text,
@@ -645,6 +669,8 @@ diesel::joinable!(admin_purge_comment -> person (admin_id));
 diesel::joinable!(admin_purge_post -> person (admin_id));
 diesel::joinable!(admin_purge_post -> posts (post_id));
 diesel::joinable!(board_aggregates -> boards (board_id));
+diesel::joinable!(board_language -> boards (board_id));
+diesel::joinable!(board_language -> language (language_id));
 diesel::joinable!(board_mods -> boards (board_id));
 diesel::joinable!(board_mods -> person (person_id));
 diesel::joinable!(board_person_bans -> boards (board_id));
@@ -704,6 +730,8 @@ diesel::joinable!(posts -> person (creator_id));
 diesel::joinable!(site -> instance (instance_id));
 diesel::joinable!(site -> person (creator_id));
 diesel::joinable!(site_aggregates -> site (site_id));
+diesel::joinable!(site_language -> language (language_id));
+diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(uploads -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
@@ -713,6 +741,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     admin_purge_post,
     admin_purge_user,
     board_aggregates,
+    board_language,
     board_mods,
     board_person_bans,
     board_subscriptions,
@@ -758,6 +787,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     site,
     site_aggregates,
     site_invite,
+    site_language,
     stray_images,
     uploads,
 );
