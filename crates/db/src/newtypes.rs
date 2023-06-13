@@ -83,11 +83,11 @@ pub struct CommentReplyId(i32);
 #[repr(transparent)]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, AsExpression, FromSqlRow)]
 #[diesel(sql_type = diesel::sql_types::Text)]
-pub struct DbUrl(pub(crate) Box<Url>);
+pub struct DbUrl(pub(crate) Box<Option<Url>>);
 
 impl Display for DbUrl {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-      self.clone().0.fmt(f)
+      self.clone().0.unwrap().fmt(f)
     }
   }
 
@@ -95,19 +95,31 @@ impl Display for DbUrl {
 #[allow(clippy::from_over_into)]
 impl Into<DbUrl> for Url {
   fn into(self) -> DbUrl {
-    DbUrl(Box::new(self))
+    DbUrl(Box::new(Some(self)))
   }
 }
 #[allow(clippy::from_over_into)]
 impl Into<Url> for DbUrl {
   fn into(self) -> Url {
+    self.0.unwrap()
+  }
+}
+#[allow(clippy::from_over_into)]
+impl Into<DbUrl> for Option<Url> {
+  fn into(self) -> DbUrl {
+    DbUrl(Box::new(self))
+  }
+}
+#[allow(clippy::from_over_into)]
+impl Into<Option<Url>> for DbUrl {
+  fn into(self) -> Option<Url> {
     *self.0
   }
 }
 #[allow(clippy::from_over_into)]
 impl Into<DbUrl> for String {
   fn into(self) -> DbUrl {
-    DbUrl(Box::new(Url::parse(&self).ok().unwrap()))
+    DbUrl(Box::new(Some(Url::parse(&self).ok().unwrap())))
   }
 }
 
@@ -117,8 +129,8 @@ where
   for<'de2> <T as Object>::Kind: Deserialize<'de2>,
 {
   fn from(value: DbUrl) -> Self {
-    let url: Url = value.into();
-    ObjectId::from(url)
+    let url: Option<Url> = value.into();
+    ObjectId::from(url.unwrap())
   }
 }
 
@@ -128,8 +140,8 @@ where
   for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
 {
   fn from(value: DbUrl) -> Self {
-    let url: Url = value.into();
-    CollectionId::from(url)
+    let url: Option<Url> = value.into();
+    CollectionId::from(url.unwrap())
   }
 }
 
@@ -145,7 +157,7 @@ where
 }
 
 impl Deref for DbUrl {
-  type Target = Url;
+  type Target = Option<Url>;
 
   fn deref(&self) -> &Self::Target {
     &self.0
@@ -154,12 +166,12 @@ impl Deref for DbUrl {
 
 impl Default for DbUrl {
   fn default() -> Self {
-      DbUrl(Box::new(Url::parse("").ok().unwrap()))
+      DbUrl(Box::new(None))
   }
 }
 
 impl DbUrl {
-  pub fn inner(&self) -> &Url {
+  pub fn inner(&self) -> &Option<Url> {
     &self.0
   }
 }

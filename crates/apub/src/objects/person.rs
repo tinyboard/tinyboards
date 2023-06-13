@@ -164,7 +164,7 @@ impl Object for ApubPerson {
 
 impl Actor for ApubPerson {
     fn id(&self) -> Url {
-        self.actor_id.inner().clone()
+        self.actor_id.clone().into()
     }
 
     fn public_key_pem(&self) -> &str {

@@ -77,62 +77,62 @@ async fn initialize_local_site_and_admin_user(
         // create the admin person object
         let inserted_admin_person = Person::create(pool, &person_admin_form).await?;
 
-        let local_user_admin_form = LocalUserForm {
-            name: Some(setup.admin_username.clone()),
-            passhash: Some(hash_password(setup.admin_password.clone())),
-            is_admin: Some(true),
-            person_id: Some(inserted_admin_person.id),
-            email: Some(setup.admin_email.clone()),
-            ..LocalUserForm::default()
-        };
+    //     let local_user_admin_form = LocalUserForm {
+    //         name: Some(setup.admin_username.clone()),
+    //         passhash: Some(hash_password(setup.admin_password.clone())),
+    //         is_admin: Some(true),
+    //         person_id: Some(inserted_admin_person.id),
+    //         email: Some(setup.admin_email.clone()),
+    //         ..LocalUserForm::default()
+    //     };
 
-        // create the local user admin object
-        LocalUser::create(pool, &local_user_admin_form).await?;
+    //     // create the local user admin object
+    //     LocalUser::create(pool, &local_user_admin_form).await?;
 
-        let default_name = "campfire".to_string();
-        let default_title = "The Default Board".to_string();
+    //     let default_name = "campfire".to_string();
+    //     let default_title = "The Default Board".to_string();
 
-        let default_board_form = BoardForm {
-            name: Some(default_name),
-            title: Some(default_title),
-            creator_id: Some(inserted_admin_person.id.clone()),
-            ..BoardForm::default()
-        };
+    //     let default_board_form = BoardForm {
+    //         name: Some(default_name),
+    //         title: Some(default_title),
+    //         creator_id: Some(inserted_admin_person.id.clone()),
+    //         ..BoardForm::default()
+    //     };
 
-        // make the default board
-        Board::create(pool, &default_board_form).await?;
+    //     // make the default board
+    //     Board::create(pool, &default_board_form).await?;
 
-        // add an entry to the site table
-        let site_key_pair = generate_actor_keypair()?;
-        let site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
+    //     // add an entry to the site table
+    //     let site_key_pair = generate_actor_keypair()?;
+    //     let site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
 
-        let site_form = SiteForm {
-            name: Some(settings
-                    .setup
-                    .clone()
-                    .map(|s| s.site_name)
-                    .unwrap_or_else(|| "New Site".to_string())),
-            instance_id: Some(instance.id.clone()),
-            actor_id: Some(site_actor_id.clone().into()),
-            last_refreshed_date: Some(naive_now()),
-            inbox_url: Some(generate_site_inbox_url(&site_actor_id.into())?),
-            private_key: Some(Some(site_key_pair.private_key)),
-            public_key: Some(site_key_pair.public_key),
-            ..SiteForm::default()
-        };
+    //     let site_form = SiteForm {
+    //         name: Some(settings
+    //                 .setup
+    //                 .clone()
+    //                 .map(|s| s.site_name)
+    //                 .unwrap_or_else(|| "New Site".to_string())),
+    //         instance_id: Some(instance.id.clone()),
+    //         actor_id: Some(site_actor_id.clone().into()),
+    //         last_refreshed_date: Some(naive_now()),
+    //         inbox_url: Some(generate_site_inbox_url(&site_actor_id.into())?),
+    //         private_key: Some(Some(site_key_pair.private_key)),
+    //         public_key: Some(site_key_pair.public_key),
+    //         ..SiteForm::default()
+    //     };
 
-        let inserted_site = Site::create(pool, &site_form).await?;
+    //     let inserted_site = Site::create(pool, &site_form).await?;
 
-        let local_site_form = LocalSiteForm {
-            site_id: Some(inserted_site.id),
-            site_setup: Some(settings.setup.is_some()),
-            ..LocalSiteForm::default()
-        };
+    //     let local_site_form = LocalSiteForm {
+    //         site_id: Some(inserted_site.id),
+    //         site_setup: Some(settings.setup.is_some()),
+    //         ..LocalSiteForm::default()
+    //     };
 
-        let _inserted_local_site = LocalSite::create(pool, &local_site_form).await?;
+    //     let _inserted_local_site = LocalSite::create(pool, &local_site_form).await?;
     }
 
-    info!("admin and site successfully initialized!");
+    // info!("admin and site successfully initialized!");
 
     Ok(())
 }

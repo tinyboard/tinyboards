@@ -149,7 +149,7 @@ impl Object for ApubSite {
 
 impl Actor for ApubSite {
     fn id(&self) -> Url {
-        self.actor_id.inner().clone()
+        self.actor_id.clone().into()
     }
 
     fn public_key_pem(&self) -> &str {

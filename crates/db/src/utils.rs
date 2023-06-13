@@ -197,7 +197,7 @@ pub async fn get_conn(
 
 impl ToSql<Text, Pg> for DbUrl {
     fn to_sql(&self, out: &mut Output<Pg>) -> diesel::serialize::Result {
-      <std::string::String as ToSql<Text, Pg>>::to_sql(&self.0.to_string(), &mut out.reborrow())
+      <std::string::String as ToSql<Text, Pg>>::to_sql(&self.0.clone().unwrap().to_string(), &mut out.reborrow())
     }
   }
   
@@ -207,7 +207,7 @@ impl ToSql<Text, Pg> for DbUrl {
   {
     fn from_sql(value: DB::RawValue<'_>) -> diesel::deserialize::Result<Self> {
       let str = String::from_sql(value)?;
-      Ok(DbUrl(Box::new(Url::parse(&str)?)))
+      Ok(DbUrl(Box::new(Some(Url::parse(&str)?))))
     }
   }
   
@@ -217,6 +217,6 @@ impl ToSql<Text, Pg> for DbUrl {
     for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
   {
     fn from(id: ObjectId<Kind>) -> Self {
-      DbUrl(Box::new(id.into()))
+      DbUrl(Box::new(Some(id.into())))
     }
   }

@@ -14,7 +14,8 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     let mut conn1 = PgConnection::establish(&db_url)
         .expect("could not establish connection");
 
-    update_banned_when_expired(&mut conn1);
+    update_banned_when_expired_local_user(&mut conn1);
+    update_banned_when_expired_person(&mut conn1);
     update_user_aggregates_rep(&mut conn1);
 
     // On startup, reindex the tables non-concurrently
@@ -22,7 +23,8 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
-        update_banned_when_expired(&mut conn1);
+        update_banned_when_expired_local_user(&mut conn1);
+        update_banned_when_expired_person(&mut conn1);
         reindex_aggregates_tables(&mut conn1, true);
     });
 
@@ -61,10 +63,20 @@ fn reindex_table(conn: &mut PgConnection, table_name: &str, concurrently: bool) 
 }
 
 /// Set banned to false after ban expires
-fn update_banned_when_expired(conn: &mut PgConnection) {
+fn update_banned_when_expired_local_user(conn: &mut PgConnection) {
     info!("Updating banned column if it expires ...");
     let update_ban_expires_stmt =
-        "update users set is_banned = false where is_banned = true and unban_date < now()";
+        "update local_user set is_banned = false where is_banned = true and unban_date < now()";
+    sql_query(update_ban_expires_stmt)
+        .execute(conn)
+        .expect("update banned when expires");
+}
+
+
+fn update_banned_when_expired_person(conn: &mut PgConnection) {
+    info!("Updating banned column if it expires ...");
+    let update_ban_expires_stmt =
+        "update person set is_banned = false where is_banned = true and unban_date < now()";
     sql_query(update_ban_expires_stmt)
         .execute(conn)
         .expect("update banned when expires");
