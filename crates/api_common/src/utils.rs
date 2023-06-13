@@ -764,12 +764,14 @@ pub async fn send_application_approval_email(
     name: &str,
     domain: &str,
   ) -> Result<DbUrl, ParseError> {
-    match endpoint_type {
-        EndpointType::Board => Ok(Url::parse(&format!("{domain}/+{name}"))?.into()),
-        EndpointType::Comment => Ok(Url::parse(&format!("{domain}/comment/{name}"))?.into()),
-        EndpointType::Post => Ok(Url::parse(&format!("{domain}/post/{name}"))?.into()),
-        EndpointType::Person => Ok(Url::parse(&format!("{domain}/@{name}"))?.into()),
-    }
+    let point = match endpoint_type {
+        EndpointType::Board => "+",
+        EndpointType::Comment => "comment",
+        EndpointType::Post => "post",
+        EndpointType::Person => "@",
+    };
+
+    Ok(Url::parse(&format!("{domain}/{point}/{name}"))?.into())
   }
 
   pub fn generate_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
