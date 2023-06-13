@@ -92,6 +92,10 @@ pub mod safe_type {
         is_deleted,
         is_nsfw,
         is_hidden,
+        actor_id,
+        subscribers_url,
+        inbox_url,
+        shared_inbox_url
     );
 
     impl ToSafe for BoardSafe {
@@ -107,6 +111,10 @@ pub mod safe_type {
                 is_deleted,
                 is_nsfw,
                 is_hidden,
+                actor_id,
+                subscribers_url,
+                inbox_url,
+                shared_inbox_url
             )
         }
     }

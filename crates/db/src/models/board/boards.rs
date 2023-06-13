@@ -1,4 +1,4 @@
-use crate::schema::boards;
+use crate::{schema::boards, newtypes::DbUrl};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -17,13 +17,13 @@ pub struct Board {
     pub is_deleted: bool,
     pub is_nsfw: bool,
     pub is_hidden: bool,
-    pub actor_id: String,
+    pub actor_id: DbUrl,
     pub local: bool,
     pub private_key: Option<String>,
     pub public_key: Option<String>,
-    pub subscribers_url: String,
-    pub inbox_url: String,
-    pub shared_inbox_url: Option<String>,
+    pub subscribers_url: DbUrl,
+    pub inbox_url: DbUrl,
+    pub shared_inbox_url: Option<DbUrl>,
     pub last_refreshed_date: NaiveDateTime,
     pub instance_id: i32,
 }
@@ -40,13 +40,13 @@ pub struct BoardForm {
     pub is_deleted: Option<bool>,
     pub is_nsfw: Option<bool>,
     pub is_hidden: Option<bool>,
-    pub actor_id: Option<String>,
+    pub actor_id: Option<DbUrl>,
     pub local: Option<bool>,
     pub private_key: Option<Option<String>>,
     pub public_key: Option<Option<String>>,
-    pub subscribers_url: Option<String>,
-    pub inbox_url: Option<String>,
-    pub shared_inbox_url: Option<Option<String>>,
+    pub subscribers_url: Option<DbUrl>,
+    pub inbox_url: Option<DbUrl>,
+    pub shared_inbox_url: Option<Option<DbUrl>>,
     pub last_refreshed_date: Option<NaiveDateTime>,
     pub instance_id: Option<i32>,
 }
@@ -64,4 +64,8 @@ pub struct BoardSafe {
     pub is_deleted: bool,
     pub is_nsfw: bool,
     pub is_hidden: bool,
+    pub actor_id: DbUrl,
+    pub subscribers_url: DbUrl,
+    pub inbox_url: DbUrl,
+    pub shared_inbox_url: Option<DbUrl>,
 }

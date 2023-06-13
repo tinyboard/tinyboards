@@ -69,6 +69,10 @@
     site_name: "My Tiny Board"
     # Email for the admin user (optional, can be omitted and set later through the website)
     admin_email: "user@example.com"
+    # Name of the default board created upon site initialization
+    default_board_name: "campfire"
+    # Description of the default board created upon site initialization
+    default_board_description: ""
   }
   # the domain name of your server (mandatory)
   hostname: "localhost"

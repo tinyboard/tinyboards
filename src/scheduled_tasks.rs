@@ -16,7 +16,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
 
     update_banned_when_expired_local_user(&mut conn1);
     update_banned_when_expired_person(&mut conn1);
-    update_user_aggregates_rep(&mut conn1);
+    update_person_aggregates_rep(&mut conn1);
 
     // On startup, reindex the tables non-concurrently
     reindex_aggregates_tables(&mut conn1, true);
@@ -34,7 +34,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     frequent_scheduler
     .every(TimeUnits::minutes(5))
     .run(move || {
-        update_user_aggregates_rep(&mut conn2);
+        update_person_aggregates_rep(&mut conn2);
     });
 
     // Manually run the scheduler in an event loop
@@ -82,17 +82,17 @@ fn update_banned_when_expired_person(conn: &mut PgConnection) {
         .expect("update banned when expires");
 }
 
-/// update the rep calculation on user_aggregates
-fn update_user_aggregates_rep(conn: &mut PgConnection) {
-    info!("Updating rep values on user_aggregates ...");
-    let update_user_aggregates_rep_stmt = 
-    "update user_aggregates ua
+/// update the rep calculation on person_aggregates
+fn update_person_aggregates_rep(conn: &mut PgConnection) {
+    info!("Updating rep values on person_aggregates ...");
+    let update_person_aggregates_rep_stmt = 
+    "update person_aggregates pa
      set rep = calc.rep
      from (
          select
-             u.id as user_id, 
+             pu.id as person_id, 
              round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep 
-         from users u
+         from person pu
          left join (
              select p.creator_id,
                  count(distinct p.id) as posts,
@@ -100,7 +100,7 @@ fn update_user_aggregates_rep(conn: &mut PgConnection) {
                  from posts p
                  left join post_votes pv on p.id = pv.post_id
                  group by p.creator_id
-             ) pd on u.id = pd.creator_id
+             ) pd on pu.id = pd.creator_id
          left join (
              select c.creator_id,
                  count(distinct c.id) as comments,
@@ -108,10 +108,10 @@ fn update_user_aggregates_rep(conn: &mut PgConnection) {
                  from comments c
                  left join comment_votes cv on c.id = cv.comment_id
                  group by c.creator_id
-             ) cd on u.id = cd.creator_id
+             ) cd on pu.id = cd.creator_id
          ) calc 
-     where ua.user_id = calc.user_id;";
-     sql_query(update_user_aggregates_rep_stmt)
+     where pa.person_id = calc.person_id;";
+     sql_query(update_person_aggregates_rep_stmt)
          .execute(conn)
-         .expect("update user aggregates rep values");
+         .expect("update person aggregates rep values");
 }

@@ -67,6 +67,10 @@
     admin_password: "VMQaLH24Tjc3aGqRfNew"
     # Name of the site (can be changed later)
     site_name: "My Tiny Board"
+    # Name of the default board created upon site initialization
+    default_board_name: "campfire"
+    # Description of the default board created upon site initialization
+    default_board_description: ""
   }
   # the domain name of your server (mandatory)
   hostname: "localhost"

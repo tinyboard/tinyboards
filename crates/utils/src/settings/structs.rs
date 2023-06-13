@@ -113,6 +113,13 @@ pub struct SetupConfig {
   #[doku(example = "user@example.com")]
   #[default(None)]
   pub admin_email: Option<String>,
+  /// Name of the default board created upon site initialization
+  #[doku(example = "campfire")]
+  pub default_board_name: String,
+  /// Description of the default board created upon site initialization
+  #[doku(example = "The Default Board")]
+  #[default(None)]
+  pub default_board_description: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Document, SmartDefault)]
