@@ -11,6 +11,7 @@ use tinyboards_db::{
     models::{person::{local_user::*, person::Person}, site::local_site::LocalSite},
     utils::{diesel_option_overwrite, naive_now},
 };
+use tinyboards_db_views::structs::LoggedInUserView;
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
@@ -142,12 +143,13 @@ impl<'des> Perform<'des> for SaveUserSettings {
             &context.settings().hostname,
         )?;
         
-        // TODO: look into this response, are we really wanting to return the entire local user view (has all fields from Person and LocalUser)
+        // get the LoggedInUserView
+        let logged_in_view = LoggedInUserView::read(context.pool(), updated_user_view.person.id).await?;
 
         // return the jwt
         Ok(LoginResponse {
             jwt: Sensitive::new(new_jwt),
-            user: updated_user_view,
+            user: logged_in_view,
         })
     }
 }

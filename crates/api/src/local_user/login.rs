@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     user::{Login, LoginResponse},
 };
 use tinyboards_db::models::{site::local_site::LocalSite};
-use tinyboards_db_views::structs::LocalUserView;
+use tinyboards_db_views::structs::{LocalUserView, LoggedInUserView};
 use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
 #[async_trait::async_trait(?Send)]
@@ -40,9 +40,11 @@ impl<'des> Perform<'des> for Login {
             return Err(TinyBoardsError::from_message(400, "login failed"));
         }
 
+        let logged_in_view = LoggedInUserView::read(context.pool(), local_user_view.person.id).await?;
+
         Ok(LoginResponse {
             jwt: Sensitive::new(local_user_view.local_user.get_jwt(&context.master_key().jwt)),
-            user: local_user_view,
+            user: logged_in_view,
         })
     }
 }

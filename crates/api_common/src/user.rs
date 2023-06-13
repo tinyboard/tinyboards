@@ -2,7 +2,7 @@ use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use tinyboards_db::newtypes::DbUrl;
-use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LocalUserView};
+use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -20,7 +20,7 @@ pub struct SignupResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LoginResponse {
     pub jwt: Sensitive<String>,
-    pub user: LocalUserView,
+    pub user: LoggedInUserView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
