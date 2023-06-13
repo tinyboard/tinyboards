@@ -134,7 +134,7 @@ alter table board_mods rename column person_id to user_id;
 
 -- board_user_bans
 alter table board_person_bans rename to board_user_bans;
-alter table boauploadfrd_user_bans rename column person_id to user_id;
+alter table board_user_bans rename column person_id to user_id;
 
 -- mod_add_board_mod
 alter table mod_add_board_mod rename column mod_person_id to mod_user_id;
