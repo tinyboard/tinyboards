@@ -1,0 +1,1 @@
+alter table person alter column avatar set default '/assets/default_pfp.png';

@@ -10,7 +10,7 @@ use tinyboards_db::{
 };
 use tinyboards_api_common::utils::{
     generate_inbox_url,
-    generate_local_apud_endpoint,
+    generate_local_apub_endpoint,
     generate_shared_inbox_url,
     EndpointType, generate_site_inbox_url,
 };
@@ -56,7 +56,7 @@ async fn initialize_local_site_and_admin_user(
     if let Some(setup) = &settings.setup {
         
         let person_keypair = generate_actor_keypair()?;
-        let person_actor_id = generate_local_apud_endpoint(
+        let person_actor_id = generate_local_apub_endpoint(
                 EndpointType::Person, 
                 &setup.admin_username, 
               &settings.get_protocol_and_hostname()

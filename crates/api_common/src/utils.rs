@@ -759,7 +759,7 @@ pub async fn send_application_approval_email(
     Comment,
   }
 
-  pub fn generate_local_apud_endpoint(
+  pub fn generate_local_apub_endpoint(
     endpoint_type: EndpointType,
     name: &str,
     domain: &str,
@@ -802,6 +802,5 @@ pub async fn send_application_approval_email(
             String::new()
         },
     );
-
     Ok(Url::parse(&url)?.into())
   }

@@ -85,11 +85,17 @@ pub struct CommentReplyId(i32);
 #[diesel(sql_type = diesel::sql_types::Text)]
 pub struct DbUrl(pub(crate) Box<Url>);
 
-impl Display for DbUrl {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-      self.clone().0.fmt(f)
-    }
+impl DbUrl {
+  pub fn inner(&self) -> &Url {
+    &self.0
   }
+}
+
+impl Display for DbUrl {
+  fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    self.clone().0.fmt(f)
+  }
+}
 
 // the project doesnt compile with From
 #[allow(clippy::from_over_into)]
@@ -142,12 +148,6 @@ impl Deref for DbUrl {
   type Target = Url;
 
   fn deref(&self) -> &Self::Target {
-    &self.0
-  }
-}
-
-impl DbUrl {
-  pub fn inner(&self) -> &Url {
     &self.0
   }
 }

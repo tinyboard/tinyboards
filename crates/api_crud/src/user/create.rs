@@ -8,7 +8,7 @@ use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
 use tinyboards_api_common::{
     sensitive::Sensitive,
     user::{Register, SignupResponse},
-    utils::{send_verification_email, generate_inbox_url, generate_shared_inbox_url, generate_local_apud_endpoint, EndpointType},
+    utils::{send_verification_email, generate_inbox_url, generate_shared_inbox_url, generate_local_apub_endpoint, EndpointType},
 };
 use tinyboards_db::models::person::person::*;
 use tinyboards_db::models::site::registration_applications::{RegistrationApplicationForm, RegistrationApplication};
@@ -76,7 +76,7 @@ impl<'des> PerformCrud<'des> for Register {
 
         let actor_keypair = generate_actor_keypair()?;
 
-        let actor_id = generate_local_apud_endpoint(
+        let actor_id = generate_local_apub_endpoint(
             EndpointType::Person, 
             &data.username, 
             &context.settings().get_protocol_and_hostname()
