@@ -1,7 +1,9 @@
 
 use hmac::{Hmac, Mac};
+use anyhow::Context;
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use sha2::Sha384;
+use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
@@ -9,18 +11,19 @@ use tinyboards_db::{
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
-        site::{registration_applications::RegistrationApplication, site::Site, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        user::{users::User, user_blocks::UserBlock},
+        site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
+        person::{local_user::*, person_blocks::*}, site::local_site::LocalSite,
     },
     traits::Crud, SiteMode, 
     utils::DbPool,
+    newtypes::DbUrl,
 };
-use tinyboards_db_views::structs::{BoardUserBanView, BoardView, UserView, UserSettingsView};
+use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
     settings::structs::{RateLimitSettings, Settings},
-    email::send_email,
+    email::send_email, location_info,
 };
 use uuid::Uuid;
 use base64::{
@@ -83,8 +86,8 @@ pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
 }
 
 // less typing !!
-type UResultOpt = Result<Option<User>, TinyBoardsError>;
-type UResult = Result<User, TinyBoardsError>;
+type UResultOpt = Result<Option<LocalUserView>, TinyBoardsError>;
+type UResult = Result<LocalUserView, TinyBoardsError>;
 
 // Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
 pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
@@ -107,7 +110,36 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
-    User::from_jwt(pool, token, master_key).await
+    let local_user = LocalUser::from_jwt(pool, token, master_key).await?.unwrap();
+    let view = LocalUserView::read(pool, local_user.id).await?;
+
+    Ok(Some(view))
+
+}
+
+pub async fn load_local_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUser>, TinyBoardsError> {
+    if auth.is_none() {
+        return Ok(None);
+    };
+
+    // here it is safe to unwrap, because the above check ensures that `auth` isn't None here
+    let auth = auth.unwrap();
+    if auth.is_empty() {
+        return Ok(None);
+    }
+
+    if !auth.starts_with("Bearer ") {
+        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
+    }
+    // Reference to the string stored in `auth` skipping the `Bearer ` part
+    // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
+    // maybe there's a better solution to this but I feel like this is too memory-consuming.
+    let token = String::from(&auth[7..]);
+    let master_key = master_key.jwt.clone();
+
+    let local_user = LocalUser::from_jwt(pool, token, master_key).await?;
+
+    Ok(local_user)  
 }
 
 /**
@@ -134,7 +166,7 @@ impl From<UResultOpt> for UserResult {
         let u_res = match r {
             Ok(u) => match u {
                 Some(u) => {
-                    if u.is_deleted {
+                    if u.local_user.is_deleted {
                         Err(TinyBoardsError::from_message(
                             401,
                             "you need to be logged in to do this",
@@ -159,7 +191,7 @@ impl From<UResult> for UserResult {
     fn from(r: UResult) -> Self {
         Self(match r {
             Ok(u) => {
-                if u.is_deleted {
+                if u.local_user.is_deleted {
                     Err(TinyBoardsError::from_message(
                         401,
                         "you need to be logged in to do this",
@@ -181,7 +213,7 @@ impl UserResult {
     pub fn not_banned(self) -> Self {
         match self.0 {
             Ok(u) => {
-                return Self(if u.has_active_ban() {
+                return Self(if u.local_user.is_banned {
                     Err(TinyBoardsError::from_message(
                         403,
                         "you are banned from the site",
@@ -197,7 +229,7 @@ impl UserResult {
     pub fn require_admin(self) -> Self {
         Self(match self.0 {
             Ok(u) => {
-                if u.is_admin {
+                if u.local_user.is_admin {
                     Ok(u)
                 } else {
                     Err(TinyBoardsError::from_message(
@@ -214,11 +246,11 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // skip this check for admins :))))
-                if u.is_admin {
+                if u.local_user.is_admin {
                     return Self(Ok(u));
                 }
                 
-                let is_banned = BoardUserBanView::get(pool, u.id, board_id)
+                let is_banned = BoardPersonBanView::get(pool, u.person.id, board_id)
                     .await
                     .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
 
@@ -239,11 +271,11 @@ impl UserResult {
         match self.0 {
             Ok(u) => {
                 // admins can do everything
-                if u.is_admin {
+                if u.local_user.is_admin {
                     return Self(Ok(u));
                 }
 
-                let is_mod = Board::board_has_mod(pool, board_id, u.id).await;
+                let is_mod = Board::board_has_mod(pool, board_id, u.person.id).await;
 
                 let inner = match is_mod {
                     Ok(is_mod) => {
@@ -267,11 +299,11 @@ impl UserResult {
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn get_user_view_from_jwt_opt(
+pub async fn get_local_user_view_from_jwt_opt(
     auth: Option<&str>,
     pool: &DbPool,
     master_key: &Secret,
-) -> Result<Option<UserView>, TinyBoardsError> {
+) -> Result<Option<LocalUserView>, TinyBoardsError> {
     if auth.is_none() {
         return Ok(None);
     }
@@ -292,15 +324,19 @@ pub async fn get_user_view_from_jwt_opt(
     let master_key = master_key.jwt.clone();
 
 
-    UserView::from_jwt(pool, token, master_key).await
+    let local_user = LocalUser::from_jwt(pool, token, master_key).await?.unwrap();
+
+    let local_user_view = LocalUserView::read(pool, local_user.id.clone()).await?;
+
+    Ok(Some(local_user_view))
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn get_user_view_from_jwt(
+pub async fn get_local_user_view_from_jwt(
     auth: Option<&str>,
     pool: &DbPool,
     master_key: &Secret,
-) -> Result<UserView, TinyBoardsError> {
+) -> Result<LocalUserView, TinyBoardsError> {
     if auth.is_none() {
         return Err(TinyBoardsError::from_message(
             401,
@@ -308,9 +344,9 @@ pub async fn get_user_view_from_jwt(
         ));
     }
 
-    let user_view = get_user_view_from_jwt_opt(auth, pool, master_key).await?;
-    match user_view {
-        Some(user_view) => Ok(user_view),
+    let local_user_view = get_local_user_view_from_jwt_opt(auth, pool, master_key).await?;
+    match local_user_view {
+        Some(local_user_view) => Ok(local_user_view),
         None => Err(TinyBoardsError::from_message(
             401,
             "you need to be logged in to do that",
@@ -320,13 +356,13 @@ pub async fn get_user_view_from_jwt(
 
 #[tracing::instrument(skip_all)]
 pub async fn check_registration_application(
-    site: &Site,
-    user_view: &UserView,
+    site: &LocalSite,
+    local_user_view: &LocalUserView,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    if site.require_application && !user_view.user.is_admin && !user_view.user.is_application_accepted {
-        let user_id = user_view.user.id;
-        let registration = RegistrationApplication::find_by_user_id(pool, user_id).await?;
+    if site.require_application && !local_user_view.local_user.is_admin && !local_user_view.local_user.is_application_accepted {
+        let person_id = local_user_view.local_user.person_id;
+        let registration = RegistrationApplication::find_by_person_id(pool, person_id).await?;
 
         if let Some(deny_reason) = registration.deny_reason {
             let registration_denied_message = &deny_reason;
@@ -344,7 +380,7 @@ pub async fn check_registration_application(
 #[tracing::instrument(skip_all)]
 pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
     if score == -1 {
-        let site = Site::read_local(pool).await?;
+        let site = LocalSite::read(pool).await?;
 
         if !site.enable_downvotes {
             return Err(TinyBoardsError::from_message(403, "downvotes are disabled"));
@@ -355,11 +391,11 @@ pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), Ti
 
 #[tracing::instrument(skip_all)]
 pub async fn check_private_instance(
-    user: &Option<User>,
+    user: &Option<LocalUser>,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
-        let site = Site::read_local(pool).await;
+        let site = LocalSite::read(pool).await;
 
         if let Ok(site) = site {
             if site.private_instance {
@@ -415,13 +451,13 @@ pub async fn check_post_deleted_removed_or_locked(
 }
 
 #[tracing::instrument(skip_all)]
-pub async fn check_user_block(
+pub async fn check_person_block(
     my_id: i32,
     other_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     
-    let is_blocked = UserBlock::read(pool, other_id, my_id).await.is_ok();
+    let is_blocked = PersonBlock::read(pool, other_id, my_id).await.is_ok();
 
     if is_blocked {
         Err(TinyBoardsError::from_message(405, "user is blocking you"))
@@ -466,10 +502,10 @@ pub fn get_rate_limit_config(rate_limit_settings: &RateLimitSettings) -> RateLim
 #[tracing::instrument(skip_all)]
 pub async fn is_mod_or_admin(
     pool: &DbPool,
-    user_id: i32,
+    person_id: i32,
     board_id: i32,
 ) -> Result<(), TinyBoardsError> {
-    let is_mod_or_admin = BoardView::is_mod_or_admin(pool, user_id, board_id).await;
+    let is_mod_or_admin = BoardView::is_mod_or_admin(pool, person_id, board_id).await;
 
     if !is_mod_or_admin {
         return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
@@ -493,11 +529,11 @@ pub async fn purge_local_image_by_url(
 }
 
 pub async fn purge_local_image_posts_for_user(
-    banned_user_id: i32,
+    banned_person_id: i32,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
 
-    let posts = Post::fetch_image_posts_for_creator(pool, banned_user_id).await?;
+    let posts = Post::fetch_image_posts_for_creator(pool, banned_person_id).await?;
 
     for post in posts {
         if let Some(url) = post.url {
@@ -509,7 +545,7 @@ pub async fn purge_local_image_posts_for_user(
         }
     }
 
-    Post::remove_post_images_and_thumbnails_for_creator(pool, banned_user_id).await?;
+    Post::remove_post_images_and_thumbnails_for_creator(pool, banned_person_id).await?;
 
     Ok(())
 }
@@ -577,14 +613,14 @@ pub async fn purge_local_image_posts_for_board(
 
   /// Send a verification email
   pub async fn send_verification_email(
-    user: &User,
+    local_user: &LocalUser,
     new_email: &str,
     pool: &DbPool,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
 
     let form = EmailVerificationForm {
-        user_id: user.id,
+        local_user_id: local_user.id,
         email: new_email.to_string(),
         verification_code: Uuid::new_v4().to_string(),
     };
@@ -602,13 +638,13 @@ pub async fn purge_local_image_posts_for_board(
     let subject = format!("Email Verification for your {} Account", &settings.hostname);
     let body = format!(
         "Thank you {} for registering for an account at {}. Please click the link below in order to verify your email: \n\n {}", 
-        &user.name, 
+        &local_user.name, 
         &settings.hostname,
         &verify_link
     );
 
     // send email
-    send_email(&subject, new_email, &user.name, &body, settings)?;
+    send_email(&subject, new_email, &local_user.name, &body, settings)?;
 
     Ok(())
   }
@@ -616,7 +652,7 @@ pub async fn purge_local_image_posts_for_board(
 
   /// Send a verification success email
   pub fn send_email_verification_success(
-    user: &User,
+    user: &LocalUser,
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
     let email = &user.email.clone().expect("email");
@@ -645,7 +681,7 @@ pub async fn send_application_approval_email(
     settings: &Settings,
   ) -> Result<(), TinyBoardsError> {
 
-    let admins = UserSettingsView::list_admins_with_email(pool).await?;
+    let admins = LocalUserSettingsView::list_admins_with_email(pool).await?;
 
     let application_link = &format!(
         "{}/admin/applications",
@@ -664,7 +700,7 @@ pub async fn send_application_approval_email(
 
 
 /// gets current site mode
-  pub fn get_current_site_mode(site: &Site, site_mode: &Option<SiteMode>) -> SiteMode {
+  pub fn get_current_site_mode(site: &LocalSite, site_mode: &Option<SiteMode>) -> SiteMode {
     let mut current_mode = match site_mode {
         Some(SiteMode::OpenMode) => SiteMode::OpenMode,
         Some(SiteMode::ApplicationMode) => SiteMode::ApplicationMode,
@@ -714,4 +750,60 @@ pub async fn send_application_approval_email(
     let file_name = format!("image.{}", img_fmt_string.unwrap());
 
     Ok((bytes, file_name))
+  }
+
+  pub enum EndpointType {
+    Board,
+    Person,
+    Post,
+    Comment,
+  }
+
+  pub fn generate_local_apud_endpoint(
+    endpoint_type: EndpointType,
+    name: &str,
+    domain: &str,
+  ) -> Result<DbUrl, ParseError> {
+    let point = match endpoint_type {
+        EndpointType::Board => "+",
+        EndpointType::Comment => "comment",
+        EndpointType::Post => "post",
+        EndpointType::Person => "@",
+    };
+
+    Ok(Url::parse(&format!("{domain}/{point}/{name}"))?.into())
+  }
+
+  pub fn generate_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/inbox"))?.into())
+  }
+
+  pub fn generate_outbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/outbox"))?.into())
+  }
+
+  pub fn generate_subscribers_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/subscribers"))?.into())
+  }
+
+  pub fn generate_site_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    let mut actor_id: Url = actor_id.clone().into();
+    actor_id.set_path("site_inbox");
+    Ok(actor_id.into())
+  }
+
+  pub fn generate_shared_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, TinyBoardsError> {
+    let actor_id: Url = actor_id.clone().into();
+    let url = format!(
+        "{}://{}{}/inbox",
+        &actor_id.scheme(),
+        &actor_id.host_str().context(location_info!())?,
+        if let Some(port) = actor_id.port() {
+            format!(":{}", port)
+        } else {
+            String::new()
+        },
+    );
+
+    Ok(Url::parse(&url)?.into())
   }

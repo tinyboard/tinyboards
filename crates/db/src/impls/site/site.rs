@@ -1,9 +1,10 @@
 use crate::{
     models::site::site::{Site, SiteForm},
-    traits::Crud, utils::{get_conn, DbPool},
+    traits::Crud, utils::{get_conn, DbPool}, newtypes::DbUrl,
 };
 use diesel::{dsl::*, result::Error, *};
 use diesel_async::RunQueryDsl;
+use url::Url;
 
 #[async_trait::async_trait]
 impl Crud for Site {
@@ -72,5 +73,34 @@ impl Site {
         use crate::schema::site::dsl::*;
         site.first::<Self>(conn)
         .await
+    }
+
+    pub fn instance_actor_id_from_url(mut url: Url) -> Url {
+        url.set_fragment(None);
+        url.set_path("");
+        url.set_query(None);
+        url
+    }
+
+    pub async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
+        use crate::schema::site::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        Ok(
+            site
+                .filter(actor_id.eq(object_id))
+                .first::<Site>(conn)
+                .await
+                .ok()
+                .map(Into::into)
+        )
+    }
+
+    pub async fn read_remote_sites(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        use crate::schema::site::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        site
+            .order_by(id)
+            .offset(1)
+            .get_results::<Self>(conn).await
     }
 }

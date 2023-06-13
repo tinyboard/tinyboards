@@ -39,8 +39,8 @@ impl Comment {
             })
     }
 
-    pub fn is_comment_creator(user_id: i32, comment_creator_id: i32) -> bool {
-        user_id == comment_creator_id
+    pub fn is_comment_creator(person_id: i32, comment_creator_id: i32) -> bool {
+        person_id == comment_creator_id
     }
 
     pub async fn update_deleted(
@@ -161,7 +161,7 @@ impl Moderateable for Comment {
 
         // create mod log entry
         let remove_comment_form = ModRemoveCommentForm {
-            mod_user_id: admin_id.unwrap_or(1),
+            mod_person_id: admin_id.unwrap_or(1),
             comment_id: self.id,
             reason: Some(reason),
             removed: Some(Some(true)),
@@ -188,7 +188,7 @@ impl Moderateable for Comment {
 
         // create mod log entry
         let remove_comment_form = ModRemoveCommentForm {
-            mod_user_id: admin_id.unwrap_or(1),
+            mod_person_id: admin_id.unwrap_or(1),
             comment_id: self.id,
             reason: None,
             removed: Some(Some(false)),

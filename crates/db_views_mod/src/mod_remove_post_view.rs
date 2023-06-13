@@ -2,37 +2,36 @@ use crate::structs::{ModLogParams, ModRemovePostView};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     models::{
-        board::boards::BoardSafe, moderator::mod_actions::ModRemovePost, post::posts::Post,
-        user::users::UserSafe,
+        board::boards::BoardSafe, moderator::mod_actions::ModRemovePost, post::posts::Post, person::person::PersonSafe,
     },
-    schema::{boards, mod_remove_post, posts, users},
+    schema::{boards, mod_remove_post, posts, person},
     traits::{ToSafe, ViewToVec},
     utils::{limit_and_offset, DbPool, get_conn},
 };
 use diesel_async::RunQueryDsl;
 
-type ModRemovePostViewTuple = (ModRemovePost, Option<UserSafe>, Post, BoardSafe);
+type ModRemovePostViewTuple = (ModRemovePost, Option<PersonSafe>, Post, BoardSafe);
 
 impl ModRemovePostView {
     pub async fn list(pool: &DbPool, params: ModLogParams) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
-        let user_alias = diesel::alias!(users as user_1);
-        let mod_id_join = params.mod_user_id.unwrap_or(-1);
+        let person_alias = diesel::alias!(person as person_1);
+        let mod_id_join = params.mod_person_id.unwrap_or(-1);
         let show_mod_names = !params.hide_modlog_names;
         let show_mod_names_expr = show_mod_names.as_sql::<diesel::sql_types::Bool>();
 
-        let mod_names_join = mod_remove_post::mod_user_id
-            .eq(users::id)
-            .and(show_mod_names_expr.or(users::id.eq(mod_id_join)));
+        let mod_names_join = mod_remove_post::mod_person_id
+            .eq(person::id)
+            .and(show_mod_names_expr.or(person::id.eq(mod_id_join)));
 
         let mut query = mod_remove_post::table
-            .left_join(users::table.on(mod_names_join))
+            .left_join(person::table.on(mod_names_join))
             .inner_join(posts::table)
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
-            .inner_join(user_alias.on(posts::creator_id.eq(user_alias.field(users::id))))
+            .inner_join(person_alias.on(posts::creator_id.eq(person_alias.field(person::id))))
             .select((
                 mod_remove_post::all_columns,
-                UserSafe::safe_columns_tuple().nullable(),
+                PersonSafe::safe_columns_tuple().nullable(),
                 posts::all_columns,
                 BoardSafe::safe_columns_tuple(),
             ))
@@ -42,12 +41,12 @@ impl ModRemovePostView {
             query = query.filter(posts::board_id.eq(board_id));
         };
 
-        if let Some(mod_user_id) = params.mod_user_id {
-            query = query.filter(mod_remove_post::mod_user_id.eq(mod_user_id));
+        if let Some(mod_person_id) = params.mod_person_id {
+            query = query.filter(mod_remove_post::mod_person_id.eq(mod_person_id));
         };
 
-        if let Some(other_user_id) = params.other_user_id {
-            query = query.filter(user_alias.field(users::id).eq(other_user_id));
+        if let Some(other_person_id) = params.other_person_id {
+            query = query.filter(person_alias.field(person::id).eq(other_person_id));
         };
 
         let (limit, offset) = limit_and_offset(params.page, params.limit)?;

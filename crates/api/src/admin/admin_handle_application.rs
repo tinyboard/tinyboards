@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm}, user::users::User,
+        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm}, person::local_user::LocalUser,
     },
     traits::Crud,
 };
@@ -29,7 +29,7 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
         let data: &HandleRegistrationApplication = &self;
 
         // only admin should be the one to approve/deny the application
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -49,7 +49,7 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
                 send_application_approval_email(&app_username, &app_email, context.settings()).await?;
             }
             // update user in the db so that their is_application_approved value is true so they can login
-            User::update_is_application_accepted(context.pool(), app.applicant.id.clone(), true).await?;
+            LocalUser::update_is_application_accepted(context.pool(), app.applicant.id.clone(), true).await?;
             // at this point we no longer need the app in the db, so delete it
             RegistrationApplication::delete(context.pool(), app_id.clone()).await?;
 
@@ -58,10 +58,10 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
         } else {
             // if we are denying the application, update the app in the DB with admin who denied it and reason
             let form = RegistrationApplicationForm {
-                user_id: app.application.user_id.clone(),
+                person_id: app.application.person_id.clone(),
                 answer: Some(app.application.answer.clone()),
                 deny_reason: Some(reason),
-                admin_id: Some(Some(user.id.clone())),
+                admin_id: Some(Some(view.person.id.clone())),
             };
             // update the application
             RegistrationApplication::update(context.pool(), app_id.clone(), &form).await?;

@@ -28,10 +28,10 @@ impl Subscribeable for BoardSubscriber {
 
     async fn subscribe(pool: &DbPool, sub_form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, user_id};
+        use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, person_id};
         insert_into(board_subscriptions)
             .values(sub_form)
-            .on_conflict((board_id, user_id))
+            .on_conflict((board_id, person_id))
             .do_update()
             .set(sub_form)
             .get_result::<Self>(conn)
@@ -40,11 +40,11 @@ impl Subscribeable for BoardSubscriber {
 
     async fn unsubscribe(pool: &DbPool, sub_form: &Self::Form) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, user_id};
+        use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, person_id};
         diesel::delete(
             board_subscriptions
                 .filter(board_id.eq(sub_form.board_id))
-                .filter(user_id.eq(sub_form.user_id)),
+                .filter(person_id.eq(sub_form.person_id)),
         )
         .execute(conn)
         .await

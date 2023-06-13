@@ -22,14 +22,14 @@ impl<'des> Perform<'des> for LockObject {
     ) -> Result<Self::Response, TinyBoardsError> {
         let target_object = get_moderateable_object(context.pool(), &self.target_fullname).await?;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .require_board_mod(target_object.get_board_id(), context.pool())
             .await
             .unwrap()?;
 
-            target_object.lock(Some(user.id), context.pool()).await?;
+            target_object.lock(Some(view.person.id), context.pool()).await?;
 
         Ok(Message::new("Locked!"))
     }
@@ -48,14 +48,14 @@ impl<'des> Perform<'des> for UnlockObject {
     ) -> Result<Self::Response, TinyBoardsError> {
         let target_object = get_moderateable_object(context.pool(), &self.target_fullname).await?;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .require_board_mod(target_object.get_board_id(), context.pool())
             .await
             .unwrap()?;
 
-            target_object.unlock(Some(user.id), context.pool()).await?;
+            target_object.unlock(Some(view.person.id), context.pool()).await?;
 
         Ok(Message::new("Unlocked!"))
     }

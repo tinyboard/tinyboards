@@ -3,7 +3,7 @@ pub mod moderator;
 pub mod admin;
 pub mod post;
 pub mod site;
-pub mod user;
+pub mod local_user;
 use actix_web::web::Data;
 use tinyboards_utils::TinyBoardsError;
 

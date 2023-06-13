@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{ListPosts, ListPostsResponse},
-    utils::{check_private_instance, load_user_opt},
+    utils::{check_private_instance, load_local_user_opt},
 };
 use tinyboards_db::{map_to_listing_type, map_to_sort_type};
 use tinyboards_db_views::{post_view::PostQuery, DeleteableOrRemoveable};
@@ -24,10 +24,10 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let data: ListPosts = self;
 
         // check to see if user is logged in or not
-        let user = load_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check to see if the instance is private or not before listing
-        check_private_instance(&user, context.pool()).await?;
+        check_private_instance(&local_user, context.pool()).await?;
 
         let sort = map_to_sort_type(data.sort.as_deref());
         let listing_type = map_to_listing_type(data.listing_type.as_deref());
@@ -35,7 +35,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
         let limit = data.limit;
         let board_id = data.board_id;
         let saved_only = data.saved_only;
-        let user_match = user.clone();
+        let user_match = local_user.clone();
 
         let mut post_query = PostQuery::builder()
             .pool(context.pool())
@@ -56,7 +56,7 @@ impl<'des> PerformCrud<'des> for ListPosts {
             .iter_mut()
             .filter(|p| p.post.is_removed || p.post.is_deleted)
         {
-            pv.hide_if_removed_or_deleted(user.as_ref());
+            pv.hide_if_removed_or_deleted(local_user.as_ref());
         }
         
 

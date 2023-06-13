@@ -16,7 +16,7 @@ impl BoardModerator {
         diesel::delete(
             board_mods
                 .filter(board_id.eq(form.board_id))
-                .filter(user_id.eq(form.user_id)),
+                .filter(person_id.eq(form.person_id)),
         )
         .execute(conn)
         .await

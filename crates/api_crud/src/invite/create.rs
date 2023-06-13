@@ -7,8 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        site::site::Site,
-        site::site_invite::{SiteInvite, SiteInviteForm},
+        site::site_invite::{SiteInvite, SiteInviteForm}, site::local_site::LocalSite,
     },
     traits::Crud,
 };
@@ -33,7 +32,7 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
             .unwrap()?;
 
         // we only create invites if site is in invite mode
-        let site = Site::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
 
         if !site.invite_only {
             return Err(TinyBoardsError::from_message(

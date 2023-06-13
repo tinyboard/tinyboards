@@ -38,7 +38,7 @@ impl<'des> Perform<'des> for BanBoard {
         }
 
         // require a mod/admin for this action
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_board_mod(board_id.clone(), context.pool())
             .await
@@ -49,7 +49,7 @@ impl<'des> Perform<'des> for BanBoard {
 
         // form for submitting remove action to mod log
         let remove_board_form = ModRemoveBoardForm {
-            mod_user_id: user.id,
+            mod_person_id: view.person.id,
             board_id: board_id.clone(),
             reason: Some(reason),
             removed: Some(Some(banned)),

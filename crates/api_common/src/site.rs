@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::SiteMode;
-use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, UserView};
+use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView};
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
     ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
@@ -29,7 +29,7 @@ pub struct SearchResponse {
     pub comments: Vec<CommentView>,
     pub posts: Vec<PostView>,
     pub boards: Vec<BoardView>,
-    pub users: Vec<UserView>,
+    pub users: Vec<PersonView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -38,7 +38,7 @@ pub struct GetFeed {
     pub sort: Option<String>,
     pub creator_id: Option<i32>,
     pub board_id: Option<i32>,
-    pub user_id: Option<i32>,
+    pub person_id: Option<i32>,
     pub search: Option<String>,
     pub saved_only: Option<bool>,
     pub is_nsfw: Option<bool>,
@@ -57,7 +57,7 @@ pub struct GetMembers {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetMembersResponse {
-    pub members: Vec<UserView>,
+    pub members: Vec<PersonView>,
     pub total_count: i64,
 }
 
@@ -79,13 +79,13 @@ impl Message {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetModLog {
-    pub mod_user_id: Option<i32>,
+    pub mod_person_id: Option<i32>,
     pub board_id: Option<i32>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
     #[serde(rename = "type")]
     pub kind: Option<String>,
-    pub other_user_id: Option<i32>,
+    pub other_person_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -110,27 +110,23 @@ pub struct GetSiteSettings {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetSiteSettingsResponse {
-    pub name: String,
-    pub description: String,
     pub site_mode: SiteMode,
     pub enable_downvotes: bool,
     pub enable_nsfw: bool,
     pub application_question: String,
     pub private_instance: bool,
-    pub email_verification_required: bool,
+    pub require_email_verification: bool,
     pub default_avatar: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SaveSiteSettings {
-    pub name: Option<String>,
-    pub description: Option<String>,
     pub site_mode: Option<SiteMode>,
     pub enable_downvotes: Option<bool>,
     pub enable_nsfw: Option<bool>,
     pub application_question: Option<String>,
     pub private_instance: Option<bool>,
-    pub email_verification_required: Option<bool>,
+    pub require_email_verification: Option<bool>,
     pub default_avatar: Option<String>,
 }
 

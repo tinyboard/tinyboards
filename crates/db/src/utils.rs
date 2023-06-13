@@ -1,8 +1,9 @@
 use crate::{newtypes::DbUrl, CommentSortType, SortType};
 use diesel::{
     result::{Error as DieselError, Error::QueryBuilderError},
-    PgConnection, Connection,
+    PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::{Backend}, deserialize::FromSql,
 };
+use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
 use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};
 use bb8::PooledConnection;
 use diesel_async::{
@@ -193,3 +194,29 @@ pub async fn get_conn(
 ) -> Result<PooledConnection<AsyncDieselConnectionManager<AsyncPgConnection>>, DieselError> {
     pool.get().await.map_err(|e| QueryBuilderError(e.into()))
 }
+
+impl ToSql<Text, Pg> for DbUrl {
+    fn to_sql(&self, out: &mut Output<Pg>) -> diesel::serialize::Result {
+      <std::string::String as ToSql<Text, Pg>>::to_sql(&self.0.to_string(), &mut out.reborrow())
+    }
+  }
+  
+  impl<DB: Backend> FromSql<Text, DB> for DbUrl
+  where
+    String: FromSql<Text, DB>,
+  {
+    fn from_sql(value: DB::RawValue<'_>) -> diesel::deserialize::Result<Self> {
+      let str = String::from_sql(value)?;
+      Ok(DbUrl(Box::new(Url::parse(&str)?)))
+    }
+  }
+  
+  impl<Kind> From<ObjectId<Kind>> for DbUrl
+  where
+    Kind: Object + Send + 'static,
+    for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
+  {
+    fn from(id: ObjectId<Kind>) -> Self {
+      DbUrl(Box::new(id.into()))
+    }
+  }

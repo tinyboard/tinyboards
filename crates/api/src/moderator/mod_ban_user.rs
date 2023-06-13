@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
-    models::user::users::User,
+    models::person::local_user::LocalUser,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -25,23 +25,23 @@ impl<'des> Perform<'des> for BanUser {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanUser = &self;
-        let target_user_id = data.target_user_id;
+        let target_person_id = data.target_person_id;
         let banned = data.banned;
         let reason = &data.reason;
         let expires = data.expires;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
 
         // update the user in the database to be banned
-        User::update_ban(context.pool(), target_user_id.clone(), banned.clone()).await?;
+        LocalUser::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
-            mod_user_id: user.id,
-            other_user_id: target_user_id.clone(),
+            mod_person_id: view.person.id,
+            other_person_id: target_person_id.clone(),
             banned: Some(Some(banned)),
             expires: Some(expires),
             reason: Some(reason.clone()),

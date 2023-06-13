@@ -39,7 +39,7 @@ impl<'des> PerformCrud<'des> for CreateBoard {
 
 
         // board creation restricted to admins (may provide other options in the future)
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -52,7 +52,7 @@ impl<'des> PerformCrud<'des> for CreateBoard {
             name: Some(name),
             title: Some(title),
             description: Some(description),
-            creator_id: Some(user.id),
+            creator_id: Some(view.person.id),
             ..BoardForm::default()
         };
 

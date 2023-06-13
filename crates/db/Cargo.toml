@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 tinyboards_utils = { workspace = true }
+tinyboards_federation = { workspace = true }
 chrono = { workspace = true }
 diesel = { workspace = true }
 diesel-async = { workspace = true, features = ["postgres", "bb8"] }
@@ -23,3 +24,6 @@ async-trait = { workspace = true }
 actix-web = { workspace = true }
 tracing = { workspace = true }
 bb8 = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+tokio = { workspace = true }

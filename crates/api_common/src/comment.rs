@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::models::user::users::User;
+use tinyboards_db::models::person::person::Person;
 use tinyboards_db_views::structs::CommentView;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -42,7 +42,7 @@ pub struct ListComments {
     pub post_id: Option<i32>,
     pub parent_id: Option<i32>,
     pub creator_id: Option<i32>,
-    pub user: Option<User>,
+    pub person: Option<Person>,
     pub search_term: Option<String>,
     pub saved_only: Option<bool>,
     pub show_deleted_and_removed: Option<bool>,

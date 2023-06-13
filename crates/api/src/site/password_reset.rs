@@ -7,7 +7,7 @@ use tinyboards_api_common::{
         send_password_reset_success_email,
     },
 };
-use tinyboards_db::models::{site::password_resets::PasswordReset, user::users::User};
+use tinyboards_db::models::{site::password_resets::PasswordReset, person::local_user::LocalUser};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::{error::TinyBoardsError, hash_password, passhash::verify_password};
 
@@ -35,7 +35,7 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
             return Err(TinyBoardsError::from_message(400, "passwords did not match"));
         }
 
-        let user = User::read(context.pool(), reset_request.user_id.clone()).await?;
+        let user = LocalUser::read(context.pool(), reset_request.local_user_id.clone()).await?;
 
         let equals_old_password = verify_password(&user.passhash, &new_password);
 
@@ -46,7 +46,7 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
         let new_passhash = hash_password(new_password);
         
         // actually update the password here
-        User::update_passhash(context.pool(), user.id.clone(), new_passhash).await?;
+        LocalUser::update_passhash(context.pool(), user.id.clone(), new_passhash).await?;
 
         // no longer need the password reset in the db, so delete it here
         PasswordReset::delete(context.pool(), reset_request.id).await?;

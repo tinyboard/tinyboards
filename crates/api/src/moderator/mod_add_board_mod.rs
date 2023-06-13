@@ -29,19 +29,19 @@ impl<'des> Perform<'des> for AddBoardMod {
         let data: &AddBoardMod = &self;
 
         // require admin to add board moderator
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
 
         let added = data.added;
-        let added_user_id = data.added_user_id;
+        let added_person_id = data.added_person_id;
         let added_board_id = data.added_board_id;
 
         // board moderator form (for adding or removing mod status)
         let form = BoardModeratorForm {
             board_id: added_board_id.clone(),
-            user_id: added_board_id.clone(),
+            person_id: added_board_id.clone(),
         };
 
         if added {
@@ -54,8 +54,8 @@ impl<'des> Perform<'des> for AddBoardMod {
 
         // log this mod action
         let mod_add_board_mod_form = ModAddBoardModForm {
-            mod_user_id: user.id,
-            other_user_id: added_user_id.clone(),
+            mod_person_id: view.person.id,
+            other_person_id: added_person_id.clone(),
             removed: Some(Some(!added.clone())),
             board_id: added_board_id.clone(),
         };

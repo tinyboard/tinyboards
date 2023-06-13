@@ -1,4 +1,4 @@
-use crate::{newtypes::UserId, utils::DbPool};
+use crate::{newtypes::{UserId, DbUrl}, utils::DbPool};
 use diesel::{result::Error};
 use tinyboards_utils::TinyBoardsError;
 
@@ -55,7 +55,7 @@ pub trait Voteable {
         Self: Sized;
     async fn remove(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         item_id: Self::IdType,
     ) -> Result<usize, TinyBoardsError>
     where
@@ -157,4 +157,27 @@ pub trait Moderateable {
     async fn lock(&self, admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError>;
     async fn unlock(&self, admin_id: Option<i32>, pool: &DbPool)
         -> Result<(), TinyBoardsError>;
+}
+
+#[async_trait::async_trait]
+pub trait ApubActor {
+    async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error>
+    where
+        Self: Sized;
+    /// - actor_name is the name of the board or user to read
+    /// - include_deleted, if true, will return boards or users that were deleted/removed
+    async fn read_from_name(
+        pool: &DbPool,
+        actor_name: &str,
+        include_deleted: bool,
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
+    async fn read_from_name_and_domain(
+        pool: &DbPool,
+        actor_name: &str,
+        protocol_domain: &str,
+    ) -> Result<Self, Error>
+    where
+        Self: Sized;
 }

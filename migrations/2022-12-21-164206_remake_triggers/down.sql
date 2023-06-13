@@ -2,7 +2,7 @@
 -- remake triggers to match new column/table names
 
 -- drop dm triggers
-drop trigger refresh_dm on dms;
+drop trigger if exists refresh_dm on dms;
 drop function refresh_dm;
 
 -- recreate dm triggers
@@ -69,7 +69,7 @@ begin
       -- User join because posts could be empty
       from user u 
       left join post p on u.id = p.creator_id
-      left join post_vote pv on p.id = pv.post_id
+      left join post_votes pv on p.id = pv.post_id
       group by u.id
     ) pd 
     where ua.user_id = OLD.creator_id;
@@ -108,7 +108,7 @@ begin
 end $$;
 
 create trigger user_aggregates_post_score
-after insert or delete on post_vote
+after insert or delete on post_votes
 for each row
 execute procedure user_aggregates_post_score();
 

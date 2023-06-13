@@ -1,44 +1,54 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::{
     aggregates::structs::{
-        BoardAggregates, CommentAggregates, PostAggregates, SiteAggregates, UserAggregates,
+        BoardAggregates, CommentAggregates, PostAggregates, SiteAggregates, PersonAggregates,
     },
     models::{
         board::boards::BoardSafe,
         comment::{comments::Comment, comment_reply::CommentReply},
         post::posts::Post,
-        site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication},
-        user::{
-            user_mentions::UserMention,
-            users::{UserSafe, UserSettings}, private_messages::PrivateMessage,
+        site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit},
+        person::{
+            person_mentions::*,
+            local_user::*,
+            person::*,
         },
     },
     SubscribedType,
 };
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UserView {
-    pub user: UserSafe,
-    pub counts: UserAggregates,
+pub struct LocalUserView {
+    pub local_user: LocalUser,
+    pub person: Person,
+    pub counts: PersonAggregates,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PersonView {
+    pub person: PersonSafe,
+    pub settings: Option<LocalUserSettings>,
+    pub counts: PersonAggregates,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LoggedInUserView {
-    pub user: UserSafe,
-    pub counts: UserAggregates,
+    pub person: PersonSafe,
+    pub settings: Option<LocalUserSettings>,
+    pub counts: PersonAggregates,
     pub unread_notifications: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UserSettingsView {
-    pub settings: UserSettings,
-    pub counts: UserAggregates,
+pub struct LocalUserSettingsView {
+    pub settings: LocalUserSettings,
+    pub counts: PersonAggregates,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct PostView {
     pub post: Post,
-    pub creator: Option<UserSafe>,
+    pub creator: Option<PersonSafe>,
     pub board: BoardSafe,
     pub creator_banned_from_board: bool, // Left Join BoardUserBan
     pub counts: PostAggregates,
@@ -52,7 +62,7 @@ pub struct PostView {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommentView {
     pub comment: Comment,
-    pub creator: Option<UserSafe>,
+    pub creator: Option<PersonSafe>,
     pub post: Post,
     pub board: BoardSafe,
     pub counts: CommentAggregates,
@@ -66,26 +76,26 @@ pub struct CommentView {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardBlockView {
-    pub user: UserSafe,
+    pub user: PersonSafe,
     pub board: BoardSafe,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardSubscriberView {
     pub board: BoardSafe,
-    pub subscriber: UserSafe,
+    pub subscriber: PersonSafe,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardModeratorView {
     pub board: BoardSafe,
-    pub moderator: UserSafe,
+    pub moderator: PersonSafe,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BoardUserBanView {
+pub struct BoardPersonBanView {
     pub board: BoardSafe,
-    pub user: UserSafe,
+    pub user: PersonSafe,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -98,18 +108,18 @@ pub struct BoardView {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct UserBlockView {
-    pub person: UserSafe,
-    pub target: UserSafe,
+    pub person: PersonSafe,
+    pub target: PersonSafe,
 }
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
-pub struct UserMentionView {
-    pub user_mention: UserMention,
+pub struct PersonMentionView {
+    pub person_mention: PersonMention,
     pub comment: Comment,
-    pub creator: UserSafe,
+    pub creator: PersonSafe,
     pub post: Post,
     pub board: BoardSafe,
-    pub recipient: UserSafe,
+    pub recipient: PersonSafe,
     pub counts: CommentAggregates,
     pub creator_banned_from_board: bool, // Left join BoardUserBan
     pub subscribed: SubscribedType,      // Left join to BoardSubscriber
@@ -126,6 +136,8 @@ pub struct SiteInviteView {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SiteView {
     pub site: Site,
+    pub local_site: LocalSite,
+    pub local_site_rate_limit: LocalSiteRateLimit,
     pub counts: SiteAggregates,
 }
 
@@ -133,10 +145,10 @@ pub struct SiteView {
 pub struct CommentReplyView {
     pub comment_reply: CommentReply,
     pub comment: Comment,
-    pub creator: UserSafe,
+    pub creator: PersonSafe,
     pub post: Post,
     pub board: BoardSafe,
-    pub recipient: UserSafe,
+    pub recipient: PersonSafe,
     pub counts: CommentAggregates,
     pub creator_banned_from_board: bool, // Left Join to BoardUserBan
     pub subscribed: SubscribedType,      // Left join to BoardSubscribers
@@ -145,17 +157,10 @@ pub struct CommentReplyView {
     pub my_vote: Option<i16>,            // Left join to CommentLike
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
-pub struct PrivateMessageView {
-    pub private_message: PrivateMessage,
-    pub creator: UserSafe,
-    pub recipient: UserSafe,
-}
-
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct RegistrationApplicationView {
   pub application: RegistrationApplication,
-  pub applicant_settings: UserSettings,
-  pub applicant: UserSafe,
-  pub admin: Option<UserSafe>,
+  pub applicant_settings: LocalUserSettings,
+  pub applicant: LocalUserSafe,
+  pub admin: Option<LocalUserSafe>,
 }

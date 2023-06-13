@@ -1,4 +1,4 @@
-use crate::schema::site;
+use crate::{schema::site, newtypes::DbUrl};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -8,35 +8,34 @@ use serde::{Deserialize, Serialize};
 pub struct Site {
     pub id: i32,
     pub name: String,
-    pub description: Option<String>,
-    pub creator_id: i32,
+    pub sidebar: Option<String>,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
-    pub enable_downvotes: bool,
-    pub open_registration: bool,
-    pub enable_nsfw: bool,
-    pub require_application: bool,
-    pub application_question: Option<String>,
-    pub private_instance: bool,
-    pub email_verification_required: bool,
-    pub invite_only: bool,
-    pub default_avatar: Option<String>,
+    pub actor_id: DbUrl,
+    pub instance_id: i32,
+    pub icon: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
+    pub description: Option<String>,
+    pub last_refreshed_date: NaiveDateTime,
+    pub inbox_url: DbUrl,
+    pub private_key: Option<String>,
+    pub public_key: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = site)]
 pub struct SiteForm {
     pub name: Option<String>,
-    pub description: Option<String>,
-    pub creator_id: Option<i32>,
+    pub sidebar: Option<Option<String>>,
+    pub creation_date: Option<NaiveDateTime>,
     pub updated: Option<Option<NaiveDateTime>>,
-    pub enable_downvotes: Option<bool>,
-    pub open_registration: Option<bool>,
-    pub enable_nsfw: Option<bool>,
-    pub require_application: Option<bool>,
-    pub application_question: Option<Option<String>>,
-    pub private_instance: Option<bool>,
-    pub email_verification_required: Option<bool>,
-    pub invite_only: Option<bool>,
-    pub default_avatar: Option<Option<String>>,
+    pub actor_id: Option<DbUrl>,
+    pub instance_id: Option<i32>,
+    pub icon: Option<Option<DbUrl>>,
+    pub banner: Option<Option<DbUrl>>,
+    pub description: Option<Option<String>>,
+    pub last_refreshed_date: Option<NaiveDateTime>,
+    pub inbox_url: Option<DbUrl>,
+    pub private_key: Option<Option<String>>,
+    pub public_key: Option<String>,
 }

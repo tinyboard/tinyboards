@@ -29,6 +29,7 @@ webpage = { version = "1.4.0", default-features = false, features = ["serde"] }
 reqwest = { workspace = true }
 base64 = { workspace = true }
 hmac = { workspace = true }
+anyhow = { workspace = true }
 
 [dependencies.uuid]
 version = "1.1.2"

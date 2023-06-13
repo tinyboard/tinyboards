@@ -26,7 +26,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &DeleteComment = &self;
 
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
@@ -41,7 +41,7 @@ impl<'des> PerformCrud<'des> for DeleteComment {
             ));
         }
 
-        if !Comment::is_comment_creator(user.id, orig_comment.creator_id) {
+        if !Comment::is_comment_creator(view.person.id, orig_comment.creator_id) {
             return Err(TinyBoardsError::from_message(
                 403,
                 "comment edit not allowed",

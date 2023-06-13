@@ -16,7 +16,7 @@ impl Voteable for PostVote {
         use crate::schema::post_votes::dsl::*;
         diesel::insert_into(post_votes)
             .values(form)
-            .on_conflict((post_id, user_id))
+            .on_conflict((post_id, person_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -26,7 +26,7 @@ impl Voteable for PostVote {
 
     async fn remove(
         pool: &DbPool,
-        user_id: i32,
+        person_id: i32,
         post_id: i32,
     ) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
@@ -34,7 +34,7 @@ impl Voteable for PostVote {
         diesel::delete(
             dsl::post_votes
                 .filter(dsl::post_id.eq(post_id))
-                .filter(dsl::user_id.eq(user_id)),
+                .filter(dsl::person_id.eq(person_id)),
         )
         .execute(conn)
         .await

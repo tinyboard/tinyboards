@@ -1,7 +1,8 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::{UserView, UserSettingsView, UserMentionView, CommentReplyView};
+use tinyboards_db::newtypes::DbUrl;
+use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -19,7 +20,7 @@ pub struct SignupResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LoginResponse {
     pub jwt: Sensitive<String>,
-    pub user: UserView,
+    pub user: LoggedInUserView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -38,8 +39,8 @@ pub struct ProfileResponse {
     pub username: String,
     pub bio: String,
     pub id: i32,
-    pub avatar_url: String,
-    pub banner_url: String,
+    pub avatar_url: DbUrl,
+    pub banner_url: DbUrl,
     pub url: String,
     pub html_url: String,
     pub saved_url: String,
@@ -80,7 +81,7 @@ pub struct GetUserSettings {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetUserSettingsResponse {
-    pub settings: UserSettingsView,
+    pub settings: LocalUserSettingsView,
 }
 
 
@@ -91,9 +92,9 @@ pub struct SaveUserSettings {
     pub theme: Option<String>,
     pub default_sort_type: Option<i16>,
     pub default_listing_type: Option<i16>,
-    pub avatar: Option<String>,
-    pub signature: Option<String>,
-    pub banner: Option<String>,
+    pub avatar: Option<DbUrl>,
+    pub signature: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
     pub email: Option<String>,
     pub bio: Option<String>,
 }
@@ -133,7 +134,7 @@ pub struct GetUserMentions {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetUserMentionsResponse {
-    pub mentions: Vec<UserMentionView>,
+    pub mentions: Vec<PersonMentionView>,
     pub total_count: i64,
     pub unread_count: i64,
 }
@@ -160,7 +161,6 @@ pub struct GetUnreadCount {}
 pub struct GetUnreadCountResponse {
   pub replies: i64,
   pub mentions: i64,
-  pub messages: i64,
   pub total_count: i64,
 }
 
@@ -174,8 +174,7 @@ pub struct MarkAllRepliesRead {}
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UsernameInfo {
     pub name: String,
-    pub avatar: Option<String>,
-    pub chat_id: String,
+    pub avatar: Option<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

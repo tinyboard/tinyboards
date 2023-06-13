@@ -29,7 +29,7 @@ impl<'des> PerformCrud<'des> for EditComment {
         auth: Option<&str>,
     ) -> Result<CommentResponse, TinyBoardsError> {
         let data: &EditComment = &self;
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .unwrap()?;
@@ -43,7 +43,7 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         check_comment_deleted_or_removed(orig_comment.comment.id, context.pool()).await?;
 
-        if user.id != orig_comment.comment.creator_id {
+        if view.person.id != orig_comment.comment.creator_id {
             return Err(TinyBoardsError::from_message(
                 403,
                 "comment edit not allowed",
@@ -76,7 +76,7 @@ impl<'des> PerformCrud<'des> for EditComment {
         let _recipient_ids = send_notifications(
             mentions, 
             &comment_view.comment, 
-            &user, 
+            &view.person, 
             &orig_comment.post, 
             context,
         ).await?;

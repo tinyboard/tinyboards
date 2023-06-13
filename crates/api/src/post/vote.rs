@@ -28,7 +28,7 @@ impl<'des> Perform<'des> for CreatePostVote {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &CreatePostVote = &self;
-        let user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
             .unwrap()?;
@@ -46,18 +46,18 @@ impl<'des> Perform<'des> for CreatePostVote {
         check_board_deleted_or_removed(post.board_id, context.pool()).await?;
 
         // check if user is banned from board
-        let is_board_banned = Board::board_has_ban(context.pool(), post.board_id, user.id).await?;
+        let is_board_banned = Board::board_has_ban(context.pool(), post.board_id, view.person.id).await?;
 
         if !is_board_banned {
             let vote_form = PostVoteForm {
                 post_id: path.post_id,
-                user_id: user.id,
+                person_id: view.person.id,
                 score: data.score,
             };
 
             // remove any existing votes first
-            let user_id = user.id;
-            PostVote::remove(context.pool(), user_id, post_id).await?;
+            let person_id = view.person.id;
+            PostVote::remove(context.pool(), person_id, post_id).await?;
 
             let do_add = vote_form.score != 0 && (vote_form.score == 1 || vote_form.score == -1);
 
@@ -66,13 +66,13 @@ impl<'des> Perform<'des> for CreatePostVote {
                 PostVote::vote(context.pool(), &cloned_form).await?;
             } else {
                 let cloned_form = vote_form.clone();
-                PostVote::remove(context.pool(), cloned_form.user_id, cloned_form.post_id).await?;
+                PostVote::remove(context.pool(), cloned_form.person_id, cloned_form.post_id).await?;
             }
 
             // mark the post as read here
 
             // grab the post view here for the response
-            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.user_id)).await?;
+            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.person_id)).await?;
 
             Ok(PostResponse { post_view })
         } else {

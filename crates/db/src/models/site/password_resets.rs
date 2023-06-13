@@ -7,14 +7,14 @@ use crate::schema::password_resets;
 #[diesel(table_name = password_resets)]
 pub struct PasswordReset {
     pub id: i32,
-    pub user_id: i32,
     pub reset_token: String,
     pub creation_date: NaiveDateTime,
+    pub local_user_id: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = password_resets)]
 pub struct PasswordResetForm {
-    pub user_id: i32,
     pub reset_token: String,
+    pub local_user_id: i32,
 }

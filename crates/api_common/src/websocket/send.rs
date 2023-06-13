@@ -5,13 +5,12 @@ use tinyboards_db::{
     models::{
         comment::comments::Comment,
         comment::comment_reply::{CommentReply, CommentReplyForm},
-        user::{users::User, user_blocks::UserBlock},
-        user::user_mentions::{UserMention, UserMentionForm},
+        person::{person::*, person_blocks::*, person_mentions::*,},
         post::posts::Post,
     },
     traits::Crud,
 };
-use tinyboards_db_views::structs::{UserView};
+use tinyboards_db_views::structs::PersonView;
 use tinyboards_utils::{error::TinyBoardsError, utils::MentionData};
 
 
@@ -19,7 +18,7 @@ use tinyboards_utils::{error::TinyBoardsError, utils::MentionData};
 pub async fn send_notifications(
     mentions: Vec<MentionData>,
     comment: &Comment,
-    user: &User,
+    person: &Person,
     post: &Post,
     context: &TinyBoardsContext,
 ) -> Result<Vec<i32>, TinyBoardsError> {
@@ -31,28 +30,28 @@ pub async fn send_notifications(
 
     for mention in mentions
         .iter()
-        .filter(|m| m.name.ne(&user.name))
+        .filter(|m| m.name.ne(&person.name))
         .collect::<Vec<&MentionData>>() 
     {
         let mention_name = mention.name.clone();
 
-        let user_view_res = UserView::read_from_name(context.pool(), &mention_name).await;
+        let person_view_res = PersonView::read_from_name(context.pool(), &mention_name).await;
 
-        match user_view_res {
+        match person_view_res {
             // we only proceed with trying to make a user mention if the user view returned successfully
-            Ok(user_view) => {
+            Ok(person_view) => {
 
-                recipient_ids.push(user_view.user.id.clone());
+                recipient_ids.push(person_view.person.id.clone());
                 
-                let user_mention_form = UserMentionForm {
-                    recipient_id: Some(user_view.user.id.clone()),
+                let user_mention_form = PersonMentionForm {
+                    recipient_id: Some(person_view.person.id.clone()),
                     comment_id: Some(comment.id),
                     read: Some(false)
                 };
 
                 // this might fail softly because comment edits might re-update or replace it
                 // the table's uniqueness will handle the fail
-                UserMention::create(context.pool(), &user_mention_form).await.ok();
+                PersonMention::create(context.pool(), &user_mention_form).await.ok();
 
             },
             // do nothing if the user view lookup failed
@@ -65,20 +64,20 @@ pub async fn send_notifications(
     // send comment reply to parent commenter/OP
     if let Some(parent_comment_id) = comment.parent_id {
         let parent_comment = Comment::read(context.pool(), parent_comment_id).await?;
-        let user_id = user.id.clone();
+        let person_id = person.id.clone();
         let parent_creator_id = parent_comment.creator_id.clone();
 
         // only add to recipients if person is not blocked
-        let creator_blocked = UserBlock::read(context.pool(), user_id, parent_creator_id).await.is_ok();
+        let creator_blocked = PersonBlock::read(context.pool(), person_id, parent_creator_id).await.is_ok();
 
         // don't send a notification to yourself dummy
-        if parent_comment.creator_id != user.id && !creator_blocked {
+        if parent_comment.creator_id != person.id && !creator_blocked {
 
-            let user_view = UserView::read(context.pool(), parent_creator_id).await?;
-            recipient_ids.push(user_view.user.id);
+            let person_view = PersonView::read(context.pool(), parent_creator_id).await?;
+            recipient_ids.push(person_view.person.id);
 
             let comment_reply_form = CommentReplyForm {
-                recipient_id: Some(user_view.user.id),
+                recipient_id: Some(person_view.person.id),
                 comment_id: Some(comment.id),
                 read: Some(false),
             };
@@ -90,16 +89,16 @@ pub async fn send_notifications(
 
     } else {
         // if no parent id then send a notification to the OP
-        let user_id = user.id.clone();
+        let person_id = person.id.clone();
         let post_creator_id = post.creator_id.clone();
-        let creator_blocked = UserBlock::read(context.pool(), user_id, post_creator_id).await.is_ok();
+        let creator_blocked = PersonBlock::read(context.pool(), person_id, post_creator_id).await.is_ok();
 
-        if post.creator_id != user.id && !creator_blocked {
+        if post.creator_id != person.id && !creator_blocked {
             let creator_id = post.creator_id;
-            let parent_user_view = UserView::read(context.pool(), creator_id).await?;
+            let parent_person_view = PersonView::read(context.pool(), creator_id).await?;
 
             let comment_reply_form = CommentReplyForm {
-                recipient_id: Some(parent_user_view.user.id),
+                recipient_id: Some(parent_person_view.person.id),
                 comment_id: Some(comment.id),
                 read: Some(false),
             };
