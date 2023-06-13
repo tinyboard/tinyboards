@@ -21,7 +21,7 @@ impl<'des> Perform<'des> for ValidateSiteInvite {
     ) -> Result<(), TinyBoardsError> {
         let token = path.invite_token.clone();
 
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
 
         if !site.invite_only {
             return Err(TinyBoardsError::from_message(

@@ -30,7 +30,7 @@ impl<'des> Perform<'des> for Login {
 
         let local_user_view: LocalUserView = LocalUserView::read(context.pool(), view.local_user.id).await?;
 
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
 
         if site.require_application == true && local_user_view.local_user.is_application_accepted == false {
             return Err(TinyBoardsError::from_message(401, "login failed - application not accepted"));

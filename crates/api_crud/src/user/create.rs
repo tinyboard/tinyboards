@@ -1,5 +1,5 @@
 use crate::PerformCrud;
-use tinyboards_db::models::site::local_site::LocalSite;
+use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
 use actix_web::web::Data;
 use regex::Regex;
@@ -32,20 +32,22 @@ impl<'des> PerformCrud<'des> for Register {
 
         let invite_token = data.invite_token.clone();
 
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site_view = SiteView::read_local(context.pool()).await?;
+        let local_site = site_view.local_site.clone();
 
         // some email verification logic here?
-        if !site.open_registration && site.invite_only && data.invite_token.is_none() {
+        if !local_site.open_registration && local_site.invite_only && data.invite_token.is_none() {
             return Err(TinyBoardsError::from_message(
                 403,
                 "invite is required for registration",
             ));
         }
 
-        if !site.open_registration && site.require_application && data.answer.is_none() {
+        if !local_site.open_registration && local_site.require_application && data.answer.is_none() {
             return Err(TinyBoardsError::from_message(
                 403, 
-                "application answer is required"));
+                "application answer is required"
+            ));
         }
         
         // USERNAME CHECK
@@ -63,7 +65,7 @@ impl<'des> PerformCrud<'des> for Register {
             ));
         }
 
-        if site.require_email_verification && data.email.is_none() {
+        if local_site.require_email_verification && data.email.is_none() {
             return Err(TinyBoardsError::from_message(
                 400,
                 "email verification is required, please provide an email",
@@ -88,8 +90,8 @@ impl<'des> PerformCrud<'des> for Register {
             public_key: Some(Some(actor_keypair.public_key)),
             inbox_url: Some(generate_inbox_url(&actor_id)?),
             shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?)),
+            instance_id: Some(site_view.site.instance_id),
             ..PersonForm::default()
-            // todo - add instance_id in later
         };
 
         let person = Person::create(context.pool(), &person_form).await?;
@@ -105,7 +107,7 @@ impl<'des> PerformCrud<'des> for Register {
         let mut invite = None;
 
         // perform a quick check if the site is in invite_only mode to see if the invite_token is valid
-        if site.invite_only {
+        if local_site.invite_only {
             invite = Some(SiteInvite::read_for_token(context.pool(), &invite_token.unwrap()).await?); // (if the invite token is valid there will be a entry in the db for it)
         }
 
@@ -128,12 +130,12 @@ impl<'des> PerformCrud<'des> for Register {
         //let inserted_user = LocalUser::register(context.pool(), user_form).await?;
 
         // if the user was invited, invalidate the invite token here by removing from db
-        if site.invite_only {
+        if local_site.invite_only {
             SiteInvite::delete(context.pool(), invite.unwrap().id).await?;
         }
 
         // if site is in application mode, add the application to the database
-        if site.require_application {
+        if local_site.require_application {
             let form = RegistrationApplicationForm {
                 person_id: person.id,
                 answer: data.answer.clone(),
@@ -144,7 +146,7 @@ impl<'des> PerformCrud<'des> for Register {
         }
 
         // email the admins regarding the new application
-        if site.require_application {
+        if local_site.require_application {
             send_new_applicant_email_to_admins(&data.username, context.pool(), context.settings())
             .await?;
         }
@@ -152,7 +154,7 @@ impl<'des> PerformCrud<'des> for Register {
         let email = inserted_local_user.email.clone().unwrap_or_default();
 
         // send a verification email if email verification is required
-        if site.require_email_verification {
+        if local_site.require_email_verification {
             send_verification_email(&inserted_local_user, &email, context.pool(), context.settings())
                 .await?;
         }
@@ -165,7 +167,7 @@ impl<'des> PerformCrud<'des> for Register {
             verify_email_sent: false,
         };
 
-        if site.require_application {
+        if local_site.require_application {
             response.registration_created = true;
             response.jwt = None;
         }

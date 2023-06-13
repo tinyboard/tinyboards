@@ -31,7 +31,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             .await
             .unwrap()?;
 
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
         
         // delete old images if new images applied
         let current_avatar = view.person.avatar.clone().unwrap_or_default();

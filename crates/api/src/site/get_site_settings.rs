@@ -22,7 +22,7 @@ impl<'des> Perform<'des> for GetSiteSettings {
         _: Option<&str>,
     ) -> Result<GetSiteSettingsResponse, TinyBoardsError> {
 
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
         
         let mut site_mode = SiteMode::OpenMode;
 

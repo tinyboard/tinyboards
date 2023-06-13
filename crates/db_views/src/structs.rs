@@ -7,7 +7,7 @@ use tinyboards_db::{
         board::boards::BoardSafe,
         comment::{comments::Comment, comment_reply::CommentReply},
         post::posts::Post,
-        site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication},
+        site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit},
         person::{
             person_mentions::*,
             local_user::*,
@@ -136,6 +136,8 @@ pub struct SiteInviteView {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SiteView {
     pub site: Site,
+    pub local_site: LocalSite,
+    pub local_site_rate_limit: LocalSiteRateLimit,
     pub counts: SiteAggregates,
 }
 

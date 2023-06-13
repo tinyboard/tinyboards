@@ -43,7 +43,7 @@ pub(crate) struct LocalSiteData {
 }
 
 pub(crate) async fn fetch_local_site_data(pool: &DbPool) -> Result<LocalSiteData, diesel::result::Error> {
-    let local_site = LocalSite::read_local(pool).await?;
+    let local_site = LocalSite::read(pool).await?;
     let allowed_instances = Instance::allow_list(pool).await?;
     let blocked_instances = Instance::block_list(pool).await?;
     Ok( LocalSiteData { local_site, allowed_instances, blocked_instances })

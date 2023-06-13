@@ -33,7 +33,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             .require_admin()
             .unwrap()?;
 
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
 
         let current_require_app = site.require_application;
 
@@ -94,16 +94,16 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         };
 
         // perform settings update
-        let updated_site = LocalSite::update(context.pool(), site.id, &form).await?;
+        let updated_local_site = LocalSite::update(context.pool(), &form).await?;
 
         Ok(GetSiteSettingsResponse {
             site_mode: get_current_site_mode(&site, &site_mode),
-            enable_downvotes: updated_site.enable_downvotes,
-            enable_nsfw: updated_site.enable_nsfw,
-            application_question: updated_site.application_question.unwrap_or_default(),
-            private_instance: updated_site.private_instance,
-            require_email_verification: updated_site.require_email_verification,
-            default_avatar: updated_site.default_avatar.unwrap_or_default(),
+            enable_downvotes: updated_local_site.enable_downvotes,
+            enable_nsfw: updated_local_site.enable_nsfw,
+            application_question: updated_local_site.application_question.unwrap_or_default(),
+            private_instance: updated_local_site.private_instance,
+            require_email_verification: updated_local_site.require_email_verification,
+            default_avatar: updated_local_site.default_avatar.unwrap_or_default(),
         })
     }
 }

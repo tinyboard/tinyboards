@@ -20,8 +20,8 @@ use tinyboards_api_common::{data::TinyBoardsContext};
 use tinyboards_db::{
     models::{
         apub::actor_language::SiteLanguage,
-        apub::{instance::Instance as DbInstance, language},
-        site::{*, site::Site},
+        apub::{instance::Instance as DbInstance},
+        site::{site::{Site, SiteForm}},
     },
     traits::Crud,
     utils::{naive_now, DbPool},
@@ -81,16 +81,14 @@ impl Object for ApubSite {
     #[tracing::instrument(skip_all)]
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, TinyBoardsError> {
         let site_id = self.id;
-        let lang = SiteLanguage::read(data.pool(), site_id).await?;
-        let mut langs = Vec::new();
-        langs.push(lang.id);
+        let langs = SiteLanguage::read(data.pool(), site_id).await?;
         let language = LanguageTag::new_multiple(langs, data.pool()).await?;
 
         let instance = Instance {
             kind: ApplicationType::Application,
             id: self.id().into(),
             name: self.name.clone(),
-            content: self.sidebar.as_ref().unwrap().map(|d| parse_markdown(d)),
+            content: self.sidebar.as_ref().map(|d| parse_markdown(d)).unwrap(),
             source: self.sidebar.clone().map(Source::new),
             summary: self.description.clone(),
             media_type: self.sidebar.as_ref().map(|_| MediaTypeHtml::Html),
@@ -101,7 +99,7 @@ impl Object for ApubSite {
             public_key: self.public_key(),
             language,
             published: convert_datetime(self.creation_date),
-            updated: convert_datetime(self.updated.unwrap()),
+            updated: Some(convert_datetime(self.updated.unwrap())),
         };
         Ok(instance)
     }
@@ -124,20 +122,21 @@ impl Object for ApubSite {
     async fn from_json(apub: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, TinyBoardsError> {
       let domain = apub.id.inner().domain().expect("group id has domain");
       let instance = DbInstance::read_or_create(data.pool(), domain.to_string()).await?;
-  
-      let site_form = SiteInsertForm {
-        name: apub.name.clone(),
-        sidebar: read_from_string_or_source_opt(&apub.content, &None, &apub.source),
-        updated: apub.updated.map(|u| u.clone().naive_local()),
-        icon: apub.icon.clone().map(|i| i.url.into()),
-        banner: apub.image.clone().map(|i| i.url.into()),
-        description: apub.summary.clone(),
+      
+      let site_form = SiteForm {
+        name: Some(apub.name.clone()),
+        sidebar: Some(read_from_string_or_source_opt(&apub.content, &None, &apub.source)),
+        updated: Some(apub.updated.map(|u| u.clone().naive_local())),
+        icon: apub.icon.clone().map(|i| Some(i.url.into())),
+        banner: apub.image.clone().map(|i| Some(i.url.into())),
+        description: Some(apub.summary.clone()),
         actor_id: Some(apub.id.clone().into()),
-        last_refreshed_at: Some(naive_now()),
+        last_refreshed_date: Some(naive_now()),
         inbox_url: Some(apub.inbox.clone().into()),
         public_key: Some(apub.public_key.public_key_pem.clone()),
         private_key: None,
-        instance_id: instance.id,
+        instance_id: Some(instance.id),
+        creation_date: Some(naive_now()),
       };
       let languages = LanguageTag::to_language_id_multiple(apub.language, data.pool()).await?;
   
@@ -168,27 +167,37 @@ impl Actor for ApubSite {
 
 
 
-// // /// Try to fetch the instance actor (to make things like site rules available)
-// pub(in crate::objects) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
-//     object_id: &T,
-//     context: &Data<TinyBoardsContext>,
-// ) -> Result<i32, TinyBoardsError> {
-//     let object_id: Url = object_id.clone().into();
-//     let instance_id = Site::instance_actor_id_from_url(object_id);
-//     let site = ObjectId::<ApubSite>::from(instance_id.clone())
-//         .dereference(context)
-//         .await;
+/// Try to fetch the instance actor (to make things like site rules available)
+pub(in crate::objects) async fn fetch_instance_actor_for_object<T: Into<Url> + Clone>(
+    object_id: &T,
+    context: &Data<TinyBoardsContext>,
+) -> Result<i32, TinyBoardsError> {
+    let object_id: Url = object_id.clone().into();
+    let instance_id = Site::instance_actor_id_from_url(object_id);
+    let site = ObjectId::<ApubSite>::from(instance_id.clone())
+        .dereference(context)
+        .await;
 
-//     match site {
-//         Ok(s) => Ok(s.instance_id),
-//         Err(e) => {
-//             debug!("Failed to dereference site for {}: {}", &instance_id, e);
-//             let domain = instance_id.domain().expect("has domain");
-//             Ok(
-//                 DbInstance::read_or_create(context.pool(), domain.to_string())
-//                     .await?
-//                     .id,
-//             )
-//         }
-//     }
-// }
+    match site {
+        Ok(s) => Ok(s.instance_id),
+        Err(e) => {
+            debug!("Failed to dereference site for {}: {}", &instance_id, e);
+            let domain = instance_id.domain().expect("has domain");
+            Ok(
+                DbInstance::read_or_create(context.pool(), domain.to_string())
+                    .await?
+                    .id,
+            )
+        }
+    }
+}
+
+pub(crate) async fn remote_instance_inboxes(pool: &DbPool) -> Result<Vec<Url>, TinyBoardsError> {
+    Ok(
+      Site::read_remote_sites(pool)
+        .await?
+        .into_iter()
+        .map(|s| ApubSite::from(s).shared_inbox_or_inbox())
+        .collect::<Vec<Url>>(),
+    )
+  }

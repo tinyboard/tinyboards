@@ -32,7 +32,7 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
             .unwrap()?;
 
         // we only create invites if site is in invite mode
-        let site = LocalSite::read_local(context.pool()).await?;
+        let site = LocalSite::read(context.pool()).await?;
 
         if !site.invite_only {
             return Err(TinyBoardsError::from_message(

@@ -380,7 +380,7 @@ pub async fn check_registration_application(
 #[tracing::instrument(skip_all)]
 pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
     if score == -1 {
-        let site = LocalSite::read_local(pool).await?;
+        let site = LocalSite::read(pool).await?;
 
         if !site.enable_downvotes {
             return Err(TinyBoardsError::from_message(403, "downvotes are disabled"));
@@ -395,7 +395,7 @@ pub async fn check_private_instance(
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
-        let site = LocalSite::read_local(pool).await;
+        let site = LocalSite::read(pool).await;
 
         if let Ok(site) = site {
             if site.private_instance {
@@ -784,6 +784,12 @@ pub async fn send_application_approval_email(
 
   pub fn generate_subscribers_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
     Ok(Url::parse(&format!("{actor_id}/subscribers"))?.into())
+  }
+
+  pub fn generate_site_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    let mut actor_id: Url = actor_id.clone().into();
+    actor_id.set_path("site_inbox");
+    Ok(actor_id.into())
   }
 
   pub fn generate_shared_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, TinyBoardsError> {

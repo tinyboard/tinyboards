@@ -39,6 +39,7 @@ pub struct LocalSite {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = local_site)]
 pub struct LocalSiteForm {
+    pub site_id: Option<i32>,
     pub site_setup: Option<bool>,
     pub invite_only: Option<bool>,
     pub enable_downvotes: Option<bool>,

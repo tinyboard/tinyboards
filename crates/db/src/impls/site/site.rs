@@ -94,4 +94,13 @@ impl Site {
                 .map(Into::into)
         )
     }
+
+    pub async fn read_remote_sites(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        use crate::schema::site::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        site
+            .order_by(id)
+            .offset(1)
+            .get_results::<Self>(conn).await
+    }
 }

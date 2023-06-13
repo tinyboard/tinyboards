@@ -38,5 +38,5 @@ pub struct Instance {
     #[serde(default)]
     pub(crate) language: Vec<LanguageTag>,
     pub(crate) published: DateTime<FixedOffset>,
-    pub(crate) updated: DateTime<FixedOffset>,
+    pub(crate) updated: Option<DateTime<FixedOffset>>,
 }
