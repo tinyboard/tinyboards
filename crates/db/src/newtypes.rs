@@ -104,12 +104,6 @@ impl Into<Url> for DbUrl {
     *self.0
   }
 }
-#[allow(clippy::from_over_into)]
-impl Into<DbUrl> for String {
-  fn into(self) -> DbUrl {
-    DbUrl(Box::new(Url::parse(&self).ok().unwrap()))
-  }
-}
 
 impl<T> From<DbUrl> for ObjectId<T>
 where
