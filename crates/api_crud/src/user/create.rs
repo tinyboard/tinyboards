@@ -86,10 +86,10 @@ impl<'des> PerformCrud<'des> for Register {
         let person_form = PersonForm {
             name: Some(data.username.clone()),
             actor_id: Some(actor_id.clone()),
-            private_key: Some(Some(actor_keypair.private_key)),
-            public_key: Some(Some(actor_keypair.public_key)),
+            private_key: Some(actor_keypair.private_key),
+            public_key: Some(actor_keypair.public_key),
             inbox_url: Some(generate_inbox_url(&actor_id)?),
-            shared_inbox_url: Some(Some(generate_shared_inbox_url(&actor_id)?)),
+            shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
             instance_id: Some(site_view.site.instance_id),
             ..PersonForm::default()
         };

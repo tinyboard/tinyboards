@@ -35,15 +35,15 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let site = LocalSite::read(context.pool()).await?;
         
         // delete old images if new images applied
-        let current_avatar = view.person.avatar.clone().unwrap_or_default();
-        let current_banner = view.person.banner.clone().unwrap_or_default();
-        let current_signature = view.person.signature.clone().unwrap_or_default();
+        let current_avatar = view.person.avatar.clone();
+        let current_banner = view.person.banner.clone();
+        let current_signature = view.person.signature.clone();
         
         let avatar = data.avatar.clone();
         let banner = data.banner.clone();
         let signature = data.signature.clone();
 
-        let bio = diesel_option_overwrite(&data.bio);
+        let bio = data.bio.clone();
         let email_deref = data.email.as_deref().map(str::to_lowercase);
         let email = match email_deref {
             Some(email) => {
@@ -57,20 +57,26 @@ impl<'des> Perform<'des> for SaveUserSettings {
         };
 
         if let Some(avatar) = avatar.clone() {
-            if avatar != current_avatar && !avatar.to_string().is_empty() && !current_avatar.to_string().is_empty() {
-                purge_local_image_by_url(context.pool(), &current_avatar.to_string()).await?;
+            if let Some(current_avatar) = current_avatar.clone() {
+                if avatar != current_avatar && !avatar.to_string().is_empty() && !current_avatar.to_string().is_empty() {
+                    purge_local_image_by_url(context.pool(), &current_avatar.to_string()).await?;
+                }
             }
         };
 
         if let Some(banner) = banner.clone() {
-            if banner != current_banner && !banner.to_string().is_empty() && !current_banner.to_string().is_empty() {
-                purge_local_image_by_url(context.pool(), &current_banner.to_string()).await?;
+            if let Some(current_banner) = current_banner {
+                if banner != current_banner && !banner.to_string().is_empty() && !current_banner.to_string().is_empty() {
+                    purge_local_image_by_url(context.pool(), &current_banner.to_string()).await?;
+                }
             }
         };
 
         if let Some(signature) = signature.clone() {
-            if signature != current_signature && !signature.to_string().is_empty() && !current_signature.to_string().is_empty() {
-                purge_local_image_by_url(context.pool(), &current_signature.to_string()).await?;
+            if let Some(current_signature) = current_signature.clone() {
+                if signature != current_signature && !signature.to_string().is_empty() && !current_signature.to_string().is_empty() {
+                    purge_local_image_by_url(context.pool(), &current_signature.to_string()).await?;
+                }            
             }
         };
 
@@ -92,7 +98,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             return Err(TinyBoardsError::from_message(400, "email required"));
         }
 
-        if let Some(Some(bio)) = &bio {
+        if let Some(bio) = &bio {
             // seems sort of arbitrary? do we want a setting for this length somewhere?
             if bio.chars().count() > 300 {
                 return Err(TinyBoardsError::from_message(400, "bio too long"));
@@ -106,9 +112,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let person_form = PersonForm {
             bio,
-            avatar: Some(avatar.clone()),
-            signature: Some(signature.clone()),
-            banner: Some(banner.clone()),
+            avatar: avatar.clone(),
+            signature: signature.clone(),
+            banner: banner.clone(),
             updated: updated,
             ..PersonForm::default()
         };

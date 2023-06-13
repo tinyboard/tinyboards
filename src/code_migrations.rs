@@ -62,17 +62,17 @@ async fn initialize_local_site_and_admin_user(
               &settings.get_protocol_and_hostname()
             )?;
         
-        // make the admin person form
-        let person_admin_form = PersonForm {
-            name: Some(setup.admin_username.clone()),
-            actor_id: Some(person_actor_id.clone()),
-            private_key: Some(Some(person_keypair.private_key)),
-            public_key: Some(Some(person_keypair.public_key)),
-            inbox_url: Some(generate_inbox_url(&person_actor_id)?),
-            shared_inbox_url: Some(Some(generate_shared_inbox_url(&person_actor_id)?)),
-            instance_id: Some(instance.id),
-            ..PersonForm::default()
-        };
+        
+        let person_admin_form = PersonForm::builder()
+            .name(Some(setup.admin_username.clone()))
+            .is_admin(Some(true))
+            .actor_id(Some(person_actor_id.clone()))
+            .private_key(Some(person_keypair.private_key))
+            .public_key(Some(person_keypair.public_key))
+            .inbox_url(Some(generate_inbox_url(&person_actor_id)?))
+            .shared_inbox_url(Some(generate_shared_inbox_url(&person_actor_id)?))
+            .instance_id(Some(instance.id.clone()))
+            .build();
 
         // create the admin person object
         let inserted_admin_person = Person::create(pool, &person_admin_form).await?;

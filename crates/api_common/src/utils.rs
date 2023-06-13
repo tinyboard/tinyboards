@@ -787,18 +787,18 @@ pub async fn send_application_approval_email(
   }
 
   pub fn generate_site_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
-    let actor_id: Option<Url> = actor_id.clone().into();
-    actor_id.clone().unwrap().set_path("site_inbox");
+    let actor_id: Url = actor_id.clone().into();
+    actor_id.clone().set_path("site_inbox");
     Ok(actor_id.into())
   }
 
   pub fn generate_shared_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, TinyBoardsError> {
-    let actor_id: Option<Url> = actor_id.clone().into();
+    let actor_id: Url = actor_id.clone().into();
     let url = format!(
         "{}://{}{}/inbox",
-        &actor_id.clone().unwrap().scheme(),
-        &actor_id.clone().unwrap().host_str().context(location_info!())?,
-        if let Some(port) = actor_id.clone().unwrap().port() {
+        &actor_id.clone().scheme(),
+        &actor_id.clone().host_str().context(location_info!())?,
+        if let Some(port) = actor_id.clone().port() {
             format!(":{}", port)
         } else {
             String::new()

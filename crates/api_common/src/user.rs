@@ -34,13 +34,13 @@ pub struct Register {
     pub answer: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProfileResponse {
     pub username: String,
     pub bio: String,
     pub id: i32,
-    pub avatar_url: DbUrl,
-    pub banner_url: DbUrl,
+    pub avatar_url: Option<DbUrl>,
+    pub banner_url: Option<DbUrl>,
     pub url: String,
     pub html_url: String,
     pub saved_url: String,
