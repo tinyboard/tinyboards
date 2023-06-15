@@ -9,7 +9,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{person::person::PersonForm},
     models::{person::{local_user::*, person::Person}, site::local_site::LocalSite},
-    utils::{diesel_option_overwrite, naive_now},
+    utils::{naive_now},
 };
 use tinyboards_db_views::structs::LoggedInUserView;
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};

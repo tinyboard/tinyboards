@@ -7,7 +7,6 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{person::local_user::LocalUser, site::local_site::{LocalSite, LocalSiteForm}},
-    traits::Crud,
     utils::naive_now,
     SiteMode,
 };

@@ -205,6 +205,9 @@ impl Crud for Post {
         let conn = &mut get_conn(pool).await?;
         let new_post = diesel::insert_into(posts::table)
             .values(form)
+            .on_conflict(posts::ap_id)
+            .do_update()
+            .set(form)
             .get_result::<Self>(conn)
             .await?;
 

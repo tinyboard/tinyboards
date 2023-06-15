@@ -186,6 +186,7 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
         board_id -> Int4,
+        local -> Bool,
         ap_id -> Nullable<Text>,
         language_id -> Int4,
     }
@@ -581,6 +582,7 @@ diesel::table! {
         image -> Nullable<Text>,
         language_id -> Int4,
         ap_id -> Nullable<Text>,
+        local -> Bool,
     }
 }
 

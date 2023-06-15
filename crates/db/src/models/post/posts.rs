@@ -26,6 +26,7 @@ pub struct Post {
     pub image: Option<DbUrl>,
     pub language_id: i32,
     pub ap_id: Option<DbUrl>,
+    pub local: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -49,4 +50,6 @@ pub struct PostForm {
     pub image: Option<DbUrl>,
     pub language_id: Option<i32>,
     pub ap_id: Option<DbUrl>,
+    pub creation_date: Option<NaiveDateTime>,
+    pub local: Option<bool>,
 }
