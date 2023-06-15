@@ -784,6 +784,14 @@ pub async fn send_application_approval_email(
     Ok(Url::parse(&format!("{actor_id}/subscribers"))?.into())
   }
 
+  pub fn generate_moderators_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/mods"))?.into())
+  }
+
+  pub fn generate_featured_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/featured"))?.into())
+  }
+
   pub fn generate_site_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
     let actor_id: Url = actor_id.clone().into();
     actor_id.clone().set_path("site_inbox");

@@ -4,7 +4,7 @@ use tinyboards_db::{
         BoardAggregates, CommentAggregates, PostAggregates, SiteAggregates, PersonAggregates,
     },
     models::{
-        board::boards::BoardSafe,
+        board::boards::{BoardSafe, Board},
         comment::{comments::Comment, comment_reply::CommentReply},
         post::posts::Post,
         site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit},
@@ -82,8 +82,8 @@ pub struct BoardBlockView {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardSubscriberView {
-    pub board: BoardSafe,
-    pub subscriber: PersonSafe,
+    pub board: Board,
+    pub subscriber: Person,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

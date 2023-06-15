@@ -26,6 +26,11 @@ pub struct Board {
     pub shared_inbox_url: Option<DbUrl>,
     pub last_refreshed_date: NaiveDateTime,
     pub instance_id: i32,
+    pub moderators_url: Option<DbUrl>,
+    pub featured_url: Option<DbUrl>,
+    pub icon: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
+    pub posting_restricted_to_mods: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -49,6 +54,11 @@ pub struct BoardForm {
     pub shared_inbox_url: Option<Option<DbUrl>>,
     pub last_refreshed_date: Option<NaiveDateTime>,
     pub instance_id: Option<i32>,
+    pub moderators_url: Option<DbUrl>,
+    pub featured_url: Option<DbUrl>,
+    pub icon: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
+    pub posting_restricted_to_mods: Option<bool>,
 }
 
 /// A safe representation of board, without the sensitive info
@@ -58,6 +68,8 @@ pub struct BoardSafe {
     pub id: i32,
     pub name: String,
     pub title: String,
+    pub icon: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
     pub description: Option<String>,
     pub creation_date: chrono::NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
@@ -68,4 +80,6 @@ pub struct BoardSafe {
     pub subscribers_url: DbUrl,
     pub inbox_url: DbUrl,
     pub shared_inbox_url: Option<DbUrl>,
+    pub moderators_url: Option<DbUrl>,
+    pub featured_url: Option<DbUrl>,
 }

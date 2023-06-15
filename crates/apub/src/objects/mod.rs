@@ -7,6 +7,8 @@ use url::Url;
 
 pub mod person;
 pub mod instance;
+pub mod post;
+pub mod board;
 
 pub(crate) fn read_from_string_or_source(
     content: &str,

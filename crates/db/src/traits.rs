@@ -181,3 +181,11 @@ pub trait ApubActor {
     where
         Self: Sized;
 }
+
+pub trait JoinView {
+    type JoinTuple;
+    fn from_tuple(tuple: Self::JoinTuple) -> Self
+    where
+      Self: Sized;
+  }
+  

@@ -86,6 +86,8 @@ pub mod safe_type {
         id,
         name,
         title,
+        icon,
+        banner,
         description,
         creation_date,
         updated,
@@ -95,7 +97,9 @@ pub mod safe_type {
         actor_id,
         subscribers_url,
         inbox_url,
-        shared_inbox_url
+        shared_inbox_url,
+        moderators_url,
+        featured_url,
     );
 
     impl ToSafe for BoardSafe {
@@ -105,6 +109,8 @@ pub mod safe_type {
                 id,
                 name,
                 title,
+                icon,
+                banner,
                 description,
                 creation_date,
                 updated,
@@ -114,7 +120,9 @@ pub mod safe_type {
                 actor_id,
                 subscribers_url,
                 inbox_url,
-                shared_inbox_url
+                shared_inbox_url,
+                moderators_url,
+                featured_url,
             )
         }
     }
