@@ -1,4 +1,4 @@
-use crate::protocol::activities::community::announce::AnnounceActivity;
+use crate::protocol::activities::board::announce::AnnounceActivity;
 use tinyboards_federation::kinds::collection::OrderedCollectionType;
 use serde::{Deserialize, Serialize};
 use url::Url;

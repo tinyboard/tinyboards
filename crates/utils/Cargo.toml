@@ -43,6 +43,7 @@ html2text = { workspace = true }
 parking_lot = { workspace = true }
 tokio = { workspace = true }
 typed-builder = { workspace = true }
+itertools = { workspace = true }
 
 [dependencies.uuid]
 version = "1.1.2"

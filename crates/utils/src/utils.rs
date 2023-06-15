@@ -3,6 +3,7 @@ use once_cell::sync::Lazy;
 use regex::{Regex};
 use crate::{IpAddr, settings::structs::Settings};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use itertools::Itertools;
 
 pub fn get_ip(conn_info: &ConnectionInfo) -> IpAddr {
     IpAddr(
@@ -33,27 +34,28 @@ static YT_REGEX: Lazy<Regex> = Lazy::new(|| {
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct MentionData {
   pub name: String,
+  pub domain: String,
 }
 
 impl MentionData {
-  // pub fn is_local(&self, hostname: &str) -> bool {
-  //   hostname.eq(&self.domain)
-  // }
+  pub fn is_local(&self, hostname: &str) -> bool {
+    hostname.eq(&self.domain)
+  }
   pub fn full_name(&self) -> String {
-    format!("@{}", &self.name)
+    format!("@{}@{}", &self.name, &self.domain)
   }
 }
 
 pub fn scrape_text_for_mentions(text: &str) -> Vec<MentionData> {
   let mut out: Vec<MentionData> = Vec::new();
   for caps in MENTIONS_REGEX.captures_iter(text) {
-    out.push(MentionData { 
-      name: caps["name"].to_string(),
-    });
+    if let Some(name) = caps.name("name").map(|c| c.as_str().to_string()) {
+      if let Some(domain) = caps.name("domain").map(|c| c.as_str().to_string()) {
+        out.push(MentionData { name, domain });
+      }
+    }
   }
-  out.sort_by_key(|k| k.name.clone());
-  out.dedup();
-  out
+  out.into_iter().unique().collect()
 }
 
 pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {

@@ -219,8 +219,8 @@ impl Object for ApubPost {
         board_id: Some(board.id),
         is_removed: None,
         is_locked: page.comments_enabled.map(|e| !e),
-        creation_date: Some(page.published.map(|u| u.naive_local())),
-        updated: Some(page.updated.map(|u| u.naive_local())),
+        creation_date: page.published.map(|u| u.naive_local()),
+        updated: page.updated.map(|u| u.naive_local()),
         is_deleted: Some(false),
         is_nsfw: page.sensitive,
         thumbnail_url,
@@ -234,8 +234,8 @@ impl Object for ApubPost {
     } else {
         PostForm {
           title: Some(name),
-          creator_id: Some(creator_id),
-          board_id: Some(board_id),
+          creator_id: Some(creator.id),
+          board_id: Some(board.id),
           ap_id: Some(page.id.clone().into()),
           is_locked: page.comments_enabled.map(|e| !e),
           updated: page.updated.map(|u| u.naive_local()),

@@ -20,6 +20,7 @@ pub struct Comment {
     pub updated: Option<NaiveDateTime>,
     pub is_locked: bool,
     pub board_id: i32,
+    pub local: bool,
     pub ap_id: Option<DbUrl>,
     pub language_id: i32,
 }
@@ -38,6 +39,8 @@ pub struct CommentForm {
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: Option<bool>,
     pub board_id: Option<i32>,
+    pub local: Option<bool>,
     pub ap_id: Option<DbUrl>,
     pub language_id: Option<i32>,
+    pub creation_date: Option<NaiveDateTime>,
 }

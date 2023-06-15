@@ -35,10 +35,10 @@ use crate::{
           Some('@') => SearchableObjects::Person(
             webfinger_resolve_actor::<TinyBoardsContext, ApubPerson>(identifier, context).await?,
           ),
-          Some('!') => SearchableObjects::Community(
+          Some('!') => SearchableObjects::Board(
             webfinger_resolve_actor::<TinyBoardsContext, ApubBoard>(identifier, context).await?,
           ),
-          _ => return Err(TinyBoardsError::from_message("invalid query")),
+          _ => return Err(TinyBoardsError::from_message(400, "invalid query")),
         }
       }
     })
@@ -106,7 +106,7 @@ use crate::{
     async fn delete(self, data: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
       match self {
         SearchableObjects::Person(p) => p.delete(data).await,
-        SearchableObjects::Community(c) => c.delete(data).await,
+        SearchableObjects::Board(b) => b.delete(data).await,
         SearchableObjects::Post(p) => p.delete(data).await,
         SearchableObjects::Comment(c) => c.delete(data).await,
       }
@@ -135,7 +135,7 @@ use crate::{
       use SearchableKinds as SAT;
       use SearchableObjects as SO;
       Ok(match apub {
-        SAT::Group(g) => SO::Community(ApubBoard::from_json(g, context).await?),
+        SAT::Group(g) => SO::Board(ApubBoard::from_json(g, context).await?),
         SAT::Person(p) => SO::Person(ApubPerson::from_json(p, context).await?),
         SAT::Page(p) => SO::Post(ApubPost::from_json(p, context).await?),
         SAT::Note(n) => SO::Comment(ApubComment::from_json(n, context).await?),

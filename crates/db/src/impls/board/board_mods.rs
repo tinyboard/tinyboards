@@ -6,7 +6,6 @@ use crate::{
 use diesel::{result::Error, *};
 use diesel_async::RunQueryDsl;
 use async_trait::async_trait;
-use tinyboards_utils::TinyBoardsError;
 
 impl BoardModerator {
     pub async fn remove_board_mod(

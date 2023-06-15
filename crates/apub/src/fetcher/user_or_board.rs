@@ -54,7 +54,7 @@ use crate::{
         Some(o) => Some(UserOrBoard::User(o)),
         None => ApubBoard::read_from_id(object_id, data)
           .await?
-          .map(UserOrBoard::Community),
+          .map(UserOrBoard::Board),
       })
     }
   

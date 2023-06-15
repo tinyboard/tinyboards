@@ -3,7 +3,7 @@ use crate::utils::{get_conn, DbPool};
 use crate::{
     models::site::local_site::*,
 };
-use diesel::{dsl::*, result::Error, *};
+use diesel::{dsl::*, result::Error};
 use diesel_async::RunQueryDsl;
 
 impl LocalSite {

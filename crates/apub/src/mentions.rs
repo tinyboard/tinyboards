@@ -1,0 +1,111 @@
+use crate::objects::{comment::ApubComment, board::ApubBoard, person::ApubPerson};
+use tinyboards_federation::{
+  config::Data,
+  fetch::{object_id::ObjectId, webfinger::webfinger_resolve_actor},
+  kinds::link::MentionType,
+  traits::Actor,
+};
+use tinyboards_api_common::data::TinyBoardsContext;
+use tinyboards_db::{
+  models::{comment::comments::Comment, person::person::Person, post::posts::Post},
+  traits::Crud,
+  utils::DbPool,
+};
+use tinyboards_utils::{
+  error::TinyBoardsError,
+  utils::{scrape_text_for_mentions, MentionData},
+};
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use url::Url;
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+pub enum MentionOrValue {
+  Mention(Mention),
+  Value(Value),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct Mention {
+  pub href: Url,
+  name: Option<String>,
+  #[serde(rename = "type")]
+  pub kind: MentionType,
+}
+
+pub struct MentionsAndAddresses {
+  pub ccs: Vec<Url>,
+  pub tags: Vec<MentionOrValue>,
+}
+
+/// This takes a comment, and builds a list of to_addresses, inboxes,
+/// and mention tags, so they know where to be sent to.
+/// Addresses are the persons / addresses that go in the cc field.
+#[tracing::instrument(skip(comment, board_id, context))]
+pub async fn collect_non_local_mentions(
+  comment: &ApubComment,
+  board_id: ObjectId<ApubBoard>,
+  context: &Data<TinyBoardsContext>,
+) -> Result<MentionsAndAddresses, TinyBoardsError> {
+  let parent_creator = get_comment_parent_creator(context.pool(), comment).await?;
+  let mut addressed_ccs: Vec<Url> = vec![board_id.into(), parent_creator.id()];
+
+  // Add the mention tag
+  let parent_creator_tag = Mention {
+    href: parent_creator.actor_id.clone().into(),
+    name: Some(format!(
+      "@{}@{}",
+      &parent_creator.name,
+      &parent_creator.id().domain().expect("has domain")
+    )),
+    kind: MentionType::Mention,
+  };
+  let mut tags = vec![parent_creator_tag];
+
+  // Get the person IDs for any mentions
+  let mentions = scrape_text_for_mentions(&comment.body)
+    .into_iter()
+    // Filter only the non-local ones
+    .filter(|m| !m.is_local(&context.settings().hostname))
+    .collect::<Vec<MentionData>>();
+
+  for mention in &mentions {
+    let identifier = format!("{}@{}", mention.name, mention.domain);
+    let person = webfinger_resolve_actor::<TinyBoardsContext, ApubPerson>(&identifier, context).await;
+    if let Ok(person) = person {
+      addressed_ccs.push(person.actor_id.to_string().parse()?);
+
+      let mention_tag = Mention {
+        href: person.id(),
+        name: Some(mention.full_name()),
+        kind: MentionType::Mention,
+      };
+      tags.push(mention_tag);
+    }
+  }
+
+  let tags = tags.into_iter().map(MentionOrValue::Mention).collect();
+  Ok(MentionsAndAddresses {
+    ccs: addressed_ccs,
+    tags,
+  })
+}
+
+/// Returns the apub ID of the person this comment is responding to. Meaning, in case this is a
+/// top-level comment, the creator of the post, otherwise the creator of the parent comment.
+#[tracing::instrument(skip(pool, comment))]
+async fn get_comment_parent_creator(
+  pool: &DbPool,
+  comment: &Comment,
+) -> Result<ApubPerson, TinyBoardsError> {
+  let parent_creator_id = if let Some(parent_comment_id) = comment.parent_comment_id() {
+    let parent_comment = Comment::read(pool, parent_comment_id).await?;
+    parent_comment.creator_id
+  } else {
+    let parent_post_id = comment.post_id;
+    let parent_post = Post::read(pool, parent_post_id).await?;
+    parent_post.creator_id
+  };
+  Ok(Person::read(pool, parent_creator_id).await?.into())
+}

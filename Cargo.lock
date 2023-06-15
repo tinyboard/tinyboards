@@ -4212,6 +4212,7 @@ dependencies = [
  "futures",
  "html2text",
  "http",
+ "itertools",
  "jsonwebtoken",
  "lettre",
  "markdown",
