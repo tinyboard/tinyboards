@@ -1,4 +1,4 @@
-use crate::schema::comments;
+use crate::{schema::comments, newtypes::DbUrl};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,8 @@ pub struct Comment {
     pub updated: Option<NaiveDateTime>,
     pub is_locked: bool,
     pub board_id: i32,
+    pub ap_id: Option<DbUrl>,
+    pub language_id: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -36,4 +38,6 @@ pub struct CommentForm {
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: Option<bool>,
     pub board_id: Option<i32>,
+    pub ap_id: Option<DbUrl>,
+    pub language_id: Option<i32>,
 }

@@ -515,9 +515,8 @@ pub async fn is_mod_or_admin(
 
 pub async fn purge_local_image_by_url(
     pool: &DbPool,
-    img_url: &str,
+    img_url: &DbUrl,
 ) -> Result<(), TinyBoardsError> {
-
     // get the file by URL
     let file = Upload::find_by_url(pool, img_url).await?;
     // remove file from local disk

@@ -186,6 +186,8 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
         board_id -> Int4,
+        ap_id -> Nullable<Text>,
+        language_id -> Int4,
     }
 }
 
@@ -578,6 +580,7 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         image -> Nullable<Text>,
         language_id -> Int4,
+        ap_id -> Nullable<Text>,
     }
 }
 
@@ -689,6 +692,7 @@ diesel::joinable!(comment_saved -> comments (comment_id));
 diesel::joinable!(comment_saved -> person (person_id));
 diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> person (person_id));
+diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> person (creator_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(email_verification -> person (local_user_id));

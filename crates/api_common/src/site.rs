@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::SiteMode;
+use tinyboards_db::{SiteMode, newtypes::DbUrl};
 use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView};
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
@@ -184,7 +184,7 @@ pub struct ExecutePasswordReset {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileUploadResponse {
-    pub uploads: Vec<String>,
+    pub uploads: Vec<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

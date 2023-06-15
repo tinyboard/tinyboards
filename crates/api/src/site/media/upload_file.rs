@@ -14,6 +14,7 @@ use tokio::{
     fs::File,
     io::AsyncWriteExt,
 };
+use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformUpload<'des> for Multipart {
@@ -67,7 +68,7 @@ impl<'des> PerformUpload<'des> for Multipart {
                     original_name: original_file_name.to_string(),
                     file_name: file_name.clone(),
                     file_path: file_path.clone(),
-                    upload_url: upload_url.clone(),
+                    upload_url: Some(Url::parse(&upload_url)?.into()),
                 };
 
                 let upload = Upload::create(context.pool(), &upload_form).await?;

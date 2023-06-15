@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::{
         check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
-        require_user,
+        require_user, generate_local_apub_endpoint, EndpointType,
     },
     websocket::send::send_notifications,
 };
@@ -15,7 +15,7 @@ use tinyboards_db::{
             comment_votes::{CommentVote, CommentVoteForm},
             comments::{Comment, CommentForm},
         },
-        post::posts::Post,
+        post::posts::Post, apub::actor_language::BoardLanguage, person::person_mentions::{PersonMention, PersonMentionForm},
     },
     traits::{Crud, Voteable},
 };
@@ -93,7 +93,30 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         let mut body_html = parse_markdown(&data.body);
         body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
+
+        let parent_opt = if let Some(parent_id) = data.parent_id {
+            Comment::read(context.pool(), parent_id).await.ok()
+        } else {
+            None
+        };
+
+        if let Some(parent) = parent_opt.as_ref() {
+            if parent.post_id != data.post_id {
+                return Err(TinyBoardsError::from_message(400, "could not create comment"));
+            }
+            // check comment depth here?
+        }
         
+        // if no language is set then copy from parent post/comment
+        let parent_language = parent_opt
+            .as_ref()
+            .map(|p| p.language_id)
+            .unwrap_or(post.language_id);
+
+        let language_id = data.language_id.unwrap_or(parent_language);
+
+        BoardLanguage::is_allowed_board_language(context.pool(), Some(language_id), post.board_id).await?;
+
         let new_comment = CommentForm {
             creator_id: view.person.id,
             body: Some(data.body),
@@ -102,23 +125,40 @@ impl<'des> PerformCrud<'des> for CreateComment {
             parent_id: data.parent_id,
             board_id: Some(post.board_id),
             level: Some(level),
+            language_id: Some(language_id),
             ..CommentForm::default()
         };
 
         let new_comment = Comment::submit(context.pool(), new_comment).await?;
 
+        // add apub id
+        let inserted_comment_id = new_comment.id;
+        let protocol_and_hostname = context.settings().get_protocol_and_hostname();
+
+        let apub_id = generate_local_apub_endpoint(
+            EndpointType::Comment, 
+            &inserted_comment_id.to_string(), 
+            &protocol_and_hostname
+        )?;
+
+        let update_form = CommentForm {
+            ap_id: Some(apub_id),
+            ..CommentForm::default()
+        };
+
+        let updated_comment = Comment::update(context.pool(), inserted_comment_id, &update_form).await?;
+
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
             person_id: view.person.id,
-            comment_id: new_comment.id,
+            comment_id: updated_comment.id,
             score: 1,
         };
 
         CommentVote::vote(context.pool(), &comment_vote).await?;
 
         let new_comment = CommentView::read(context.pool(), new_comment.id, Some(view.person.id)).await?;
-
-
+        
         // send notifications
         let mentions = scrape_text_for_mentions(&new_comment.comment.body_html);
         let _recipient_ids = send_notifications(
@@ -130,7 +170,22 @@ impl<'des> PerformCrud<'des> for CreateComment {
         )
         .await?;
 
+        // if parent comment has person_mentions then mark them as read
+        if let Some(parent_id) = data.parent_id {
+            let person_id = view.person.id;
+            let person_mention = 
+                PersonMention::read_by_comment_and_person(context.pool(), parent_id, person_id).await;
+            if let Ok(mention) = person_mention {
+                PersonMention::update(
+                    context.pool(), 
+                    mention.id, 
+                    &PersonMentionForm { read: Some(true), ..PersonMentionForm::default()})
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 400, "could not update person mention"))?;
+            }
+        }
 
+        // build comment response logic here
 
         Ok(new_comment)
     }

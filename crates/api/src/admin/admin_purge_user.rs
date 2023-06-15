@@ -55,12 +55,12 @@ impl<'des> Perform<'des> for PurgeUser {
 
         // purge user banner
         if let Some(banner) = target_person.banner {
-            purge_local_image_by_url(context.pool(), &banner.to_string()).await.ok();
+            purge_local_image_by_url(context.pool(), &banner).await.ok();
         }
 
         // purge user avatar
         if let Some(avatar) = target_person.avatar {
-            purge_local_image_by_url(context.pool(), &avatar.to_string()).await.ok();
+            purge_local_image_by_url(context.pool(), &avatar).await.ok();
         }
 
         // purge all submitted media/images from user

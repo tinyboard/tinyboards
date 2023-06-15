@@ -7,6 +7,7 @@ pub struct CreateComment {
     pub body: String,
     pub post_id: i32,
     pub parent_id: Option<i32>, // parent comment id
+    pub language_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

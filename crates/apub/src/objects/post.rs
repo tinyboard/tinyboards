@@ -50,3 +50,37 @@ use crate::{
 
   #[derive(Clone, Debug)]
 pub struct ApubPost(pub(crate) Post);
+
+impl Deref for ApubPost {
+  type Target = Post;
+  fn deref(&self) -> &Self::Target {
+    &self.0
+  }
+}
+
+impl From<Post> for ApubPost {
+  fn from(p: Post) -> Self {
+    ApubPost(p)
+  }
+}
+
+#[async_trait::async_trait]
+impl Object for Post {
+  type DataType = TinyBoardsContext;
+  type Kind = Page;
+  type Error = TinyBoardsError;
+
+  fn last_refreshed_at(&self) -> Option<NaiveDateTime> {
+    None
+  }
+
+  #[tracing::instrument(skip_all)]
+  async fn read_from_id(
+    object_id: Url,
+    context: &Data<Self::DataType>,
+  ) -> Result<Option<Self>, TinyBoardsError> {
+    Ok(
+      Post::r
+    )
+  }
+}

@@ -2,7 +2,7 @@ use crate::{
     models::person::person_mentions::{PersonMention, PersonMentionForm},
     traits::Crud, utils::{get_conn, DbPool},
 };
-use diesel::{result::Error, QueryDsl};
+use diesel::{result::Error, QueryDsl, ExpressionMethods};
 use diesel_async::RunQueryDsl;
 
 #[async_trait::async_trait]
@@ -36,6 +36,23 @@ impl Crud for PersonMention {
         diesel::update(person_mentions.find(id_))
             .set(form)
             .get_result::<Self>(conn)
+            .await
+    }
+}
+
+impl PersonMention {
+
+    pub async fn read_by_comment_and_person(
+        pool: &DbPool,
+        for_comment_id: i32,
+        for_recipient_id: i32,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person_mentions::dsl::*;
+        person_mentions
+            .filter(comment_id.eq(for_comment_id))
+            .filter(recipient_id.eq(for_recipient_id))
+            .first::<Self>(conn)
             .await
     }
 }

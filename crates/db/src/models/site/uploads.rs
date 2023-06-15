@@ -1,4 +1,4 @@
-use crate::schema::uploads;
+use crate::{schema::uploads, newtypes::DbUrl};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ pub struct Upload {
     pub original_name: String,
     pub file_name: String,
     pub file_path: String,
-    pub upload_url: String,
+    pub upload_url: DbUrl,
     pub creation_date: NaiveDateTime,
 }
 
@@ -22,5 +22,5 @@ pub struct UploadForm {
     pub original_name: String,
     pub file_name: String,
     pub file_path: String,
-    pub upload_url: String,
+    pub upload_url: Option<DbUrl>,
 }

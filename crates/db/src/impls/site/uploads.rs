@@ -1,4 +1,4 @@
-use crate::{models::site::uploads::*, traits::Crud, utils::{get_conn, DbPool}};
+use crate::{models::site::uploads::*, traits::Crud, utils::{get_conn, DbPool}, newtypes::DbUrl};
 use diesel::{result::Error, *};
 use diesel_async::RunQueryDsl;
 use crate::schema::uploads::dsl::*;
@@ -12,7 +12,7 @@ impl Upload {
             .await
     }
 
-    pub async fn find_by_url(pool: &DbPool, f_url: &str) -> Result<Self, Error> {
+    pub async fn find_by_url(pool: &DbPool, f_url: &DbUrl) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         uploads
             .filter(upload_url.eq(f_url))

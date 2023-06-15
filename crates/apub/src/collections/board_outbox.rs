@@ -3,7 +3,7 @@ use crate::{
     objects::{board::ApubBoard, post::ApubPost},
     protocol::{
       activities::{
-        community::announce::AnnounceActivity,
+        board::announce::AnnounceActivity,
         create_or_update::page::CreateOrUpdatePage,
         CreateOrUpdateType,
       },
