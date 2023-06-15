@@ -3983,6 +3983,7 @@ dependencies = [
  "reqwest",
  "reqwest-middleware",
  "serde",
+ "serde_with",
  "sha2",
  "tinyboards_db",
  "tinyboards_db_views",

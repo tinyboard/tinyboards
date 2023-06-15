@@ -104,15 +104,15 @@ use crate::{
             is_nsfw: None,
             subscribers_url: Some(self.followers.into()),
             inbox_url: Some(self.inbox.into()),
-            shared_inbox_url: Some(Some(self.endpoints.map(|e| e.shared_inbox.into()))),
-            moderators_url: Some(self.attributed_to.map(Into::into)),
+            shared_inbox_url: Some(self.endpoints.map(|e| e.shared_inbox.into())),
+            moderators_url: self.attributed_to.map(Into::into),
             posting_restricted_to_mods: self.posting_restricted_to_mods,
             instance_id: Some(instance_id),
-            featured_url: Some(self.featured.map(Into::into)),
+            featured_url: self.featured.map(Into::into),
             local: Some(false),
             actor_id: Some(self.id.into()),
-            icon: Some(self.icon.map(|i| i.url.into())),
-            banner: Some(self.image.map(|i| i.url.into())),
+            icon: self.icon.map(|i| i.url.into()),
+            banner: self.image.map(|i| i.url.into()),
         }
     }
   }

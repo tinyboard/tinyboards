@@ -1,7 +1,8 @@
 use crate::sensitive::Sensitive;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::aggregates::structs::PersonAggregates;
+use tinyboards_db::{aggregates::structs::PersonAggregates, newtypes::DbUrl};
 use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
+use serde_with::skip_serializing_none;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PostResponse {
@@ -84,4 +85,14 @@ pub struct EditPost {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DeletePost {
     pub deleted: bool,
+}
+
+#[skip_serializing_none]
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+/// Site metadata, from its opengraph tags.
+pub struct SiteMetadata {
+  pub title: Option<String>,
+  pub description: Option<String>,
+  pub(crate) image: Option<DbUrl>,
+  pub embed_video_url: Option<DbUrl>,
 }

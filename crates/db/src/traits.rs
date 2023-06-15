@@ -38,10 +38,10 @@ pub trait Subscribeable {
 #[async_trait::async_trait]
 pub trait Joinable {
     type Form;
-    async fn join(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn join(pool: &DbPool, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    async fn leave(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn leave(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
 }

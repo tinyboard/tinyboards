@@ -11,6 +11,7 @@ pub(crate) mod instance;
 pub(crate) mod person;
 pub(crate) mod group;
 pub(crate) mod note;
+pub(crate) mod page;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Endpoints {

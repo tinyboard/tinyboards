@@ -9,6 +9,7 @@ pub mod person;
 pub mod instance;
 pub mod post;
 pub mod board;
+pub mod comment;
 
 pub(crate) fn read_from_string_or_source(
     content: &str,
