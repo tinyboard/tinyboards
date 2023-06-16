@@ -58,12 +58,6 @@ pub struct BanBoard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AddAdmin {
-    pub added: bool,
-    pub added_person_id: i32,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddBoardMod {
     pub added: bool,
     pub added_person_id: i32,

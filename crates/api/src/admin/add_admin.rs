@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{AddAdmin, ModActionResponse},
+    admin::{AddAdmin, AddAdminResponse},
     utils::require_user,
 };
 use tinyboards_db::{
@@ -12,11 +12,12 @@ use tinyboards_db::{
     },
     traits::Crud,
 };
+use tinyboards_db_views::structs::{PersonView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for AddAdmin {
-    type Response = ModActionResponse<ModAddAdmin>;
+    type Response = AddAdminResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context, auth))]
@@ -49,8 +50,11 @@ impl<'des> Perform<'des> for AddAdmin {
         };
 
         // submit to the mod log
-        let mod_action = ModAddAdmin::create(context.pool(), &mod_add_admin_form).await?;
+        ModAddAdmin::create(context.pool(), &mod_add_admin_form).await?;
+        
+        // get list of admins
+        let admins = PersonView::admins(context.pool()).await?;
 
-        Ok(ModActionResponse { mod_action })
+        Ok(AddAdminResponse { admins })
     }
 }

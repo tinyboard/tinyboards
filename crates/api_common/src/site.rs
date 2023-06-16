@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{SiteMode, newtypes::DbUrl, models::apub::instance::Instance};
-use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView};
+use tinyboards_db::{SiteMode, newtypes::DbUrl, models::apub::{instance::Instance, language::Language}};
+use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView, SiteView};
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
     ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
@@ -109,6 +109,28 @@ pub struct GetModLogResponse {
 pub struct GetSiteSettings {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetSite {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SiteResponse {
+    pub site_view: SiteView,
+    //pub taglines: Vec<TagLine>,
+}
+  
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetSiteResponse {
+    pub site_view: SiteView,
+    pub admins: Vec<PersonView>,
+    pub version: String,
+    pub all_languages: Vec<Language>,
+    pub discussion_languages: Vec<i32>,
+    // list of taglines shown at the top of the front page
+    // pub taglines: Vec<TagLine>,
+    // list of custom emojis your site supports
+    // pub custom_emojis: Vec<CustomEmojiView>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetSiteSettingsResponse {
     pub site_mode: SiteMode,
     pub enable_downvotes: bool,
@@ -181,6 +203,11 @@ pub struct ExecutePasswordReset {
     pub new_password: String,
     pub new_password_verify: String,
 } 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ExecutePasswordResetResponse {
+    pub success: bool,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileUploadResponse {

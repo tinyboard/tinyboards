@@ -3,7 +3,6 @@ use tinyboards_db::traits::{Crud, Moderateable};
 use tinyboards_db::utils::DbPool;
 use tinyboards_utils::TinyBoardsError;
 
-pub mod mod_add_admin;
 pub mod mod_add_board_mod;
 pub mod mod_ban_from_board;
 pub mod mod_ban_user;

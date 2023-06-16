@@ -1,15 +1,15 @@
 use crate::SendActivity;
 use tinyboards_api_common::{
     comment::{
-        // CommentReportResponse,
         CommentResponse,
         GetComment,
         ListComments,
         ListCommentsResponse,
+        SaveComment,
         // ListCommentReports,
         // ListCommentReportsResponse,
         // ResolveCommentReport,
-        SaveComment,
+        // CommentReportResponse,
     },
     board::{
         BoardResponse,
@@ -28,8 +28,6 @@ use tinyboards_api_common::{
     //     EditCustomEmoji,
     // },
     person::{
-        // AddAdmin,
-        // AddAdminResponse,
         // BannedPersonsResponse,
         // BlockPerson,
         // BlockPersonResponse,
@@ -51,9 +49,6 @@ use tinyboards_api_common::{
         // MarkAllAsRead,
         // MarkCommentReplyAsRead,
         // MarkPersonMentionAsRead,
-        // PasswordChangeAfterReset,
-        // PasswordReset,
-        // PasswordResetResponse,
         // PersonMentionResponse,
         Register,
         SaveUserSettings,
@@ -65,15 +60,15 @@ use tinyboards_api_common::{
         GetPostResponse,
         ListPosts,
         ListPostsResponse,
+        PostResponse,
+        SavePost,
         // GetSiteMetadata,
         // GetSiteMetadataResponse,
         // ListPostReports,
         // ListPostReportsResponse,
         // MarkPostAsRead,
         // PostReportResponse,
-        PostResponse,
         // ResolvePostReport,
-        SavePost,
       },
       site::{
         // ApproveRegistrationApplication,
@@ -81,19 +76,23 @@ use tinyboards_api_common::{
         // EditSite,
         GetFederatedInstances,
         GetFederatedInstancesResponse,
+        ExecutePasswordReset,
+        ExecutePasswordResetResponse,
         // GetModlog,
         // GetModlogResponse,
-        // GetSite,
-        // GetSiteResponse,
-        // LeaveAdmin,
+        GetSite,
+        GetSiteResponse,
         // RegistrationApplicationResponse,
         // ResolveObject,
         // ResolveObjectResponse,
         Search,
         SearchResponse,
-        // SiteResponse,
+        SiteResponse,
       },
       admin::{
+        AddAdmin,
+        AddAdminResponse,
+        LeaveAdmin,
         PurgeBoard,
         PurgeComment,
         PurgePost,
@@ -105,7 +104,7 @@ use tinyboards_api_common::{
       applications::{
         ListRegistrationApplications,
         ListRegistrationApplicationsResponse,
-      }
+      },
 };
 
 impl SendActivity for Register {
@@ -142,4 +141,24 @@ impl SendActivity for ListRegistrationApplications {
 
 impl SendActivity for Search {
     type Response = SearchResponse;
+}
+
+impl SendActivity for ExecutePasswordReset {
+    type Response = ExecutePasswordResetResponse;
+}
+
+impl SendActivity for AddAdmin {
+    type Response = AddAdminResponse;
+}
+
+impl SendActivity for LeaveAdmin {
+    type Response = GetSiteResponse;
+}
+
+impl SendActivity for GetSite {
+    type Response = GetSiteResponse;
+}
+
+impl SendActivity for ListComments {
+    type Response = ListCommentsResponse;
 }
