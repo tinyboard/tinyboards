@@ -23,6 +23,7 @@ use url::{ParseError, Url};
 use uuid::Uuid;
 
 pub mod board;
+pub mod block;
 
 /// Checks that the specified Url actually specifies a Person (by fetching it), and that the person has no site ban.
 #[tracing::instrument(skip_all)]
