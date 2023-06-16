@@ -102,4 +102,14 @@ impl Instance {
         Self::read_or_create_with_conn(conn, domain).await
     }
 
+    pub async fn linked(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        instance::table
+          .left_join(federation_blocklist::table)
+          .filter(federation_blocklist::id.is_null())
+          .select(instance::all_columns)
+          .get_results(conn)
+          .await
+      }
+
 }

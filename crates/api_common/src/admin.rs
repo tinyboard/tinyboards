@@ -20,9 +20,14 @@ pub struct PurgeBoard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PurgeUser {
+pub struct PurgePerson {
     pub person_id: i32,
     pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PurgeItemResponse {
+    pub success: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

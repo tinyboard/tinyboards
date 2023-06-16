@@ -3,7 +3,7 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
-    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, user::*, applications::*, board::*,
+    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, person::*, applications::*, board::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -23,6 +23,13 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/unlock", web::post().to(route_post::<UnlockObject>))
             .route("/password_reset", web::post().to(route_post::<PasswordResetRequest>))
             .route("/password_reset/{reset_token}", web::post().to(route_post::<ExecutePasswordReset>))
+            /// Get Federated Instances
+            .service(
+                web::scope("/federated_instances")
+                    .wrap(rate_limit.message())
+                    .route("", web::get().to(route_get::<GetFederatedInstances>)),
+            )
+            /// Validate Site Invite
             .route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),

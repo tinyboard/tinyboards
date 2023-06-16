@@ -19,7 +19,6 @@ use crate::{
         subscribed::{accept::AcceptSubscribe, subscribe::Subscribe, undo_subscribe::UndoSubscribe},
         voting::{undo_vote::UndoVote, vote::Vote},
       },
-      objects::page::Page,
       InBoard,
     },
   };

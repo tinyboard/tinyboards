@@ -3,6 +3,7 @@ use hmac::{Hmac, Mac};
 use anyhow::Context;
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use sha2::Sha384;
+use futures::try_join;
 use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
@@ -12,7 +13,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        person::{local_user::*, person_blocks::*}, site::local_site::LocalSite,
+        person::{local_user::*, person_blocks::*}, site::local_site::LocalSite, apub::instance::Instance,
     },
     traits::Crud, SiteMode, 
     utils::DbPool,
@@ -30,6 +31,8 @@ use base64::{
     Engine as _,
     engine::{general_purpose},
 };
+
+use crate::site::FederatedInstances;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -811,3 +814,26 @@ pub async fn send_application_approval_email(
     );
     Ok(Url::parse(&url)?.into())
   }
+
+#[tracing::instrument(skip_all)]
+pub async fn build_federated_instances(
+  local_site: &LocalSite,
+  pool: &DbPool,
+) -> Result<Option<FederatedInstances>, TinyBoardsError> {
+  if local_site.federation_enabled {
+    // TODO I hate that this requires 3 queries
+    let (linked, allowed, blocked) = try_join!(
+      Instance::linked(pool),
+      Instance::allow_list(pool),
+      Instance::block_list(pool)
+    )?;
+
+    Ok(Some(FederatedInstances {
+      linked,
+      allowed,
+      blocked,
+    }))
+  } else {
+    Ok(None)
+  }
+}

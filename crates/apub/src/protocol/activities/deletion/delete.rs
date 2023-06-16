@@ -9,7 +9,6 @@ use crate::{
     kinds::activity::DeleteType,
     protocol::helpers::deserialize_one_or_many,
   };
-  use anyhow::anyhow;
   use tinyboards_api_common::data::TinyBoardsContext;
   use tinyboards_db::{
     models::{board::boards::Board, post::posts::Post},
@@ -37,29 +36,26 @@ use crate::{
     #[serde(default)]
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub(crate) cc: Vec<Url>,
-    /// If summary is present, this is a mod action (Remove in Lemmy terms). Otherwise, its a user
+    /// If summary is present, this is a mod action (Remove in Tinyboards terms). Otherwise, its a user
     /// deleting their own content.
     pub(crate) summary: Option<String>,
   }
   
   #[async_trait::async_trait]
-  impl InCommunity for Delete {
-    async fn community(&self, context: &Data<LemmyContext>) -> Result<ApubCommunity, LemmyError> {
-      let community_id = match DeletableObjects::read_from_db(self.object.id(), context).await? {
-        DeletableObjects::Community(c) => c.id,
+  impl InBoard for Delete {
+    async fn board(&self, context: &Data<TinyBoardsContext>) -> Result<ApubBoard, TinyBoardsError> {
+      let board_id = match DeletableObjects::read_from_db(self.object.id(), context).await? {
+        DeletableObjects::Board(b) => b.id,
         DeletableObjects::Comment(c) => {
           let post = Post::read(context.pool(), c.post_id).await?;
-          post.community_id
+          post.board_id
         }
-        DeletableObjects::Post(p) => p.community_id,
-        DeletableObjects::PrivateMessage(_) => {
-          return Err(anyhow!("Private message is not part of community").into())
-        }
+        DeletableObjects::Post(p) => p.board_id
       };
-      let board = Board::read(context.pool(), community_id).await?;
+      let board = Board::read(context.pool(), board_id).await?;
       if let Some(audience) = &self.audience {
-        verify_board_matches(audience, community.actor_id.clone())?;
+        verify_board_matches(audience, board.actor_id.clone())?;
       }
-      Ok(community.into())
+      Ok(board.into())
     }
   }

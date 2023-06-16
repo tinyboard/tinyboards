@@ -70,7 +70,7 @@ impl Collection for ApubBoardFeatured {
         }
     
         // We intentionally ignore errors here. This is because the outbox might contain posts from old
-        // Lemmy versions, or from other software which we cant parse. In that case, we simply skip the
+        // Tinyboards versions, or from other software which we cant parse. In that case, we simply skip the
         // item and only parse the ones that work.
         // process items in parallel, to avoid long delay from fetch_site_metadata() and other processing
         join_all(posts.into_iter().map(|post| {

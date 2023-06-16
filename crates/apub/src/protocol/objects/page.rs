@@ -117,7 +117,7 @@ impl Attachment {
 
   pub(crate) fn url(self) -> Url {
     match self {
-      // url as sent by Lemmy (new)
+      // url as sent by Tinyboards (new)
       Attachment::Link(l) => l.href,
       // image sent by lotide
       Attachment::Image(i) => i.url,

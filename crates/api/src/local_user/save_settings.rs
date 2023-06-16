@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
-    user::{LoginResponse, SaveUserSettings},
+    person::{LoginResponse, SaveUserSettings},
     utils::{get_local_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{

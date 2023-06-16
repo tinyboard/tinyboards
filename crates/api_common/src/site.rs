@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{SiteMode, newtypes::DbUrl};
+use tinyboards_db::{SiteMode, newtypes::DbUrl, models::apub::instance::Instance};
 use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView};
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
@@ -201,4 +201,20 @@ pub struct DeleteFile{}
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileNamePath {
     pub file_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FederatedInstances {
+    pub linked: Vec<Instance>,
+    pub allowed: Vec<Instance>,
+    pub blocked: Vec<Instance>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetFederatedInstances {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetFederatedInstancesResponse {
+    /// Optional if federation is disabled
+    pub federated_instances: Option<FederatedInstances>,
 }

@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    user::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
+    person::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::{require_user},
 };
 use tinyboards_db_views::structs::{LoggedInUserView, LocalUserView};

@@ -1,6 +1,6 @@
 pub mod data;
 pub mod board;
-pub mod user;
+pub mod person;
 pub mod sensitive;
 pub mod utils;
 pub mod post;

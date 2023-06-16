@@ -1,9 +1,8 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    admin::PurgeUser,
+    admin::{PurgePerson, PurgeItemResponse},
     data::TinyBoardsContext,
-    moderator::ModActionResponse,
     utils::{purge_local_image_posts_for_user, require_user, purge_local_image_by_url},
 };
 use tinyboards_db::{
@@ -17,8 +16,8 @@ use tinyboards_db::{
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for PurgeUser {
-    type Response = ModActionResponse<AdminPurgeUser>;
+impl<'des> Perform<'des> for PurgePerson {
+    type Response = PurgeItemResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context, auth))]
@@ -28,7 +27,7 @@ impl<'des> Perform<'des> for PurgeUser {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &PurgeUser = &self;
+        let data: &PurgePerson = &self;
         let target_person_id = data.person_id;
 
         let settings = SETTINGS.to_owned();
@@ -82,8 +81,8 @@ impl<'des> Perform<'des> for PurgeUser {
             reason: Some(reason),
         };
 
-        let mod_action = AdminPurgeUser::create(context.pool(), &form).await?;
+        AdminPurgeUser::create(context.pool(), &form).await?;
 
-        Ok(ModActionResponse { mod_action })
+        Ok(PurgeItemResponse { success: true })
     }
 }

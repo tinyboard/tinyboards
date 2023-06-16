@@ -25,6 +25,7 @@ use uuid::Uuid;
 pub mod board;
 pub mod block;
 pub mod deletion;
+pub mod unfederated;
 
 /// Checks that the specified Url actually specifies a Person (by fetching it), and that the person has no site ban.
 #[tracing::instrument(skip_all)]

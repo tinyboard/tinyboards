@@ -3,7 +3,7 @@
 //     SortType,
 // };
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::BoardView;
+use tinyboards_db_views::structs::{BoardView, BoardModeratorView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateBoard {
@@ -31,3 +31,15 @@ pub struct EditBoard {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeleteBoard {}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct AddModToBoard {
+    pub board_id: i32,
+    pub person_id: i32,
+    pub added: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct AddModToBoardResponse {
+    pub moderators: Vec<BoardModeratorView>,
+}

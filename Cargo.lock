@@ -3977,6 +3977,7 @@ dependencies = [
  "chrono",
  "diesel",
  "encoding",
+ "futures",
  "hmac",
  "jwt",
  "percent-encoding",
