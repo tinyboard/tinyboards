@@ -12,7 +12,7 @@ use crate::{
   
   #[derive(Clone, Debug, Deserialize, Serialize)]
   #[serde(rename_all = "camelCase")]
-  pub struct AcceptFollow {
+  pub struct AcceptSubscribe {
     pub(crate) actor: ObjectId<ApubBoard>,
     /// Optional, for compatibility with platforms that always expect recipient field
     #[serde(deserialize_with = "deserialize_skip_error", default)]

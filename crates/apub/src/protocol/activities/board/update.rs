@@ -18,7 +18,7 @@ use url::Url;
 /// fields of a local board.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateCommunity {
+pub struct UpdateBoard {
   pub(crate) actor: ObjectId<ApubPerson>,
   #[serde(deserialize_with = "deserialize_one_or_many")]
   pub(crate) to: Vec<Url>,
@@ -32,7 +32,7 @@ pub struct UpdateCommunity {
 }
 
 #[async_trait::async_trait]
-impl InBoard for UpdateCommunity {
+impl InBoard for UpdateBoard {
   async fn board(&self, context: &Data<TinyBoardsContext>) -> Result<ApubBoard, TinyBoardsError> {
     let board: ApubBoard = self.object.id.clone().dereference(context).await?;
     if let Some(audience) = &self.audience {

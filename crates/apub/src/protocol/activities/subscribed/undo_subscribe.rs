@@ -9,7 +9,7 @@ use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct UndoFollow {
+pub struct UndoSubscribe {
   pub(crate) actor: ObjectId<ApubPerson>,
   /// Optional, for compatibility with platforms that always expect recipient field
   #[serde(deserialize_with = "deserialize_skip_error", default)]
