@@ -85,7 +85,7 @@ impl Object for ApubBoard {
             id: self.id().into(),
             preferred_username: self.name.clone(),
             name: Some(self.title.clone()),
-            summary: self.description.as_ref().map(|b| parse_markdown(b)),
+            summary: self.description.as_ref().map(|b| parse_markdown(b)).unwrap(),
             source: self.description.clone().map(Source::new),
             icon: self.icon.clone().map(ImageObject::new),
             image: self.banner.clone().map(ImageObject::new),
@@ -158,7 +158,7 @@ impl Actor for ApubBoard {
       }
     
       fn public_key_pem(&self) -> &str {
-        &self.public_key
+        &self.public_key.unwrap()
       }
     
       fn private_key_pem(&self) -> Option<String> {
@@ -176,7 +176,7 @@ impl Actor for ApubBoard {
 
 impl ApubBoard {
     #[tracing::instrument(skip_all)]
-    pub(crate) async fn get_follower_inboxes(
+    pub(crate) async fn get_subscriber_inboxes(
       &self,
       context: &TinyBoardsContext,
     ) -> Result<Vec<Url>, TinyBoardsError> {
@@ -186,11 +186,11 @@ impl ApubBoard {
       let follows = BoardSubscriberView::for_board(context.pool(), id).await?;
       let inboxes: Vec<Url> = follows
         .into_iter()
-        .filter(|f| !f.follower.local)
-        .map(|f| {
-          f.follower
+        .filter(|s| !s.subscriber.local)
+        .map(|s| {
+          s.subscriber
             .shared_inbox_url
-            .unwrap_or(f.follower.inbox_url)
+            .unwrap_or(s.subscriber.inbox_url)
             .into()
         })
         .unique()

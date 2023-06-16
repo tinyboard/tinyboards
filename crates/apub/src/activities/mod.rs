@@ -22,6 +22,8 @@ use tracing::info;
 use url::{ParseError, Url};
 use uuid::Uuid;
 
+pub mod board;
+
 /// Checks that the specified Url actually specifies a Person (by fetching it), and that the person has no site ban.
 #[tracing::instrument(skip_all)]
 async fn verify_person(

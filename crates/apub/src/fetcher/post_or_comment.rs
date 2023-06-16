@@ -90,8 +90,8 @@ use crate::{
   impl InBoard for PostOrComment {
     async fn board(&self, context: &Data<TinyBoardsContext>) -> Result<ApubBoard, TinyBoardsError> {
       let board_id = match self {
-        PostOrComment::Post(p) => p.community_id,
-        PostOrComment::Comment(c) => Post::read(context.pool(), c.post_id).await?.community_id,
+        PostOrComment::Post(p) => p.board_id,
+        PostOrComment::Comment(c) => Post::read(context.pool(), c.post_id).await?.board_id,
       };
       Ok(Board::read(context.pool(), board_id).await?.into())
     }

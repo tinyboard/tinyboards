@@ -9,6 +9,10 @@ use crate::{
 };
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
+pub enum CollectionType {
+    Moderators,
+    Featured,
+}
 
 impl Board {
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin
@@ -28,7 +32,30 @@ impl Board {
 
         mod_id.map(|opt| opt.is_some())
     }
-
+    pub async fn get_by_collection_url(
+        pool: &DbPool,
+        url: &DbUrl,
+      ) -> Result<(Board, CollectionType), Error> {
+        use crate::schema::boards::dsl::{featured_url, moderators_url};
+        use CollectionType::*;
+        let conn = &mut get_conn(pool).await?;
+        let res = boards::table
+          .filter(moderators_url.eq(url))
+          .first::<Self>(conn)
+          .await;
+        if let Ok(b) = res {
+          return Ok((b, Moderators));
+        }
+        let res = boards::table
+          .filter(featured_url.eq(url))
+          .first::<Self>(conn)
+          .await;
+        if let Ok(b) = res {
+          return Ok((b, Featured));
+        }
+        Err(diesel::NotFound)
+    }
+    
     /// Takes a board id and an user id, and returns true if the user is banned from the board with the given id
     pub async fn board_has_ban(
         pool: &DbPool,

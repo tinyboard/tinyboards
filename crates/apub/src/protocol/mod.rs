@@ -78,6 +78,7 @@ impl<Kind: Id + DeserializeOwned + Send> IdOrNestedObject<Kind> {
   }
   pub(crate) async fn object(self, context: &Data<TinyBoardsContext>) -> Result<Kind, TinyBoardsError> {
     match self {
+      // TODO: move IdOrNestedObject struct to library and make fetch_object_http private
       IdOrNestedObject::Id(i) => Ok(fetch_object_http(&i, context).await?),
       IdOrNestedObject::NestedObject(o) => Ok(o),
     }
