@@ -12,6 +12,7 @@ pub(crate) mod person;
 pub(crate) mod group;
 pub(crate) mod note;
 pub(crate) mod page;
+pub(crate) mod tombstone;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Endpoints {
