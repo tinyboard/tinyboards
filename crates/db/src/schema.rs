@@ -384,6 +384,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    mod_feature_post (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        post_id -> Int4,
+        featured -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
     mod_lock_post (id) {
         id -> Int4,
         mod_person_id -> Int4,
@@ -422,16 +432,6 @@ diesel::table! {
         post_id -> Int4,
         reason -> Nullable<Text>,
         removed -> Nullable<Bool>,
-        when_ -> Timestamp,
-    }
-}
-
-diesel::table! {
-    mod_sticky_post (id) {
-        id -> Int4,
-        mod_person_id -> Int4,
-        post_id -> Int4,
-        stickied -> Nullable<Bool>,
         when_ -> Timestamp,
     }
 }
@@ -578,12 +578,13 @@ diesel::table! {
         creation_date -> Timestamp,
         is_deleted -> Bool,
         is_nsfw -> Bool,
-        is_stickied -> Bool,
         updated -> Nullable<Timestamp>,
         image -> Nullable<Text>,
         language_id -> Int4,
         ap_id -> Nullable<Text>,
         local -> Bool,
+        featured_board -> Bool,
+        featured_local -> Bool,
     }
 }
 
@@ -709,6 +710,8 @@ diesel::joinable!(local_user_language -> local_user (local_user_id));
 diesel::joinable!(mod_add_board -> boards (board_id));
 diesel::joinable!(mod_add_board_mod -> boards (board_id));
 diesel::joinable!(mod_ban_from_board -> boards (board_id));
+diesel::joinable!(mod_feature_post -> person (mod_person_id));
+diesel::joinable!(mod_feature_post -> posts (post_id));
 diesel::joinable!(mod_lock_post -> person (mod_person_id));
 diesel::joinable!(mod_lock_post -> posts (post_id));
 diesel::joinable!(mod_remove_board -> boards (board_id));
@@ -717,8 +720,6 @@ diesel::joinable!(mod_remove_comment -> comments (comment_id));
 diesel::joinable!(mod_remove_comment -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> posts (post_id));
-diesel::joinable!(mod_sticky_post -> person (mod_person_id));
-diesel::joinable!(mod_sticky_post -> posts (post_id));
 diesel::joinable!(password_resets -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
 diesel::joinable!(person_aggregates -> person (person_id));
@@ -774,11 +775,11 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_add_board_mod,
     mod_ban,
     mod_ban_from_board,
+    mod_feature_post,
     mod_lock_post,
     mod_remove_board,
     mod_remove_comment,
     mod_remove_post,
-    mod_sticky_post,
     password_resets,
     person,
     person_aggregates,

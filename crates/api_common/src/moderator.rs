@@ -2,18 +2,11 @@ use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use tinyboards_db_views::structs::PersonView;
 
-use crate::sensitive::Sensitive;
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModActionResponse<T> {
     pub mod_action: T,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct StickyPost {
-    pub post_id: i32,
-    pub stickied: bool,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanUser {

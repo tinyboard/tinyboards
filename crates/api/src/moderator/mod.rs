@@ -9,7 +9,6 @@ pub mod mod_ban_user;
 pub mod mod_lock_object;
 pub mod mod_remove_board;
 pub mod mod_remove_object;
-pub mod mod_sticky_post;
 
 // ;)
 #[allow(dead_code)]

@@ -6,7 +6,7 @@ use tinyboards_db::models::{
         admin_actions::{AdminPurgeBoard, AdminPurgeComment, AdminPurgePost, AdminPurgeUser},
         mod_actions::{
             ModAddAdmin, ModAddBoard, ModAddBoardMod, ModBan, ModBanFromBoard, ModLockPost,
-            ModRemoveBoard, ModRemoveComment, ModRemovePost, ModStickyPost,
+            ModRemoveBoard, ModRemoveComment, ModRemovePost, ModFeaturePost,
         },
     },
     post::posts::Post,
@@ -84,8 +84,8 @@ pub struct ModRemovePostView {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct ModStickyPostView {
-    pub mod_sticky_post: ModStickyPost,
+pub struct ModFeaturePostView {
+    pub mod_feature_post: ModFeaturePost,
     pub moderator: Option<PersonSafe>,
     pub post: Post,
     pub board: BoardSafe,

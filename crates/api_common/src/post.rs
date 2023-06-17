@@ -95,3 +95,11 @@ pub struct SiteMetadata {
   pub(crate) image: Option<DbUrl>,
   pub embed_video_url: Option<DbUrl>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// Feature a post (stickies/pin to top)
+pub struct FeaturePost {
+    pub post_id: i32,
+    pub featured: bool,
+    pub feature_type: String,
+}

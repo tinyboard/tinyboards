@@ -21,12 +21,13 @@ pub struct Post {
     pub creation_date: NaiveDateTime,
     pub is_deleted: bool,
     pub is_nsfw: bool,
-    pub is_stickied: bool,
     pub updated: Option<NaiveDateTime>,
     pub image: Option<DbUrl>,
     pub language_id: i32,
     pub ap_id: Option<DbUrl>,
     pub local: bool,
+    pub featured_board: bool,
+    pub featured_local: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -46,10 +47,11 @@ pub struct PostForm {
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: Option<bool>,
     pub is_nsfw: Option<bool>,
-    pub is_stickied: Option<bool>,
     pub image: Option<DbUrl>,
     pub language_id: Option<i32>,
     pub ap_id: Option<DbUrl>,
     pub creation_date: Option<NaiveDateTime>,
     pub local: Option<bool>,
+    pub featured_board: Option<bool>,
+    pub featured_local: Option<bool>,
 }

@@ -4,7 +4,7 @@ use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteV
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
     ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
-    ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModStickyPostView,
+    ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModFeaturePostView,
 };
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -92,7 +92,7 @@ pub struct GetModLog {
 pub struct GetModLogResponse {
     pub removed_posts: Vec<ModRemovePostView>,
     pub locked_posts: Vec<ModLockPostView>,
-    pub stickied_posts: Vec<ModStickyPostView>,
+    pub featured_posts: Vec<ModFeaturePostView>,
     pub removed_comments: Vec<ModRemoveCommentView>,
     pub removed_boards: Vec<ModRemoveBoardView>,
     pub banned_from_board: Vec<ModBanFromBoardView>,

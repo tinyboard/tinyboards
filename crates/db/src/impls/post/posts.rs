@@ -146,15 +146,28 @@ impl Post {
             .await
     }
 
-    pub async fn update_stickied(
+    pub async fn update_featured_board(
         pool: &DbPool,
         post_id: i32,
-        new_stickied: bool,
+        new_featured: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         diesel::update(posts.find(post_id))
-            .set((is_stickied.eq(new_stickied), updated.eq(naive_now())))
+            .set((featured_board.eq(new_featured), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_featured_local(
+        pool: &DbPool,
+        post_id: i32,
+        new_featured: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::posts::dsl::*;
+        diesel::update(posts.find(post_id))
+            .set((featured_local.eq(new_featured), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }
