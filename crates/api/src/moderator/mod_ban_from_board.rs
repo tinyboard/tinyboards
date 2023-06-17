@@ -29,11 +29,11 @@ impl<'des> Perform<'des> for BanFromBoard {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanFromBoard = &self;
 
-        let target_person_id = data.target_person_id;
+        let target_person_id = data.person_id;
         let board_id = data.board_id;
         let reason = data.reason.clone();
         let expires = data.expires;
-        let banned = data.banned;
+        let banned = data.ban;
 
         // require board moderator (at least) to perform this action
         let view = require_user(context.pool(), context.master_key(), auth)

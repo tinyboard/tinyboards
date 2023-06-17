@@ -36,7 +36,6 @@ pub struct SubmitPostResponse {
 pub struct GetPost {
     pub id: Option<i32>,
     pub comment_id: Option<i32>,
-    pub auth: Option<Sensitive<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -56,7 +55,6 @@ pub struct ListPosts {
     pub board_id: Option<i32>,
     pub board_name: Option<String>,
     pub saved_only: Option<bool>,
-    pub auth: Option<Sensitive<String>>,
 }
 
 #[derive(Deserialize)]

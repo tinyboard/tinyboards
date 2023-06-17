@@ -195,7 +195,6 @@ pub struct BanPerson {
     pub remove_data: Option<bool>,
     pub reason: Option<String>,
     pub expires: Option<i64>,
-    pub auth: Sensitive<String>,
 }
 
 
