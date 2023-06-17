@@ -103,9 +103,7 @@ diesel::table! {
 diesel::table! {
     boards (id) {
         id -> Int4,
-        #[max_length = 50]
         name -> Varchar,
-        #[max_length = 150]
         title -> Varchar,
         description -> Nullable<Text>,
         creator_id -> Int4,
@@ -129,6 +127,7 @@ diesel::table! {
         icon -> Nullable<Text>,
         banner -> Nullable<Text>,
         posting_restricted_to_mods -> Bool,
+        is_removed -> Bool,
     }
 }
 
@@ -266,7 +265,6 @@ diesel::table! {
         federation_http_fetch_retry_limit -> Int4,
         federation_worker_count -> Int4,
         captcha_enabled -> Bool,
-        #[max_length = 255]
         captcha_difficulty -> Varchar,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
@@ -450,9 +448,7 @@ diesel::table! {
 diesel::table! {
     person (id) {
         id -> Int4,
-        #[max_length = 30]
         name -> Varchar,
-        #[max_length = 30]
         display_name -> Nullable<Varchar>,
         is_banned -> Bool,
         creation_date -> Timestamp,
@@ -568,9 +564,7 @@ diesel::table! {
 diesel::table! {
     posts (id) {
         id -> Int4,
-        #[max_length = 200]
         title -> Varchar,
-        #[max_length = 10]
         type_ -> Varchar,
         url -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
@@ -614,7 +608,6 @@ diesel::table! {
 diesel::table! {
     site (id) {
         id -> Int4,
-        #[max_length = 20]
         name -> Varchar,
         sidebar -> Nullable<Text>,
         creation_date -> Timestamp,

@@ -91,6 +91,19 @@ impl Comment {
             .await
     }
 
+    pub async fn update_removed_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+        new_removed: bool,
+    ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::comments::dsl::*;
+        diesel::update(comments.filter(creator_id.eq(for_creator_id)))
+            .set((is_removed.eq(new_removed), updated.eq(naive_now())))
+            .get_results::<Self>(conn)
+            .await
+    }
+
     pub async fn update_locked(
         pool: &DbPool,
         comment_id: i32,

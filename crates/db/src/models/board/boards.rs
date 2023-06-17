@@ -31,6 +31,7 @@ pub struct Board {
     pub icon: Option<DbUrl>,
     pub banner: Option<DbUrl>,
     pub posting_restricted_to_mods: bool,
+    pub is_removed: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -59,6 +60,7 @@ pub struct BoardForm {
     pub icon: Option<DbUrl>,
     pub banner: Option<DbUrl>,
     pub posting_restricted_to_mods: Option<bool>,
+    pub is_removed: Option<bool>,
 }
 
 /// A safe representation of board, without the sensitive info
@@ -74,6 +76,7 @@ pub struct BoardSafe {
     pub creation_date: chrono::NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: bool,
+    pub is_removed: bool,
     pub is_nsfw: bool,
     pub is_hidden: bool,
     pub actor_id: DbUrl,

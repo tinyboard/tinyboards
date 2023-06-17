@@ -184,6 +184,26 @@ impl Post {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn update_removed_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+        for_board_id: Option<i32>,
+        new_removed: bool,
+    ) -> Result<Vec<Self>, Error> {
+        use crate::schema::posts::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        let mut update = diesel::update(posts).into_boxed();
+        update = update.filter(creator_id.eq(for_creator_id));
+        if let Some(for_board_id) = for_board_id {
+            update = update.filter(board_id.eq(for_board_id));
+        }
+
+        update
+            .set((is_removed.eq(new_removed), updated.eq(naive_now())))
+            .get_results::<Self>(conn)
+            .await
+    }
 }
 
 #[async_trait::async_trait]
