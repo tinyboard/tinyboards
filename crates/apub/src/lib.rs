@@ -160,5 +160,6 @@ pub trait SendActivity: Sync {
         _request: &Self,
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
     ) -> Result<(), TinyBoardsError>;
 }

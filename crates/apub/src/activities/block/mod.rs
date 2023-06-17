@@ -13,8 +13,8 @@ use tinyboards_federation::{
 };
 use chrono::NaiveDateTime;
 use tinyboards_api_common::{
-    moderator::{BanFromBoard, ModActionResponse},
-    utils::get_local_user_view_from_jwt, data::TinyBoardsContext,
+    moderator::{BanFromBoard, BanFromBoardResponse},
+    utils::require_user, data::TinyBoardsContext, person::{BanPerson, BanPersonResponse},
 };
 use tinyboards_db::{
     models::{board::boards::Board, person::person::Person, site::site::Site},
@@ -125,4 +125,92 @@ async fn generate_cc(target: &SiteOrBoard, pool: &DbPool) -> Result<Vec<Url>, Ti
             .collect(),
         SiteOrBoard::Board(b) => vec![b.id()],
     })
+}
+
+#[async_trait::async_trait]
+impl SendActivity for BanPerson {
+    type Response = BanPersonResponse;
+    async fn send_activity(
+        request: &Self,
+        _response: &Self::Response,
+        context: &Data<TinyBoardsContext>,
+        auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
+        let person = Person::read(context.pool(), request.person_id).await?;
+        let site = SiteOrBoard::Site(SiteView::read_local(context.pool()).await?.site.into());
+        let expires = request.expires.map(naive_from_unix);
+
+        // if the action affects a local user, federate to other instances
+        if person.local {
+            if request.ban {
+                BlockUser::send(
+                    &site,
+                    &person.into(),
+                    &local_user_view.person.into(),
+                    request.remove_data.unwrap_or(false),
+                    request.reason.clone(),
+                    expires,
+                    context,
+                )
+                .await
+            } else {
+                UndoBlockUser::send(
+                    &site,
+                    &person.into(),
+                    &local_user_view.person.into(),
+                    request.reason.clone(),
+                    context,
+                )
+                .await
+            }
+        } else {
+            Ok(())
+        }
+    }
+}
+
+
+#[async_trait::async_trait]
+impl SendActivity for BanFromBoard {
+  type Response = BanFromBoardResponse;
+
+  async fn send_activity(
+    request: &Self,
+    _response: &Self::Response,
+    context: &Data<TinyBoardsContext>,
+    auth: Option<&str>,
+  ) -> Result<(), TinyBoardsError> {
+    let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
+    let board: ApubBoard = Board::read(context.pool(), request.board_id)
+      .await?
+      .into();
+    let banned_person: ApubPerson = Person::read(context.pool(), request.person_id)
+      .await?
+      .into();
+    let expires = request.expires.map(naive_from_unix);
+
+    if request.ban {
+      BlockUser::send(
+        &SiteOrBoard::Board(board),
+        &banned_person,
+        &local_user_view.person.clone().into(),
+        request.remove_data.unwrap_or(false),
+        request.reason.clone(),
+        expires,
+        context,
+      )
+      .await
+    } else {
+      UndoBlockUser::send(
+        &SiteOrBoard::Board(board),
+        &banned_person,
+        &local_user_view.person.clone().into(),
+        request.reason.clone(),
+        context,
+      )
+      .await
+    }
+    Ok(())
+  }
 }

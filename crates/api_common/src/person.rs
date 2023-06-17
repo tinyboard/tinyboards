@@ -2,7 +2,7 @@ use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 use tinyboards_db::newtypes::DbUrl;
-use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView};
+use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView, PersonView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -185,4 +185,23 @@ pub struct SearchNames {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SearchNamesResponse {
     pub users: Vec<UsernameInfo>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// ban a person from the site.
+pub struct BanPerson {
+    pub person_id: i32,
+    pub ban: bool,
+    pub remove_data: Option<bool>,
+    pub reason: Option<String>,
+    pub expires: Option<i64>,
+    pub auth: Sensitive<String>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// A response for a banned person.
+pub struct BanPersonResponse {
+  pub person_view: PersonView,
+  pub banned: bool,
 }

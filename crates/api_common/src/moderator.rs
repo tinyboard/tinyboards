@@ -1,5 +1,8 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
+use tinyboards_db_views::structs::PersonView;
+
+use crate::sensitive::Sensitive;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModActionResponse<T> {
@@ -22,11 +25,19 @@ pub struct BanUser {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanFromBoard {
-    pub target_person_id: i32,
     pub board_id: i32,
-    pub banned: bool,
-    pub expires: Option<NaiveDateTime>,
+    pub person_id: i32,
+    pub ban: bool,
+    pub remove_data: Option<bool>,
     pub reason: Option<String>,
+    pub expires: Option<i64>,
+    pub auth: Sensitive<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BanFromBoardResponse {
+  pub person_view: PersonView,
+  pub banned: bool,
 }
 
 #[derive(Debug, Deserialize)]
