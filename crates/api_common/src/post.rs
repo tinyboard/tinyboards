@@ -1,6 +1,6 @@
 use crate::sensitive::Sensitive;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{aggregates::structs::PersonAggregates, newtypes::DbUrl};
+use tinyboards_db::{aggregates::structs::PersonAggregates, newtypes::DbUrl, PostFeatureType};
 use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
 use serde_with::skip_serializing_none;
 
@@ -101,5 +101,5 @@ pub struct SiteMetadata {
 pub struct FeaturePost {
     pub post_id: i32,
     pub featured: bool,
-    pub feature_type: String,
+    pub feature_type: PostFeatureType,
 }

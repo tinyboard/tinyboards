@@ -8,8 +8,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::moderator::mod_actions::{ModFeaturePost, ModFeaturePostForm},
     models::post::posts::Post,
-    traits::Crud, 
-    map_to_post_feature_type, 
+    traits::Crud,
     PostFeatureType,
 };
 use tinyboards_db_views::structs::PostView;
@@ -31,7 +30,7 @@ impl<'des> Perform<'des> for FeaturePost {
 
         let post_id = data.post_id;
         let featured = data.featured;
-        let feature_type = map_to_post_feature_type(Some(&data.feature_type));
+        let feature_type = data.feature_type;
 
         // get the post object
         let orig_post = Post::read(context.pool(), post_id.clone()).await?;
