@@ -1,4 +1,5 @@
 use tinyboards_api_common::data::TinyBoardsContext;
+use tinyboards_db::models::person::person_subscriber::PersonSubscriber;
 use tinyboards_federation::{traits::Actor, config::Data};
 use tinyboards_utils::TinyBoardsError;
 use url::Url;
@@ -44,8 +45,12 @@ pub(crate) async fn send_activity_in_board(
     // send to user followers
     if !is_mod_action {
         inboxes.append(
-            &mut 
-        )
+            &mut PersonSubscriber::list_subscribers(context.pool(), actor.id)
+                .await?
+                .into_iter()
+                .map(|p| ApubPerson(p).shared_inbox_or_inbox())
+                .collect(),
+        );
     }
 
     if board.local {
