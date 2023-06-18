@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{FeaturePost, PostResponse},
-    utils::require_user,
+    utils::{require_user, is_mod_or_admin},
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModFeaturePost, ModFeaturePostForm},
@@ -68,8 +68,10 @@ impl<'des> Perform<'des> for FeaturePost {
         // submit mod action to the mod log
         ModFeaturePost::create(context.pool(), &feature_post_form).await?;
 
+        let is_mod_or_admin = is_mod_or_admin(context.pool(), view.person.id, updated_post.board_id).await.is_ok();
+
         // get post view
-        let post_view = PostView::read(context.pool(), updated_post.id, None).await?;
+        let post_view = PostView::read(context.pool(), updated_post.id, None, Some(is_mod_or_admin)).await?;
 
         Ok(PostResponse { post_view })
     }

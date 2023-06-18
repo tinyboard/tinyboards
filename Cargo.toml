@@ -41,6 +41,7 @@ base64 = "0.21.0"
 diesel = { version = "2.1.0", features = ["postgres", "r2d2", "serde_json", "chrono"] }
 diesel-async = "0.3.1"
 diesel_migrations = "2.0.0"
+diesel-derive-newtype = "2.1.0"
 serde = { version = "1.0.147", features = ["derive"] }
 serde_json = { version = "1.0.91", features = ["preserve_order"] }
 actix-web = { version = "4.3.1", default-features = false, features = ["macros", "rustls"] }
@@ -120,6 +121,7 @@ tower = { version = "0.4.13" }
 hyper = { version = "0.14" }
 displaydoc = "0.2.3"
 serde_with = "3.0.0"
+rosetta-i18n = "0.1.2"
 
 [dependencies]
 tinyboards_apub = { workspace = true }

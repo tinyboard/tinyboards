@@ -15,6 +15,7 @@ pub struct CreateBoard {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardResponse {
     pub board_view: BoardView,
+    pub discussion_languages: Vec<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

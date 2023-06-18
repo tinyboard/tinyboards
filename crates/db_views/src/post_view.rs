@@ -44,21 +44,11 @@ impl PostView {
         pool: &DbPool,
         post_id: i32,
         my_person_id: Option<i32>,
+        is_mod_or_admin: Option<bool>,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let person_id_join = my_person_id.unwrap_or(-1);
-        let (
-            post,
-            creator,
-            board,
-            creator_banned_from_board,
-            counts,
-            subscriber,
-            saved,
-            read,
-            creator_blocked,
-            post_vote,
-        ) = posts::table
+        let mut query = posts::table
             .find(post_id)
             .inner_join(person::table)
             .inner_join(boards::table)
@@ -110,8 +100,27 @@ impl PostView {
                 person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
             ))
-            .first::<PostViewTuple>(conn)
-            .await?;
+            .into_boxed();
+        
+        // hide deleted or removed posts from non-admin or mods
+        if !is_mod_or_admin.unwrap_or(true) {
+            query = query
+                .filter(posts::is_deleted.eq(false))
+                .filter(posts::is_removed.eq(false));
+        }
+
+        let (
+            post,
+            creator,
+            board,
+            creator_banned_from_board,
+            counts,
+            subscriber,
+            saved,
+            read,
+            creator_blocked,
+            post_vote,
+        ) = query.first::<PostViewTuple>(conn).await?;
 
         let my_vote = if my_person_id.is_some() && post_vote.is_none() {
             Some(0)

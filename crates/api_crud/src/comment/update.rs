@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{
         check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_or_removed, require_user,
-    }, websocket::send::send_notifications,
+    }, websocket::send::send_notifications, build_response::build_comment_response,
 };
 use tinyboards_db::{
     models::comment::comments::{Comment, CommentForm},
@@ -68,12 +68,12 @@ impl<'des> PerformCrud<'des> for EditComment {
             ..CommentForm::default()
         };
 
-        Comment::update(context.pool(), comment_id, &form).await?;
+        let updated_comment = Comment::update(context.pool(), comment_id, &form).await?;
 
         let comment_view = CommentView::read(context.pool(), comment_id, Some(orig_comment.comment.creator_id)).await?;
 
         let mentions = scrape_text_for_mentions(&comment_view.comment.body_html);
-        let _recipient_ids = send_notifications(
+        let recipient_ids = send_notifications(
             mentions, 
             &comment_view.comment, 
             &view.person, 
@@ -81,6 +81,6 @@ impl<'des> PerformCrud<'des> for EditComment {
             context,
         ).await?;
 
-        Ok(CommentResponse { comment_view })
+        Ok(build_comment_response(context, updated_comment.id, Some(view), None, recipient_ids).await?)
     }
 }

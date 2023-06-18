@@ -25,7 +25,7 @@ use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
     settings::structs::{RateLimitSettings, Settings},
-    email::send_email, location_info,
+    email::{send_email, /*translations::Lang*/}, location_info,
 };
 use uuid::Uuid;
 use base64::{
@@ -935,3 +935,15 @@ pub async fn remove_user_data_in_board(
 
     Ok(())
 }
+
+// pub fn get_interface_language(user: &LocalUserView) -> Lang {
+//     lang_str_to_lang(&user.local_user.interface_language)
+// }
+
+// fn lang_str_to_lang(lang: &str) -> Lang {
+//     let lang_id = LanguageId::new(lang);
+//     Lang::from_language_id(&lang_id).unwrap_or_else(|| {
+//       let en = LanguageId::new("en");
+//       Lang::from_language_id(&en).expect("default language")
+//     })
+// }

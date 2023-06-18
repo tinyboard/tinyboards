@@ -3,9 +3,10 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{check_private_instance, load_local_user_opt},
+    utils::{check_private_instance, load_local_user_opt, is_mod_or_admin},
 };
 
+use tinyboards_db::{models::post::posts::Post, traits::Crud};
 use tinyboards_utils::TinyBoardsError;
 
 use tinyboards_db_views::{
@@ -37,8 +38,14 @@ impl<'des> PerformCrud<'des> for GetPost {
         };
 
         let post_id = path.post_id;
+        let post = Post::read(context.pool(), post_id).await?;
+        let mut mod_or_admin = false;
+        if let Some(pid) = person_id {
+            mod_or_admin = is_mod_or_admin(context.pool(), pid, post.board_id).await.is_ok();
+        } 
+        
 
-        let mut post_view = PostView::read(context.pool(), post_id, person_id).await?;
+        let mut post_view = PostView::read(context.pool(), post_id, person_id, Some(mod_or_admin)).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
             post_view.hide_if_removed_or_deleted(local_user.as_ref());
@@ -49,7 +56,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         // mark read here
 
         let board_id = post_view.board.id;
-        let board_view = BoardView::read(context.pool(), board_id, person_id).await?;
+        let board_view = BoardView::read(context.pool(), board_id, person_id, Some(mod_or_admin)).await?;
 
         // blank out deleted or removed info here
 

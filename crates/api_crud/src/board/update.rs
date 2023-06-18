@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     board::{EditBoard, BoardResponse, BoardIdPath},
     utils::{
         require_user,
-    },
+    }, build_response::build_board_response,
 };
 use tinyboards_db::{
     models::{
@@ -13,7 +13,6 @@ use tinyboards_db::{
     },
     traits::Crud, utils::naive_now,
 };
-use tinyboards_db_views::structs::BoardView;
 use tinyboards_utils::{
     parser::parse_markdown,
     TinyBoardsError,
@@ -38,7 +37,7 @@ impl<'des> PerformCrud<'des> for EditBoard {
         let is_nsfw = data.is_nsfw.clone();
 
         // board update restricted to board mod or admin (may provide other options in the future)
-        let _user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_board_mod(path.board_id.clone(), context.pool())
             .await
@@ -59,8 +58,6 @@ impl<'des> PerformCrud<'des> for EditBoard {
         // update the board
         let board = Board::update(context.pool(), path.board_id.clone(), &form).await?;
 
-        let board_view = BoardView::read(context.pool(), board.id, None).await?;
-
-        Ok(BoardResponse { board_view })
+        Ok(build_board_response(context, view, board.id).await?)
     }
 }

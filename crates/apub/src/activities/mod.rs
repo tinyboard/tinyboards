@@ -24,6 +24,7 @@ use uuid::Uuid;
 
 pub mod board;
 pub mod block;
+pub mod create_or_update;
 pub mod deletion;
 pub mod subscribed;
 pub mod unfederated;
@@ -112,9 +113,9 @@ where
     Ok(())
 }
 
-pub(crate) fn check_board_deleted(board: &Board) -> Result<(), TinyBoardsError> {
-    if board.is_deleted {
-        Err(TinyBoardsError::from_message(400, "New post or comment can't be made in a deleted board."))
+pub(crate) fn check_board_deleted_or_removed(board: &Board) -> Result<(), TinyBoardsError> {
+    if board.is_deleted || board.is_removed {
+        Err(TinyBoardsError::from_message(400, "new post or comment can't be made in a deleted/removed board."))
     } else {
         Ok(())
     }

@@ -26,11 +26,12 @@ impl BoardView {
         pool: &DbPool,
         board_id: i32,
         person_id: Option<i32>,
+        is_mod_or_admin: Option<bool>,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let person_id_join = person_id.unwrap_or(-1);
 
-        let (board, counts, subscriber, blocked) = boards::table
+        let mut query = boards::table
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
@@ -49,8 +50,16 @@ impl BoardView {
                 board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
             ))
-            .first::<BoardViewTuple>(conn)
-            .await?;
+            .into_boxed();
+        
+        // hide deleted and removed boards for non-admins or mods
+        if !is_mod_or_admin.unwrap_or(true) {
+            query = query
+                .filter(boards::is_removed.eq(false))
+                .filter(boards::is_deleted.eq(false));
+        }
+
+        let (board, counts, subscriber, blocked) = query.first::<BoardViewTuple>(conn).await?;
 
         Ok(BoardView {
             board,

@@ -168,6 +168,7 @@ diesel::table! {
         comment_id -> Int4,
         score -> Int2,
         creation_date -> Timestamp,
+        post_id -> Int4,
     }
 }
 
@@ -706,6 +707,7 @@ diesel::joinable!(comment_saved -> comments (comment_id));
 diesel::joinable!(comment_saved -> person (person_id));
 diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> person (person_id));
+diesel::joinable!(comment_votes -> posts (post_id));
 diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> person (creator_id));
 diesel::joinable!(comments -> posts (post_id));

@@ -11,3 +11,4 @@ pub mod admin;
 pub mod site;
 pub mod websocket;
 pub mod applications;
+pub mod build_response;

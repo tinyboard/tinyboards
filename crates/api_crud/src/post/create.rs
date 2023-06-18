@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{PostResponse, SubmitPost},
-    utils::{check_board_deleted_or_removed, require_user, generate_local_apub_endpoint, EndpointType},
+    utils::{check_board_deleted_or_removed, require_user, generate_local_apub_endpoint, EndpointType}, build_response::build_post_response,
 };
 use tinyboards_db::{
     models::{post::{
@@ -100,10 +100,6 @@ impl<'des> PerformCrud<'des> for SubmitPost {
 
         // web mention logic
 
-        // build post response logic here
-
-        let post_view = PostView::read(context.pool(), published_post.id, Some(view.person.id)).await?;
-
-        Ok(PostResponse { post_view })
+        Ok(build_post_response(context, board_id, view.person.id, published_post.id).await?)
     }
 }

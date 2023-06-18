@@ -153,6 +153,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             person_id: view.person.id,
             comment_id: updated_comment.id,
             score: 1,
+            post_id: updated_comment.post_id,
         };
 
         CommentVote::vote(context.pool(), &comment_vote).await?;
