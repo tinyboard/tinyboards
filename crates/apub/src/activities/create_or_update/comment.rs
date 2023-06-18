@@ -15,34 +15,34 @@ use crate::{
       InBoard,
     },
     SendActivity,
-  };
-  use tinyboards_federation::{
-    config::Data,
-    fetch::object_id::ObjectId,
-    kinds::public,
-    protocol::verification::verify_domains_match,
-    traits::{ActivityHandler, Actor, Object},
-  };
-  use tinyboards_api_common::{
-    build_response::send_local_notifs,
-    comment::{CommentResponse, CreateComment, EditComment},
-    data::TinyBoardsContext,
-    utils::{check_post_deleted_or_removed, is_mod_or_admin},
-  };
-  use tinyboards_db::{
-    models::{
-      comment::{
-        comments::Comment,
-        comment_votes::{CommentVote, CommentVoteForm},
-      },
-      board::boards::Board,
-      person::person::Person,
-      post::posts::Post,
+};
+use tinyboards_federation::{
+  config::Data,
+  fetch::object_id::ObjectId,
+  kinds::public,
+  protocol::verification::verify_domains_match,
+  traits::{ActivityHandler, Actor, Object},
+};
+use tinyboards_api_common::{
+  build_response::send_local_notifs,
+  comment::{CommentResponse, CreateComment, EditComment},
+  data::TinyBoardsContext,
+  utils::{check_post_deleted_or_removed},
+};
+use tinyboards_db::{
+  models::{
+    comment::{
+      comments::Comment,
+      comment_votes::{CommentVote, CommentVoteForm},
     },
-    traits::{Crud, Voteable},
-  };
-  use tinyboards_utils::{error::TinyBoardsError, utils::scrape_text_for_mentions};
-  use url::Url;
+    board::boards::Board,
+    person::person::Person,
+    post::posts::Post,
+  },
+  traits::{Crud, Voteable},
+};
+use tinyboards_utils::{error::TinyBoardsError, utils::scrape_text_for_mentions};
+use url::Url;
 
 
 #[async_trait::async_trait]
@@ -96,7 +96,7 @@ impl CreateOrUpdateNote {
     // TODO: might be helpful to add a comment method to retrieve board directly
     let post_id = comment.post_id;
     let post = Post::read(context.pool(), post_id).await?;
-    let board_id = post.community_id;
+    let board_id = post.board_id;
     let person: ApubPerson = Person::read(context.pool(), person_id).await?.into();
     let board: ApubBoard = Board::read(context.pool(), board_id).await?.into();
 
@@ -155,7 +155,7 @@ impl ActivityHandler for CreateOrUpdateNote {
   }
 
   #[tracing::instrument(skip_all)]
-  async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
+  async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsContext> {
     verify_is_public(&self.to, &self.cc)?;
     let post = self.object.get_parents(context).await?.0;
     let board = self.board(context).await?;
@@ -175,19 +175,9 @@ impl ActivityHandler for CreateOrUpdateNote {
     // Need to do this check here instead of Note::from_json because we need the person who
     // send the activity, not the comment author.
     let existing_comment = self.object.id.dereference_local(context).await.ok();
-    if let (Some(distinguished), Some(existing_comment)) =
-      (self.object.distinguished, existing_comment)
-    {
-      if distinguished != existing_comment.distinguished {
-        let creator = self.actor.dereference(context).await?;
-        let (post, _) = self.object.get_parents(context).await?;
-        is_mod_or_admin(context.pool(), creator.id, post.community_id).await?;
-      }
-    }
-
     let comment = ApubComment::from_json(self.object, context).await?;
 
-    // author likes their own comment by default
+    // author upvotes their own comment by default
     let vote_form = CommentVoteForm {
       comment_id: comment.id,
       post_id: comment.post_id,
@@ -206,7 +196,7 @@ impl ActivityHandler for CreateOrUpdateNote {
     // Its much easier to scrape them from the comment body, since the API has to do that
     // anyway.
     // TODO: for compatibility with other projects, it would be much better to read this from cc or tags
-    let mentions = scrape_text_for_mentions(&comment.content);
+    let mentions = scrape_text_for_mentions(&comment.body);
     send_local_notifs(mentions, &comment.0, &actor, &post, do_send_email, context).await?;
     Ok(())
   }
