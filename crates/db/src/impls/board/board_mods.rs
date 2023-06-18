@@ -22,6 +22,16 @@ impl BoardModerator {
         .execute(conn)
         .await
     }
+
+    pub async fn get_person_moderated_boards(pool: &DbPool, mod_id: i32) -> Result<Vec<i32>, Error> {
+        use crate::schema::board_mods::dsl::{board_id, board_mods, person_id};
+        let conn = &mut get_conn(pool).await?;
+        board_mods
+          .filter(person_id.eq(mod_id))
+          .select(board_id)
+          .load::<i32>(conn)
+          .await
+    }
 }
 
 #[async_trait::async_trait]

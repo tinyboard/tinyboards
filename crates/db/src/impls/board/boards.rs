@@ -9,6 +9,7 @@ use crate::{
 };
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
+
 pub enum CollectionType {
     Moderators,
     Featured,
