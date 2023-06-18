@@ -33,6 +33,9 @@ pub trait Subscribeable {
     async fn unsubscribe(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
+    async fn subscribe_accepted(pool: &DbPool, board_id: i32, person_id: i32) -> Result<Self, Error>
+    where
+        Self: Sized;
 }
 
 #[async_trait::async_trait]

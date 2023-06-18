@@ -43,3 +43,23 @@ pub struct AddModToBoard {
 pub struct AddModToBoardResponse {
     pub moderators: Vec<BoardModeratorView>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// Subscribe to a board
+pub struct SubscribeToBoard {
+    pub board_id: i32,
+    pub follow: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// Block a board
+pub struct BlockBoard {
+    pub board_id: i32,
+    pub block: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BlockBoardResponse {
+    pub board_view: BoardView,
+    pub blocked: bool,
+}

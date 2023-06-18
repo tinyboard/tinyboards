@@ -32,6 +32,28 @@ impl Subscribeable for PersonSubscriber {
     .execute(conn)
     .await
   }
+
+  async fn subscribe_accepted(
+    pool: &DbPool,
+    subscriber_id_: i32,
+    person_id_: i32,
+  ) -> Result<Self, Error> {
+    use crate::schema::person_subscriber::dsl::{
+      person_subscriber,
+      subscriber_id,
+      pending,
+      person_id,
+    };
+    let conn = &mut get_conn(pool).await?;
+    diesel::update(
+        person_subscriber
+          .filter(subscriber_id.eq(subscriber_id_))
+          .filter(person_id.eq(person_id_)),
+    )
+    .set(pending.eq(false))
+    .get_result::<Self>(conn)
+    .await
+  }
 }
 
 impl PersonSubscriber {

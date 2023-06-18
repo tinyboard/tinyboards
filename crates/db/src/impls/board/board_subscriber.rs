@@ -49,4 +49,26 @@ impl Subscribeable for BoardSubscriber {
         .execute(conn)
         .await
     }
+
+    async fn subscribe_accepted(
+        pool: &DbPool,
+        board_id_: i32,
+        person_id_: i32,
+      ) -> Result<Self, Error> {
+        use crate::schema::board_subscriber::dsl::{
+          board_subscriber,
+          board_id,
+          pending,
+          person_id,
+        };
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(
+            board_subscriber
+            .filter(board_id.eq(board_id_))
+            .filter(person_id.eq(person_id_)),
+        )
+        .set(pending.eq(false))
+        .get_result::<Self>(conn)
+        .await
+      }
 }

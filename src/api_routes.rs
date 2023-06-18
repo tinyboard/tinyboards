@@ -76,6 +76,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/boards")
                 .wrap(rate_limit.message())
                 .route("", web::post().to(route_post_crud::<CreateBoard>))
+                .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
+                .route("/block", web::post().to(route_post::<BlockBoard>))
                 .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
                 .route("/{board_id}", web::delete().to(route_post_crud::<DeleteBoard>))
             )
