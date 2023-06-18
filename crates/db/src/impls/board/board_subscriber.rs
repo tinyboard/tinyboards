@@ -1,5 +1,5 @@
 use crate::{
-    models::board::board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
+    models::board::board_subscriber::{BoardSubscriber, BoardSubscriberForm},
     traits::Subscribeable,
     SubscribedType,
     utils::{get_conn, DbPool},
@@ -11,7 +11,7 @@ impl BoardSubscriber {
     pub fn to_subscribed_type(subscriber: &Option<Self>) -> SubscribedType {
         match subscriber {
             Some(f) => {
-                if f.pending.unwrap_or(false) {
+                if f.pending {
                     SubscribedType::Pending
                 } else {
                     SubscribedType::Subscribed
@@ -28,8 +28,8 @@ impl Subscribeable for BoardSubscriber {
 
     async fn subscribe(pool: &DbPool, sub_form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, person_id};
-        insert_into(board_subscriptions)
+        use crate::schema::board_subscriber::dsl::{board_id, board_subscriber, person_id};
+        insert_into(board_subscriber)
             .values(sub_form)
             .on_conflict((board_id, person_id))
             .do_update()
@@ -40,9 +40,9 @@ impl Subscribeable for BoardSubscriber {
 
     async fn unsubscribe(pool: &DbPool, sub_form: &Self::Form) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_subscriptions::dsl::{board_id, board_subscriptions, person_id};
+        use crate::schema::board_subscriber::dsl::{board_id, board_subscriber, person_id};
         diesel::delete(
-            board_subscriptions
+            board_subscriber
                 .filter(board_id.eq(sub_form.board_id))
                 .filter(person_id.eq(sub_form.person_id)),
         )

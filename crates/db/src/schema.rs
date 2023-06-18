@@ -91,12 +91,12 @@ diesel::table! {
 }
 
 diesel::table! {
-    board_subscriptions (id) {
+    board_subscriber (id) {
         id -> Int4,
         board_id -> Int4,
         person_id -> Int4,
         creation_date -> Timestamp,
-        pending -> Nullable<Bool>,
+        pending -> Bool,
     }
 }
 
@@ -521,6 +521,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    person_subscriber (id) {
+        id -> Int4,
+        person_id -> Int4,
+        subscriber_id -> Int4,
+        creation_date -> Timestamp,
+        pending -> Bool,
+    }
+}
+
+diesel::table! {
     post_aggregates (id) {
         id -> Int4,
         post_id -> Int4,
@@ -685,8 +695,8 @@ diesel::joinable!(board_mods -> boards (board_id));
 diesel::joinable!(board_mods -> person (person_id));
 diesel::joinable!(board_person_bans -> boards (board_id));
 diesel::joinable!(board_person_bans -> person (person_id));
-diesel::joinable!(board_subscriptions -> boards (board_id));
-diesel::joinable!(board_subscriptions -> person (person_id));
+diesel::joinable!(board_subscriber -> boards (board_id));
+diesel::joinable!(board_subscriber -> person (person_id));
 diesel::joinable!(boards -> instance (instance_id));
 diesel::joinable!(boards -> person (creator_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
@@ -754,7 +764,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_language,
     board_mods,
     board_person_bans,
-    board_subscriptions,
+    board_subscriber,
     boards,
     comment_aggregates,
     comment_reply,
@@ -787,6 +797,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     person_blocks,
     person_board_blocks,
     person_mentions,
+    person_subscriber,
     post_aggregates,
     post_read,
     post_saved,

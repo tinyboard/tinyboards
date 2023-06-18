@@ -3,7 +3,7 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
-        board::board_subscriptions::BoardSubscriber,
+        board::board_subscriber::BoardSubscriber,
         board::board_person_bans::BoardPersonBan,
         board::boards::BoardSafe,
         post::posts::Post,
@@ -14,7 +14,7 @@ use tinyboards_db::{
         person::local_user::*,
     },
     schema::{
-        board_subscriptions, board_person_bans, boards, post_aggregates, post_votes, posts,
+        board_subscriber, board_person_bans, boards, post_aggregates, post_votes, posts,
         person_blocks, person_board_blocks, post_read, post_saved, person,
     },
     traits::{ToSafe, ViewToVec},
@@ -74,9 +74,9 @@ impl PostView {
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(posts::board_id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(posts::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 post_saved::table.on(posts::id
@@ -104,7 +104,7 @@ impl PostView {
                 BoardSafe::safe_columns_tuple(),
                 board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
@@ -184,9 +184,9 @@ impl<'a> PostQuery<'a> {
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(posts::board_id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(posts::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 post_saved::table.on(posts::id
@@ -219,7 +219,7 @@ impl<'a> PostQuery<'a> {
                 BoardSafe::safe_columns_tuple(),
                 board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 post_saved::all_columns.nullable(),
                 post_read::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
@@ -242,9 +242,9 @@ impl<'a> PostQuery<'a> {
             )
             .inner_join(post_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(posts::board_id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(posts::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 post_saved::table.on(posts::id
@@ -279,13 +279,13 @@ impl<'a> PostQuery<'a> {
         if let Some(listing_type) = self.listing_type {
             match listing_type {
                 ListingType::Subscribed => {
-                    query = query.filter(board_subscriptions::person_id.is_not_null())
+                    query = query.filter(board_subscriber::person_id.is_not_null())
                 }
                 ListingType::All => {
                     query = query.filter(
                         boards::is_hidden
                             .eq(false)
-                            .or(board_subscriptions::person_id.eq(person_id_join)),
+                            .or(board_subscriber::person_id.eq(person_id_join)),
                     )
                 }
             }

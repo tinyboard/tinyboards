@@ -3,13 +3,13 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board_subscriptions::BoardSubscriber, board::board_person_bans::BoardPersonBan,
+        board::board_subscriber::BoardSubscriber, board::board_person_bans::BoardPersonBan,
         board::boards::BoardSafe, comment::comments::Comment,
         comment::comment_saved::CommentSaved, post::posts::Post, person::person_blocks::PersonBlock,
         person::person_mentions::PersonMention, person::person::PersonSafe,
     },
     schema::{
-        board_subscriptions, board_person_bans, boards, comment_aggregates, comment_votes, comments,
+        board_subscriber, board_person_bans, boards, comment_aggregates, comment_votes, comments,
         posts, person_blocks, comment_saved, person_mentions, person,
     },
     traits::{ToSafe, ViewToVec},
@@ -79,9 +79,9 @@ impl PersonMentionView {
                     )),
             )
             .left_join(
-                board_subscriptions::table.on(posts::board_id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(posts::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comments::id
@@ -107,7 +107,7 @@ impl PersonMentionView {
                 person_alias.fields(PersonSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
                 board_person_bans::all_columns.nullable(),
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
@@ -209,9 +209,9 @@ impl<'a> PersonMentionQuery<'a> {
                     )),
             )
             .left_join(
-                board_subscriptions::table.on(posts::board_id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(posts::board_id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comments::id
@@ -237,7 +237,7 @@ impl<'a> PersonMentionQuery<'a> {
                 person_alias.fields(PersonSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
                 board_person_bans::all_columns.nullable(),
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),

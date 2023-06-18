@@ -41,12 +41,12 @@ pub(crate) async fn send_activity_in_board(
 ) -> Result<(), TinyBoardsError> {
     let mut inboxes = extra_inboxes;
 
-    // // send to user followers
-    // if !is_mod_action {
-    //     inboxes.append(
-    //         &mut Bo
-    //     )
-    // }
+    // send to user followers
+    if !is_mod_action {
+        inboxes.append(
+            &mut 
+        )
+    }
 
     if board.local {
         // send directly to board subscribers

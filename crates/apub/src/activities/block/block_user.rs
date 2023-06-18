@@ -27,7 +27,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        board::board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
+        board::board_subscriber::{BoardSubscriber, BoardSubscriberForm},
         board::board_person_bans::{BoardPersonBan, BoardPersonBanForm},
         person::person::{Person, PersonForm}, moderator::mod_actions::{ModBanForm, ModBan, ModBanFromBoardForm, ModBanFromBoard},
     },

@@ -17,7 +17,7 @@ use tinyboards_db::{
         comment_reply,
         comment_saved,
         boards,
-        board_subscriptions,
+        board_subscriber,
         board_person_bans,
         person,
         person_blocks,
@@ -28,7 +28,7 @@ use tinyboards_db::{
         comment::comment_saved::CommentSaved,
         comment::comment_reply::CommentReply,
         board::boards::BoardSafe,
-        board::board_subscriptions::BoardSubscriber,
+        board::board_subscriber::BoardSubscriber,
         board::board_person_bans::BoardPersonBan,
         person::person::PersonSafe,
         person::person_blocks::PersonBlock,
@@ -101,10 +101,10 @@ impl CommentReplyView {
                 ),
             )
             .left_join(
-                board_subscriptions::table.on(
+                board_subscriber::table.on(
                     posts::board_id
-                        .eq(board_subscriptions::board_id)
-                        .and(board_subscriptions::person_id.eq(person_id_join))
+                        .eq(board_subscriber::board_id)
+                        .and(board_subscriber::person_id.eq(person_id_join))
                 )
             )
             .left_join(
@@ -137,7 +137,7 @@ impl CommentReplyView {
                 person_alias.fields(PersonSafe::safe_columns_tuple()),
                 comment_aggregates::all_columns,
                 board_person_bans::all_columns.nullable(),
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 comment_saved::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 comment_votes::score.nullable(),
@@ -237,10 +237,10 @@ impl <'a> CommentReplyQuery<'a> {
             ),
         )
         .left_join(
-            board_subscriptions::table.on(
+            board_subscriber::table.on(
                 posts::board_id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))
             )
         )
         .left_join(
@@ -273,7 +273,7 @@ impl <'a> CommentReplyQuery<'a> {
             person_alias.fields(PersonSafe::safe_columns_tuple()),
             comment_aggregates::all_columns,
             board_person_bans::all_columns.nullable(),
-            board_subscriptions::all_columns.nullable(),
+            board_subscriber::all_columns.nullable(),
             comment_saved::all_columns.nullable(),
             person_blocks::all_columns.nullable(),
             comment_votes::score.nullable(),

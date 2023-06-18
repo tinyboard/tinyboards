@@ -3,10 +3,10 @@ use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
-        board::board_subscriptions::BoardSubscriber, board::boards::BoardSafe,
+        board::board_subscriber::BoardSubscriber, board::boards::BoardSafe,
         board::person_board_blocks::BoardBlock, person::local_user::*,
     },
-    schema::{board_aggregates, board_subscriptions, boards, person_board_blocks, person, local_user},
+    schema::{board_aggregates, board_subscriber, boards, person_board_blocks, person, local_user},
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
     ListingType, SortType,
@@ -34,9 +34,9 @@ impl BoardView {
             .find(board_id)
             .inner_join(board_aggregates::table)
             .left_join(
-                board_subscriptions::table.on(boards::id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(boards::id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 person_board_blocks::table.on(boards::id
@@ -46,7 +46,7 @@ impl BoardView {
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
             ))
             .first::<BoardViewTuple>(conn)
@@ -129,9 +129,9 @@ impl<'a> BoardQuery<'a> {
             .left_join(person::table.on(person::id.eq(person_id_join)))
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .left_join(
-                board_subscriptions::table.on(boards::id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(boards::id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 person_board_blocks::table.on(boards::id
@@ -141,7 +141,7 @@ impl<'a> BoardQuery<'a> {
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
-                board_subscriptions::all_columns.nullable(),
+                board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
             ))
             .into_boxed();
@@ -150,9 +150,9 @@ impl<'a> BoardQuery<'a> {
             .inner_join(board_aggregates::table)
             .left_join(person::table.on(person::id.eq(person_id_join)))
             .left_join(
-                board_subscriptions::table.on(boards::id
-                    .eq(board_subscriptions::board_id)
-                    .and(board_subscriptions::person_id.eq(person_id_join))),
+                board_subscriber::table.on(boards::id
+                    .eq(board_subscriber::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
                 person_board_blocks::table.on(boards::id
@@ -198,7 +198,7 @@ impl<'a> BoardQuery<'a> {
 
         if let Some(listing_type) = self.listing_type {
             query = match listing_type {
-                ListingType::Subscribed => query.filter(board_subscriptions::person_id.is_not_null()),
+                ListingType::Subscribed => query.filter(board_subscriber::person_id.is_not_null()),
                 ListingType::All => query,
             };
         }

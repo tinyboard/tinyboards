@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::board::{
-        board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
+        board_subscriber::{BoardSubscriber, BoardSubscriberForm},
         board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     },
     models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
