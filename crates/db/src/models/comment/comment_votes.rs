@@ -11,6 +11,7 @@ pub struct CommentVote {
     pub comment_id: i32,
     pub score: i16,
     pub creation_date: NaiveDateTime,
+    pub post_id: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -19,4 +20,5 @@ pub struct CommentVoteForm {
     pub comment_id: i32,
     pub person_id: i32,
     pub score: i16,
+    pub post_id: i32,
 }

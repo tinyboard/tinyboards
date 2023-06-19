@@ -5,8 +5,8 @@ use tinyboards_api_common::{
     post::{EditPost, PostIdPath, PostResponse},
     utils::{
         check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
-        require_user,
-    },
+        require_user, is_mod_or_admin,
+    }, build_response::build_post_response,
 };
 use tinyboards_db::{
     models::post::posts::{Post, PostForm},
@@ -35,7 +35,9 @@ impl<'des> PerformCrud<'des> for EditPost {
             .unwrap()?;
 
         let post_id = path.post_id;
-        let orig_post = PostView::read(context.pool(), post_id, None).await?;
+        let post = Post::read(context.pool(), post_id).await?;
+        let mod_or_admin = is_mod_or_admin(context.pool(), view.person.id, post.board_id).await.is_ok();
+        let orig_post = PostView::read(context.pool(), post_id, None, Some(mod_or_admin)).await?;
 
         check_board_deleted_or_removed(orig_post.board.id, context.pool()).await?;
 
@@ -61,17 +63,13 @@ impl<'des> PerformCrud<'des> for EditPost {
             ..PostForm::default()
         };
 
-        Post::update(context.pool(), post_id, &form)
+        let updated_post = Post::update(context.pool(), post_id, &form)
             .await
             .map_err(|_| TinyBoardsError::from_message(500, "could not update post"))?;
 
         // parse post mentions here
         // send post notifications here (to mentioned users)
 
-        let post_view = PostView::read(context.pool(), post_id, Some(orig_post.post.creator_id))
-            .await
-            .map_err(|_| TinyBoardsError::from_message(500, "could not find updated post"))?;
-
-        Ok(PostResponse { post_view })
+        Ok(build_post_response(context, updated_post.board_id, view.person.id, updated_post.id).await?)
     }
 }

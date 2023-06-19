@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::{
         check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_removed_or_locked, require_user,
-    },
+    }, build_response::build_comment_response,
 };
 use tinyboards_db::{
     models::{
@@ -55,6 +55,7 @@ impl<'des> Perform<'des> for CreateCommentVote {
                 comment_id: path.comment_id,
                 person_id: view.person.id,
                 score: data.score,
+                post_id: orig_comment.comment.post_id,
             };
 
             // remove any existing votes first
@@ -72,10 +73,6 @@ impl<'des> Perform<'des> for CreateCommentVote {
         }
 
         // mark comment as read here
-
-        // grab updated comment view here
-        let comment_view = CommentView::read(context.pool(), comment_id, Some(view.person.id)).await?;
-
-        Ok(CommentResponse { comment_view })
+        Ok(build_comment_response(context, comment_id, Some(view), None, vec![]).await?)
     }
 }

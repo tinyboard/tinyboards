@@ -5,11 +5,8 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
 use tinyboards_api_common::{
     sensitive::Sensitive,
-    user::{Register, SignupResponse},
-    utils::{
-        generate_inbox_url, generate_local_apub_endpoint, generate_shared_inbox_url,
-        send_verification_email, EndpointType,
-    },
+    person::{Register, SignupResponse},
+    utils::{send_verification_email, generate_inbox_url, generate_shared_inbox_url, generate_local_apub_endpoint, EndpointType},
 };
 use tinyboards_db::models::person::local_user::*;
 use tinyboards_db::models::person::person::*;

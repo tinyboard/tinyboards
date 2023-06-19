@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    site::{ExecutePasswordReset, PasswordResetTokenPath},
+    site::{ExecutePasswordReset, PasswordResetTokenPath, ExecutePasswordResetResponse},
     utils::{
         send_password_reset_success_email,
     },
@@ -13,7 +13,7 @@ use tinyboards_utils::{error::TinyBoardsError, hash_password, passhash::verify_p
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for ExecutePasswordReset {
-    type Response = ();
+    type Response = ExecutePasswordResetResponse;
     type Route = PasswordResetTokenPath;
 
     #[tracing::instrument(skip(context))]
@@ -22,7 +22,7 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
         context: &Data<TinyBoardsContext>,
         path: Self::Route,
         _: Option<&str>,
-    ) -> Result<(), TinyBoardsError> {
+    ) -> Result<ExecutePasswordResetResponse, TinyBoardsError> {
 
         let data: &ExecutePasswordReset = &self;
         let reset_token = path.reset_token.clone();
@@ -54,6 +54,6 @@ impl<'des> Perform<'des> for ExecutePasswordReset {
         // send an email that the reset was successful
         send_password_reset_success_email(&user.name, &user.email.unwrap(), context.settings()).await?;
 
-        Ok(())
+        Ok(ExecutePasswordResetResponse { success: true })
     }
 }

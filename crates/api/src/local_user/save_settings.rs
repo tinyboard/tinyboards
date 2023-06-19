@@ -3,13 +3,13 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
-    user::{LoginResponse, SaveUserSettings},
+    person::{LoginResponse, SaveUserSettings},
     utils::{get_local_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::{person::person::PersonForm},
     models::{person::{local_user::*, person::Person}, site::local_site::LocalSite},
-    utils::{diesel_option_overwrite, naive_now},
+    utils::{naive_now},
 };
 use tinyboards_db_views::structs::LoggedInUserView;
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
@@ -59,7 +59,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         if let Some(avatar) = avatar.clone() {
             if let Some(current_avatar) = current_avatar.clone() {
                 if avatar != current_avatar && !avatar.to_string().is_empty() && !current_avatar.to_string().is_empty() {
-                    purge_local_image_by_url(context.pool(), &current_avatar.to_string()).await?;
+                    purge_local_image_by_url(context.pool(), &current_avatar).await?;
                 }
             }
         };
@@ -67,7 +67,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         if let Some(banner) = banner.clone() {
             if let Some(current_banner) = current_banner {
                 if banner != current_banner && !banner.to_string().is_empty() && !current_banner.to_string().is_empty() {
-                    purge_local_image_by_url(context.pool(), &current_banner.to_string()).await?;
+                    purge_local_image_by_url(context.pool(), &current_banner).await?;
                 }
             }
         };
@@ -75,7 +75,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         if let Some(signature) = signature.clone() {
             if let Some(current_signature) = current_signature.clone() {
                 if signature != current_signature && !signature.to_string().is_empty() && !current_signature.to_string().is_empty() {
-                    purge_local_image_by_url(context.pool(), &current_signature.to_string()).await?;
+                    purge_local_image_by_url(context.pool(), &current_signature).await?;
                 }            
             }
         };

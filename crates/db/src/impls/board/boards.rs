@@ -10,6 +10,11 @@ use crate::{
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 
+pub enum CollectionType {
+    Moderators,
+    Featured,
+}
+
 impl Board {
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin
     pub async fn board_has_mod(
@@ -28,7 +33,30 @@ impl Board {
 
         mod_id.map(|opt| opt.is_some())
     }
-
+    pub async fn get_by_collection_url(
+        pool: &DbPool,
+        url: &DbUrl,
+      ) -> Result<(Board, CollectionType), Error> {
+        use crate::schema::boards::dsl::{featured_url, moderators_url};
+        use CollectionType::*;
+        let conn = &mut get_conn(pool).await?;
+        let res = boards::table
+          .filter(moderators_url.eq(url))
+          .first::<Self>(conn)
+          .await;
+        if let Ok(b) = res {
+          return Ok((b, Moderators));
+        }
+        let res = boards::table
+          .filter(featured_url.eq(url))
+          .first::<Self>(conn)
+          .await;
+        if let Ok(b) = res {
+          return Ok((b, Featured));
+        }
+        Err(diesel::NotFound)
+    }
+    
     /// Takes a board id and an user id, and returns true if the user is banned from the board with the given id
     pub async fn board_has_ban(
         pool: &DbPool,
@@ -64,6 +92,19 @@ impl Board {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn update_removed(
+        pool: &DbPool,
+        board_id: i32,
+        new_is_removed: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+        diesel::update(boards.find(board_id))
+            .set((is_removed.eq(new_is_removed), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
     
     pub async fn update_banned(
         pool: &DbPool,
@@ -86,16 +127,21 @@ pub mod safe_type {
         id,
         name,
         title,
+        icon,
+        banner,
         description,
         creation_date,
         updated,
         is_deleted,
+        is_removed,
         is_nsfw,
         is_hidden,
         actor_id,
         subscribers_url,
         inbox_url,
-        shared_inbox_url
+        shared_inbox_url,
+        moderators_url,
+        featured_url,
     );
 
     impl ToSafe for BoardSafe {
@@ -105,16 +151,21 @@ pub mod safe_type {
                 id,
                 name,
                 title,
+                icon,
+                banner,
                 description,
                 creation_date,
                 updated,
                 is_deleted,
+                is_removed,
                 is_nsfw,
                 is_hidden,
                 actor_id,
                 subscribers_url,
                 inbox_url,
-                shared_inbox_url
+                shared_inbox_url,
+                moderators_url,
+                featured_url,
             )
         }
     }

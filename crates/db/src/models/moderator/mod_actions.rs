@@ -11,7 +11,7 @@ use crate::schema::{
     mod_remove_board,
     mod_remove_comment,
     mod_remove_post,
-    mod_sticky_post,
+    mod_feature_post,
 };
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
@@ -197,19 +197,19 @@ pub struct ModRemovePostForm {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-#[diesel(table_name = mod_sticky_post)]
-pub struct ModStickyPost {
+#[diesel(table_name = mod_feature_post)]
+pub struct ModFeaturePost {
     pub id: i32,
     pub mod_person_id: i32,
     pub post_id: i32,
-    pub stickied: Option<bool>,
+    pub featured: Option<bool>,
     pub when_: NaiveDateTime,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
-#[diesel(table_name = mod_sticky_post)]
-pub struct ModStickyPostForm {
+#[diesel(table_name = mod_feature_post)]
+pub struct ModFeaturePostForm {
     pub mod_person_id: i32,
     pub post_id: i32,
-    pub stickied: Option<Option<bool>>,
+    pub featured: Option<bool>,
 }

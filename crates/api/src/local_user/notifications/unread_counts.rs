@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
   data::TinyBoardsContext,
-  user::{GetUnreadCount, GetUnreadCountResponse},
+  person::{GetUnreadCount, GetUnreadCountResponse},
   utils::{get_local_user_view_from_jwt},
 };
 use tinyboards_db_views::structs::{CommentReplyView, PersonMentionView};

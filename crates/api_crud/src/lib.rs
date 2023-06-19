@@ -9,6 +9,8 @@ pub mod post;
 pub mod user;
 pub mod invite;
 pub mod applications;
+pub mod post_report;
+pub mod comment_report;
 
 #[async_trait::async_trait(?Send)]
 pub trait PerformCrud<'des> {

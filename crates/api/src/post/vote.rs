@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     post::{CreatePostVote, PostIdPath, PostResponse},
     utils::{
         check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
-        require_user,
+        require_user, is_mod_or_admin,
     },
 };
 use tinyboards_db::{
@@ -71,8 +71,10 @@ impl<'des> Perform<'des> for CreatePostVote {
 
             // mark the post as read here
 
+
+            let is_mod_or_admin = is_mod_or_admin(context.pool(), view.person.id, post.board_id).await.is_ok();
             // grab the post view here for the response
-            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.person_id)).await?;
+            let post_view = PostView::read(context.pool(), vote_form.post_id, Some(vote_form.person_id), Some(is_mod_or_admin)).await?;
 
             Ok(PostResponse { post_view })
         } else {

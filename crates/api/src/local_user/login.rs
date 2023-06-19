@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
-    user::{Login, LoginResponse},
+    person::{Login, LoginResponse},
 };
 use tinyboards_db::models::{site::local_site::LocalSite};
 use tinyboards_db_views::structs::{LocalUserView, LoggedInUserView};

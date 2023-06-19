@@ -91,12 +91,12 @@ diesel::table! {
 }
 
 diesel::table! {
-    board_subscriptions (id) {
+    board_subscriber (id) {
         id -> Int4,
         board_id -> Int4,
         person_id -> Int4,
         creation_date -> Timestamp,
-        pending -> Nullable<Bool>,
+        pending -> Bool,
     }
 }
 
@@ -122,6 +122,12 @@ diesel::table! {
         shared_inbox_url -> Nullable<Text>,
         last_refreshed_date -> Timestamp,
         instance_id -> Int4,
+        moderators_url -> Nullable<Text>,
+        featured_url -> Nullable<Text>,
+        icon -> Nullable<Text>,
+        banner -> Nullable<Text>,
+        posting_restricted_to_mods -> Bool,
+        is_removed -> Bool,
     }
 }
 
@@ -147,6 +153,20 @@ diesel::table! {
 }
 
 diesel::table! {
+    comment_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        comment_id -> Int4,
+        original_comment_text -> Text,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Int4,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     comment_saved (id) {
         id -> Int4,
         comment_id -> Int4,
@@ -162,6 +182,7 @@ diesel::table! {
         comment_id -> Int4,
         score -> Int2,
         creation_date -> Timestamp,
+        post_id -> Int4,
     }
 }
 
@@ -181,6 +202,9 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
         board_id -> Int4,
+        local -> Bool,
+        ap_id -> Nullable<Text>,
+        language_id -> Int4,
     }
 }
 
@@ -375,6 +399,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    mod_feature_post (id) {
+        id -> Int4,
+        mod_person_id -> Int4,
+        post_id -> Int4,
+        featured -> Nullable<Bool>,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
     mod_lock_post (id) {
         id -> Int4,
         mod_person_id -> Int4,
@@ -413,16 +447,6 @@ diesel::table! {
         post_id -> Int4,
         reason -> Nullable<Text>,
         removed -> Nullable<Bool>,
-        when_ -> Timestamp,
-    }
-}
-
-diesel::table! {
-    mod_sticky_post (id) {
-        id -> Int4,
-        mod_person_id -> Int4,
-        post_id -> Int4,
-        stickied -> Nullable<Bool>,
         when_ -> Timestamp,
     }
 }
@@ -512,6 +536,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    person_subscriber (id) {
+        id -> Int4,
+        person_id -> Int4,
+        subscriber_id -> Int4,
+        creation_date -> Timestamp,
+        pending -> Bool,
+    }
+}
+
+diesel::table! {
     post_aggregates (id) {
         id -> Int4,
         post_id -> Int4,
@@ -531,6 +565,22 @@ diesel::table! {
         post_id -> Int4,
         person_id -> Int4,
         creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
+    post_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        post_id -> Int4,
+        original_post_title -> Text,
+        original_post_url -> Nullable<Text>,
+        original_post_body -> Nullable<Text>,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Int4,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
     }
 }
 
@@ -569,10 +619,13 @@ diesel::table! {
         creation_date -> Timestamp,
         is_deleted -> Bool,
         is_nsfw -> Bool,
-        is_stickied -> Bool,
         updated -> Nullable<Timestamp>,
         image -> Nullable<Text>,
         language_id -> Int4,
+        ap_id -> Nullable<Text>,
+        local -> Bool,
+        featured_board -> Bool,
+        featured_local -> Bool,
     }
 }
 
@@ -673,17 +726,20 @@ diesel::joinable!(board_mods -> boards (board_id));
 diesel::joinable!(board_mods -> person (person_id));
 diesel::joinable!(board_person_bans -> boards (board_id));
 diesel::joinable!(board_person_bans -> person (person_id));
-diesel::joinable!(board_subscriptions -> boards (board_id));
-diesel::joinable!(board_subscriptions -> person (person_id));
+diesel::joinable!(board_subscriber -> boards (board_id));
+diesel::joinable!(board_subscriber -> person (person_id));
 diesel::joinable!(boards -> instance (instance_id));
 diesel::joinable!(boards -> person (creator_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
 diesel::joinable!(comment_reply -> comments (comment_id));
 diesel::joinable!(comment_reply -> person (recipient_id));
+diesel::joinable!(comment_report -> comments (comment_id));
 diesel::joinable!(comment_saved -> comments (comment_id));
 diesel::joinable!(comment_saved -> person (person_id));
 diesel::joinable!(comment_votes -> comments (comment_id));
 diesel::joinable!(comment_votes -> person (person_id));
+diesel::joinable!(comment_votes -> posts (post_id));
+diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> person (creator_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(email_verification -> person (local_user_id));
@@ -697,6 +753,8 @@ diesel::joinable!(local_user_language -> local_user (local_user_id));
 diesel::joinable!(mod_add_board -> boards (board_id));
 diesel::joinable!(mod_add_board_mod -> boards (board_id));
 diesel::joinable!(mod_ban_from_board -> boards (board_id));
+diesel::joinable!(mod_feature_post -> person (mod_person_id));
+diesel::joinable!(mod_feature_post -> posts (post_id));
 diesel::joinable!(mod_lock_post -> person (mod_person_id));
 diesel::joinable!(mod_lock_post -> posts (post_id));
 diesel::joinable!(mod_remove_board -> boards (board_id));
@@ -705,8 +763,6 @@ diesel::joinable!(mod_remove_comment -> comments (comment_id));
 diesel::joinable!(mod_remove_comment -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> posts (post_id));
-diesel::joinable!(mod_sticky_post -> person (mod_person_id));
-diesel::joinable!(mod_sticky_post -> posts (post_id));
 diesel::joinable!(password_resets -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
 diesel::joinable!(person_aggregates -> person (person_id));
@@ -718,6 +774,7 @@ diesel::joinable!(person_mentions -> person (recipient_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
 diesel::joinable!(post_read -> person (person_id));
 diesel::joinable!(post_read -> posts (post_id));
+diesel::joinable!(post_report -> posts (post_id));
 diesel::joinable!(post_saved -> person (person_id));
 diesel::joinable!(post_saved -> posts (post_id));
 diesel::joinable!(post_votes -> person (person_id));
@@ -741,10 +798,11 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_language,
     board_mods,
     board_person_bans,
-    board_subscriptions,
+    board_subscriber,
     boards,
     comment_aggregates,
     comment_reply,
+    comment_report,
     comment_saved,
     comment_votes,
     comments,
@@ -762,11 +820,11 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_add_board_mod,
     mod_ban,
     mod_ban_from_board,
+    mod_feature_post,
     mod_lock_post,
     mod_remove_board,
     mod_remove_comment,
     mod_remove_post,
-    mod_sticky_post,
     password_resets,
     person,
     person_aggregates,
@@ -774,8 +832,10 @@ diesel::allow_tables_to_appear_in_same_query!(
     person_blocks,
     person_board_blocks,
     person_mentions,
+    person_subscriber,
     post_aggregates,
     post_read,
+    post_report,
     post_saved,
     post_votes,
     posts,

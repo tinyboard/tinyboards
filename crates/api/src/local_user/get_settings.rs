@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    user::{GetUserSettings, GetUserSettingsResponse},
+    person::{GetUserSettings, GetUserSettingsResponse},
     utils::{
         get_local_user_view_from_jwt,
     },

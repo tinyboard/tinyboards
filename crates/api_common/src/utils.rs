@@ -2,34 +2,38 @@
 use hmac::{Hmac, Mac};
 use anyhow::Context;
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
+use reqwest_middleware::ClientWithMiddleware;
 use sha2::Sha384;
+use futures::try_join;
 use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
-        board::boards::Board,
+        board::{boards::{Board, BoardForm}, board_mods::BoardModerator},
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
-        person::{local_user::*, person_blocks::*}, site::local_site::LocalSite,
+        person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance,
     },
     traits::Crud, SiteMode, 
-    utils::DbPool,
+    utils::{DbPool, naive_now},
     newtypes::DbUrl,
 };
-use tinyboards_db_views::structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView};
+use tinyboards_db_views::{structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView, BoardModeratorView}, CommentQuery};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
     settings::structs::{RateLimitSettings, Settings},
-    email::send_email, location_info,
+    email::{send_email, /*translations::Lang*/}, location_info,
 };
 use uuid::Uuid;
 use base64::{
     Engine as _,
     engine::{general_purpose},
 };
+
+use crate::site::FederatedInstances;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -518,9 +522,8 @@ pub async fn is_mod_or_admin(
 
 pub async fn purge_local_image_by_url(
     pool: &DbPool,
-    img_url: &str,
+    img_url: &DbUrl,
 ) -> Result<(), TinyBoardsError> {
-
     // get the file by URL
     let file = Upload::find_by_url(pool, img_url).await?;
     // remove file from local disk
@@ -787,6 +790,14 @@ pub async fn send_application_approval_email(
     Ok(Url::parse(&format!("{actor_id}/subscribers"))?.into())
   }
 
+  pub fn generate_moderators_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/mods"))?.into())
+  }
+
+  pub fn generate_featured_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
+    Ok(Url::parse(&format!("{actor_id}/featured"))?.into())
+  }
+
   pub fn generate_site_inbox_url(actor_id: &DbUrl) -> Result<DbUrl, ParseError> {
     let actor_id: Url = actor_id.clone().into();
     actor_id.clone().set_path("site_inbox");
@@ -806,4 +817,171 @@ pub async fn send_application_approval_email(
         },
     );
     Ok(Url::parse(&url)?.into())
+  }
+
+#[tracing::instrument(skip_all)]
+pub async fn build_federated_instances(
+  local_site: &LocalSite,
+  pool: &DbPool,
+) -> Result<Option<FederatedInstances>, TinyBoardsError> {
+  if local_site.federation_enabled {
+    // TODO I hate that this requires 3 queries
+    let (linked, allowed, blocked) = try_join!(
+      Instance::linked(pool),
+      Instance::allow_list(pool),
+      Instance::block_list(pool)
+    )?;
+
+    Ok(Some(FederatedInstances {
+      linked,
+      allowed,
+      blocked,
+    }))
+  } else {
+    Ok(None)
+  }
+}
+
+pub async fn remove_user_data(
+        banned_person_id: i32,
+        pool: &DbPool,
+    ) -> Result<(), TinyBoardsError> {
+    let person = Person::read(pool, banned_person_id).await?;
+    if let Some(avatar) = person.avatar {
+        purge_local_image_by_url(pool, &avatar)
+            .await
+            .ok();
+    }
+    if let Some(banner) = person.banner {
+        purge_local_image_by_url(pool, &banner)
+            .await
+            .ok();
+    }
+    if let Some(signature) = person.signature {
+        purge_local_image_by_url(pool, &signature)
+            .await
+            .ok();
+    }
+
+    let remove_form = PersonForm {
+        avatar: None,
+        banner: None,
+        signature: None,
+        updated: Some(naive_now()),
+        ..PersonForm::default()
+    };
+
+    Person::update(pool, banned_person_id, &remove_form).await?;
+
+    // Posts
+    Post::update_removed_for_creator(pool, banned_person_id, None, true).await?;
+
+    purge_local_image_posts_for_user(banned_person_id, pool).await?;
+
+    let first_mod_boards = BoardModeratorView::get_board_first_mods(pool).await?;
+
+    let banned_user_first_boards: Vec<BoardModeratorView> = first_mod_boards
+        .into_iter()
+        .filter(|fmb| fmb.moderator.id == banned_person_id)
+        .collect();
+
+    for fmb in banned_user_first_boards {
+        let board_id = fmb.board.id;
+        let form = BoardForm {
+            is_removed: Some(true),
+            updated: Some(Some(naive_now())),
+            ..BoardForm::default()
+        };
+        let board = Board::update(pool, board_id, &form).await?;
+
+        if let Some(icon) = board.icon {
+            purge_local_image_by_url(pool, &icon).await.ok();
+        }
+
+        if let Some(banner) = board.banner {
+            purge_local_image_by_url(pool, &banner).await.ok();
+        }
+
+        let form = BoardForm {
+            icon: None,
+            banner: None,
+            ..BoardForm::default()
+        };
+        Board::update(pool, board_id, &form).await?;
+    }
+
+    Comment::update_removed_for_creator(pool, banned_person_id, true).await?;
+
+    Ok(())
+}
+
+pub async fn remove_user_data_in_board(
+    board_id: i32,
+    banned_person_id: i32,
+    pool: &DbPool,
+) -> Result<(), TinyBoardsError> {
+    Post::update_removed_for_creator(pool, banned_person_id, Some(board_id), true).await?;
+
+    let response = CommentQuery::builder()
+        .pool(pool)
+        .creator_id(Some(banned_person_id))
+        .board_id(Some(board_id))
+        .limit(Some(i64::MAX))
+        .build()
+        .list()
+        .await?;
+
+    for comment_view in response.comments {
+        let comment_id = comment_view.comment.id;
+        Comment::update_removed(pool, comment_id, true).await?;
+    }
+
+    Ok(())
+}
+
+// pub fn get_interface_language(user: &LocalUserView) -> Lang {
+//     lang_str_to_lang(&user.local_user.interface_language)
+// }
+
+// fn lang_str_to_lang(lang: &str) -> Lang {
+//     let lang_id = LanguageId::new(lang);
+//     Lang::from_language_id(&lang_id).unwrap_or_else(|| {
+//       let en = LanguageId::new("en");
+//       Lang::from_language_id(&en).expect("default language")
+//     })
+// }
+
+pub async fn delete_user_account(
+    person_id: i32,
+    pool: &DbPool,
+  ) -> Result<(), TinyBoardsError> {
+    // Delete their images
+    let person = Person::read(pool, person_id).await?;
+    if let Some(avatar) = person.avatar {
+      purge_local_image_by_url(pool, &avatar).await?;
+    }
+    if let Some(banner) = person.banner {
+      purge_local_image_by_url(pool, &banner).await?;
+    }
+    // No need to update avatar and banner, those are handled in Person::delete_account
+  
+    // Comments
+    Comment::permadelete_for_creator(pool, person_id)
+      .await
+      .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't update comment"))?;
+  
+    // Posts
+    Post::permadelete_for_creator(pool, person_id)
+      .await
+      .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't update post"))?;
+  
+    // Purge image posts
+    purge_local_image_posts_for_user(person_id, pool).await?;
+  
+    // Leave boards they mod
+    BoardModerator::leave_all_boards(pool, person_id).await?;
+  
+    Person::delete_account(pool, person_id).await?;
+  
+    Ok(())
   }

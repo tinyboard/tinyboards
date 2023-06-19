@@ -1,10 +1,11 @@
 use crate::{
     models::board::board_mods::{BoardModerator, BoardModeratorForm},
-    traits::Crud, 
+    traits::{Crud, Joinable}, 
     utils::{DbPool, get_conn},
 };
 use diesel::{result::Error, *};
 use diesel_async::RunQueryDsl;
+use async_trait::async_trait;
 
 impl BoardModerator {
     pub async fn remove_board_mod(
@@ -20,6 +21,27 @@ impl BoardModerator {
         )
         .execute(conn)
         .await
+    }
+
+    pub async fn leave_all_boards(
+      pool: &DbPool,
+      for_person_id: i32,
+    ) -> Result<usize, Error> {
+      use crate::schema::board_mods::dsl::{board_mods, person_id};
+      let conn = &mut get_conn(pool).await?;
+      diesel::delete(board_mods.filter(person_id.eq(for_person_id)))
+        .execute(conn)
+        .await
+    }
+
+    pub async fn get_person_moderated_boards(pool: &DbPool, mod_id: i32) -> Result<Vec<i32>, Error> {
+        use crate::schema::board_mods::dsl::{board_id, board_mods, person_id};
+        let conn = &mut get_conn(pool).await?;
+        board_mods
+          .filter(person_id.eq(mod_id))
+          .select(board_id)
+          .load::<i32>(conn)
+          .await
     }
 }
 
@@ -56,4 +78,35 @@ impl Crud for BoardModerator {
             .get_result::<Self>(conn)
             .await
     }
+}
+
+#[async_trait]
+impl Joinable for BoardModerator {
+  type Form = BoardModeratorForm;
+  async fn join(
+    pool: &DbPool,
+    board_moderator_form: &BoardModeratorForm,
+  ) -> Result<Self, Error> {
+    use crate::schema::board_mods::dsl::board_mods;
+    let conn = &mut get_conn(pool).await?;
+    insert_into(board_mods)
+      .values(board_moderator_form)
+      .get_result::<Self>(conn)
+      .await
+  }
+
+  async fn leave(
+    pool: &DbPool,
+    board_moderator_form: &BoardModeratorForm,
+  ) -> Result<usize, Error> {
+    use crate::schema::board_mods::dsl::{board_id, board_mods, person_id};
+    let conn = &mut get_conn(pool).await?;
+    diesel::delete(
+      board_mods
+        .filter(board_id.eq(board_moderator_form.board_id))
+        .filter(person_id.eq(board_moderator_form.person_id)),
+    )
+    .execute(conn)
+    .await
+  }
 }

@@ -10,6 +10,7 @@ chrono = { workspace = true }
 diesel = { workspace = true }
 diesel-async = { workspace = true, features = ["postgres", "bb8"] }
 diesel_migrations = { workspace = true }
+diesel-derive-newtype = { workspace = true }
 r2d2 = { workspace = true }
 dotenvy = { workspace = true }
 serde = { workspace = true }

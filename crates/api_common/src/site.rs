@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::SiteMode;
-use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView};
+use tinyboards_db::{SiteMode, newtypes::DbUrl, models::apub::{instance::Instance, language::Language}};
+use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView, SiteView};
 use tinyboards_db_views_mod::structs::{
     AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
     ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
-    ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModStickyPostView,
+    ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModFeaturePostView,
 };
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -92,7 +92,7 @@ pub struct GetModLog {
 pub struct GetModLogResponse {
     pub removed_posts: Vec<ModRemovePostView>,
     pub locked_posts: Vec<ModLockPostView>,
-    pub stickied_posts: Vec<ModStickyPostView>,
+    pub featured_posts: Vec<ModFeaturePostView>,
     pub removed_comments: Vec<ModRemoveCommentView>,
     pub removed_boards: Vec<ModRemoveBoardView>,
     pub banned_from_board: Vec<ModBanFromBoardView>,
@@ -107,6 +107,28 @@ pub struct GetModLogResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetSiteSettings {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetSite {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SiteResponse {
+    pub site_view: SiteView,
+    //pub taglines: Vec<TagLine>,
+}
+  
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetSiteResponse {
+    pub site_view: SiteView,
+    pub admins: Vec<PersonView>,
+    pub version: String,
+    pub all_languages: Vec<Language>,
+    pub discussion_languages: Vec<i32>,
+    // list of taglines shown at the top of the front page
+    // pub taglines: Vec<TagLine>,
+    // list of custom emojis your site supports
+    // pub custom_emojis: Vec<CustomEmojiView>,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetSiteSettingsResponse {
@@ -183,8 +205,13 @@ pub struct ExecutePasswordReset {
 } 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ExecutePasswordResetResponse {
+    pub success: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileUploadResponse {
-    pub uploads: Vec<String>,
+    pub uploads: Vec<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -201,4 +228,20 @@ pub struct DeleteFile{}
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileNamePath {
     pub file_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FederatedInstances {
+    pub linked: Vec<Instance>,
+    pub allowed: Vec<Instance>,
+    pub blocked: Vec<Instance>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetFederatedInstances {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct GetFederatedInstancesResponse {
+    /// Optional if federation is disabled
+    pub federated_instances: Option<FederatedInstances>,
 }

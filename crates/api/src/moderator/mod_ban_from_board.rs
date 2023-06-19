@@ -7,13 +7,13 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::board::{
-        board_subscriptions::{BoardSubscriber, BoardSubscriberForm},
+        board_subscriber::{BoardSubscriber, BoardSubscriberForm},
         board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     },
     models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
     traits::{Bannable, Crud, Subscribeable},
 };
-use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_utils::{error::TinyBoardsError, time::naive_from_unix};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for BanFromBoard {
@@ -29,11 +29,11 @@ impl<'des> Perform<'des> for BanFromBoard {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &BanFromBoard = &self;
 
-        let target_person_id = data.target_person_id;
+        let target_person_id = data.person_id;
         let board_id = data.board_id;
         let reason = data.reason.clone();
-        let expires = data.expires;
-        let banned = data.banned;
+        let expires = Some(naive_from_unix(data.expires.unwrap()));
+        let banned = data.ban;
 
         // require board moderator (at least) to perform this action
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -45,7 +45,7 @@ impl<'des> Perform<'des> for BanFromBoard {
         let board_user_ban_form = BoardPersonBanForm {
             board_id: board_id.clone(),
             person_id: target_person_id.clone(),
-            expires: expires.clone(),
+            expires,
         };
 
         if banned {

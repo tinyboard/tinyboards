@@ -1,3 +1,4 @@
+use crate::newtypes::DbUrl;
 use crate::schema::comments::dsl::*;
 use crate::traits::Moderateable;
 use crate::utils::naive_now;
@@ -10,8 +11,45 @@ use crate::{
 use diesel::{prelude::*, result::Error, QueryDsl};
 use tinyboards_utils::TinyBoardsError;
 use diesel_async::RunQueryDsl;
+use url::Url;
 
 impl Comment {
+
+    pub async fn permadelete_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+      ) -> Result<Vec<Self>, Error> {
+        use crate::schema::comments::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(comments.filter(creator_id.eq(for_creator_id)))
+          .set((
+            body.eq("*Permananently Deleted*"),
+            is_deleted.eq(true),
+            updated.eq(naive_now()),
+          ))
+          .get_results::<Self>(conn)
+          .await
+    }
+
+    pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::comments::dsl::*;
+        let object_id: DbUrl = object_id.into();
+        Ok(
+            comments
+                .filter(ap_id.eq(object_id))
+                .first::<Comment>(conn)
+                .await
+                .ok()
+                .map(Into::into),
+        )
+    }
+
+    pub fn parent_comment_id(&self) -> Option<i32> {
+        let parent_comment_id = self.parent_id;
+        parent_comment_id
+    }
+
     pub async fn submit(pool: &DbPool, form: CommentForm) -> Result<Self, TinyBoardsError> {
         Self::create(pool, &form)
             .await    
@@ -66,6 +104,19 @@ impl Comment {
         diesel::update(comments.find(comment_id))
             .set((is_removed.eq(new_removed), updated.eq(naive_now())))
             .get_result::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_removed_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+        new_removed: bool,
+    ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::comments::dsl::*;
+        diesel::update(comments.filter(creator_id.eq(for_creator_id)))
+            .set((is_removed.eq(new_removed), updated.eq(naive_now())))
+            .get_results::<Self>(conn)
             .await
     }
 

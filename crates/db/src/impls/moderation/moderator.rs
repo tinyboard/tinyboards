@@ -318,25 +318,25 @@ impl Crud for ModRemovePost {
 }
 
 #[async_trait::async_trait]
-impl Crud for ModStickyPost {
-    type Form = ModStickyPostForm;
+impl Crud for ModFeaturePost {
+    type Form = ModFeaturePostForm;
     type IdType = i32;
     async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::mod_sticky_post::dsl::*;
-        mod_sticky_post.find(id_).first::<Self>(conn)
+        use crate::schema::mod_feature_post::dsl::*;
+        mod_feature_post.find(id_).first::<Self>(conn)
         .await
     }
     async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::mod_sticky_post::dsl::*;
-        diesel::delete(mod_sticky_post.find(id_)).execute(conn)
+        use crate::schema::mod_feature_post::dsl::*;
+        diesel::delete(mod_feature_post.find(id_)).execute(conn)
         .await
     }
     async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::mod_sticky_post::dsl::*;
-        let new = diesel::insert_into(mod_sticky_post)
+        use crate::schema::mod_feature_post::dsl::*;
+        let new = diesel::insert_into(mod_feature_post)
             .values(form)
             .get_result::<Self>(conn)
             .await?;
@@ -344,8 +344,8 @@ impl Crud for ModStickyPost {
     }
     async fn update(pool: &DbPool, id_: i32, form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::mod_sticky_post::dsl::*;
-        diesel::update(mod_sticky_post.find(id_))
+        use crate::schema::mod_feature_post::dsl::*;
+        diesel::update(mod_feature_post.find(id_))
             .set(form)
             .get_result::<Self>(conn)
             .await

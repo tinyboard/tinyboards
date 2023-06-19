@@ -8,13 +8,21 @@ use tinyboards_db::{
     models::site::local_site::LocalSite,
     traits::Crud, utils::DbPool,
 };
+use once_cell::sync::Lazy;
 
 pub mod api;
 pub mod objects;
 pub mod protocol;
-
+pub mod activities;
+pub mod collections;
+pub mod activity_lists;
+pub mod mentions;
+pub mod fetcher;
 
 pub const FEDERATION_HTTP_FETCH_LIMIT: u32 = 50;
+static CONTEXT: Lazy<Vec<serde_json::Value>> = Lazy::new(|| {
+    serde_json::from_str(include_str!("../assets/tinyboards/context.json")).expect("parse apub context")
+});
 
 #[derive(Clone)]
 pub struct VerifyUrlData(pub DbPool);
@@ -152,5 +160,6 @@ pub trait SendActivity: Sync {
         _request: &Self,
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
     ) -> Result<(), TinyBoardsError>;
 }

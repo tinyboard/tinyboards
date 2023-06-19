@@ -33,15 +33,18 @@ pub trait Subscribeable {
     async fn unsubscribe(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
+    async fn subscribe_accepted(pool: &DbPool, board_id: i32, person_id: i32) -> Result<Self, Error>
+    where
+        Self: Sized;
 }
 
 #[async_trait::async_trait]
 pub trait Joinable {
     type Form;
-    async fn join(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn join(pool: &DbPool, form: &Self::Form) -> Result<Self, Error>
     where
         Self: Sized;
-    async fn leave(pool: &DbPool, form: &Self::Form) -> Result<Self, TinyBoardsError>
+    async fn leave(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
 }
@@ -116,14 +119,14 @@ pub trait Reportable {
     async fn resolve(
         pool: &DbPool,
         report_id: Self::IdType,
-        resolver_id: UserId,
+        resolver_id: i32,
     ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
     async fn unresolve(
         pool: &DbPool,
         report_id: Self::IdType,
-        resolver_id: UserId,
+        resolver_id: i32,
     ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
@@ -181,3 +184,11 @@ pub trait ApubActor {
     where
         Self: Sized;
 }
+
+pub trait JoinView {
+    type JoinTuple;
+    fn from_tuple(tuple: Self::JoinTuple) -> Self
+    where
+      Self: Sized;
+  }
+  

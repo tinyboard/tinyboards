@@ -6,12 +6,49 @@ use crate::{
     schema::posts,
     traits::{Crud, Moderateable},
     utils::{naive_now, get_conn, DbPool},
+    newtypes::DbUrl,
 };
 use diesel::{prelude::*, result::Error};
 use tinyboards_utils::TinyBoardsError;
 use diesel_async::RunQueryDsl;
+use url::Url;
 
 impl Post {
+
+    pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        let object_id: DbUrl = object_id.into();
+        Ok(
+            posts::table
+                .filter(posts::ap_id.eq(object_id))
+                .first::<Post>(conn)
+                .await
+                .ok()
+                .map(Into::into)
+        )
+    }
+
+    pub async fn permadelete_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+      ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::posts::dsl::*;
+        let perma_deleted = "*Permananently Deleted*";
+        let perma_deleted_url = "https://deleted.com";
+    
+        diesel::update(posts.filter(creator_id.eq(for_creator_id)))
+          .set((
+            title.eq(perma_deleted),
+            url.eq(perma_deleted_url),
+            body.eq(perma_deleted),
+            is_deleted.eq(true),
+            updated.eq(naive_now()),
+          ))
+          .get_results::<Self>(conn)
+          .await
+    }
+
     pub async fn submit(pool: &DbPool, form: PostForm) -> Result<Self, TinyBoardsError> {
         Self::create(pool, &form)
             .await    
@@ -129,15 +166,28 @@ impl Post {
             .await
     }
 
-    pub async fn update_stickied(
+    pub async fn update_featured_board(
         pool: &DbPool,
         post_id: i32,
-        new_stickied: bool,
+        new_featured: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         diesel::update(posts.find(post_id))
-            .set((is_stickied.eq(new_stickied), updated.eq(naive_now())))
+            .set((featured_board.eq(new_featured), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_featured_local(
+        pool: &DbPool,
+        post_id: i32,
+        new_featured: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::posts::dsl::*;
+        diesel::update(posts.find(post_id))
+            .set((featured_local.eq(new_featured), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }
@@ -167,6 +217,26 @@ impl Post {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn update_removed_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+        for_board_id: Option<i32>,
+        new_removed: bool,
+    ) -> Result<Vec<Self>, Error> {
+        use crate::schema::posts::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        let mut update = diesel::update(posts).into_boxed();
+        update = update.filter(creator_id.eq(for_creator_id));
+        if let Some(for_board_id) = for_board_id {
+            update = update.filter(board_id.eq(for_board_id));
+        }
+
+        update
+            .set((is_removed.eq(new_removed), updated.eq(naive_now())))
+            .get_results::<Self>(conn)
+            .await
+    }
 }
 
 #[async_trait::async_trait]
@@ -188,6 +258,9 @@ impl Crud for Post {
         let conn = &mut get_conn(pool).await?;
         let new_post = diesel::insert_into(posts::table)
             .values(form)
+            .on_conflict(posts::ap_id)
+            .do_update()
+            .set(form)
             .get_result::<Self>(conn)
             .await?;
 

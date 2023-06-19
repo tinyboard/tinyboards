@@ -43,6 +43,8 @@ html2text = { workspace = true }
 parking_lot = { workspace = true }
 tokio = { workspace = true }
 typed-builder = { workspace = true }
+itertools = { workspace = true }
+rosetta-i18n = { workspace = true }
 
 [dependencies.uuid]
 version = "1.1.2"
@@ -52,3 +54,6 @@ features = [
     "macro-diagnostics",
     "serde"
 ]
+
+#[build-dependencies]
+#rosetta-build = "0.1.2"

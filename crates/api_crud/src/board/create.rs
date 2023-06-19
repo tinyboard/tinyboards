@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     board::{CreateBoard, BoardResponse},
     utils::{
         require_user,
-    },
+    }, build_response::build_board_response,
 };
 use tinyboards_db::{
     models::{
@@ -13,7 +13,6 @@ use tinyboards_db::{
     },
     traits::Crud,
 };
-use tinyboards_db_views::structs::BoardView;
 use tinyboards_utils::{
     parser::parse_markdown,
     TinyBoardsError,
@@ -59,8 +58,6 @@ impl<'des> PerformCrud<'des> for CreateBoard {
         // create the board
         let board = Board::create(context.pool(), &form).await?;
 
-        let board_view = BoardView::read(context.pool(), board.id, None).await?;
-
-        Ok(BoardResponse { board_view })
+        Ok(build_board_response(context, view, board.id).await?)
     }
 }

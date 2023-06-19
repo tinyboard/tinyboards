@@ -4,10 +4,10 @@ use tinyboards_db::{
         BoardAggregates, CommentAggregates, PersonAggregates, PostAggregates, SiteAggregates,
     },
     models::{
-        board::boards::BoardSafe,
-        comment::{comment_reply::CommentReply, comments::Comment},
+        board::boards::{BoardSafe, Board},
+        comment::{comment_reply::CommentReply, comments::Comment, comment_report::CommentReport},
         person::{local_user::*, person::*, person_mentions::*},
-        post::posts::Post,
+        post::{posts::Post, post_report::PostReport},
         site::{
             local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit,
             registration_applications::RegistrationApplication, site::Site,
@@ -82,8 +82,8 @@ pub struct BoardBlockView {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardSubscriberView {
-    pub board: BoardSafe,
-    pub subscriber: PersonSafe,
+    pub board: Board,
+    pub subscriber: Person,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -159,8 +159,35 @@ pub struct CommentReplyView {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct RegistrationApplicationView {
-    pub application: RegistrationApplication,
-    pub applicant_settings: LocalUserSettings,
-    pub applicant: LocalUserSafe,
-    pub admin: Option<LocalUserSafe>,
+  pub application: RegistrationApplication,
+  pub applicant_settings: LocalUserSettings,
+  pub applicant: LocalUserSafe,
+  pub admin: Option<LocalUserSafe>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct PostReportView {
+    pub post_report: PostReport,
+    pub post: Post,
+    pub board: Board,
+    pub creator: PersonSafe,
+    pub post_creator: PersonSafe,
+    pub creator_banned_from_board: bool,
+    pub my_vote: Option<i16>,
+    pub counts: PostAggregates,
+    pub resolver: Option<PersonSafe>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct CommentReportView {
+    pub comment_report: CommentReport,
+    pub comment: Comment,
+    pub post: Post,
+    pub board: Board,
+    pub creator: PersonSafe,
+    pub comment_creator: PersonSafe,
+    pub counts: CommentAggregates,
+    pub creator_banned_from_board: bool,
+    pub my_vote: Option<i16>,
+    pub resolver: Option<PersonSafe>,
 }

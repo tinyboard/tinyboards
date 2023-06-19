@@ -80,7 +80,7 @@ pub enum ModLogActionType {
     All,
     ModRemovePost,
     ModLockPost,
-    ModStickyPost,
+    ModFeaturePost,
     ModRemoveComment,
     ModRemoveBoard,
     ModBanFromBoard,
@@ -93,12 +93,20 @@ pub enum ModLogActionType {
     AdminPurgeComment,
 }
 
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum PostFeatureType {
+    /// Features to the top of the local site
+    Local,
+    /// Features to the top of the board
+    Board,
+}
+
 pub fn map_to_modlog_type(match_string: Option<&str>) -> ModLogActionType {
     match match_string {
         Some("all") => ModLogActionType::All,
         Some("modremovepost") => ModLogActionType::ModRemovePost,
         Some("modlockpost") => ModLogActionType::ModLockPost,
-        Some("modstickypost") => ModLogActionType::ModStickyPost,
+        Some("modfeaturepost") => ModLogActionType::ModFeaturePost,
         Some("modremovecomment") => ModLogActionType::ModRemoveComment,
         Some("modremoveboard") => ModLogActionType::ModRemoveBoard,
         Some("modbanfromboard") => ModLogActionType::ModBanFromBoard,
@@ -171,5 +179,14 @@ pub fn map_to_listing_type(match_string: Option<&str>) -> ListingType {
         Some("subscribed") => ListingType::Subscribed,
         Some(&_) => ListingType::All,
         None => ListingType::All,
+    }
+}
+
+pub fn map_to_post_feature_type(match_string: Option<&str>) -> PostFeatureType {
+    match match_string {
+        Some("local") => PostFeatureType::Local,
+        Some("board") => PostFeatureType::Board,
+        Some(&_) => PostFeatureType::Board,
+        None => PostFeatureType::Board,
     }
 }

@@ -1,4 +1,4 @@
-use crate::schema::posts;
+use crate::{schema::posts, newtypes::DbUrl};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -9,9 +9,9 @@ pub struct Post {
     pub id: i32,
     pub title: String,
     pub type_: String,
-    pub url: Option<String>,
-    pub thumbnail_url: Option<String>,
-    pub permalink: Option<String>,
+    pub url: Option<DbUrl>,
+    pub thumbnail_url: Option<DbUrl>,
+    pub permalink: Option<DbUrl>,
     pub body: String,
     pub body_html: String,
     pub creator_id: i32,
@@ -21,10 +21,13 @@ pub struct Post {
     pub creation_date: NaiveDateTime,
     pub is_deleted: bool,
     pub is_nsfw: bool,
-    pub is_stickied: bool,
     pub updated: Option<NaiveDateTime>,
-    pub image: Option<String>,
+    pub image: Option<DbUrl>,
     pub language_id: i32,
+    pub ap_id: Option<DbUrl>,
+    pub local: bool,
+    pub featured_board: bool,
+    pub featured_local: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -32,9 +35,9 @@ pub struct Post {
 pub struct PostForm {
     pub title: Option<String>,
     pub type_: Option<String>,
-    pub url: Option<String>,
-    pub thumbnail_url: Option<String>,
-    pub permalink: Option<Option<String>>,
+    pub url: Option<DbUrl>,
+    pub thumbnail_url: Option<DbUrl>,
+    pub permalink: Option<Option<DbUrl>>,
     pub body: Option<String>,
     pub body_html: Option<String>,
     pub creator_id: Option<i32>,
@@ -44,7 +47,11 @@ pub struct PostForm {
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: Option<bool>,
     pub is_nsfw: Option<bool>,
-    pub is_stickied: Option<bool>,
-    pub image: Option<String>,
+    pub image: Option<DbUrl>,
     pub language_id: Option<i32>,
+    pub ap_id: Option<DbUrl>,
+    pub creation_date: Option<NaiveDateTime>,
+    pub local: Option<bool>,
+    pub featured_board: Option<bool>,
+    pub featured_local: Option<bool>,
 }

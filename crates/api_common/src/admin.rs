@@ -1,5 +1,5 @@
 use serde::{Serialize, Deserialize};
-use tinyboards_db_views::structs::RegistrationApplicationView;
+use tinyboards_db_views::structs::{RegistrationApplicationView, PersonView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PurgePost {
@@ -20,9 +20,14 @@ pub struct PurgeBoard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct PurgeUser {
+pub struct PurgePerson {
     pub person_id: i32,
     pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct PurgeItemResponse {
+    pub success: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -40,3 +45,17 @@ pub struct HandleRegistrationApplication {
 pub struct HandleRegistrationApplicationResponse {
     pub application: Option<RegistrationApplicationView>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddAdmin {
+    pub added_person_id: i32,
+    pub added: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddAdminResponse {
+    pub admins: Vec<PersonView>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct LeaveAdmin {}

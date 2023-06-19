@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    user::{SearchNames, SearchNamesResponse, UsernameInfo},
+    person::{SearchNames, SearchNamesResponse, UsernameInfo},
     utils::{
         require_user,
     },

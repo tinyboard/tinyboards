@@ -8,3 +8,4 @@ pub mod validate_invite;
 pub mod password_reset;
 pub mod password_reset_request;
 pub mod media;
+pub mod federated_instances;

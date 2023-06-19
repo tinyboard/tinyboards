@@ -1,12 +1,13 @@
 use actix_multipart::Multipart;
 use actix_web::*;
+use reqwest::Request;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
-    admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, moderator::*,
-    post::*, site::*, user::*,
+    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, person::*, applications::*, board::*,
 };
 use tinyboards_api_crud::PerformCrud;
+use tinyboards_apub::SendActivity;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
@@ -22,14 +23,15 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/approve", web::post().to(route_post::<ApproveObject>))
             .route("/lock", web::post().to(route_post::<LockObject>))
             .route("/unlock", web::post().to(route_post::<UnlockObject>))
-            .route(
-                "/password_reset",
-                web::post().to(route_post::<PasswordResetRequest>),
+            .route("/password_reset", web::post().to(route_post::<PasswordResetRequest>))
+            .route("/password_reset/{reset_token}", web::post().to(route_post::<ExecutePasswordReset>))
+            /// Get Federated Instances
+            .service(
+                web::scope("/federated_instances")
+                    .wrap(rate_limit.message())
+                    .route("", web::get().to(route_get::<GetFederatedInstances>)),
             )
-            .route(
-                "/password_reset/{reset_token}",
-                web::post().to(route_post::<ExecutePasswordReset>),
-            )
+            /// Validate Site Invite
             .route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),
@@ -47,7 +49,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/auth")
                     //.wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
-                    .route("/signup", web::post().to(route_post_crud::<Register>)),
+                    .route("/signup", web::post().to(route_post_crud::<Register>))
+                    /// Delete Account
+                    .route("/delete_account", web::post().to(route_post::<DeleteAccount>)),
             )
             // User
             .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
@@ -78,13 +82,13 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             // Board
             .service(
                 web::scope("/boards")
-                    .wrap(rate_limit.message())
-                    .route("", web::post().to(route_post_crud::<CreateBoard>))
-                    .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
-                    .route(
-                        "/{board_id}",
-                        web::delete().to(route_post_crud::<DeleteBoard>),
-                    ),
+                .wrap(rate_limit.message())
+                .route("", web::post().to(route_post_crud::<CreateBoard>))
+                .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
+                .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
+                .route("/block", web::post().to(route_post::<BlockBoard>))
+                .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
+                .route("/{board_id}", web::delete().to(route_post_crud::<DeleteBoard>))
             )
             // Post
             .service(
@@ -92,6 +96,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("", web::get().to(route_get_crud::<ListPosts>))
+                    .route("/remove", web::post().to(route_post_crud::<RemovePost>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route(
                         "/{post_id}",
@@ -114,6 +119,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
+                    .route("/remove", web::post().to(route_post_crud::<RemoveComment>))
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     .route(
                         "/{comment_id}",
@@ -138,13 +144,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/ban", web::post().to(route_post::<BanUser>))
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     .route("/ban_board", web::post().to(route_post::<BanBoard>))
-                    .route("/sticky_post", web::post().to(route_post::<StickyPost>))
+                    .route("/feature_post", web::post().to(route_post::<FeaturePost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>)),
             )
             // Admin Actions
             .service(
                 web::scope("/admin")
                     .route("/add_admin", web::post().to(route_post::<AddAdmin>))
+                    .route("/leave_admin", web::post().to(route_post::<LeaveAdmin>))
                     .route("/purge_user", web::post().to(route_post::<PurgeUser>))
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
@@ -178,16 +185,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     );
 }
 
-async fn perform<'des, Request>(
-    data: Request,
-    context: web::Data<TinyBoardsContext>,
-    path: web::Path<Request::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Request: Perform<'des>,
-    Request: Send + 'static,
-{
+fn get_auth(req: HttpRequest) -> Option<&str> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -199,7 +197,21 @@ where
         },
         None => None,
     };
+    auth_header
+}
 
+async fn perform<'des, Request>(
+    data: Request,
+    context: web::Data<TinyBoardsContext>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, TinyBoardsError>
+where
+    Request: Perform<'des>,
+    Request: Send + 'static,
+{
+
+    let auth_header = get_auth(req);
     let res = data
         .perform(&context, path.into_inner(), auth_header)
         .await
@@ -220,16 +232,46 @@ where
     perform::<Request>(query.0, data, path, req).await
 }
 
-async fn route_post<'des, Request>(
+async fn route_get_apub<'a, Data>(
     data: web::Data<TinyBoardsContext>,
+    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
+    query: web::Query<Request>,
+    path: web::Path<Request::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, Error> 
+where 
+    Data: Perform
+    + SendActivity<Response = <Data as Perform>::Response>
+    + Clone
+    + Deserialize<'a>
+    + Send
+    + 'static,
+{
+    let auth_header = get_auth(req);
+    let res = perform::<Request>(query.0, data, path, req).await;
+    SendActivity::send_activity(&req, &res, &apub_data, auth_header).await?;
+    Ok(HttpResponse::Ok().json(res))
+}
+
+async fn route_post<'a, Request>(
+    data: web::Data<TinyBoardsContext>,
+    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     body: web::Json<Request>,
     path: web::Path<Request::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, TinyBoardsError>
 where
-    Request: Deserialize<'des> + Perform<'des> + Send + 'static,
+    Data: Perform
+        + SendActivity<Response = <Data as Perform>::Response>
+        + Clone
+        + Deserialize<'a>
+        + Send
+        + 'static
 {
-    perform::<Request>(body.into_inner(), data, path, req).await
+    let auth_header = get_auth(req);
+    let res = perform::<Request>(body.into_inner(), data, path, req).await?;
+    SendActivity::send_activity(&req, &res, &apub_data, auth_header).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 async fn perform_crud<'des, Request>(

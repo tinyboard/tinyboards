@@ -1109,6 +1109,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "diesel-derive-newtype"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c7267437d5b12df60ae29bd97f8d120f1c3a6272d6f213551afa56bbb2ecfbb7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.18",
+]
+
+[[package]]
 name = "diesel_derives"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3355,6 +3366,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rosetta-i18n"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5298de832602aecc9458398f435d9bff0be57da7aac11221b6ff3d4ef9503de"
+
+[[package]]
 name = "rust-argon2"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3977,12 +3994,14 @@ dependencies = [
  "chrono",
  "diesel",
  "encoding",
+ "futures",
  "hmac",
  "jwt",
  "percent-encoding",
  "reqwest",
  "reqwest-middleware",
  "serde",
+ "serde_with",
  "sha2",
  "tinyboards_db",
  "tinyboards_db_views",
@@ -4060,6 +4079,7 @@ dependencies = [
  "chrono",
  "diesel",
  "diesel-async",
+ "diesel-derive-newtype",
  "diesel_migrations",
  "dotenvy",
  "hmac",
@@ -4211,6 +4231,7 @@ dependencies = [
  "futures",
  "html2text",
  "http",
+ "itertools",
  "jsonwebtoken",
  "lettre",
  "markdown",
@@ -4220,6 +4241,7 @@ dependencies = [
  "rand 0.8.5",
  "regex",
  "reqwest-middleware",
+ "rosetta-i18n",
  "rust-argon2",
  "serde",
  "serde_json",

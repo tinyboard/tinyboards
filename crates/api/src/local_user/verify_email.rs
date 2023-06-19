@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    user::{VerifyEmail, VerifyEmailResponse},
+    person::{VerifyEmail, VerifyEmailResponse},
     utils::{send_email_verification_success},
 };
 use tinyboards_db::{

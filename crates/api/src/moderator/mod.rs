@@ -3,14 +3,12 @@ use tinyboards_db::traits::{Crud, Moderateable};
 use tinyboards_db::utils::DbPool;
 use tinyboards_utils::TinyBoardsError;
 
-pub mod mod_add_admin;
 pub mod mod_add_board_mod;
 pub mod mod_ban_from_board;
 pub mod mod_ban_user;
 pub mod mod_lock_object;
 pub mod mod_remove_board;
 pub mod mod_remove_object;
-pub mod mod_sticky_post;
 
 // ;)
 #[allow(dead_code)]

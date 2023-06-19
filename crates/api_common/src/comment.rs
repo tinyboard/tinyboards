@@ -1,12 +1,13 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::models::person::person::Person;
-use tinyboards_db_views::structs::CommentView;
+use tinyboards_db_views::structs::{CommentView, CommentReportView};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateComment {
     pub body: String,
     pub post_id: i32,
     pub parent_id: Option<i32>, // parent comment id
+    pub language_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -60,6 +61,9 @@ pub struct ListCommentsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CommentResponse {
     pub comment_view: CommentView,
+    pub recipient_ids: Vec<i32>,
+    /// optional front end id to tell which is coming back
+    pub form_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -67,4 +71,49 @@ pub struct GetComment {
     pub context: Option<i32>,
     pub sort: Option<String>,
     pub post: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Remove a comment (only doable by mods)
+pub struct RemoveComment {
+    pub comment_id: i32,
+    pub removed: bool,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Report a comment.
+pub struct CreateCommentReport {
+  pub comment_id: i32,
+  pub reason: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// The comment report response.
+pub struct CommentReportResponse {
+  pub comment_report_view: CommentReportView,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Resolve a comment report (only doable by mods).
+pub struct ResolveCommentReport {
+  pub report_id: i32,
+  pub resolved: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// List comment reports.
+pub struct ListCommentReports {
+  pub page: Option<i64>,
+  pub limit: Option<i64>,
+  /// Only shows the unresolved reports
+  pub unresolved_only: Option<bool>,
+  /// if no board is given, it returns reports for all boards moderated by the auth user
+  pub board_id: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// The comment report list response.
+pub struct ListCommentReportsResponse {
+  pub comment_reports: Vec<CommentReportView>,
 }

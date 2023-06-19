@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     board::{DeleteBoard, BoardIdPath, BoardResponse},
     utils::{
         require_user,
-    },
+    }, build_response::build_board_response,
 };
 
 use tinyboards_db::{
@@ -33,7 +33,7 @@ impl<'des> PerformCrud<'des> for DeleteBoard {
     ) -> Result<BoardResponse, TinyBoardsError> {
 
         // board delete restricted to admin (may provide other options in the future)
-        let _user = require_user(context.pool(), context.master_key(), auth)
+        let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
@@ -44,10 +44,8 @@ impl<'des> PerformCrud<'des> for DeleteBoard {
         let new_is_deleted = !orig_board.is_deleted;
 
         // toggle is_deleted on the board
-        Board::update_deleted(context.pool(), path.board_id.clone(), new_is_deleted).await?;
+        let deleted_board = Board::update_deleted(context.pool(), path.board_id.clone(), new_is_deleted).await?;
 
-        let board_view = BoardView::read(context.pool(), path.board_id.clone(), None).await?;
-
-        Ok(BoardResponse { board_view })
+        Ok(build_board_response(context, view, deleted_board.id).await?)
     }
 }
