@@ -28,6 +28,7 @@ pub mod create_or_update;
 pub mod deletion;
 pub mod subscribed;
 pub mod unfederated;
+pub mod voting;
 
 /// Checks that the specified Url actually specifies a Person (by fetching it), and that the person has no site ban.
 #[tracing::instrument(skip_all)]
