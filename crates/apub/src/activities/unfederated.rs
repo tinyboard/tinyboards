@@ -6,10 +6,10 @@ use tinyboards_api_common::{
         ListComments,
         ListCommentsResponse,
         SaveComment,
-        // ListCommentReports,
-        // ListCommentReportsResponse,
-        // ResolveCommentReport,
-        // CommentReportResponse,
+        ListCommentReports,
+        ListCommentReportsResponse,
+        ResolveCommentReport,
+        CommentReportResponse,
     },
     board::{
         BoardResponse,
@@ -104,61 +104,161 @@ use tinyboards_api_common::{
       applications::{
         ListRegistrationApplications,
         ListRegistrationApplicationsResponse,
-      },
+      }, data::TinyBoardsContext,
 };
+use tinyboards_federation::config::Data;
+use tinyboards_utils::TinyBoardsError;
 
+#[async_trait::async_trait]
 impl SendActivity for Register {
     type Response = LoginResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for GetFederatedInstances {
     type Response = GetFederatedInstancesResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for PurgeBoard {
     type Response = PurgeItemResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for PurgePost {
     type Response = PurgeItemResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for PurgeComment {
     type Response = PurgeItemResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for PurgePerson {
     type Response = PurgeItemResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for HandleRegistrationApplication {
     type Response = HandleRegistrationApplicationResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for ListRegistrationApplications {
     type Response = ListRegistrationApplicationsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for Search {
     type Response = SearchResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for ExecutePasswordReset {
     type Response = ExecutePasswordResetResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for AddAdmin {
     type Response = AddAdminResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for LeaveAdmin {
     type Response = GetSiteResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for GetSite {
     type Response = GetSiteResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
+#[async_trait::async_trait]
 impl SendActivity for ListComments {
     type Response = ListCommentsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
 }

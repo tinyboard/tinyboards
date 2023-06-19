@@ -9,6 +9,7 @@ use crate::{
     },
     SendActivity,
   };
+use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_federation::{config::Data, fetch::object_id::ObjectId};
 use tinyboards_api_common::{
     comment::{CommentResponse, CreateCommentVote},
@@ -40,13 +41,14 @@ impl SendActivity for CreatePostVote {
     context: &Data<TinyBoardsContext>,
     auth: &Option<&str>,
   ) -> Result<(), TinyBoardsError> {
-    let object_id = ObjectId::from(response.post_view.post.ap_id.clone());
+    let object_id = ObjectId::from(response.post_view.post.ap_id.unwrap().clone());
     let board_id = response.post_view.board.id;
+    let view = require_user(context.pool(), context.master_key(), *auth).await.unwrap()?;
     send_activity(
       object_id,
       board_id,
       request.score,
-      auth,
+      view,
       context,
     )
     .await
@@ -63,7 +65,7 @@ impl SendActivity for CreateCommentVote {
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,
   ) -> Result<(), TinyBoardsError> {
-    let object_id = ObjectId::from(response.comment_view.comment.ap_id.clone());
+    let object_id = ObjectId::from(response.comment_view.comment.ap_id.unwrap().clone());
     let board_id = response.comment_view.board.id;
     send_activity(
       object_id,
@@ -80,28 +82,25 @@ async fn send_activity(
     object_id: ObjectId<PostOrComment>,
     board_id: i32,
     score: i16,
-    auth: Option<&str>,
+    view: LocalUserView,
     context: &Data<TinyBoardsContext>,
   ) -> Result<(), TinyBoardsError> {
     let board = Board::read(context.pool(), board_id).await?.into();
-    let view = require_user(context.pool(), context.master_key(), auth)
-        .await
-        .unwrap()?;
     let actor = Person::read(context.pool(), view.person.id)
       .await?
       .into();
   
     // score of 1 means upvote, -1 downvote, 0 undo a previous vote
     if score != 0 {
-      let vote = Vote::new(object_id, &actor, &view, score.try_into()?, context)?;
+      let vote = Vote::new(object_id, &actor, &board, score.try_into()?, context)?;
       let activity = AnnouncableActivities::Vote(vote);
-      send_activity_in_board(activity, &actor, &view, vec![], false, context).await
+      send_activity_in_board(activity, &actor, &board, vec![], false, context).await
     } else {
       // Tinyboards API doesnt distinguish between Undo/Like and Undo/Dislike, so we hardcode it here.
-      let vote = Vote::new(object_id, &actor, &view, VoteType::Like, context)?;
-      let undo_vote = UndoVote::new(vote, &actor, &view, context)?;
+      let vote = Vote::new(object_id, &actor, &board, VoteType::Like, context)?;
+      let undo_vote = UndoVote::new(vote, &actor, &board, context)?;
       let activity = AnnouncableActivities::UndoVote(undo_vote);
-      send_activity_in_board(activity, &actor, &view, vec![], false, context).await
+      send_activity_in_board(activity, &actor, &board, vec![], false, context).await
     }
   }
 

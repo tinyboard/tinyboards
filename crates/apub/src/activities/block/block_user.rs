@@ -47,7 +47,7 @@ impl BlockUser {
         context: &Data<TinyBoardsContext>,
     ) -> Result<BlockUser, TinyBoardsError> {
         let audience = if let SiteOrBoard::Board(b) = target {
-            Some(b.id.into())
+            Some(b.id().into())
         } else {
             None
         };
@@ -142,7 +142,7 @@ impl ActivityHandler for BlockUser {
     #[tracing::instrument(skip_all)]
     async fn receive(self, context: &Data<TinyBoardsContext>) -> Result<(), TinyBoardsError> {
         insert_activity(&self.id, &self, false, false, context).await?;
-        let expires = Some(self.expires.map(|u| u.naive_local()));
+        let expires = self.expires.map(|u| u.naive_local());
         let mod_person = self.actor.dereference(context).await?;
         let blocked_person = self.object.dereference(context).await?;
         let target = self.target.dereference(context).await?;
@@ -150,7 +150,7 @@ impl ActivityHandler for BlockUser {
             SiteOrBoard::Site(_site) => {
                 let blocked_form = PersonForm {
                     is_banned: Some(true),
-                    unban_date: Some(expires),
+                    unban_date: expires,
                     updated: Some(naive_now()),
                     ..PersonForm::default()
                 };
@@ -173,7 +173,7 @@ impl ActivityHandler for BlockUser {
                     other_person_id: blocked_person.id,
                     reason: Some(self.summary),
                     banned: Some(Some(true)),
-                    expires,
+                    expires: Some(expires),
                 };
                 ModBan::create(context.pool(), &form).await?;
             },
@@ -202,7 +202,7 @@ impl ActivityHandler for BlockUser {
                     board_id: board.id,
                     reason: Some(self.summary),
                     banned: Some(Some(true)),
-                    expires,
+                    expires: Some(expires),
                 };
                 ModBanFromBoard::create(context.pool(), &form).await?;
             }

@@ -106,8 +106,8 @@ impl ActivityHandler for UndoBlockUser {
           context.pool(),
           blocked_person.id,
           &PersonForm::builder()
-            .banned(Some(false))
-            .ban_expires(Some(expires))
+            .is_banned(Some(false))
+            .unban_date(Some(expires))
             .build(),
         )
         .await?;

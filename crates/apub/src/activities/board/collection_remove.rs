@@ -9,7 +9,7 @@ use crate::{
     activity_lists::AnnouncableActivities,
     insert_activity,
     objects::{board::ApubBoard, person::ApubPerson, post::ApubPost},
-    protocol::{activities::board::collection_remove::CollectionRemove},
+    protocol::{activities::board::collection_remove::CollectionRemove, InBoard},
   };
   use tinyboards_federation::{
     config::Data,
@@ -75,7 +75,7 @@ use crate::{
       let remove = CollectionRemove {
         actor: actor.id().into(),
         to: vec![public()],
-        object: featured_post.ap_id.clone().into(),
+        object: featured_post.ap_id.clone().unwrap().into(),
         target: generate_featured_url(&board.actor_id)?.into(),
         cc: vec![board.id()],
         kind: RemoveType::Remove,
@@ -103,9 +103,9 @@ use crate::{
     #[tracing::instrument(skip_all)]
     async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
       verify_is_public(&self.to, &self.cc)?;
-      let community = self.community(context).await?;
-      verify_person_in_board(&self.actor, &community, context).await?;
-      verify_mod_action(&self.actor, &self.object, community.id, context).await?;
+      let board = self.board(context).await?;
+      verify_person_in_board(&self.actor, &board, context).await?;
+      verify_mod_action(&self.actor, &self.object, board.id, context).await?;
       Ok(())
     }
   

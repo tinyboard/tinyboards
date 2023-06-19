@@ -200,7 +200,7 @@ impl SendActivity for BanFromBoard {
         expires,
         context,
       )
-      .await
+      .await?;
     } else {
       UndoBlockUser::send(
         &SiteOrBoard::Board(board),
@@ -209,7 +209,7 @@ impl SendActivity for BanFromBoard {
         request.reason.clone(),
         context,
       )
-      .await
+      .await?;
     }
     Ok(())
   }

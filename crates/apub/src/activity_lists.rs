@@ -19,7 +19,7 @@ use crate::{
         subscribed::{accept::AcceptSubscribe, subscribe::Subscribe, undo_subscribe::UndoSubscribe},
         voting::{undo_vote::UndoVote, vote::Vote},
       },
-      InBoard,
+      InBoard, objects::page::Page,
     },
   };
   use tinyboards_federation::{
@@ -93,6 +93,8 @@ pub enum AnnouncableActivities {
     CollectionRemove(CollectionRemove),
     LockPost(LockPage),
     UndoLockPost(UndoLockPage),
+    // only send, no receive
+    Page(Page)
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -124,6 +126,22 @@ impl InBoard for AnnouncableActivities {
       CollectionRemove(a) => a.board(context).await,
       LockPost(a) => a.board(context).await,
       UndoLockPost(a) => a.board(context).await,
+      Page(_) => unimplemented!(),
     }
   }
+}
+
+#[async_trait::async_trait]
+impl ActivityHandler for Page {
+  type DataType = TinyBoardsContext;
+  type Error = TinyBoardsError;
+
+  fn id(&self) -> &Url { unimplemented!() }
+
+  fn actor(&self) -> &Url { unimplemented!() }
+
+  async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> { Ok(()) }
+
+  async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> { Ok(()) }
+
 }

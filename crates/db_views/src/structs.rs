@@ -137,7 +137,7 @@ pub struct SiteInviteView {
 pub struct SiteView {
     pub site: Site,
     pub local_site: LocalSite,
-    //pub local_site_rate_limit: LocalSiteRateLimit,
+    pub local_site_rate_limit: LocalSiteRateLimit,
     pub counts: SiteAggregates,
 }
 

@@ -27,7 +27,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
 models::{
-    board::boards::{BoardForm, Board},
+    board::boards::{Board},
     post::posts::{Post, PostForm},
 },
 traits::Crud, utils::naive_now,

@@ -40,7 +40,7 @@ impl SendActivity for CreatePostReport {
   ) -> Result<(), TinyBoardsError> {
     let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     Report::send(
-      ObjectId::from(response.post_report_view.post.ap_id.clone()),
+      ObjectId::from(response.post_report_view.post.ap_id.unwrap().clone()),
       &view.person.into(),
       ObjectId::from(response.post_report_view.board.actor_id.clone()),
       request.reason.to_string(),
@@ -62,7 +62,7 @@ impl SendActivity for CreateCommentReport {
   ) -> Result<(), TinyBoardsError> {
     let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     Report::send(
-      ObjectId::from(response.comment_report_view.comment.ap_id.clone()),
+      ObjectId::from(response.comment_report_view.comment.ap_id.unwrap().clone()),
       &view.person.into(),
       ObjectId::from(response.comment_report_view.board.actor_id.clone()),
       request.reason.to_string(),
@@ -117,8 +117,8 @@ impl ActivityHandler for Report {
 
   #[tracing::instrument(skip_all)]
   async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
-    let community = self.community(context).await?;
-    verify_person_in_board(&self.actor, &community, context).await?;
+    let board = self.board(context).await?;
+    verify_person_in_board(&self.actor, &board, context).await?;
     Ok(())
   }
 
@@ -132,7 +132,7 @@ impl ActivityHandler for Report {
           creator_id: Some(actor.id),
           post_id: Some(post.id),
           original_post_title: Some(post.title.clone()),
-          original_post_url: Some(post.url.clone()),
+          original_post_url: Some(post.url.unwrap().clone()),
           reason: Some(self.summary),
           original_post_body: Some(post.body.clone()),
           ..PostReportForm::default()
@@ -143,7 +143,7 @@ impl ActivityHandler for Report {
         let report_form = CommentReportForm {
           creator_id: Some(actor.id),
           comment_id: Some(comment.id),
-          original_comment_text: Some(comment.content.clone()),
+          original_comment_text: Some(comment.body.clone()),
           reason: Some(self.summary),
           ..CommentReportForm::default()
         };

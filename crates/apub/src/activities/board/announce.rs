@@ -85,21 +85,22 @@ impl AnnounceActivity {
                 )?, 
             })
     }
+
+    #[tracing::instrument(skip_all)]
+    pub async fn send(
+        object: RawAnnouncableActivities,
+        board: &ApubBoard,
+        context: &Data<TinyBoardsContext>,
+    ) -> Result<(), TinyBoardsError> {
+        
+        let announce = AnnounceActivity::new(object.clone(), board, context)?;
+        let inboxes = board.get_subscriber_inboxes(context).await?;
+        send_tinyboards_activity(context, announce, board, inboxes.clone(), false).await?;
+
+        Ok(())
+    }
 }
 
-#[tracing::instrument(skip_all)]
-pub async fn send(
-    object: RawAnnouncableActivities,
-    board: &ApubBoard,
-    context: &Data<TinyBoardsContext>,
-) -> Result<(), TinyBoardsError> {
-    
-    let announce = AnnounceActivity::new(object.clone(), board, context)?;
-    let inboxes = board.get_subscriber_inboxes(context).await?;
-    send_tinyboards_activity(context, announce, board, inboxes.clone(), false).await?;
-
-    Ok(())
-}
 
 #[async_trait::async_trait]
 impl ActivityHandler for AnnounceActivity {

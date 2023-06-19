@@ -11,7 +11,7 @@ use tinyboards_db::{
 type SiteViewTuple = (
     Site,
     LocalSite,
-    //LocalSiteRateLimit,
+    LocalSiteRateLimit,
     SiteAggregates,
 );
 
@@ -21,18 +21,18 @@ impl SiteView {
         let (
             mut site,
             local_site,
-            //local_site_rate_limit,
+            local_site_rate_limit,
             counts,
         ) = site::table
             .inner_join(local_site::table)
-            /*.inner_join(
+            .inner_join(
                 local_site_rate_limit::table.on(local_site::id.eq(local_site_rate_limit::local_site_id)),
-            )*/
+            )
             .inner_join(site_aggregates::table)
             .select((
                 site::all_columns,
                 local_site::all_columns,
-                //local_site_rate_limit::all_columns,
+                local_site_rate_limit::all_columns,
                 site_aggregates::all_columns,
             ))
             .first::<SiteViewTuple>(conn)
@@ -42,7 +42,7 @@ impl SiteView {
         Ok(SiteView {
             site,
             local_site,
-            //local_site_rate_limit,
+            local_site_rate_limit,
             counts,
         })
     }

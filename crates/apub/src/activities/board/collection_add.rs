@@ -76,7 +76,7 @@ impl CollectionAdd {
     pub async fn send_add_featured_post(
         board: &ApubBoard,
         featured_post: &ApubPost,
-        actor: &ApubBoard,
+        actor: &ApubPerson,
         context: &Data<TinyBoardsContext>,
     ) -> Result<(), TinyBoardsError> {
         let id = generate_activity_id(
@@ -86,7 +86,7 @@ impl CollectionAdd {
         let add = CollectionAdd {
             actor: actor.id().into(),
             to: vec![public()],
-            object: featured_post.ap_id.clone().into(),
+            object: featured_post.ap_id.clone().unwrap().into(),
             target: generate_featured_url(&board.actor_id)?.into(),
             cc: vec![board.id()],
             kind: AddType::Add,
@@ -217,11 +217,11 @@ impl SendActivity for FeaturePost {
         .unwrap()?;
         let board = Board::read(context.pool(), response.post_view.board.id).await?.into();
         let post = response.post_view.post.clone().into();
-        let person = view.person.into();
+        let person: ApubPerson = view.person.into();
         if request.featured {
-            CollectionAdd::send_add_featured_post(&board, &post, &person, context).await
+            CollectionAdd::send_add_featured_post(&board, &post, &person, context).await?;
         } else {
-            CollectionRemove::send_remove_featured_post(&board, &post, &person, context).await
+            CollectionRemove::send_remove_featured_post(&board, &post, &person, context).await?;
         }
         Ok(())
     }

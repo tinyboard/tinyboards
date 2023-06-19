@@ -119,7 +119,7 @@ pub(in crate::activities) async fn receive_remove_action(
         reason: Some(reason),
       };
       ModRemoveBoard::create(context.pool(), &form).await?;
-      Board::update_removed(context.pool(), board.id, true)?;
+      Board::update_removed(context.pool(), board.id, true).await?;
     },
     DeletableObjects::Post(post) => {
       let form = ModRemovePostForm {

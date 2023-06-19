@@ -16,7 +16,6 @@ use crate::{
     },
     SendActivity,
 };
-use async_trait::async_trait;
 use tinyboards_federation::{
   config::Data,
   fetch::object_id::ObjectId,
@@ -58,7 +57,7 @@ impl SendActivity for CreateComment {
   ) -> Result<(), TinyBoardsError> {
     CreateOrUpdateNote::send(
       &response.comment_view.comment,
-      response.comment_view.creator.id,
+      response.comment_view.creator.unwrap().id,
       CreateOrUpdateType::Create,
       context,
     )
@@ -78,7 +77,7 @@ impl SendActivity for EditComment {
   ) -> Result<(), TinyBoardsError> {
     CreateOrUpdateNote::send(
       &response.comment_view.comment,
-      response.comment_view.creator.id,
+      response.comment_view.creator.unwrap().id,
       CreateOrUpdateType::Update,
       context,
     )
@@ -164,7 +163,7 @@ impl ActivityHandler for CreateOrUpdateNote {
     verify_person_in_board(&self.actor, &board, context).await?;
     verify_domains_match(self.actor.inner(), self.object.id.inner())?;
     check_board_deleted_or_removed(&board)?;
-    check_post_deleted_or_removed(&post)?;
+    check_post_deleted_or_removed(&post.0).await?;
 
     ApubComment::verify(&self.object, self.actor.inner(), context).await?;
     Ok(())

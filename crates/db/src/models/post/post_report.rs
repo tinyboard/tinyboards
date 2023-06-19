@@ -20,7 +20,7 @@ pub struct PostReport {
     pub updated: Option<NaiveDateTime>,
 }
 
-#[derive(Clone, Insertable, AsChangeset)]
+#[derive(Clone, Insertable, AsChangeset, Default)]
 #[diesel(table_name = post_report)]
 pub struct PostReportForm {
     pub creator_id: Option<i32>,

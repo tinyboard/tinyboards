@@ -3,10 +3,9 @@ use crate::{
     board::BoardResponse,
     data::TinyBoardsContext,
     post::PostResponse,
-    utils::{check_person_block, is_mod_or_admin},
+    utils::{/*check_person_block,*/ is_mod_or_admin},
 };
 use actix_web::web::Data;
-use chrono::Local;
 use tinyboards_db::{
     models::{
         apub::actor_language::BoardLanguage,
@@ -81,12 +80,12 @@ pub async fn send_local_notifs(
   mentions: Vec<MentionData>,
   comment: &Comment,
   person: &Person,
-  post: &Post,
+  _post: &Post,
   _do_send_email: bool,
   context: &TinyBoardsContext,
 ) -> Result<Vec<i32>, TinyBoardsError> {
   let mut recipient_ids = Vec::new();
-  let inbox_link = format!("{}/inbox", context.settings().get_protocol_and_hostname());
+  let _inbox_link = format!("{}/inbox", context.settings().get_protocol_and_hostname());
 
   // Send the local mentions
   for mention in mentions

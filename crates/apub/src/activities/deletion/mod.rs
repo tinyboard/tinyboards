@@ -260,7 +260,7 @@ pub(in crate::activities) async fn verify_delete_activity(
       verify_is_public(&activity.to, &[])?;
       verify_delete_post_or_comment(
         &activity.actor,
-        &p.ap_id.clone().into(),
+        &p.ap_id.clone().unwrap().into(),
         &activity.board(context).await?,
         is_mod_action,
         context,
@@ -271,7 +271,7 @@ pub(in crate::activities) async fn verify_delete_activity(
       verify_is_public(&activity.to, &[])?;
       verify_delete_post_or_comment(
         &activity.actor,
-        &c.ap_id.clone().into(),
+        &c.ap_id.clone().unwrap().into(),
         &activity.board(context).await?,
         is_mod_action,
         context,
