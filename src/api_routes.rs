@@ -38,16 +38,16 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             )
             // File Upload / Deletion
             .service(
-        web::scope("/file")
+                web::scope("/file")
                     .route("/upload", web::put().to(upload_file::<Multipart>))
-                    .route("/{file_name}", web::delete().to(route_post::<DeleteFile>))
+                    .route("/{file_name}", web::delete().to(route_post::<DeleteFile>)),
             )
             // File Retrieval
             //.route("/media/{file_name}", web::get().to(route_get::<GetFile>))
             // Authenticate
             .service(
                 web::scope("/auth")
-                    .wrap(rate_limit.message())
+                    //.wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>))
                     /// Delete Account
@@ -61,7 +61,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route(
                         "/verify_email/{token}",
                         web::post().to(route_post::<VerifyEmail>),
-                    )
+                    ),
             )
             // Notifications
             .service(
@@ -69,9 +69,15 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("/unread", web::get().to(route_get::<GetUnreadCount>))
                     .route("/mentions", web::get().to(route_get::<GetUserMentions>))
-                    .route("/mentions/mark_read", web::post().to(route_post::<MarkAllMentionsRead>))
+                    .route(
+                        "/mentions/mark_read",
+                        web::post().to(route_post::<MarkAllMentionsRead>),
+                    )
                     .route("/replies", web::get().to(route_get::<GetCommentReplies>))
-                    .route("/replies/mark_read", web::post().to(route_post::<MarkAllRepliesRead>))
+                    .route(
+                        "/replies/mark_read",
+                        web::post().to(route_post::<MarkAllRepliesRead>),
+                    ),
             )
             // Board
             .service(
@@ -150,13 +156,31 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
-                    .route("/site_settings",web::get().to(route_get::<GetSiteSettings>))
-                    .route("/site_settings",web::put().to(route_post::<SaveSiteSettings>))
-                    .route("/invite", web::post().to(route_post_crud::<CreateSiteInvite>))
+                    .route(
+                        "/site_settings",
+                        web::get().to(route_get::<GetSiteSettings>),
+                    )
+                    .route(
+                        "/site_settings",
+                        web::put().to(route_post::<SaveSiteSettings>),
+                    )
+                    .route(
+                        "/invite",
+                        web::post().to(route_post_crud::<CreateSiteInvite>),
+                    )
                     .route("/invite", web::get().to(route_get_crud::<ListSiteInvites>))
-                    .route("/invite/{invite_id}", web::delete().to(route_post_crud::<DeleteSiteInvite>))
-                    .route("/application", web::get().to(route_get_crud::<ListRegistrationApplications>))
-                    .route("/application/{app_id}", web::post().to(route_post::<HandleRegistrationApplication>))
+                    .route(
+                        "/invite/{invite_id}",
+                        web::delete().to(route_post_crud::<DeleteSiteInvite>),
+                    )
+                    .route(
+                        "/application",
+                        web::get().to(route_get_crud::<ListRegistrationApplications>),
+                    )
+                    .route(
+                        "/application/{app_id}",
+                        web::post().to(route_post::<HandleRegistrationApplication>),
+                    ),
             ),
     );
 }
@@ -284,12 +308,20 @@ async fn upload_file<'des, Multipart>(
     data: web::Data<TinyBoardsContext>,
     payload: Multipart,
     path: web::Path<Multipart::Route>,
-    req: HttpRequest, 
-) -> Result<HttpResponse, TinyBoardsError> 
+    req: HttpRequest,
+) -> Result<HttpResponse, TinyBoardsError>
 where
     Multipart: PerformUpload<'des> + 'static,
-{  
-    let result = Multipart::perform_upload(payload, &data, path.into_inner(), req.headers().get("Authorization").and_then(|header| header.to_str().ok())).await?;
+{
+    let result = Multipart::perform_upload(
+        payload,
+        &data,
+        path.into_inner(),
+        req.headers()
+            .get("Authorization")
+            .and_then(|header| header.to_str().ok()),
+    )
+    .await?;
     Ok(HttpResponse::Ok().json(result))
 }
 
