@@ -160,7 +160,7 @@ impl SendActivity for DeleteBoard {
       .await
       .unwrap()?;
     let board = Board::read(context.pool(), response.board_view.board.id).await?;
-    let deletable = DeletableObjects::Community(board.clone().into());
+    let deletable = DeletableObjects::B(board.clone().into());
     send_apub_delete_in_board(
       view.person,
       board,
@@ -200,8 +200,8 @@ impl DeletableObjects {
   pub(crate) fn id(&self) -> Url {
     match self {
       DeletableObjects::Board(b) => b.id(),
-      DeletableObjects::Comment(c) => c.ap_id.clone().into(),
-      DeletableObjects::Post(p) => p.ap_id.clone().into(),
+      DeletableObjects::Comment(c) => c.ap_id.clone().unwrap().into(),
+      DeletableObjects::Post(p) => p.ap_id.clone().unwrap().into(),
     }
   }
 }

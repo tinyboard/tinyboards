@@ -96,7 +96,7 @@ impl ActivityHandler for UpdateBoard {
     insert_activity(&self.id, &self, false, false, context).await?;
     let board = self.board(context).await?;
 
-    let board_update_form = self.object.into_form();
+    let board_update_form = self.object.into_form(board.instance_id);
 
     Board::update(context.pool(), board.id, &board_update_form).await?;
     Ok(())

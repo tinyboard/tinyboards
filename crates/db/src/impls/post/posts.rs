@@ -5,7 +5,7 @@ use crate::{
     models::post::posts::{Post, PostForm},
     schema::posts,
     traits::{Crud, Moderateable},
-    utils::{naive_now, get_conn, DbPool},
+    utils::{naive_now, get_conn, DbPool, FETCH_LIMIT_MAX},
     newtypes::DbUrl,
 };
 use diesel::{prelude::*, result::Error};
@@ -14,6 +14,32 @@ use diesel_async::RunQueryDsl;
 use url::Url;
 
 impl Post {
+
+    pub async fn list_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        posts::table
+            .filter(posts::board_id.eq(the_board_id))
+            .filter(posts::is_deleted.eq(false))
+            .filter(posts::is_removed.eq(false))
+            .then_order_by(posts::featured_board.desc())
+            .then_order_by(posts::creation_date.desc())
+            .limit(FETCH_LIMIT_MAX)
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn list_featured_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        posts::table
+            .filter(posts::board_id.eq(the_board_id))
+            .filter(posts::is_deleted.eq(false))
+            .filter(posts::is_removed.eq(false))
+            .filter(posts::featured_board.eq(true))
+            .then_order_by(posts::creation_date.desc())
+            .limit(FETCH_LIMIT_MAX)
+            .load::<Self>(conn)
+            .await
+    }
 
     pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;

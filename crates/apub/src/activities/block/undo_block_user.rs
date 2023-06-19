@@ -102,13 +102,15 @@ impl ActivityHandler for UndoBlockUser {
     let blocked_person = self.object.object.dereference(context).await?;
     match self.object.target.dereference(context).await? {
         SiteOrBoard::Site(_site) => {
+        let form = PersonForm {
+          is_banned: Some(false),
+          unban_date: None,
+          ..PersonForm::default()
+        };
         let blocked_person = Person::update(
           context.pool(),
           blocked_person.id,
-          &PersonForm::builder()
-            .is_banned(Some(false))
-            .unban_date(Some(expires))
-            .build(),
+          &form
         )
         .await?;
 

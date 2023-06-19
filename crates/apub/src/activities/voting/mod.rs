@@ -67,11 +67,12 @@ impl SendActivity for CreateCommentVote {
   ) -> Result<(), TinyBoardsError> {
     let object_id = ObjectId::from(response.comment_view.comment.ap_id.unwrap().clone());
     let board_id = response.comment_view.board.id;
+    let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     send_activity(
       object_id,
       board_id,
       request.score,
-      auth,
+      view,
       context,
     )
     .await

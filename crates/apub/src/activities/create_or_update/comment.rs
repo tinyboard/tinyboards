@@ -163,7 +163,7 @@ impl ActivityHandler for CreateOrUpdateNote {
     verify_person_in_board(&self.actor, &board, context).await?;
     verify_domains_match(self.actor.inner(), self.object.id.inner())?;
     check_board_deleted_or_removed(&board)?;
-    check_post_deleted_or_removed(&post.0).await?;
+    check_post_deleted_or_removed(post.id, context.pool()).await?;
 
     ApubComment::verify(&self.object, self.actor.inner(), context).await?;
     Ok(())
