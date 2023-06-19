@@ -256,7 +256,10 @@ impl UserResult {
 
                 let inner = match is_banned {
                     Ok(is_banned) => {
-                        Err(TinyBoardsError::from_message(403, format!("You are banned from /b/{}", is_banned.board.name).as_str()))
+                        match is_banned {
+                            Some(ban) => Err(TinyBoardsError::from_message(403, format!("You are banned from /b/{}", ban.board.name).as_str())),
+                            None => Ok(u)
+                        }
                     }
                     Err(e) => Err(e),
                 };

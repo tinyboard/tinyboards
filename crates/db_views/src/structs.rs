@@ -1,17 +1,17 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::{
     aggregates::structs::{
-        BoardAggregates, CommentAggregates, PostAggregates, SiteAggregates, PersonAggregates,
+        BoardAggregates, CommentAggregates, PersonAggregates, PostAggregates, SiteAggregates,
     },
     models::{
         board::boards::BoardSafe,
-        comment::{comments::Comment, comment_reply::CommentReply},
+        comment::{comment_reply::CommentReply, comments::Comment},
+        person::{local_user::*, person::*, person_mentions::*},
         post::posts::Post,
-        site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit},
-        person::{
-            person_mentions::*,
-            local_user::*,
-            person::*,
+        site::{
+            local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit,
+            registration_applications::RegistrationApplication, site::Site,
+            site_invite::SiteInvite,
         },
     },
     SubscribedType,
@@ -137,7 +137,7 @@ pub struct SiteInviteView {
 pub struct SiteView {
     pub site: Site,
     pub local_site: LocalSite,
-    pub local_site_rate_limit: LocalSiteRateLimit,
+    //pub local_site_rate_limit: LocalSiteRateLimit,
     pub counts: SiteAggregates,
 }
 
@@ -159,8 +159,8 @@ pub struct CommentReplyView {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct RegistrationApplicationView {
-  pub application: RegistrationApplication,
-  pub applicant_settings: LocalUserSettings,
-  pub applicant: LocalUserSafe,
-  pub admin: Option<LocalUserSafe>,
+    pub application: RegistrationApplication,
+    pub applicant_settings: LocalUserSettings,
+    pub applicant: LocalUserSafe,
+    pub admin: Option<LocalUserSafe>,
 }
