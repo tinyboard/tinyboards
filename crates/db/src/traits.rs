@@ -119,14 +119,14 @@ pub trait Reportable {
     async fn resolve(
         pool: &DbPool,
         report_id: Self::IdType,
-        resolver_id: UserId,
+        resolver_id: i32,
     ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;
     async fn unresolve(
         pool: &DbPool,
         report_id: Self::IdType,
-        resolver_id: UserId,
+        resolver_id: i32,
     ) -> Result<usize, TinyBoardsError>
     where
         Self: Sized;

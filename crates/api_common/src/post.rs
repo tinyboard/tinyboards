@@ -1,7 +1,7 @@
 use crate::sensitive::Sensitive;
 use serde::{Deserialize, Serialize};
 use tinyboards_db::{aggregates::structs::PersonAggregates, newtypes::DbUrl, PostFeatureType};
-use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView};
+use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView, PostReportView};
 use serde_with::skip_serializing_none;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
