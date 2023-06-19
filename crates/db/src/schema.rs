@@ -153,6 +153,20 @@ diesel::table! {
 }
 
 diesel::table! {
+    comment_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        comment_id -> Int4,
+        original_comment_text -> Text,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Int4,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     comment_saved (id) {
         id -> Int4,
         comment_id -> Int4,
@@ -555,6 +569,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    post_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        post_id -> Int4,
+        original_post_title -> Text,
+        original_post_url -> Nullable<Text>,
+        original_post_body -> Nullable<Text>,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Int4,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     post_saved (id) {
         id -> Int4,
         post_id -> Int4,
@@ -703,6 +733,7 @@ diesel::joinable!(boards -> person (creator_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
 diesel::joinable!(comment_reply -> comments (comment_id));
 diesel::joinable!(comment_reply -> person (recipient_id));
+diesel::joinable!(comment_report -> comments (comment_id));
 diesel::joinable!(comment_saved -> comments (comment_id));
 diesel::joinable!(comment_saved -> person (person_id));
 diesel::joinable!(comment_votes -> comments (comment_id));
@@ -743,6 +774,7 @@ diesel::joinable!(person_mentions -> person (recipient_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
 diesel::joinable!(post_read -> person (person_id));
 diesel::joinable!(post_read -> posts (post_id));
+diesel::joinable!(post_report -> posts (post_id));
 diesel::joinable!(post_saved -> person (person_id));
 diesel::joinable!(post_saved -> posts (post_id));
 diesel::joinable!(post_votes -> person (person_id));
@@ -770,6 +802,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     boards,
     comment_aggregates,
     comment_reply,
+    comment_report,
     comment_saved,
     comment_votes,
     comments,
@@ -802,6 +835,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     person_subscriber,
     post_aggregates,
     post_read,
+    post_report,
     post_saved,
     post_votes,
     posts,

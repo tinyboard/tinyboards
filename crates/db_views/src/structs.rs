@@ -5,8 +5,8 @@ use tinyboards_db::{
     },
     models::{
         board::boards::{BoardSafe, Board},
-        comment::{comments::Comment, comment_reply::CommentReply},
-        post::posts::Post,
+        comment::{comments::Comment, comment_reply::CommentReply, comment_report::CommentReport},
+        post::{posts::Post, post_report::PostReport},
         site::{site::Site, site_invite::SiteInvite, registration_applications::RegistrationApplication, local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit},
         person::{
             person_mentions::*,
@@ -163,4 +163,31 @@ pub struct RegistrationApplicationView {
   pub applicant_settings: LocalUserSettings,
   pub applicant: LocalUserSafe,
   pub admin: Option<LocalUserSafe>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct PostReportView {
+    pub post_report: PostReport,
+    pub post: Post,
+    pub board: Board,
+    pub creator: PersonSafe,
+    pub post_creator: PersonSafe,
+    pub creator_banned_from_board: bool,
+    pub my_vote: Option<i16>,
+    pub counts: PostAggregates,
+    pub resolver: Option<PersonSafe>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct CommentReportView {
+    pub comment_report: CommentReport,
+    pub comment: Comment,
+    pub post: Post,
+    pub board: Board,
+    pub creator: PersonSafe,
+    pub comment_creator: PersonSafe,
+    pub counts: CommentAggregates,
+    pub creator_banned_from_board: bool,
+    pub my_vote: Option<i16>,
+    pub resolver: Option<PersonSafe>,
 }

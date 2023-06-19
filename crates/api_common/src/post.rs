@@ -112,3 +112,43 @@ pub struct RemovePost {
   pub removed: bool,
   pub reason: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Create a post report.
+pub struct CreatePostReport {
+  pub post_id: i32,
+  pub reason: String,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// The post report response.
+pub struct PostReportResponse {
+  pub post_report_view: PostReportView,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Resolve a post report (mods only).
+pub struct ResolvePostReport {
+  pub report_id: i32,
+  pub resolved: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// List post reports.
+pub struct ListPostReports {
+  pub page: Option<i64>,
+  pub limit: Option<i64>,
+  /// Only shows the unresolved reports
+  pub unresolved_only: Option<bool>,
+  /// if no board is given, it returns reports for all boards moderated by the auth user
+  pub board_id: Option<i32>,
+  pub auth: Sensitive<String>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// The post reports response.
+pub struct ListPostReportsResponse {
+  pub post_reports: Vec<PostReportView>,
+}
