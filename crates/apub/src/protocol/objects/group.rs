@@ -94,6 +94,7 @@ use crate::{
             title: Some(self.name.unwrap_or(self.preferred_username)),
             description: Some(read_from_string_or_source_opt(&self.summary, &None, &self.source)),
             is_deleted: None,
+            is_removed: None,
             updated: Some(self.updated.map(|u| u.naive_local())),
             creator_id: None,
             is_hidden: None,

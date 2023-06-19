@@ -43,6 +43,14 @@ pub struct RemoveBoard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Hide a board from the main view
+pub struct HideBoard {
+    pub board_id: i32,
+    pub hidden: bool,
+    pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct AddModToBoard {
     pub board_id: i32,
     pub person_id: i32,
