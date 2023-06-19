@@ -49,7 +49,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/auth")
                     .wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
-                    .route("/signup", web::post().to(route_post_crud::<Register>)),
+                    .route("/signup", web::post().to(route_post_crud::<Register>))
+                    /// Delete Account
+                    .route("/delete_account", web::post().to(route_post::<DeleteAccount>)),
             )
             // User
             .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))

@@ -2,7 +2,7 @@ use crate::{
     models::person::person::{Person, PersonForm},
     schema::{person, instance},
     traits::{Crud, ApubActor},
-    utils::{fuzzy_search, DbPool, get_conn, functions::lower}, newtypes::DbUrl,
+    utils::{fuzzy_search, DbPool, get_conn, functions::lower, naive_now}, newtypes::DbUrl,
 };
 
 use diesel::{prelude::*, result::Error};
@@ -31,6 +31,31 @@ impl Person {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn delete_account(pool: &DbPool, person_id: i32) -> Result<Person, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::local_user;
+
+        // Set the local user info to none
+        diesel::update(local_user::table.filter(local_user::person_id.eq(person_id)))
+          .set((
+            local_user::email.eq::<Option<String>>(None),
+          ))
+          .execute(conn)
+          .await?;
+    
+        diesel::update(person::table.find(person_id))
+          .set((
+            person::display_name.eq::<Option<String>>(None),
+            person::avatar.eq::<Option<String>>(None),
+            person::banner.eq::<Option<String>>(None),
+            person::bio.eq::<Option<String>>(None),
+            person::is_deleted.eq(true),
+            person::updated.eq(naive_now()),
+          ))
+          .get_result::<Self>(conn)
+          .await
+      }
 }
 
 

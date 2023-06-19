@@ -9,7 +9,7 @@ use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
-        board::boards::{Board, BoardForm},
+        board::{boards::{Board, BoardForm}, board_mods::BoardModerator},
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
@@ -947,3 +947,38 @@ pub async fn remove_user_data_in_board(
 //       Lang::from_language_id(&en).expect("default language")
 //     })
 // }
+
+pub async fn delete_user_account(
+    person_id: i32,
+    pool: &DbPool,
+  ) -> Result<(), TinyBoardsError> {
+    // Delete their images
+    let person = Person::read(pool, person_id).await?;
+    if let Some(avatar) = person.avatar {
+      purge_local_image_by_url(pool, &avatar).await?;
+    }
+    if let Some(banner) = person.banner {
+      purge_local_image_by_url(pool, &banner).await?;
+    }
+    // No need to update avatar and banner, those are handled in Person::delete_account
+  
+    // Comments
+    Comment::permadelete_for_creator(pool, person_id)
+      .await
+      .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't update comment"))?;
+  
+    // Posts
+    Post::permadelete_for_creator(pool, person_id)
+      .await
+      .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't update post"))?;
+  
+    // Purge image posts
+    purge_local_image_posts_for_user(person_id, pool).await?;
+  
+    // Leave boards they mod
+    BoardModerator::leave_all_boards(pool, person_id).await?;
+  
+    Person::delete_account(pool, person_id).await?;
+  
+    Ok(())
+  }

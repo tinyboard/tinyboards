@@ -23,6 +23,17 @@ impl BoardModerator {
         .await
     }
 
+    pub async fn leave_all_boards(
+      pool: &DbPool,
+      for_person_id: i32,
+    ) -> Result<usize, Error> {
+      use crate::schema::board_mods::dsl::{board_mods, person_id};
+      let conn = &mut get_conn(pool).await?;
+      diesel::delete(board_mods.filter(person_id.eq(for_person_id)))
+        .execute(conn)
+        .await
+    }
+
     pub async fn get_person_moderated_boards(pool: &DbPool, mod_id: i32) -> Result<Vec<i32>, Error> {
         use crate::schema::board_mods::dsl::{board_id, board_mods, person_id};
         let conn = &mut get_conn(pool).await?;

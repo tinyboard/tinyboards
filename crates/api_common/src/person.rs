@@ -204,3 +204,15 @@ pub struct BanPersonResponse {
   pub person_view: PersonView,
   pub banned: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Delete your account.
+pub struct DeleteAccount {
+  pub password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "full", derive(TS))]
+#[cfg_attr(feature = "full", ts(export))]
+/// The response of deleting your account.
+pub struct DeleteAccountResponse {}

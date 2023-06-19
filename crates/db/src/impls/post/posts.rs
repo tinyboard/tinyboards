@@ -26,7 +26,27 @@ impl Post {
                 .ok()
                 .map(Into::into)
         )
+    }
 
+    pub async fn permadelete_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+      ) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::posts::dsl::*;
+        let perma_deleted = "*Permananently Deleted*";
+        let perma_deleted_url = "https://deleted.com";
+    
+        diesel::update(posts.filter(creator_id.eq(for_creator_id)))
+          .set((
+            title.eq(perma_deleted),
+            url.eq(perma_deleted_url),
+            body.eq(perma_deleted),
+            is_deleted.eq(true),
+            updated.eq(naive_now()),
+          ))
+          .get_results::<Self>(conn)
+          .await
     }
 
     pub async fn submit(pool: &DbPool, form: PostForm) -> Result<Self, TinyBoardsError> {

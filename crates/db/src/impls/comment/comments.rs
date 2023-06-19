@@ -15,6 +15,22 @@ use url::Url;
 
 impl Comment {
 
+    pub async fn permadelete_for_creator(
+        pool: &DbPool,
+        for_creator_id: i32,
+      ) -> Result<Vec<Self>, Error> {
+        use crate::schema::comments::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(comments.filter(creator_id.eq(for_creator_id)))
+          .set((
+            body.eq("*Permananently Deleted*"),
+            is_deleted.eq(true),
+            updated.eq(naive_now()),
+          ))
+          .get_results::<Self>(conn)
+          .await
+    }
+
     pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comments::dsl::*;
