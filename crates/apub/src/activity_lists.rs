@@ -130,18 +130,3 @@ impl InBoard for AnnouncableActivities {
     }
   }
 }
-
-#[async_trait::async_trait]
-impl ActivityHandler for Page {
-  type DataType = TinyBoardsContext;
-  type Error = TinyBoardsError;
-
-  fn id(&self) -> &Url { unimplemented!() }
-
-  fn actor(&self) -> &Url { unimplemented!() }
-
-  async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> { Ok(()) }
-
-  async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> { Ok(()) }
-
-}

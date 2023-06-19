@@ -1,6 +1,6 @@
 use crate::{
     activities::verify_board_matches,
-    fetcher::user_or_board::{PersonOrGroupType, UserOrBoard},
+    //fetcher::user_or_board::{PersonOrGroupType, UserOrBoard},
     objects::{board::ApubBoard, person::ApubPerson, post::ApubPost},
     protocol::{objects::LanguageTag, ImageObject, InBoard, Source},
   };
@@ -174,6 +174,25 @@ impl Page {
       //   .map(|a| ObjectId::<ApubPerson>::from(a.id.clone().into_inner()))
       //   .ok_or_else(|| TinyBoardsError::from_message(400, "page does not specify creator person")),
     }
+  }
+}
+
+#[async_trait::async_trait]
+impl ActivityHandler for Page {
+  type DataType = TinyBoardsContext;
+  type Error = TinyBoardsError;
+  fn id(&self) -> &Url {
+    unimplemented!()
+  }
+  fn actor(&self) -> &Url {
+    unimplemented!()
+  }
+  async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
+    ApubPost::verify(self, self.id.inner(), data).await
+  }
+  async fn receive(self, data: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
+    ApubPost::from_json(self, data).await?;
+    Ok(())
   }
 }
 

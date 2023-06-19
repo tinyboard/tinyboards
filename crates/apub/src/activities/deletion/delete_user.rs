@@ -84,8 +84,6 @@ impl ActivityHandler for DeleteUser {
     delete_user_account(
       actor.id,
       context.pool(),
-      context.settings(),
-      context.client(),
     )
     .await?;
     Ok(())

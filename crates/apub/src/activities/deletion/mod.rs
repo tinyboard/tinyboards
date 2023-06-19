@@ -160,7 +160,7 @@ impl SendActivity for DeleteBoard {
       .await
       .unwrap()?;
     let board = Board::read(context.pool(), response.board_view.board.id).await?;
-    let deletable = DeletableObjects::B(board.clone().into());
+    let deletable = DeletableObjects::Board(board.clone().into());
     send_apub_delete_in_board(
       view.person,
       board,
