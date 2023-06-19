@@ -76,6 +76,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/boards")
                 .wrap(rate_limit.message())
                 .route("", web::post().to(route_post_crud::<CreateBoard>))
+                .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
                 .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
                 .route("/block", web::post().to(route_post::<BlockBoard>))
                 .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
@@ -87,6 +88,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("", web::get().to(route_get_crud::<ListPosts>))
+                    .route("/remove", web::post().to(route_post_crud::<RemovePost>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route(
                         "/{post_id}",
@@ -109,6 +111,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
+                    .route("/remove", web::post().to(route_post_crud::<RemoveComment>))
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     .route(
                         "/{comment_id}",

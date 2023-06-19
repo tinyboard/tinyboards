@@ -8,9 +8,9 @@ use lettre::{
 use std::str::FromStr;
 use uuid::Uuid;
 
-pub mod translations {
-    rosetta_i18n::include_translations!();
-}
+// pub mod translations {
+//     rosetta_i18n::include_translations!();
+// }
 
 pub fn send_email(
     subject: &str,

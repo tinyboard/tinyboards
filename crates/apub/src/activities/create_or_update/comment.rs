@@ -16,6 +16,7 @@ use crate::{
     },
     SendActivity,
 };
+use async_trait::async_trait;
 use tinyboards_federation::{
   config::Data,
   fetch::object_id::ObjectId,
@@ -155,7 +156,7 @@ impl ActivityHandler for CreateOrUpdateNote {
   }
 
   #[tracing::instrument(skip_all)]
-  async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsContext> {
+  async fn verify(&self, context: &Data<TinyBoardsContext>) -> Result<(), TinyBoardsError> {
     verify_is_public(&self.to, &self.cc)?;
     let post = self.object.get_parents(context).await?.0;
     let board = self.board(context).await?;
@@ -170,7 +171,7 @@ impl ActivityHandler for CreateOrUpdateNote {
   }
 
   #[tracing::instrument(skip_all)]
-  async fn receive(self, context: &Data<Self::DataType>) -> Result<(), TinyBoardsError> {
+  async fn receive(self, context: &Data<TinyBoardsContext>) -> Result<(), TinyBoardsError> {
     insert_activity(&self.id, &self, false, false, context).await?;
     // Need to do this check here instead of Note::from_json because we need the person who
     // send the activity, not the comment author.

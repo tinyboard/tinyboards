@@ -34,6 +34,15 @@ pub struct EditBoard {
 pub struct DeleteBoard {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Remove a board (only doable by moderators).
+pub struct RemoveBoard {
+  pub board_id: i32,
+  pub removed: bool,
+  pub reason: Option<String>,
+  pub expires: Option<i64>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct AddModToBoard {
     pub board_id: i32,
     pub person_id: i32,
