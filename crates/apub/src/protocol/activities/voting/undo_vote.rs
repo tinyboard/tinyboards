@@ -23,7 +23,7 @@ use crate::{
   #[async_trait::async_trait]
   impl InBoard for UndoVote {
     async fn board(&self, context: &Data<TinyBoardsContext>) -> Result<ApubBoard, TinyBoardsError> {
-      let board = self.object.community(context).await?;
+      let board = self.object.board(context).await?;
       if let Some(audience) = &self.audience {
         verify_board_matches(audience, board.actor_id.clone())?;
       }
