@@ -60,7 +60,7 @@ use crate::{
   }
   
   /// Returns an empty subscribers collection, only populating the size (for privacy).
-  pub(crate) async fn get_apub_board_followers(
+  pub(crate) async fn get_apub_board_subscribers(
     info: web::Path<BoardQuery>,
     context: Data<TinyBoardsContext>,
   ) -> Result<HttpResponse, TinyBoardsError> {
