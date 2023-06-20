@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::models::person::person::Person;
+use tinyboards_db::{models::person::person::Person, ListingType, CommentSortType};
 use tinyboards_db_views::structs::{CommentView, CommentReportView};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
@@ -116,4 +116,24 @@ pub struct ListCommentReports {
 /// The comment report list response.
 pub struct ListCommentReportsResponse {
   pub comment_reports: Vec<CommentReportView>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct GetComments {
+  pub type_: Option<ListingType>,
+  pub sort: Option<CommentSortType>,
+  pub max_depth: Option<i32>,
+  pub page: Option<i64>,
+  pub limit: Option<i64>,
+  pub board_id: Option<i32>,
+  pub board_name: Option<String>,
+  pub post_id: Option<i32>,
+  pub parent_id: Option<i32>,
+  pub saved_only: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// The comment list response.
+pub struct GetCommentsResponse {
+  pub comments: Vec<CommentView>,
 }
