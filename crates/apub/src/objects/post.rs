@@ -113,7 +113,7 @@ impl Object for ApubPost {
       name: Some(self.title.clone()),
       content: parse_markdown(&self.body),
       media_type: Some(MediaTypeMarkdownOrHtml::Html),
-      source: Some(Source::new(self.body)),
+      source: Some(Source::new(self.body.clone())),
       attachment: self.url.clone().map(Attachment::new).into_iter().collect(),
       image: self.thumbnail_url.clone().map(ImageObject::new),
       comments_enabled: Some(!self.is_locked),

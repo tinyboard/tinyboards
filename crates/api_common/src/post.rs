@@ -114,6 +114,14 @@ pub struct RemovePost {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Lock or unlock a post (only doable by mods).
+pub struct LockPost {
+  pub post_id: i32,
+  pub locked: bool,
+  pub reason: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Create a post report.
 pub struct CreatePostReport {
   pub post_id: i32,

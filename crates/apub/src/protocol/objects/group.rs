@@ -100,7 +100,7 @@ use crate::{
             is_hidden: None,
             is_banned: None,
             private_key: None,
-            public_key: Some(Some(self.public_key.public_key_pem)),
+            public_key: Some(self.public_key.public_key_pem),
             last_refreshed_date: Some(naive_now()),
             is_nsfw: None,
             subscribers_url: Some(self.followers.into()),

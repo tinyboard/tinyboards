@@ -50,7 +50,7 @@ impl SendActivity for SubmitPost {
   ) -> Result<(), TinyBoardsError> {
     CreateOrUpdatePage::send(
       &response.post_view.post,
-      response.post_view.creator.unwrap().id,
+      response.post_view.creator.clone().unwrap().id,
       CreateOrUpdateType::Create,
       context,
     )
@@ -70,7 +70,7 @@ impl SendActivity for EditPost {
   ) -> Result<(), TinyBoardsError> {
     CreateOrUpdatePage::send(
       &response.post_view.post,
-      response.post_view.creator.unwrap().id,
+      response.post_view.creator.clone().unwrap().id,
       CreateOrUpdateType::Update,
       context,
     )

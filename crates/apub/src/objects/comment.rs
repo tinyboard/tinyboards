@@ -159,8 +159,9 @@ use crate::{
         let body = Some(read_from_string_or_source(&note.content, &note.media_type, &note.source));
         let body_html = parse_markdown(&read_from_string_or_source(&note.content, &note.media_type, &note.source));
 
-        let local_site = LocalSite::read(context.pool()).await.ok();
-        let language_id = LanguageTag::to_language_id_single(note.language, context.pool()).await?;
+        let _local_site = LocalSite::read(context.pool()).await.ok();
+        let language_id = LanguageTag::to_language_id_single(note.language.clone(), context.pool()).await?;
+        let board = note.board(context).await?;
 
         let form = CommentForm {
             creator_id: creator.id,
@@ -175,7 +176,7 @@ use crate::{
             ap_id: Some(note.id.into()),
             local: Some(false),
             language_id,
-            board_id: Some(note.board(context).await?.id),
+            board_id: Some(board.id),
             ..CommentForm::default()
         };
 

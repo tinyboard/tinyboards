@@ -41,7 +41,7 @@ impl SendActivity for CreatePostVote {
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,
   ) -> Result<(), TinyBoardsError> {
-    let object_id = ObjectId::from(response.post_view.post.ap_id.unwrap().clone());
+    let object_id = ObjectId::from(response.post_view.post.ap_id.clone().unwrap());
     let board_id = response.post_view.board.id;
     let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     send_activity(
@@ -65,7 +65,7 @@ impl SendActivity for CreateCommentVote {
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,
   ) -> Result<(), TinyBoardsError> {
-    let object_id = ObjectId::from(response.comment_view.comment.ap_id.unwrap().clone());
+    let object_id = ObjectId::from(response.comment_view.comment.ap_id.clone().unwrap());
     let board_id = response.comment_view.board.id;
     let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     send_activity(

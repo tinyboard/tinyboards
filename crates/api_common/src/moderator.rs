@@ -43,16 +43,6 @@ pub struct ApproveObject {
     pub target_fullname: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct LockObject {
-    pub target_fullname: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct UnlockObject {
-    pub target_fullname: String,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanBoard {
     pub board_id: i32,

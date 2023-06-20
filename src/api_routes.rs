@@ -8,6 +8,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::SendActivity;
+use tinyboards_federation::config::Data;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
@@ -21,17 +22,15 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
             .route("/remove", web::post().to(route_post::<RemoveObject>))
             .route("/approve", web::post().to(route_post::<ApproveObject>))
-            .route("/lock", web::post().to(route_post::<LockObject>))
-            .route("/unlock", web::post().to(route_post::<UnlockObject>))
             .route("/password_reset", web::post().to(route_post::<PasswordResetRequest>))
             .route("/password_reset/{reset_token}", web::post().to(route_post::<ExecutePasswordReset>))
-            /// Get Federated Instances
+            // Get Federated Instances
             .service(
                 web::scope("/federated_instances")
                     .wrap(rate_limit.message())
-                    .route("", web::get().to(route_get::<GetFederatedInstances>)),
+                    .route("", web::get().to(route_get::<GetFederatedInstances>))
             )
-            /// Validate Site Invite
+            // Validate Site Invite
             .route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),
@@ -50,7 +49,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     //.wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>))
-                    /// Delete Account
+                    // Delete Account
                     .route("/delete_account", web::post().to(route_post::<DeleteAccount>)),
             )
             // User
@@ -97,6 +96,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("", web::get().to(route_get_crud::<ListPosts>))
                     .route("/remove", web::post().to(route_post_crud::<RemovePost>))
+                    .route("/lock", web::post().to(route_post::<LockPost>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route(
                         "/{post_id}",
@@ -152,7 +152,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/admin")
                     .route("/add_admin", web::post().to(route_post::<AddAdmin>))
                     .route("/leave_admin", web::post().to(route_post::<LeaveAdmin>))
-                    .route("/purge_user", web::post().to(route_post::<PurgeUser>))
+                    .route("/purge_user", web::post().to(route_post::<PurgePerson>))
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
@@ -185,7 +185,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     );
 }
 
-fn get_auth(req: HttpRequest) -> Option<&str> {
+fn get_auth(req: HttpRequest) -> Option<&'static str> {
     let auth_header = req
         .headers()
         .get("Authorization")
@@ -240,8 +240,8 @@ async fn route_get_apub<'a, Data>(
     req: HttpRequest,
 ) -> Result<HttpResponse, Error> 
 where 
-    Data: Perform
-    + SendActivity<Response = <Data as Perform>::Response>
+    Data: Perform<'a>
+    + SendActivity<Response = <Data as Perform<'a>>::Response>
     + Clone
     + Deserialize<'a>
     + Send
@@ -261,8 +261,8 @@ async fn route_post<'a, Request>(
     req: HttpRequest,
 ) -> Result<HttpResponse, TinyBoardsError>
 where
-    Data: Perform
-        + SendActivity<Response = <Data as Perform>::Response>
+    Data: Perform<'a>
+        + SendActivity<Response = <Data as Perform<'a>>::Response>
         + Clone
         + Deserialize<'a>
         + Send

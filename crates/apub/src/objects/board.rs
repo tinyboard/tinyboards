@@ -158,7 +158,7 @@ impl Actor for ApubBoard {
       }
     
       fn public_key_pem(&self) -> &str {
-        &self.public_key.unwrap()
+        &self.public_key
       }
     
       fn private_key_pem(&self) -> Option<String> {

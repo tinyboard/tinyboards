@@ -6,7 +6,6 @@ use tinyboards_utils::TinyBoardsError;
 pub mod mod_add_board_mod;
 pub mod mod_ban_from_board;
 pub mod mod_ban_user;
-pub mod mod_lock_object;
 pub mod mod_remove_board;
 pub mod mod_remove_object;
 

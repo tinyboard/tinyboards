@@ -57,7 +57,7 @@ impl SendActivity for CreateComment {
   ) -> Result<(), TinyBoardsError> {
     CreateOrUpdateNote::send(
       &response.comment_view.comment,
-      response.comment_view.creator.unwrap().id,
+      response.comment_view.creator.clone().unwrap().id,
       CreateOrUpdateType::Create,
       context,
     )
@@ -77,7 +77,7 @@ impl SendActivity for EditComment {
   ) -> Result<(), TinyBoardsError> {
     CreateOrUpdateNote::send(
       &response.comment_view.comment,
-      response.comment_view.creator.unwrap().id,
+      response.comment_view.creator.clone().unwrap().id,
       CreateOrUpdateType::Update,
       context,
     )

@@ -122,7 +122,7 @@ impl SendActivity for LockPost {
     let lock = LockPage {
       actor,
       to: vec![public()],
-      object: response.post_view.post.ap_id.clone().into(),
+      object: response.post_view.post.ap_id.clone().unwrap().into(),
       cc: vec![board_id.clone().into()],
       kind: LockType::Lock,
       id,

@@ -40,7 +40,7 @@ impl<'des> PerformUpload<'des> for Multipart {
         while let Some(item) = data.next().await {
             let mut field = item.unwrap();
             let content_disposition = field.content_disposition().clone();
-            let original_file_name = content_disposition.get_filename().unwrap().clone();
+            let original_file_name = content_disposition.get_filename().clone().unwrap();
             let content_type = field.content_type().unwrap().to_string();
 
             if !is_acceptable_file_type(&content_type) {

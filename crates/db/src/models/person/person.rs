@@ -25,7 +25,7 @@ pub struct Person {
     pub actor_id: DbUrl,
     pub local: bool,
     pub private_key: Option<String>,
-    pub public_key: Option<String>,
+    pub public_key: String,
     pub inbox_url: DbUrl,
     pub shared_inbox_url: Option<DbUrl>,
     pub bot_account: bool,

@@ -113,7 +113,7 @@ impl SendActivity for DeleteComment {
   ) -> Result<(), TinyBoardsError> {
     let board_id = response.comment_view.board.id;
     let board = Board::read(context.pool(), board_id).await?;
-    let person = Person::read(context.pool(), response.comment_view.creator.unwrap().id).await?;
+    let person = Person::read(context.pool(), response.comment_view.creator.clone().unwrap().id).await?;
     let deletable = DeletableObjects::Comment(response.comment_view.comment.clone().into());
     send_apub_delete_in_board(person, board, deletable, None, request.deleted, context)
       .await

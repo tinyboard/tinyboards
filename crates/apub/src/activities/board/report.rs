@@ -40,7 +40,7 @@ impl SendActivity for CreatePostReport {
   ) -> Result<(), TinyBoardsError> {
     let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     Report::send(
-      ObjectId::from(response.post_report_view.post.ap_id.unwrap().clone()),
+      ObjectId::from(response.post_report_view.post.ap_id.clone().unwrap()),
       &view.person.into(),
       ObjectId::from(response.post_report_view.board.actor_id.clone()),
       request.reason.to_string(),
@@ -62,7 +62,7 @@ impl SendActivity for CreateCommentReport {
   ) -> Result<(), TinyBoardsError> {
     let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
     Report::send(
-      ObjectId::from(response.comment_report_view.comment.ap_id.unwrap().clone()),
+      ObjectId::from(response.comment_report_view.comment.ap_id.clone().unwrap()),
       &view.person.into(),
       ObjectId::from(response.comment_report_view.board.actor_id.clone()),
       request.reason.to_string(),
@@ -132,7 +132,7 @@ impl ActivityHandler for Report {
           creator_id: Some(actor.id),
           post_id: Some(post.id),
           original_post_title: Some(post.title.clone()),
-          original_post_url: Some(post.url.unwrap().clone()),
+          original_post_url: Some(post.url.clone().unwrap()),
           reason: Some(self.summary),
           original_post_body: Some(post.body.clone()),
           ..PostReportForm::default()
