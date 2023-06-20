@@ -18,6 +18,7 @@ pub mod collections;
 pub mod activity_lists;
 pub mod mentions;
 pub mod fetcher;
+pub mod http;
 
 pub const FEDERATION_HTTP_FETCH_LIMIT: u32 = 50;
 static CONTEXT: Lazy<Vec<serde_json::Value>> = Lazy::new(|| {

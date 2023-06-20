@@ -1,3 +1,4 @@
+use crate::newtypes::DbUrl;
 use crate::schema::activity::dsl::*;
 use crate::utils::{get_conn, DbPool};
 use crate::{
@@ -44,3 +45,13 @@ impl Crud for Activity {
         .await
     }
 }
+
+impl Activity {
+    pub async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Activity, Error> {
+      let conn = &mut get_conn(pool).await?;
+      activity
+        .filter(ap_id.eq(object_id))
+        .first::<Self>(conn)
+        .await
+    }
+  }

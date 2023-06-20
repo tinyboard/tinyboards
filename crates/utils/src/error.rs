@@ -16,6 +16,8 @@ pub struct TinyBoardsError {
     pub error_code: u16,
 }
 
+pub type TinyBoardsResult<T> = Result<T, TinyBoardsError>;
+
 impl TinyBoardsError {
     /// Create a TinyBoardsError from a message, including stack trace
     pub fn from_message(error_code: u16, message: &str) -> Self {
