@@ -226,10 +226,10 @@ where
     let auth_header = get_auth(req);
     let res = data
         .perform(&context, path.into_inner(), auth_header)
-        .await
-        .map(|json| HttpResponse::Ok().json(json))?;
+        .await?;
+    //.map(|json| HttpResponse::Ok().json(json))?;
 
-    Ok(res)
+    Ok(HttpResponse::Ok().json(res))
 }
 
 async fn route_get<'des, Request>(
@@ -261,12 +261,27 @@ where
         + 'static,
 {
     let auth_header = get_auth(req);
-    let res = perform::<Data>(query.0, data, path, req).await;
+    let res = perform::<Data>(query.0, data, path, req).await?;
     SendActivity::send_activity(&query.0, &res, &apub_data, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
+    Ok(res)
 }
 
 async fn route_post<'a, Data>(
+    data: web::Data<TinyBoardsContext>,
+    body: web::Json<Data>,
+    path: web::Path<Data::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, TinyBoardsError>
+where
+    //Request: Deserialize<'a> + Send + 'static + Perform<'a>, ,
+    Data: Perform<'a> + Clone + Deserialize<'a> + Send + 'static,
+{
+    // let auth_header = get_auth(req);
+    let res = perform::<Data>(body.clone(), data, path, req).await?;
+    Ok(res)
+}
+
+async fn route_post_apub<'a, Data>(
     data: web::Data<TinyBoardsContext>,
     apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     body: web::Json<Data>,
@@ -282,10 +297,11 @@ where
         + Send
         + 'static,
 {
-    let auth_header = get_auth(req);
-    let res = perform::<Data>(body.clone().into_inner(), data, path, req).await?;
-    SendActivity::send_activity(&body.into_inner(), &res, &apub_data, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
+    // let auth_header = get_auth(req);
+    let body = body.into_inner();
+    let res = perform::<Data>(body.clone(), data, path, req).await?;
+    SendActivity::send_activity(&body, &res, &apub_data, auth_header).await?;
+    Ok(res)
 }
 
 async fn perform_crud<'des, Request>(
