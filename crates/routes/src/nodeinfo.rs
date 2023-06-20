@@ -1,7 +1,6 @@
 use actix_web::{error::ErrorBadRequest, web, Error, HttpResponse, Result};
 use anyhow::anyhow;
 use tinyboards_api_common::data::TinyBoardsContext;
-use tinyboards_db::RegistrationMode;
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_utils::{error::TinyBoardsError, version};
 use serde::{Deserialize, Serialize};
