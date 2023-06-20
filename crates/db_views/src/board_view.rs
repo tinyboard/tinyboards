@@ -209,6 +209,7 @@ impl<'a> BoardQuery<'a> {
             query = match listing_type {
                 ListingType::Subscribed => query.filter(board_subscriber::person_id.is_not_null()),
                 ListingType::All => query,
+                ListingType::Local => query,
             };
         }
 

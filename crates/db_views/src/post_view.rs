@@ -296,6 +296,12 @@ impl<'a> PostQuery<'a> {
                             .eq(false)
                             .or(board_subscriber::person_id.eq(person_id_join)),
                     )
+                },
+                ListingType::Local => {
+                    query = query.filter(
+                        boards::local
+                            .eq(true),
+                    )
                 }
             }
         }
