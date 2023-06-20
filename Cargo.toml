@@ -25,6 +25,7 @@ members = [
     "crates/db_views",
     "crates/db_views_mod",
     "crates/federation",
+    "crates/routes"
 ]
 
 [workspace.dependencies]
@@ -37,6 +38,7 @@ tinyboards_utils = { version = "=0.1.0", path="./crates/utils" }
 tinyboards_db = { version = "=0.1.0", path="./crates/db" }
 tinyboards_db_views = { version = "=0.1.0", path="./crates/db_views" }
 tinyboards_db_views_mod = { version = "=0.1.0", path="./crates/db_views_mod" }
+tinyboards_routes = { version = "=0.1.0", path="./crates/routes" }
 base64 = "0.21.0"
 diesel = { version = "2.1.0", features = ["postgres", "r2d2", "serde_json", "chrono"] }
 diesel-async = "0.3.1"
@@ -133,6 +135,7 @@ tinyboards_db = { workspace = true }
 tinyboards_db_views = { workspace = true }
 tinyboards_db_views_mod = { workspace = true }
 tinyboards_utils = { workspace = true }
+tinyboards_routes = { workspace = true }
 diesel = { workspace = true }
 diesel_migrations = { workspace = true }
 diesel-async = { workspace = true }

@@ -29,6 +29,10 @@ pub struct BoardAggregates {
     pub posts: i64,
     pub comments: i64,
     pub creation_date: NaiveDateTime,
+    pub users_active_day: i64,
+    pub users_active_week: i64,
+    pub users_active_month: i64,
+    pub users_active_half_year: i64,
 }
 
 #[derive(
@@ -75,4 +79,8 @@ pub struct SiteAggregates {
     pub posts: i64,
     pub comments: i64,
     pub boards: i64,
+    pub users_active_day: i64,
+    pub users_active_week: i64,
+    pub users_active_month: i64,
+    pub users_active_half_year: i64,
 }

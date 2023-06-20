@@ -4,7 +4,7 @@ use clokwerk::{Scheduler, TimeUnits};
 use diesel::{sql_query, PgConnection, Connection, RunQueryDsl};
 use std::{thread, time::Duration};
 use tinyboards_utils::error::TinyBoardsError;
-use tracing::info;
+use tracing::{info, error};
 
 /// Schedules various cleanup tasks for tinyboards in a background thread
 pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
@@ -20,9 +20,13 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
 
     // On startup, reindex the tables non-concurrently
     reindex_aggregates_tables(&mut conn1, true);
+
+    // On startup, calculate the activity stats
+    active_counts(&mut conn1);
     
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
+        active_counts(&mut conn1);
         update_banned_when_expired_local_user(&mut conn1);
         update_banned_when_expired_person(&mut conn1);
         reindex_aggregates_tables(&mut conn1, true);
@@ -114,4 +118,42 @@ fn update_person_aggregates_rep(conn: &mut PgConnection) {
      sql_query(update_person_aggregates_rep_stmt)
          .execute(conn)
          .expect("update person aggregates rep values");
+}
+
+/// Re-calculate the site and board active counts every 12 hours
+fn active_counts(conn: &mut PgConnection) {
+    info!("Updating the site and board aggregates with active counts...");
+
+    let intervals = vec![
+        ("1 day", "day"),
+        ("1 week", "week"),
+        ("1 month", "month"),
+        ("6 months", "half_year")
+    ];
+
+    for i in &intervals {
+        let update_site_stmt = format!(
+            "update site_aggregates set users_active_{} = (select * from site_aggregates_activity('{}'))",
+            i.1,
+            i.0
+        );
+        match sql_query(update_site_stmt).execute(conn) {
+            Ok(_) => {},
+            Err(e) => {
+                error!("Failed to update site stats: {}", e)
+            }
+        }
+        let update_board_stmt = format!(
+            "update board_aggregates set users_active_{} = (select * from board_aggregates_activity('{}'))",
+            i.1,
+            i.0
+        );
+        match sql_query(update_board_stmt).execute(conn) {
+            Ok(_) => {},
+            Err(e) => {
+                error!("Failed to update board stats: {}", e)
+            }
+        }
+    }
+    info!("Done.")
 }

@@ -1,6 +1,6 @@
 use crate::sensitive::Sensitive;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{aggregates::structs::PersonAggregates, newtypes::DbUrl, PostFeatureType};
+use tinyboards_db::{aggregates::structs::PersonAggregates, newtypes::DbUrl, PostFeatureType, ListingType, SortType};
 use tinyboards_db_views::structs::{BoardModeratorView, BoardView, PostView, PostReportView};
 use serde_with::skip_serializing_none;
 
@@ -159,4 +159,22 @@ pub struct ListPostReports {
 /// The post reports response.
 pub struct ListPostReportsResponse {
   pub post_reports: Vec<PostReportView>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+/// Get a list of posts.
+pub struct GetPosts {
+  pub type_: Option<ListingType>,
+  pub sort: Option<SortType>,
+  pub page: Option<i64>,
+  pub limit: Option<i64>,
+  pub board_id: Option<i32>,
+  pub board_name: Option<String>,
+  pub saved_only: Option<bool>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+/// The post list response.
+pub struct GetPostsResponse {
+  pub posts: Vec<PostView>,
 }

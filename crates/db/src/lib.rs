@@ -22,6 +22,18 @@ pub enum SiteMode {
     InviteMode,
 }
 
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum RegistrationMode {
+    /// Closed to the public
+    Closed,
+    /// Open, but you need to have an approved application,
+    RequireApplication,
+    /// Open, but an invite link is required
+    RequireInvite,
+    /// Open to all
+    Open,
+}
+
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SortType {
     Active,

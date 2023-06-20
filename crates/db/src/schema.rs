@@ -60,6 +60,10 @@ diesel::table! {
         posts -> Int8,
         comments -> Int8,
         creation_date -> Timestamp,
+        users_active_day -> Int8,
+        users_active_week -> Int8,
+        users_active_month -> Int8,
+        users_active_half_year -> Int8,
     }
 }
 
@@ -674,6 +678,10 @@ diesel::table! {
         posts -> Int8,
         comments -> Int8,
         boards -> Int8,
+        users_active_day -> Int8,
+        users_active_week -> Int8,
+        users_active_month -> Int8,
+        users_active_half_year -> Int8,
     }
 }
 
