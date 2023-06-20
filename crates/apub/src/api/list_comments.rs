@@ -25,7 +25,7 @@ use crate::{
       let data: &GetComments = self;
       let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
       let local_site = LocalSite::read(context.pool()).await?;
-      check_private_instance(&Some(local_user_view.local_user), context.pool()).await?;
+      check_private_instance(&Some(local_user_view.local_user.clone()), context.pool()).await?;
   
       let board_id = if let Some(name) = &data.board_name {
         resolve_actor_identifier::<ApubBoard, Board>(name, context, &None, true)
@@ -36,14 +36,13 @@ use crate::{
         data.board_id
       };
       let sort = data.sort;
-      let max_depth = data.max_depth;
       let saved_only = data.saved_only;
       let page = data.page;
       let limit = data.limit;
       let parent_id = data.parent_id;
       let listing_type = listing_type_with_default(data.type_, &local_site, board_id)?;
       let post_id = data.post_id;
-      let local_user = local_user_view.local_user;
+      let local_user = local_user_view.local_user.clone();
 
       let resp = CommentQuery::builder()
         .pool(context.pool())
