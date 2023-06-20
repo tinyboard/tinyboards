@@ -4,7 +4,8 @@ use reqwest::Request;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
-    admin::*, comment::*, data::TinyBoardsContext, moderator::*, post::*, site::*, person::*, applications::*, board::*,
+    admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, moderator::*,
+    person::*, post::*, site::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::SendActivity;
@@ -22,13 +23,19 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
             .route("/remove", web::post().to(route_post::<RemoveObject>))
             .route("/approve", web::post().to(route_post::<ApproveObject>))
-            .route("/password_reset", web::post().to(route_post::<PasswordResetRequest>))
-            .route("/password_reset/{reset_token}", web::post().to(route_post::<ExecutePasswordReset>))
+            .route(
+                "/password_reset",
+                web::post().to(route_post::<PasswordResetRequest>),
+            )
+            .route(
+                "/password_reset/{reset_token}",
+                web::post().to(route_post::<ExecutePasswordReset>),
+            )
             // Get Federated Instances
             .service(
                 web::scope("/federated_instances")
                     .wrap(rate_limit.message())
-                    .route("", web::get().to(route_get::<GetFederatedInstances>))
+                    .route("", web::get().to(route_get::<GetFederatedInstances>)),
             )
             // Validate Site Invite
             .route(
@@ -50,7 +57,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/login", web::post().to(route_post::<Login>))
                     .route("/signup", web::post().to(route_post_crud::<Register>))
                     // Delete Account
-                    .route("/delete_account", web::post().to(route_post::<DeleteAccount>)),
+                    .route(
+                        "/delete_account",
+                        web::post().to(route_post_crud::<DeleteAccount>),
+                    ),
             )
             // User
             .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
@@ -81,13 +91,16 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             // Board
             .service(
                 web::scope("/boards")
-                .wrap(rate_limit.message())
-                .route("", web::post().to(route_post_crud::<CreateBoard>))
-                .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
-                .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
-                .route("/block", web::post().to(route_post::<BlockBoard>))
-                .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
-                .route("/{board_id}", web::delete().to(route_post_crud::<DeleteBoard>))
+                    .wrap(rate_limit.message())
+                    .route("", web::post().to(route_post_crud::<CreateBoard>))
+                    .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
+                    .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
+                    .route("/block", web::post().to(route_post::<BlockBoard>))
+                    .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
+                    .route(
+                        "/{board_id}",
+                        web::delete().to(route_post_crud::<DeleteBoard>),
+                    ),
             )
             // Post
             .service(
@@ -210,7 +223,6 @@ where
     Request: Perform<'des>,
     Request: Send + 'static,
 {
-
     let auth_header = get_auth(req);
     let res = data
         .perform(&context, path.into_inner(), auth_header)
@@ -235,42 +247,44 @@ where
 async fn route_get_apub<'a, Data>(
     data: web::Data<TinyBoardsContext>,
     apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    query: web::Query<Request>,
-    path: web::Path<Request::Route>,
+    query: web::Query<Data>,
+    path: web::Path<Data::Route>,
     req: HttpRequest,
-) -> Result<HttpResponse, Error> 
-where 
-    Data: Perform<'a>
-    + SendActivity<Response = <Data as Perform<'a>>::Response>
-    + Clone
-    + Deserialize<'a>
-    + Send
-    + 'static,
-{
-    let auth_header = get_auth(req);
-    let res = perform::<Request>(query.0, data, path, req).await;
-    SendActivity::send_activity(&req, &res, &apub_data, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
-}
-
-async fn route_post<'a, Request>(
-    data: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    body: web::Json<Request>,
-    path: web::Path<Request::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
+) -> Result<HttpResponse, Error>
 where
+    //Request: Deserialize<'a> + Send +SendActivity + 'static + Perform<'a>,
     Data: Perform<'a>
         + SendActivity<Response = <Data as Perform<'a>>::Response>
         + Clone
         + Deserialize<'a>
         + Send
-        + 'static
+        + 'static,
 {
     let auth_header = get_auth(req);
-    let res = perform::<Request>(body.into_inner(), data, path, req).await?;
-    SendActivity::send_activity(&req, &res, &apub_data, auth_header).await?;
+    let res = perform::<Data>(query.0, data, path, req).await;
+    SendActivity::send_activity(&query.0, &res, &apub_data, auth_header).await?;
+    Ok(HttpResponse::Ok().json(res))
+}
+
+async fn route_post<'a, Data>(
+    data: web::Data<TinyBoardsContext>,
+    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
+    body: web::Json<Data>,
+    path: web::Path<Data::Route>,
+    req: HttpRequest,
+) -> Result<HttpResponse, TinyBoardsError>
+where
+    //Request: Deserialize<'a> + Send + 'static + Perform<'a>, ,
+    Data: Perform<'a>
+        + SendActivity<Response = <Data as Perform<'a>>::Response>
+        + Clone
+        + Deserialize<'a>
+        + Send
+        + 'static,
+{
+    let auth_header = get_auth(req);
+    let res = perform::<Data>(body.clone().into_inner(), data, path, req).await?;
+    SendActivity::send_activity(&body.into_inner(), &res, &apub_data, auth_header).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 
