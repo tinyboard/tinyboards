@@ -17,14 +17,14 @@ impl TinyBoardsContext {
         client: ClientWithMiddleware,
         settings: Settings,
         master_key: Secret,
-        settings_updated_channel: RateLimitCell,
+        rate_limit_cell: RateLimitCell,
     ) -> TinyBoardsContext {
         TinyBoardsContext {
             pool,
             client,
             settings,
             master_key,
-            rate_limit_cell: settings_updated_channel,
+            rate_limit_cell,
         }
     }
 
@@ -44,7 +44,7 @@ impl TinyBoardsContext {
         &self.master_key
     }
 
-    pub fn settings_updated_channel(&self) -> &RateLimitCell {
+    pub fn rate_limit_cell(&self) -> &RateLimitCell {
         &&self.rate_limit_cell
     }
 }

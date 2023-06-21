@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate diesel_migrations;
 
+use actix_cors::Cors;
 use actix_web::{web::Data, *};
 use diesel_migrations::EmbeddedMigrations;
 use dotenv::dotenv;
@@ -8,11 +9,15 @@ use reqwest::Client;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
+use tinyboards_apub::{FEDERATION_HTTP_FETCH_LIMIT, VerifyUrlData};
+use tinyboards_db_views::structs::SiteView;
+use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
+use tinyboards_routes::nodeinfo;
 use std::{thread, time::Duration};
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     request::build_user_agent,
-    utils::{get_rate_limit_config},
+    utils::{get_rate_limit_config, check_private_instance_and_federation_enabled},
 };
 use tinyboards_db::{models::secret::Secret, utils::{build_db_pool, run_migrations, get_db_url}};
 use tinyboards_server::{
@@ -29,7 +34,7 @@ pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[actix_web::main]
 async fn main() -> Result<(), TinyBoardsError> {
-    dotenv().ok();
+    dotenv().ok(); // TODO - remove this (should be un-needed)
 
     let settings = SETTINGS.to_owned();
     
@@ -60,16 +65,37 @@ async fn main() -> Result<(), TinyBoardsError> {
     let db_url = get_db_url(Some(&settings));
     let secret = Secret::init(db_url).expect("Couldn't initialize secrets.");
 
+    // make sure local site is setup
+    let site_view = SiteView::read_local(&pool)
+        .await
+        .expect("local site is not set up");
+
+    let local_site = site_view.local_site;
+    let federation_enabled = local_site.federation_enabled;
+
+    if federation_enabled {
+        println!("federation is enabled, host is {}", &settings.hostname);
+    }
+
+    // make sure private instance and federation enabled are not turned on at the same time
+    check_private_instance_and_federation_enabled(&local_site)?;
+
+    let rate_limit_config 
+        = local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
+    let rate_limit_cell = 
+        RateLimitCell::new(rate_limit_config).await;
+
     println!(
         "Starting http server at {}:{}",
         settings.bind, settings.port
     );
 
+    let user_agent = build_user_agent(&settings);
     let reqwest_client = Client::builder()
-        .user_agent(build_user_agent(&settings))
+        .user_agent(user_agent.clone())
         .timeout(REQWEST_TIMEOUT)
-        .build()
-        .map_err(|_| TinyBoardsError::from_message(500, "could not build reqwest client"))?;
+        .connect_timeout(REQWEST_TIMEOUT)
+        .build()?;
 
     let retry_policy = ExponentialBackoff {
         max_n_retries: 3,
@@ -92,12 +118,41 @@ async fn main() -> Result<(), TinyBoardsError> {
             secret.clone(),
             rate_limit_cell.clone(),
         );
+
+        let federation_config = FederationConfig::builder()
+            .domain(settings.hostname.clone())
+            .app_data(context.clone())
+            .client(client.clone())
+            .http_fetch_limit(FEDERATION_HTTP_FETCH_LIMIT)
+            .worker_count(local_site.federation_worker_count as u64)
+            .debug(cfg!(debug_assertions))
+            .http_signature_compat(true)
+            .url_verifier(Box::new(VerifyUrlData(context.pool().clone())))
+            .build()
+            .expect("configure federation");
+
+        let cors_config = if cfg!(debug_assertions) {
+            Cors::permissive()
+        } else {
+            Cors::default()
+        };
+
         App::new()
             .wrap(actix_web::middleware::Logger::default())
+            .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
             .app_data(Data::new(rate_limit_cell.clone()))
+            .wrap(FederationMiddleware::new(federation_config))
+            // the routes
             .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
+            .configure(|cfg| {
+                if federation_enabled {
+                    tinyboards_apub::http::routes::config(cfg);
+                    webfinger::config(cfg);
+                }
+            })
+            .configure(nodeinfo::config)
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?

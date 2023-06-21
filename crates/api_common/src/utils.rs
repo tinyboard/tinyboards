@@ -12,7 +12,7 @@ use tinyboards_db::{
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
-        site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
+        site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload, local_site_rate_limit::LocalSiteRateLimit},
         person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance,
     },
     traits::Crud, SiteMode, 
@@ -999,4 +999,33 @@ pub async fn delete_user_account(
     Person::delete_account(pool, person_id).await?;
   
     Ok(())
+  }
+
+  pub fn check_private_instance_and_federation_enabled(
+    local_site: &LocalSite,
+  ) -> Result<(), TinyBoardsError> {
+    if local_site.private_instance && local_site.federation_enabled {
+        return Err(TinyBoardsError::from_message(400, "cannot have private instance and federation enabled at the same time."));
+    }
+    Ok(())
+  }
+
+  pub fn local_site_rate_limit_to_rate_limit_config(
+    local_site_rate_limit: &LocalSiteRateLimit,
+  ) -> RateLimitConfig {
+    let l = local_site_rate_limit;
+    RateLimitConfig {
+      message: l.message,
+      message_per_second: l.message_per_second,
+      post: l.post,
+      post_per_second: l.post_per_second,
+      register: l.register,
+      register_per_second: l.register_per_second,
+      image: l.image,
+      image_per_second: l.image_per_second,
+      comment: l.comment,
+      comment_per_second: l.comment_per_second,
+      search: l.search,
+      search_per_second: l.search_per_second,
+    }
   }
