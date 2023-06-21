@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    person::{GetUserMentions, GetUserMentionsResponse},
+    person::{GetPersonMentions, GetPersonMentionsResponse},
     utils::{get_local_user_view_from_jwt},
 };
 use tinyboards_db::{
@@ -13,8 +13,8 @@ use tinyboards_db_views::person_mention_view::PersonMentionQuery;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for GetUserMentions {
-    type Response = GetUserMentionsResponse;
+impl<'des> Perform<'des> for GetPersonMentions {
+    type Response = GetPersonMentionsResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context, auth))]
@@ -23,8 +23,8 @@ impl<'des> Perform<'des> for GetUserMentions {
         context: &Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>
-    ) -> Result<GetUserMentionsResponse, TinyBoardsError> {
-            let data: &GetUserMentions = &self;
+    ) -> Result<GetPersonMentionsResponse, TinyBoardsError> {
+            let data: &GetPersonMentions = &self;
             
             let person =
             get_local_user_view_from_jwt(auth, context.pool(), context.master_key())
@@ -52,6 +52,6 @@ impl<'des> Perform<'des> for GetUserMentions {
                 .list()
                 .await?;
 
-            Ok(GetUserMentionsResponse { mentions: resp.mentions, total_count: resp.count, unread_count: resp.unread })
+            Ok(GetPersonMentionsResponse { mentions: resp.mentions, total_count: resp.count, unread_count: resp.unread })
     }
 }

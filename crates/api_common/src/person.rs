@@ -125,7 +125,7 @@ pub struct AcceptSiteInvite {
 pub struct AcceptSiteInviteResponse {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct GetUserMentions {
+pub struct GetPersonMentions {
     pub sort: Option<String>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
@@ -133,7 +133,7 @@ pub struct GetUserMentions {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GetUserMentionsResponse {
+pub struct GetPersonMentionsResponse {
     pub mentions: Vec<PersonMentionView>,
     pub total_count: i64,
     pub unread_count: i64,

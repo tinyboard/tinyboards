@@ -227,8 +227,8 @@ impl Object for ApubPost {
         ap_id: Some(page.id.clone().into()),
         local: Some(false),
         language_id,
-        //featured_board: None,
-        //featured_local: None,
+        featured_board: None,
+        featured_local: None,
         ..PostForm::default()
       }
     } else {
