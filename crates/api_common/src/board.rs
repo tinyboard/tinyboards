@@ -66,7 +66,7 @@ pub struct AddModToBoardResponse {
 /// Subscribe to a board
 pub struct SubscribeToBoard {
     pub board_id: i32,
-    pub follow: bool,
+    pub subscribe: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

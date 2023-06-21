@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::PersonView;
+use tinyboards_db_views::structs::{PersonView, BoardModeratorView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModActionResponse<T> {
@@ -55,4 +55,9 @@ pub struct AddBoardMod {
     pub added: bool,
     pub added_person_id: i32,
     pub added_board_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddBoardModResponse {
+    pub moderators: Vec<BoardModeratorView>,
 }

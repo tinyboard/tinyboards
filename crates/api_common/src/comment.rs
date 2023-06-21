@@ -30,7 +30,7 @@ pub struct EditComment {
     pub body: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CreateCommentVote {
     pub score: i16,
 }

@@ -301,6 +301,7 @@ where
     // let auth_header = get_auth(req);
     let body = body.into_inner();
     let res = perform::<Data>(body.clone(), data, path, req).await?;
+    let auth_header = get_auth(req);
     SendActivity::send_activity(&body, &res, &apub_data, auth_header).await?;
     Ok(res)
 }

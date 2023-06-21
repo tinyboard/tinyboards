@@ -428,6 +428,22 @@ pub async fn check_board_deleted_or_removed(
 }
 
 #[tracing::instrument(skip_all)]
+pub async fn check_board_ban(
+    person_id: i32,
+    board_id: i32,
+    pool: &DbPool
+) -> Result<(), TinyBoardsError> {
+    let is_banned = BoardPersonBanView::get(pool, person_id, board_id)
+        .await
+        .is_ok();
+    if is_banned {
+        Err(TinyBoardsError::from_message(400, "banned from board"))
+    } else {
+        Ok(())
+    }
+}
+
+#[tracing::instrument(skip_all)]
 pub async fn check_post_deleted_or_removed(
     post_id: i32,
     pool: &DbPool,

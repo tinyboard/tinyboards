@@ -33,7 +33,7 @@ impl SendActivity for SubscribeToBoard {
             .into();
         if board.local {
             Ok(())
-        } else if request.follow {
+        } else if request.subscribe {
             Subscribe::send(&person, &board, context).await
         } else {
             UndoSubscribe::send(&person, &board, context).await
