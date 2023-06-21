@@ -142,7 +142,7 @@ use crate::{
           let post = ObjectId::<ApubPost>::from(self.object)
             .dereference(context)
             .await?;
-          Post::update_featured_board(context.pool(), post.id, false);
+          Post::update_featured_board(context.pool(), post.id, false).await?;
         }
       }
       Ok(())

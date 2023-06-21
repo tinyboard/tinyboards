@@ -1,4 +1,4 @@
-use crate::{newtypes::{UserId, DbUrl}, utils::DbPool};
+use crate::{newtypes::{DbUrl}, utils::DbPool};
 use diesel::{result::Error};
 use tinyboards_utils::TinyBoardsError;
 

@@ -12,7 +12,7 @@ use tinyboards_federation::{
 };
 use actix_web::{web, web::Bytes, HttpRequest, HttpResponse};
 use http::StatusCode;
-use tinyboards_api_common::{data::TinyBoardsContext, sensitive};
+use tinyboards_api_common::{data::TinyBoardsContext};
 use tinyboards_db::models::apub::activity::Activity;
 use tinyboards_utils::error::{TinyBoardsError, TinyBoardsResult};
 use serde::{Deserialize, Serialize};

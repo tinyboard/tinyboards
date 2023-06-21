@@ -10,7 +10,6 @@ use tinyboards_db::{
     models::{
         apub::actor_language::BoardLanguage,
         comment::comments::Comment,
-        comment::comment_reply::{CommentReply, CommentReplyForm},
         person::person::Person,
         person::person_mentions::{PersonMention, PersonMentionForm},
         post::posts::Post,

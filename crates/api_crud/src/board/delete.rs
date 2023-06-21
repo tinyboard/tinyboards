@@ -14,7 +14,6 @@ use tinyboards_db::{
     },
     traits::Crud, 
 };
-use tinyboards_db_views::structs::BoardView;
 use tinyboards_utils::{
     TinyBoardsError,
 };

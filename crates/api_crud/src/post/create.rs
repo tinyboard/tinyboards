@@ -12,7 +12,6 @@ use tinyboards_db::{
     }, apub::actor_language::BoardLanguage},
     traits::{Voteable, Crud}, impls::apub::actor_language::default_post_language,
 };
-use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::custom_body_parsing};
 
 #[async_trait::async_trait(?Send)]

@@ -24,7 +24,7 @@ impl SendActivity for DeleteAccount {
   type Response = DeleteAccountResponse;
 
   async fn send_activity(
-    request: &Self,
+    _request: &Self,
     _response: &Self::Response,
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,

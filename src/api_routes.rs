@@ -1,6 +1,5 @@
 use actix_multipart::Multipart;
 use actix_web::*;
-use reqwest::Request;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
@@ -9,7 +8,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::SendActivity;
-use tinyboards_federation::config::Data;
+//use tinyboards_federation::config::Data;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {

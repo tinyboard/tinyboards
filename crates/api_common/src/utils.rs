@@ -2,7 +2,6 @@
 use hmac::{Hmac, Mac};
 use anyhow::Context;
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
-use reqwest_middleware::ClientWithMiddleware;
 use sha2::Sha384;
 use futures::try_join;
 use url::{Url, ParseError};

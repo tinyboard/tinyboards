@@ -151,7 +151,7 @@ impl SendActivity for DeleteBoard {
   type Response = BoardResponse;
 
   async fn send_activity(
-    request: &Self,
+    _request: &Self,
     response: &Self::Response,
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,

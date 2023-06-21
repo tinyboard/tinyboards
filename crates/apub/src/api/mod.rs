@@ -1,4 +1,4 @@
-use tinyboards_db::{ListingType, models::site::{site::Site, local_site::LocalSite}, map_to_listing_type};
+use tinyboards_db::{ListingType, models::site::{local_site::LocalSite}, map_to_listing_type};
 use tinyboards_federation::config::Data;
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_utils::TinyBoardsError;

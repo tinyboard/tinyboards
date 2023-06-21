@@ -169,7 +169,7 @@ impl SendActivity for AddModToBoard {
 
   async fn send_activity(
     request: &Self,
-    response: &Self::Response,
+    _response: &Self::Response,
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,
   ) -> Result<(), TinyBoardsError> {

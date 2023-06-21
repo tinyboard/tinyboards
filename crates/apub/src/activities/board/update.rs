@@ -31,7 +31,7 @@ impl SendActivity for EditBoard {
   type Response = BoardResponse;
 
   async fn send_activity(
-    request: &Self,
+    _request: &Self,
     response: &Self::Response,
     context: &Data<TinyBoardsContext>,
     auth: Option<&str>,
@@ -100,5 +100,21 @@ impl ActivityHandler for UpdateBoard {
 
     Board::update(context.pool(), board.id, &board_update_form).await?;
     Ok(())
+  }
+}
+
+#[async_trait::async_trait]
+impl SendActivity for HideBoard {
+  type Response = BoardResponse;
+
+  async fn send_activity(
+    request: &Self,
+    _response: &Self::Response,
+    context: &Data<TinyBoardsContext>,
+    auth: Option<&str>,
+  ) -> Result<(), TinyBoardsError> {
+    let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
+    let board = Board::read(context.pool(), request.board_id).await?;
+    UpdateBoard::send(board.into(), &view.person.into(), context).await
   }
 }

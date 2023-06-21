@@ -3,11 +3,11 @@ use tinyboards_utils::TinyBoardsError;
 use tokio::sync::OnceCell;
 use crate::models::apub::language::Language;
 use crate::models::site::site::Site;
-use crate::schema::{local_user_language, site_language, board_language, site, local_site};
+use crate::schema::{/*local_user_language,*/ site_language, /*board_language,*/ site, local_site};
 use crate::utils::{get_conn, DbPool};
 use crate::{
     models::apub::actor_language::*,
-    traits::Crud,
+    //traits::Crud,
 };
 use diesel::{dsl::*, result::Error, *};
 use diesel_async::{

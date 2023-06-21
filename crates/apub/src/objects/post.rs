@@ -207,7 +207,7 @@ impl Object for ApubPost {
         .map(|u| (u.title, u.description, u.embed_video_url))
         .unwrap_or_default();
 
-      let local_site = LocalSite::read(context.pool()).await.ok();
+      let _local_site = LocalSite::read(context.pool()).await.ok();
 
       let language_id = LanguageTag::to_language_id_single(page.language, context.pool()).await?;
 

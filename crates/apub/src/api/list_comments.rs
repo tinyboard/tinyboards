@@ -11,7 +11,6 @@ use crate::{
   };
   use tinyboards_db::{
     models::{board::boards::Board, site::local_site::LocalSite},
-    traits::Crud,
   };
   use tinyboards_db_views::comment_view::CommentQuery;
   use tinyboards_utils::error::TinyBoardsError;

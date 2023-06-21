@@ -9,7 +9,6 @@ use tinyboards_db::{
     models::comment::comment_saved::{CommentSaved, CommentSavedForm},
     traits::Saveable,
 };
-use tinyboards_db_views::structs::CommentView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -45,9 +44,7 @@ impl<'des> Perform<'des> for SaveComment {
         }
 
         let comment_id = path.comment_id;
-        let person_id = local_user_view.person.id;
-        let comment_view = CommentView::read(context.pool(), comment_id, Some(person_id)).await?;
-
+        
         Ok(build_comment_response(context, comment_id, Some(local_user_view), None, vec![]).await?)
     }
 }
