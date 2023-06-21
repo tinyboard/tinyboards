@@ -19,7 +19,7 @@ use crate::{
   impl PerformApub for GetComments {
     type Response = GetCommentsResponse;
   
-    #[tracing::instrument(skip(context))]
+    #[tracing::instrument(skip(context, auth))]
     async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetCommentsResponse, TinyBoardsError> {
       let data: &GetComments = self;
       let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
