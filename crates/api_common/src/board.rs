@@ -50,18 +50,6 @@ pub struct HideBoard {
     pub reason: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct AddModToBoard {
-    pub board_id: i32,
-    pub person_id: i32,
-    pub added: bool,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct AddModToBoardResponse {
-    pub moderators: Vec<BoardModeratorView>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// Subscribe to a board
 pub struct SubscribeToBoard {
@@ -80,4 +68,16 @@ pub struct BlockBoard {
 pub struct BlockBoardResponse {
     pub board_view: BoardView,
     pub blocked: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddBoardMod {
+    pub added: bool,
+    pub person_id: i32,
+    pub board_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AddBoardModResponse {
+    pub moderators: Vec<BoardModeratorView>,
 }

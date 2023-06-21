@@ -1,9 +1,8 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    admin::PurgeBoard,
+    admin::{PurgeBoard, PurgeItemResponse},
     data::TinyBoardsContext,
-    moderator::ModActionResponse,
     utils::{purge_local_image_posts_for_board, require_user},
 };
 use tinyboards_db::{
@@ -17,7 +16,7 @@ use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for PurgeBoard {
-    type Response = ModActionResponse<AdminPurgeBoard>;
+    type Response = PurgeItemResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context, auth))]
@@ -61,8 +60,8 @@ impl<'des> Perform<'des> for PurgeBoard {
         };
 
         // submit mod log action
-        let mod_action = AdminPurgeBoard::create(context.pool(), &form).await?;
+        AdminPurgeBoard::create(context.pool(), &form).await?;
 
-        Ok(ModActionResponse { mod_action })
+        Ok(PurgeItemResponse { success: true })
     }
 }

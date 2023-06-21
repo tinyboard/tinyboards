@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{AddBoardMod, AddBoardModResponse},
+    board::{AddBoardMod, AddBoardModResponse},
     utils::require_user,
 };
 use tinyboards_db::{
@@ -36,13 +36,13 @@ impl<'des> Perform<'des> for AddBoardMod {
             .unwrap()?;
 
         let added = data.added;
-        let added_person_id = data.added_person_id;
-        let added_board_id = data.added_board_id;
+        let person_id = data.person_id;
+        let board_id = data.board_id;
 
         // board moderator form (for adding or removing mod status)
         let form = BoardModeratorForm {
-            board_id: added_board_id.clone(),
-            person_id: added_board_id.clone(),
+            board_id,
+            person_id,
         };
 
         if added {
@@ -56,15 +56,15 @@ impl<'des> Perform<'des> for AddBoardMod {
         // log this mod action
         let mod_add_board_mod_form = ModAddBoardModForm {
             mod_person_id: view.person.id,
-            other_person_id: added_person_id.clone(),
+            other_person_id: person_id.clone(),
             removed: Some(Some(!added.clone())),
-            board_id: added_board_id.clone(),
+            board_id: board_id.clone(),
         };
 
         // submit to the mod log
         ModAddBoardMod::create(context.pool(), &mod_add_board_mod_form).await?;
 
-        let board_id = data.added_board_id;
+        let board_id = data.board_id;
         let moderators = BoardModeratorView::for_board(context.pool(), board_id).await?;
 
         Ok(AddBoardModResponse { moderators })

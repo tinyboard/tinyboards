@@ -63,7 +63,7 @@ pub struct ProfileResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Profile {}
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetLoggedInUser {}
 
 #[derive(Deserialize)]

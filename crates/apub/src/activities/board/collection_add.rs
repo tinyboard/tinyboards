@@ -26,7 +26,7 @@ use tinyboards_federation::{
     traits::{ActivityHandler, Actor},
 };
 use tinyboards_api_common::{
-    board::{AddModToBoard, AddModToBoardResponse},
+    board::{AddBoardMod, AddBoardModResponse},
     data::TinyBoardsContext,
     post::{FeaturePost, PostResponse},
     utils::{generate_featured_url, generate_moderators_url, require_user},
@@ -164,8 +164,8 @@ impl ActivityHandler for CollectionAdd {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for AddModToBoard {
-  type Response = AddModToBoardResponse;
+impl SendActivity for AddBoardMod {
+  type Response = AddBoardModResponse;
 
   async fn send_activity(
     request: &Self,
