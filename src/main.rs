@@ -12,12 +12,12 @@ use reqwest_tracing::TracingMiddleware;
 use tinyboards_apub::{FEDERATION_HTTP_FETCH_LIMIT, VerifyUrlData};
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
-use tinyboards_routes::nodeinfo;
+use tinyboards_routes::{nodeinfo, webfinger};
 use std::{thread, time::Duration};
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     request::build_user_agent,
-    utils::{get_rate_limit_config, check_private_instance_and_federation_enabled},
+    utils::{check_private_instance_and_federation_enabled, local_site_rate_limit_to_rate_limit_config},
 };
 use tinyboards_db::{models::secret::Secret, utils::{build_db_pool, run_migrations, get_db_url}};
 use tinyboards_server::{
@@ -57,9 +57,6 @@ async fn main() -> Result<(), TinyBoardsError> {
     thread::spawn(move || {
         scheduled_tasks::setup(db_url).expect("Couldn't setup scheduled tasks");
     });
-
-    let rate_limit_config = get_rate_limit_config(&settings.rate_limit.to_owned().unwrap());
-    let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;
 
     // init the secret
     let db_url = get_db_url(Some(&settings));

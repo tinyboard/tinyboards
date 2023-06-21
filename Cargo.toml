@@ -142,6 +142,7 @@ diesel_migrations = { workspace = true }
 diesel-async = { workspace = true }
 serde = { workspace = true }
 actix-web = { workspace = true }
+actix-cors = { workspace = true }
 dotenv  = { workspace = true }
 tracing = { workspace = true }
 tracing-actix-web = { workspace = true }

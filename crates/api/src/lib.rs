@@ -26,7 +26,7 @@ pub trait Perform<'des> {
         self,
         context: &Data<TinyBoardsContext>,
         path: Self::Route,
-        authorization: Option<&str>,
+        auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError>;
 }
 
@@ -39,6 +39,6 @@ pub trait PerformUpload<'des> {
         self,
         context: &Data<TinyBoardsContext>,
         path: Self::Route,
-        authorization: Option<&str>,
+        auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError>;
 }
