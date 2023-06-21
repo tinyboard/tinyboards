@@ -1,0 +1,1 @@
+drop table mod_hide_board cascade;

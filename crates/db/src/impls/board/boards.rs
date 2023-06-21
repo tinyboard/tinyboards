@@ -105,6 +105,19 @@ impl Board {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn update_hidden(
+        pool: &DbPool,
+        board_id: i32,
+        new_is_hidden: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+        diesel::update(boards.find(board_id))
+            .set((is_hidden.eq(new_is_hidden), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
     
     pub async fn update_banned(
         pool: &DbPool,

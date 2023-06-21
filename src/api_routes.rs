@@ -21,8 +21,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            .route("/remove", web::post().to(route_post::<RemoveObject>))
-            .route("/approve", web::post().to(route_post::<ApproveObject>))
+            //.route("/remove", web::post().to(route_post::<RemoveObject>))
+            //.route("/approve", web::post().to(route_post::<ApproveObject>))
             .route(
                 "/password_reset",
                 web::post().to(route_post::<PasswordResetRequest>),
@@ -169,6 +169,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_post", web::post().to(route_post::<PurgePost>))
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
+                    .route("/hide_board", web::post().to(route_post::<HideBoard>))
                     .route(
                         "/site_settings",
                         web::get().to(route_get::<GetSiteSettings>),

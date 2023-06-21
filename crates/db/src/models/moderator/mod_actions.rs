@@ -12,6 +12,7 @@ use crate::schema::{
     mod_remove_comment,
     mod_remove_post,
     mod_feature_post,
+    mod_hide_board,
 };
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
@@ -212,4 +213,24 @@ pub struct ModFeaturePostForm {
     pub mod_person_id: i32,
     pub post_id: i32,
     pub featured: Option<bool>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[diesel(table_name = mod_hide_board)]
+pub struct ModHideBoard {
+    pub id: i32,
+    pub board_id: i32,
+    pub mod_person_id: i32,
+    pub when_: NaiveDateTime,
+    pub reason: Option<String>,
+    pub hidden: bool,
+}
+
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = mod_hide_board)]
+pub struct ModHideBoardForm {
+    pub board_id: Option<i32>,
+    pub mod_person_id: Option<i32>,
+    pub reason: Option<String>,
+    pub hidden: Option<bool>,
 }

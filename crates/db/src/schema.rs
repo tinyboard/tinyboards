@@ -413,6 +413,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    mod_hide_board (id) {
+        id -> Int4,
+        board_id -> Int4,
+        mod_person_id -> Int4,
+        when_ -> Timestamp,
+        reason -> Nullable<Text>,
+        hidden -> Bool,
+    }
+}
+
+diesel::table! {
     mod_lock_post (id) {
         id -> Int4,
         mod_person_id -> Int4,
@@ -763,6 +774,8 @@ diesel::joinable!(mod_add_board_mod -> boards (board_id));
 diesel::joinable!(mod_ban_from_board -> boards (board_id));
 diesel::joinable!(mod_feature_post -> person (mod_person_id));
 diesel::joinable!(mod_feature_post -> posts (post_id));
+diesel::joinable!(mod_hide_board -> boards (board_id));
+diesel::joinable!(mod_hide_board -> person (mod_person_id));
 diesel::joinable!(mod_lock_post -> person (mod_person_id));
 diesel::joinable!(mod_lock_post -> posts (post_id));
 diesel::joinable!(mod_remove_board -> boards (board_id));
@@ -829,6 +842,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_ban,
     mod_ban_from_board,
     mod_feature_post,
+    mod_hide_board,
     mod_lock_post,
     mod_remove_board,
     mod_remove_comment,

@@ -351,3 +351,38 @@ impl Crud for ModFeaturePost {
             .await
     }
 }
+
+#[async_trait::async_trait]
+impl Crud for ModHideBoard {
+    type Form = ModHideBoardForm;
+    type IdType = i32;
+    async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::mod_hide_board::dsl::*;
+        mod_hide_board.find(id_).first::<Self>(conn)
+        .await
+    }
+    async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::mod_hide_board::dsl::*;
+        diesel::delete(mod_hide_board.find(id_)).execute(conn)
+        .await
+    }
+    async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::mod_hide_board::dsl::*;
+        let new = diesel::insert_into(mod_hide_board)
+            .values(form)
+            .get_result::<Self>(conn)
+            .await?;
+        Ok(new)
+    }
+    async fn update(pool: &DbPool, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::mod_hide_board::dsl::*;
+        diesel::update(mod_hide_board.find(id_))
+            .set(form)
+            .get_result::<Self>(conn)
+            .await
+    }
+}
