@@ -17,7 +17,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/feed", web::get().to(route_get::<GetFeed>))
             .route("/members", web::get().to(route_get::<GetMembers>))
-            .route("/search", web::get().to(route_get::<Search>))
+            .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
             //.route("/remove", web::post().to(route_post::<RemoveObject>))
