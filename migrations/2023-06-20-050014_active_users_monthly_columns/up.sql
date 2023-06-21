@@ -28,7 +28,7 @@ begin
     select p.creator_id from posts p
     inner join person pu on p.creator_id = pu.id
     where p.creation_date > ('now'::timestamp - i::interval)
-    and u.local = true
+    and p.local = true
   ) a;
   return count_;
 end;
