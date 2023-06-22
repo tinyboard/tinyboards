@@ -27,6 +27,7 @@ pub struct LocalSiteRateLimit {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = local_site_rate_limit)]
 pub struct LocalSiteRateLimitForm {
+    pub local_site_id: Option<i32>,
     pub message: Option<i32>,
     pub message_per_second: Option<i32>,
     pub post: Option<i32>,

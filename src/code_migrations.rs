@@ -1,7 +1,7 @@
 use tinyboards_db::{
     models::{
         board::boards::{Board, BoardForm},
-        site::{site::{Site, SiteForm}, local_site::{LocalSite, LocalSiteForm}},
+        site::{site::{Site, SiteForm}, local_site::{LocalSite, LocalSiteForm}, local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitForm}},
         person::local_user::*,
         person::person::*, apub::instance::Instance,
     },
@@ -137,10 +137,25 @@ async fn initialize_local_site_and_admin_user(
             ..LocalSiteForm::default()
         };
 
-        let _inserted_local_site = LocalSite::create(pool, &local_site_form).await?;
-    }
+        let inserted_local_site = LocalSite::create(pool, &local_site_form).await?;
 
-    info!("admin and site successfully initialized!");
+        let local_site_rate_limit_form = LocalSiteRateLimitForm {
+            message: Some(999),
+            post: Some(999),
+            register: Some(999),
+            image: Some(999),
+            comment: Some(999),
+            search: Some(999),
+            local_site_id: Some(inserted_local_site.id),
+            ..LocalSiteRateLimitForm::default()
+        };
 
-    Ok(())
+        LocalSiteRateLimit::create(pool, &local_site_rate_limit_form).await?;
+        
+        info!("admin and site successfully initialized!");
+
+        Ok(())
+    } else {
+        Ok(())
+    }    
 }

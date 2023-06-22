@@ -6,7 +6,7 @@
     # Password to connect to postgres
     password: "tinyboards"
     # Host where postgres is running
-    host: "postgres"
+    host: "127.0.0.1"
     # Port where postgres can be accessed
     port: 5432
     # Name of the postgres database for tinyboards
