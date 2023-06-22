@@ -144,7 +144,7 @@ fn active_counts(conn: &mut PgConnection) {
             }
         }
         let update_board_stmt = format!(
-            "update board_aggregates set users_active_{} = (select * from board_aggregates_activity('{}'))",
+            "update board_aggregates ba set users_active_{} = mv.count_ from board_aggregates_activity('{}') mv where ba.board_id = mv.board_id_",
             i.1,
             i.0
         );
