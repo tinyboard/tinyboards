@@ -134,6 +134,9 @@ async fn initialize_local_site_and_admin_user(
         let local_site_form = LocalSiteForm {
             site_id: Some(inserted_site.id),
             site_setup: Some(settings.setup.is_some()),
+            open_registration: Some(true),
+            invite_only: Some(false),
+            require_application: Some(false),
             ..LocalSiteForm::default()
         };
 
