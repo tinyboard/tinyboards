@@ -23,11 +23,11 @@ use tinyboards_db::{
     models::{
         board::boards::Board,
         board::board_person_bans::BoardPersonBan,
-        person::person::Person,
+        person::person::PersonSafe,
         post::posts::Post,
         post::post_report::PostReport,
     },
-    traits::JoinView,
+    traits::{JoinView, ToSafe},
     utils::{get_conn, limit_and_offset, DbPool},
 };
 use typed_builder::TypedBuilder;
@@ -36,12 +36,12 @@ type PostReportViewTuple = (
     PostReport,
     Post,
     Board,
-    Person,
-    Person,
+    PersonSafe,
+    PersonSafe,
     Option<BoardPersonBan>,
     Option<i16>,
     PostAggregates,
-    Option<Person>,
+    Option<PersonSafe>,
 );
 
 impl PostReportView {
@@ -49,10 +49,12 @@ impl PostReportView {
     pub async fn read(
         pool: &DbPool,
         report_id: i32,
-        my_person_id: i32,
+        my_person_id: Option<i32>,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let (person_alias_1, person_alias_2) = diesel::alias!(person as person1, person as person2);
+
+        let person_id_join = my_person_id.unwrap_or(-1);
 
         let (
             post_report,
@@ -80,7 +82,7 @@ impl PostReportView {
                 post_votes::table.on(
                     posts::id
                         .eq(post_votes::post_id)
-                        .and(post_votes::person_id.eq(my_person_id))
+                        .and(post_votes::person_id.eq(person_id_join))
                 )
             )
             .inner_join(post_aggregates::table.on(post_report::post_id.eq(post_aggregates::post_id)))
@@ -91,12 +93,12 @@ impl PostReportView {
                 post_report::all_columns,
                 posts::all_columns,
                 boards::all_columns,
-                person::all_columns,
-                person_alias_1.fields(person::all_columns),
+                PersonSafe::safe_columns_tuple(),
+                person_alias_1.fields(PersonSafe::safe_columns_tuple()),
                 board_person_bans::all_columns.nullable(),
                 post_votes::score.nullable(),
                 post_aggregates::all_columns,
-                person_alias_2.fields(person::all_columns.nullable())
+                person_alias_2.fields(PersonSafe::safe_columns_tuple().nullable())
             ))
             .first::<PostReportViewTuple>(conn)
             .await?;
@@ -202,12 +204,12 @@ impl<'a> PostReportQuery<'a> {
                 post_report::all_columns,
                 posts::all_columns,
                 boards::all_columns,
-                person::all_columns,
-                person_alias_1.fields(person::all_columns),
+                PersonSafe::safe_columns_tuple(),
+                person_alias_1.fields(PersonSafe::safe_columns_tuple()),
                 board_person_bans::all_columns.nullable(),
                 post_votes::score.nullable(),
                 post_aggregates::all_columns,
-                person_alias_2.fields(person::all_columns.nullable())
+                person_alias_2.fields(PersonSafe::safe_columns_tuple().nullable())
             ))
             .into_boxed();
 

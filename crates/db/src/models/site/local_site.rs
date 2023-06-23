@@ -34,6 +34,7 @@ pub struct LocalSite {
     pub captcha_difficulty: String,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub reports_email_admins: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -65,4 +66,5 @@ pub struct LocalSiteForm {
     pub captcha_enabled: Option<bool>,
     pub captcha_difficulty: Option<String>,
     pub updated: Option<NaiveDateTime>,
+    pub reports_email_admins: Option<bool>,
 }

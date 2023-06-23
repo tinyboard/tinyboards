@@ -2,17 +2,17 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
   data::TinyBoardsContext,
-  post::{PostReportResponse, ResolvePostReport},
+  comment::{CommentReportResponse, ResolveCommentReport},
   utils::{require_user},
 };
-use tinyboards_db::{models::post::post_report::PostReport, traits::Reportable};
-use tinyboards_db_views::structs::PostReportView;
+use tinyboards_db::{models::comment::comment_report::CommentReport, traits::Reportable};
+use tinyboards_db_views::structs::CommentReportView;
 use tinyboards_utils::error::TinyBoardsError;
 
-/// Resolves or unresolves a post report and notifies the moderators
+/// Resolves or unresolves a comment report and notifies the moderators
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for ResolvePostReport {
-    type Response = PostReportResponse;
+impl<'des> Perform<'des> for ResolveCommentReport {
+    type Response = CommentReportResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context))]
@@ -22,9 +22,9 @@ impl<'des> Perform<'des> for ResolvePostReport {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &ResolvePostReport = &self;
+        let data: &ResolveCommentReport = &self;
 
-        let report_view = PostReportView::read(context.pool(), data.report_id, None).await?;
+        let report_view = CommentReportView::read(context.pool(), data.report_id, None).await?;
 
         let board_id = report_view.board.id;
 
@@ -38,13 +38,13 @@ impl<'des> Perform<'des> for ResolvePostReport {
         let person_id = view.person.id;
 
         if data.resolved {
-            PostReport::resolve(context.pool(), report_id, person_id).await?;
+            CommentReport::resolve(context.pool(), report_id, person_id).await?;
         } else {
-            PostReport::unresolve(context.pool(), report_id, person_id).await?;
+            CommentReport::unresolve(context.pool(), report_id, person_id).await?;
         }
 
-        let post_report_view = PostReportView::read(context.pool(), report_id, Some(person_id)).await?;
+        let comment_report_view = CommentReportView::read(context.pool(), report_id, Some(person_id)).await?;
 
-        Ok( PostReportResponse { post_report_view })
+        Ok( CommentReportResponse { comment_report_view })
     }
 }

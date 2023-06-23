@@ -492,3 +492,51 @@ impl SendActivity for MarkAllRepliesRead {
 
 }
 
+#[async_trait::async_trait]
+impl SendActivity for ListPostReports {
+    type Response = ListPostReportsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for ResolvePostReport {
+    type Response = PostReportResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for ListCommentReports {
+    type Response = ListCommentReportsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for ResolveCommentReport {
+    type Response = CommentReportResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+

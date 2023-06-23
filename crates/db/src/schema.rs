@@ -287,6 +287,7 @@ diesel::table! {
         captcha_difficulty -> Varchar,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
+        reports_email_admins -> Bool,
     }
 }
 

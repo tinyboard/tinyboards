@@ -2,17 +2,17 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{ListPostReports, ListPostReportsResponse},
+    comment::{ListCommentReports, ListCommentReportsResponse},
     utils::require_user,
 };
-use tinyboards_db_views::post_report_view::PostReportQuery;
+use tinyboards_db_views::comment_report_view::CommentReportQuery;
 use tinyboards_utils::error::TinyBoardsError;
 
-/// Lists post reports for a board if an id is supplied
-/// or returns all post reports for a board that a user moderates
+/// Lists comment reports for a board if an id is supplied
+/// or returns all comment reports for a board that a user moderates
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for ListPostReports {
-    type Response = ListPostReportsResponse;
+impl<'des> Perform<'des> for ListCommentReports {
+    type Response = ListCommentReportsResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context))]
@@ -22,7 +22,7 @@ impl<'des> Perform<'des> for ListPostReports {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &ListPostReports = &self;
+        let data: &ListCommentReports = &self;
 
         // require board mod at least to view reports
         let mut user_res = require_user(context.pool(), context.master_key(), auth)
@@ -48,7 +48,7 @@ impl<'des> Perform<'des> for ListPostReports {
             let page = data.page;
             let limit = data.limit;
 
-            let post_reports = PostReportQuery::builder()
+            let comment_reports = CommentReportQuery::builder()
                 .pool(context.pool())
                 .my_person_id(person_id)
                 .admin(admin)
@@ -60,7 +60,7 @@ impl<'des> Perform<'des> for ListPostReports {
                 .list()
                 .await?;
 
-            Ok( ListPostReportsResponse { post_reports })
+            Ok( ListCommentReportsResponse { comment_reports })
 
         } else {
             return Err(TinyBoardsError::from_message(403, "need to be at least a board moderator to list reports."));

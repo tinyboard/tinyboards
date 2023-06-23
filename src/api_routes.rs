@@ -109,6 +109,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::get().to(route_get_crud::<ListPosts>))
                     .route("/remove", web::post().to(route_post_crud::<RemovePost>))
                     .route("/lock", web::post().to(route_post::<LockPost>))
+                    .route("/report", web::post().to(route_post::<CreatePostReport>))
+                    .route("/report/list", web::post().to(route_post::<ListPostReports>))
+                    .route("/report/resolve", web::post().to(route_post::<ResolvePostReport>))
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route(
                         "/{post_id}",
@@ -132,6 +135,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
                     .route("/remove", web::post().to(route_post_crud::<RemoveComment>))
+                    .route("/report", web::post().to(route_post::<CreateCommentReport>))
+                    .route("/report/list", web::post().to(route_post::<ListCommentReports>))
+                    .route("/report/resolve", web::post().to(route_post::<ResolveCommentReport>))
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     .route(
                         "/{comment_id}",

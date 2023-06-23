@@ -170,12 +170,12 @@ pub struct PostReportView {
     pub post_report: PostReport,
     pub post: Post,
     pub board: Board,
-    pub creator: Person,
-    pub post_creator: Person,
+    pub creator: PersonSafe,
+    pub post_creator: PersonSafe,
     pub creator_banned_from_board: bool,
     pub my_vote: Option<i16>,
     pub counts: PostAggregates,
-    pub resolver: Option<Person>,
+    pub resolver: Option<PersonSafe>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]

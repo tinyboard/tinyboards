@@ -7,7 +7,7 @@ pub mod post_report;
 pub mod site;
 pub mod local_user;
 pub mod board;
-use actix_web::{web::Data, HttpResponse, HttpRequest};
+use actix_web::{web::Data};
 use tinyboards_utils::TinyBoardsError;
 
 use serde::{Deserialize, Serialize};

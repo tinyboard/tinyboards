@@ -2,6 +2,7 @@ pub mod board_moderator_view;
 pub mod board_person_ban_view;
 pub mod board_view;
 pub mod comment_view;
+pub mod comment_report_view;
 pub mod post_view;
 pub mod structs;
 pub mod person_mention_view;

@@ -2,23 +2,23 @@ use crate::{check_report_reason, Perform};
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{CreatePostReport, PostReportResponse},
+    comment::{CreateCommentReport, CommentReportResponse},
     utils::{require_user, send_new_report_email_to_admins, check_board_ban},
 };
 use tinyboards_db::{
     models::{
         site::local_site::LocalSite,
-        post::post_report::{PostReport, PostReportForm},
+        comment::comment_report::{CommentReport, CommentReportForm},
     },
     traits::Reportable,
 };
-use tinyboards_db_views::structs::{PostReportView, PostView};
+use tinyboards_db_views::structs::{CommentReportView, CommentView};
 use tinyboards_utils::error::TinyBoardsError;
 
-/// Creates a post report and notifies the mods
+/// Creates a comment report and notifies the mods
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for CreatePostReport {
-    type Response = PostReportResponse;
+impl<'des> Perform<'des> for CreateCommentReport {
+    type Response = CommentReportResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context))]
@@ -28,7 +28,7 @@ impl<'des> Perform<'des> for CreatePostReport {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &CreatePostReport = &self;
+        let data: &CreateCommentReport = &self;
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
@@ -38,35 +38,33 @@ impl<'des> Perform<'des> for CreatePostReport {
         check_report_reason(reason)?;
 
         let person_id = view.person.id;
-        let post_id = data.post_id;
-        let post_view = PostView::read(context.pool(), post_id, None, None).await?;
+        let comment_id = data.comment_id;
+        let comment_view = CommentView::read(context.pool(), comment_id, None).await?;
         
-        check_board_ban(person_id, post_view.board.id, context.pool()).await?;
+        check_board_ban(person_id, comment_view.board.id, context.pool()).await?;
 
-        let report_form = PostReportForm {
+        let report_form = CommentReportForm {
             creator_id: Some(person_id),
-            post_id: Some(post_id),
-            original_post_title: Some(post_view.post.title),
-            original_post_url: post_view.post.url,
-            original_post_body: Some(post_view.post.body),
+            comment_id: Some(comment_id),
+            original_comment_text: Some(comment_view.comment.body),
             reason: Some(reason.to_owned()),
-            ..PostReportForm::default()
+            ..CommentReportForm::default()
         };
 
-        let report = PostReport::report(context.pool(), &report_form).await?;
+        let report = CommentReport::report(context.pool(), &report_form).await?;
 
-        let post_report_view = PostReportView::read(context.pool(), report.id, Some(person_id)).await?;
+        let comment_report_view = CommentReportView::read(context.pool(), report.id, Some(person_id)).await?;
 
         if local_site.reports_email_admins {
             send_new_report_email_to_admins(
-                &post_report_view.creator.name,
-                &post_report_view.post_creator.name,
+                &comment_report_view.creator.name,
+                &comment_report_view.comment_creator.name,
                 context.pool(),
                 context.settings(),
             )
             .await?;
         }
         
-        Ok(PostReportResponse { post_report_view })
+        Ok(CommentReportResponse { comment_report_view })    
     }
 }
