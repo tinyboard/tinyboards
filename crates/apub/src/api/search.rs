@@ -7,12 +7,12 @@ use crate::{
   use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{Search, SearchResponse},
-    utils::{check_private_instance, require_user},
+    utils::{check_private_instance, require_user_opt},
   };
   use tinyboards_db::{
-    models::{board::boards::Board, site::local_site::LocalSite, person::local_user::LocalUser},
+    models::{board::boards::Board, site::local_site::LocalSite},
     utils::post_to_comment_sort_type,
-    SearchType, map_to_search_type, map_to_listing_type, map_to_sort_type, traits::Crud,
+    SearchType, map_to_search_type, map_to_listing_type, map_to_sort_type,
   };
   use tinyboards_db_views::{comment_view::CommentQuery, post_view::PostQuery, board_view::BoardQuery, person_view::PersonQuery};
   use tinyboards_utils::error::TinyBoardsError;
@@ -25,13 +25,12 @@ use crate::{
     async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<SearchResponse, TinyBoardsError> {
         let data: &Search = self;
 
-        let view = require_user(context.pool(), context.master_key(), auth)
-            .await
-            .unwrap()?;
+        let view = require_user_opt(context.pool(), context.master_key(), auth)
+            .await?;
 
         let _local_site = LocalSite::read(context.pool()).await?;
 
-        check_private_instance(&Some(view.local_user.clone()), context.pool()).await?;
+        check_private_instance(&view.clone().map(|u| u.local_user), context.pool()).await?;
 
         let mut posts = Vec::new();
         let mut comments = Vec::new();
@@ -45,7 +44,7 @@ use crate::{
         let listing_type = map_to_listing_type(data.listing_type.clone().map(|l| l.to_lowercase()).as_deref());
         let search_type = map_to_search_type(data.kind.clone().map(|s| s.to_lowercase()).as_deref());
         let board_id = if let Some(name) = &data.board_name {
-            resolve_actor_identifier::<ApubBoard, Board>(name, context, &Some(view.clone()), false)
+            resolve_actor_identifier::<ApubBoard, Board>(name, context, &view.clone(), false)
                 .await
                 .ok()
                 .map(|c| c.id)
@@ -54,7 +53,7 @@ use crate::{
         };
         let creator_id = data.creator_id;
 
-        let local_user = LocalUser::read(context.pool(), view.local_user.id.clone()).await?;
+        let local_user = view.map(|l| l.local_user);
 
         match search_type {
             SearchType::Post => {
@@ -64,7 +63,7 @@ use crate::{
                     .listing_type(Some(listing_type))
                     .board_id(board_id)
                     .creator_id(creator_id)
-                    .user(Some(&local_user))
+                    .user(local_user.as_ref())
                     .search_term(q)
                     .page(page)
                     .limit(limit)
@@ -105,7 +104,7 @@ use crate::{
                     .sort(Some(sort))
                     .listing_type(Some(listing_type))
                     .search_term(q)
-                    .user(Some(&view.local_user))
+                    .user(local_user.as_ref())
                     .page(page)
                     .limit(limit)
                     .build()

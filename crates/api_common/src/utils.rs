@@ -164,6 +164,10 @@ pub async fn require_user(pool: &DbPool, master_key: &Secret, auth: Option<&str>
     load_user_opt(pool, master_key, auth).await.into()
 }
 
+pub async fn require_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUserView>, TinyBoardsError> {
+    get_local_user_view_from_jwt_opt(auth, pool, master_key).await
+}
+
 impl From<UResultOpt> for UserResult {
     fn from(r: UResultOpt) -> Self {
         let u_res = match r {

@@ -7,7 +7,7 @@ use crate::{
   use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPosts, GetPostsResponse},
-    utils::{check_private_instance, require_user, is_mod_or_admin},
+    utils::{check_private_instance, require_user_opt},
   };
   use tinyboards_db::models::{board::boards::Board, site::local_site::LocalSite};
   use tinyboards_db_views::post_view::PostQuery;
@@ -20,10 +20,10 @@ use crate::{
     #[tracing::instrument(skip(context))]
     async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetPostsResponse, TinyBoardsError> {
         let data: &GetPosts = self;
-        let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
+        let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;
         let local_site = LocalSite::read(context.pool()).await?;
 
-        check_private_instance(&Some(local_user_view.local_user.clone()), context.pool()).await?;
+        check_private_instance(&local_user_view.clone().map(|u| u.local_user), context.pool()).await?;
 
         let sort = data.sort;
         let page = data.page;
@@ -40,16 +40,10 @@ use crate::{
 
         let saved_only = data.saved_only;
         let listing_type = listing_type_with_default(data.type_, &local_site, board_id)?;
-
-
-        let mut _mod_or_admin = false;
-        if let Some(board_id) = board_id {
-            _mod_or_admin = is_mod_or_admin(context.pool(), local_user_view.person.id, board_id).await.is_ok();
-        }
         
         let resp = PostQuery::builder()
             .pool(context.pool())
-            .user(Some(&local_user_view.local_user.clone()))
+            .user(local_user_view.clone().map(|l| l.local_user).as_ref())
             .listing_type(Some(listing_type))
             .sort(sort)
             .board_id(board_id)

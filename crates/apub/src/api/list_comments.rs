@@ -7,7 +7,7 @@ use crate::{
   use tinyboards_api_common::{
     comment::{GetComments, GetCommentsResponse},
     data::TinyBoardsContext,
-    utils::{check_private_instance, require_user},
+    utils::{check_private_instance, require_user_opt},
   };
   use tinyboards_db::{
     models::{board::boards::Board, site::local_site::LocalSite},
@@ -22,9 +22,9 @@ use crate::{
     #[tracing::instrument(skip(context, auth))]
     async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetCommentsResponse, TinyBoardsError> {
       let data: &GetComments = self;
-      let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
+      let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;
       let local_site = LocalSite::read(context.pool()).await?;
-      check_private_instance(&Some(local_user_view.local_user.clone()), context.pool()).await?;
+      check_private_instance(&local_user_view.clone().map(|u| u.local_user), context.pool()).await?;
   
       let board_id = if let Some(name) = &data.board_name {
         resolve_actor_identifier::<ApubBoard, Board>(name, context, &None, true)
@@ -41,7 +41,6 @@ use crate::{
       let parent_id = data.parent_id;
       let listing_type = listing_type_with_default(data.type_, &local_site, board_id)?;
       let post_id = data.post_id;
-      let local_user = local_user_view.local_user.clone();
 
       let resp = CommentQuery::builder()
         .pool(context.pool())
@@ -51,7 +50,7 @@ use crate::{
         .board_id(board_id)
         .post_id(post_id)
         .parent_id(parent_id)
-        .person_id(Some(local_user.person_id))
+        .person_id(local_user_view.clone().map(|u| u.local_user.person_id))
         .page(page)
         .limit(limit)
         .build()
