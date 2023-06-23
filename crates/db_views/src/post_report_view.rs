@@ -226,7 +226,7 @@ impl<'a> PostReportQuery<'a> {
             .limit(limit)
             .offset(offset);
 
-        let res = if !self.admin {
+        let res: Vec<PostReportViewTuple> = if !self.admin {
             query
                 .inner_join(
                     board_mods::table.on(
@@ -236,9 +236,9 @@ impl<'a> PostReportQuery<'a> {
                     )
                 )
                 .load::<PostReportViewTuple>(conn)
-                .await?;
+                .await?
         } else {
-            query.load::<PostReportViewTuple>(conn).await?;
+            query.load::<PostReportViewTuple>(conn).await?
         };
 
         Ok(res.into_iter().map(PostReportView::from_tuple).collect())
