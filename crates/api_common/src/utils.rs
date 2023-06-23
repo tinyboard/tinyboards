@@ -719,6 +719,25 @@ pub async fn send_application_approval_email(
     Ok(())
 }
 
+/// Sends a report email to admins
+pub async fn send_new_report_email_to_admins(
+    reporter_username: &str,
+    reported_username: &str,
+    pool: &DbPool,
+    settings: &Settings,
+) -> Result<(), TinyBoardsError> {
+    let admins = LocalUserView::list_admins_with_email(pool).await?;
+    let reports_link = &format!("{}/reports", settings.get_protocol_and_hostname());
+    let hostname = &settings.hostname;
+    for admin in admins {
+        let email = &admin.local_user.email.clone().expect("email");
+        let subject = &format!("New report created by {reporter_username} for {reported_username} on {hostname}");
+        let body = &format!("Please click the link below to view all reports.<br><br><a href=\"{reports_link}\">View Reports</a>");
+        send_email(subject, email, &admin.person.name, body, settings)?;
+    }
+    Ok(())
+}
+
 
 /// gets current site mode
   pub fn get_current_site_mode(site: &LocalSite, site_mode: &Option<SiteMode>) -> SiteMode {

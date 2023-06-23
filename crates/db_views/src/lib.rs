@@ -12,6 +12,7 @@ pub mod site_view;
 pub mod comment_reply_view;
 pub mod registration_application_view;
 pub mod board_subscriber_view;
+pub mod post_report_view;
 
 pub use comment_view::CommentQuery;
 

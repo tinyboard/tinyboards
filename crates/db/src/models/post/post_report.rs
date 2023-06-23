@@ -15,7 +15,7 @@ pub struct PostReport {
     pub original_post_body: Option<String>,
     pub reason: String,
     pub resolved: bool,
-    pub resolver_id: i32,
+    pub resolver_id: Option<i32>,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
 }
