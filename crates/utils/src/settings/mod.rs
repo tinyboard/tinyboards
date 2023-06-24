@@ -18,9 +18,9 @@ impl Settings {
     pub(crate) fn init() -> Result<Self, TinyBoardsError> {
         let config = from_str::<Settings>(
             &Self::read_config_file()
-                .map_err(|_| TinyBoardsError::from_message(500, "error reading config file"))?,
+                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "error reading config file"))?,
         )
-        .map_err(|_| TinyBoardsError::from_message(500, "error converting config to string"))?;
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "error converting config to string"))?;
 
         if config.hostname == "unset" {
             return Err(TinyBoardsError::from_message(
