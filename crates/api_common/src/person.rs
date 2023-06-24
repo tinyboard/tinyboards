@@ -1,8 +1,8 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::newtypes::DbUrl;
-use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView, PersonView};
+use tinyboards_db::{newtypes::DbUrl, SortType};
+use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView, PersonView, CommentView, PostView, BoardModeratorView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -216,3 +216,28 @@ pub struct DeleteAccount {
 #[cfg_attr(feature = "full", ts(export))]
 /// The response of deleting your account.
 pub struct DeleteAccountResponse {}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Gets a person's details.
+///
+/// Either person_id, or username are required.
+pub struct GetPersonDetails {
+  pub person_id: Option<i32>,
+  /// Example: kroner , or kroner@xyz.tld
+  pub username: Option<String>,
+  pub sort: Option<SortType>,
+  pub page: Option<i64>,
+  pub limit: Option<i64>,
+  pub board_id: Option<i32>,
+  pub saved_only: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// A person's details response.
+pub struct GetPersonDetailsResponse {
+  pub person_view: PersonView,
+  pub comments: Vec<CommentView>,
+  pub posts: Vec<PostView>,
+  pub moderates: Vec<BoardModeratorView>,
+}

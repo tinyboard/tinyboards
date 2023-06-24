@@ -3,6 +3,7 @@ use tinyboards_api_common::{
     comment::*,
     moderator::*,
     person::*,
+    board::*,
     post::*,
     site::*,
     admin::*,
@@ -400,17 +401,6 @@ impl SendActivity for BanBoard {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for GetFeed {
-    type Response = ListPostsResponse;
-    async fn send_activity(
-        _request: &Self,
-        _response: &Self::Response,
-        _context: &Data<TinyBoardsContext>,
-        _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-}
-
-#[async_trait::async_trait]
 impl SendActivity for DeleteFile {
     type Response = ();
     async fn send_activity(
@@ -540,3 +530,38 @@ impl SendActivity for ResolveCommentReport {
 
 }
 
+#[async_trait::async_trait]
+impl SendActivity for GetPersonDetails {
+    type Response = GetPersonDetailsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for GetBoard {
+    type Response = GetBoardResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for ResolveObject {
+    type Response = ResolveObjectResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}

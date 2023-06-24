@@ -32,20 +32,6 @@ pub struct SearchResponse {
     pub users: Vec<PersonView>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Default, Clone)]
-pub struct GetFeed {
-    pub listing_type: Option<String>,
-    pub sort: Option<String>,
-    pub creator_id: Option<i32>,
-    pub board_id: Option<i32>,
-    pub person_id: Option<i32>,
-    pub search: Option<String>,
-    pub saved_only: Option<bool>,
-    pub is_nsfw: Option<bool>,
-    pub limit: Option<i64>,
-    pub page: Option<i64>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetMembers {
     pub sort: Option<String>,
@@ -244,4 +230,25 @@ pub struct GetFederatedInstances {}
 pub struct GetFederatedInstancesResponse {
     /// Optional if federation is disabled
     pub federated_instances: Option<FederatedInstances>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Does an apub fetch for an object.
+pub struct ResolveObject {
+  /// Can be the full url, or a shortened version like: !fediverse@tinyboards.net
+  pub q: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum FederatedObject {
+    Comment(Option<CommentView>),
+    Post(Option<PostView>),
+    Board(Option<BoardView>),
+    Person(Option<PersonView>),
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ResolveObjectResponse {
+    pub object: FederatedObject
 }

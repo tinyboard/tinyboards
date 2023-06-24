@@ -17,7 +17,7 @@ use crate::{
   impl PerformApub for GetPosts {
     type Response = GetPostsResponse;
 
-    #[tracing::instrument(skip(context))]
+    #[tracing::instrument(skip(context, auth))]
     async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetPostsResponse, TinyBoardsError> {
         let data: &GetPosts = self;
         let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;

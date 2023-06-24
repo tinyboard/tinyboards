@@ -85,7 +85,7 @@ pub struct AddBoardModResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Get a board. Must provide either an id, or a name.
-pub struct GetCommunity {
+pub struct GetBoard {
   pub id: Option<i32>,
   /// Example: campfire, or campfire@xyz.tld
   pub name: Option<String>,
@@ -93,7 +93,7 @@ pub struct GetCommunity {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The board response.
-pub struct GetCommunityResponse {
+pub struct GetBoardResponse {
   pub board_view: BoardView,
   pub site: Option<Site>,
   pub moderators: Vec<BoardModeratorView>,

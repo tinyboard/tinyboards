@@ -17,7 +17,7 @@ use tinyboards_db::{
     },
     schema::{
         board_subscriber, board_person_bans, boards, comment_aggregates, comment_votes, comments,
-        posts, person_blocks, person_board_blocks, comment_saved, person,
+        posts, person_blocks, person_board_blocks, comment_saved, person, local_user_language,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited, get_conn, DbPool},
@@ -300,6 +300,7 @@ pub struct CommentQuery<'a> {
     #[builder(!default)]
     pool: &'a DbPool,
     listing_type: Option<ListingType>,
+    user: Option<&'a LocalUser>,
     sort: Option<CommentSortType>,
     board_id: Option<i32>,
     post_id: Option<i32>,
@@ -325,7 +326,8 @@ impl<'a> CommentQuery<'a> {
         let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
-        let person_id_join = self.person_id.unwrap_or(-1);
+        let person_id_join = self.user.map(|l| l.person_id).unwrap_or(-1);
+        let local_user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
 
         let mut query = comments::table
             .inner_join(person::table)
@@ -421,6 +423,13 @@ impl<'a> CommentQuery<'a> {
                     .eq(comment_votes::comment_id)
                     .and(comment_votes::person_id.eq(person_id_join))),
             )
+            .left_join(
+                local_user_language::table.on(
+                    comments::language_id
+                        .eq(local_user_language::language_id)
+                        .and(local_user_language::local_user_id.eq(local_user_id_join))
+                )
+            )
             .select((
                 comments::all_columns,
                 PersonSafe::safe_columns_tuple(),
@@ -513,6 +522,11 @@ impl<'a> CommentQuery<'a> {
 
             count_query = count_query.filter(person_board_blocks::person_id.is_null());
             count_query = count_query.filter(person_blocks::person_id.is_null());
+        }
+
+        if !self.user.map(|u| u.show_bots).unwrap_or(true) {
+            query = query.filter(person::bot_account.eq(false));
+            count_query = count_query.filter(person::bot_account.eq(false));
         }
 
         let (limit, offset) = limit_and_offset_unlimited(self.page, self.limit);

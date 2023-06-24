@@ -19,7 +19,7 @@ use tinyboards_db::{
     utils::{DbPool, naive_now},
     newtypes::DbUrl,
 };
-use tinyboards_db_views::{structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView, BoardModeratorView}, CommentQuery};
+use tinyboards_db_views::{structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView, BoardModeratorView, PersonView}, CommentQuery};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
@@ -535,6 +535,42 @@ pub async fn is_mod_or_admin(
 
     if !is_mod_or_admin {
         return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
+    }
+    Ok(())
+}
+
+#[tracing::instrument(skip_all)]
+pub async fn is_mod_or_admin_opt(
+  pool: &DbPool,
+  local_user_view: Option<&LocalUserView>,
+  community_id: Option<i32>,
+) -> Result<(), TinyBoardsError> {
+  if let Some(local_user_view) = local_user_view {
+    if let Some(community_id) = community_id {
+      is_mod_or_admin(pool, local_user_view.person.id, community_id).await
+    } else {
+      is_admin(local_user_view)
+    }
+  } else {
+    Err(TinyBoardsError::from_message(403, "not a mod or admin"))
+  }
+}
+
+pub async fn is_top_admin(pool: &DbPool, person_id: i32) -> Result<(), TinyBoardsError> {
+    let admins = PersonView::admins(pool).await?;
+    let top_admin = admins
+      .first()
+      .ok_or_else(|| TinyBoardsError::from_message(400, "no admins"))?;
+  
+    if top_admin.person.id != person_id {
+      return Err(TinyBoardsError::from_message(400, "not top admin"));
+    }
+    Ok(())
+}
+  
+pub fn is_admin(local_user_view: &LocalUserView) -> Result<(), TinyBoardsError> {
+    if !local_user_view.person.is_admin {
+        return Err(TinyBoardsError::from_message(400, "not an admin"));
     }
     Ok(())
 }

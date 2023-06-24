@@ -46,25 +46,8 @@ pub struct GetPostResponse {
     pub author_counts: PersonAggregates,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ListPosts {
-    pub listing_type: Option<String>,
-    pub sort: Option<String>,
-    pub page: Option<i64>,
-    pub limit: Option<i64>,
-    pub board_id: Option<i32>,
-    pub board_name: Option<String>,
-    pub saved_only: Option<bool>,
-}
-
 #[derive(Deserialize)]
 pub struct GetPostComments {}
-
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ListPostsResponse {
-    pub posts: Vec<PostView>,
-    pub total_count: i64,
-}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct CreatePostVote {

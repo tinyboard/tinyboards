@@ -8,20 +8,21 @@ use tinyboards_api_common::{
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::{SendActivity, api::PerformApub};
-//use tinyboards_federation::config::Data;
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     cfg.service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
-            .route("/feed", web::get().to(route_get::<GetFeed>))
             .route("/members", web::get().to(route_get::<GetMembers>))
             .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            //.route("/remove", web::post().to(route_post::<RemoveObject>))
-            //.route("/approve", web::post().to(route_post::<ApproveObject>))
+            // resolve federated objects (object => post, person, board or comment)
+            .route(
+                "/resolve_object", web::get().to(route_get_apub::<ResolveObject>
+                )
+            )
             .route(
                 "/password_reset",
                 web::post().to(route_post::<PasswordResetRequest>),
@@ -65,6 +66,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
             .service(
                 web::scope("/user")
+                    .route("", web::get().to(route_get_apub::<GetPersonDetails>))
                     .route("/{username}", web::get().to(route_get::<Profile>))
                     .route(
                         "/verify_email/{token}",
@@ -89,9 +91,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             )
             // Board
             .service(
-                web::scope("/boards")
+                web::scope("/board")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateBoard>))
+                    .route("", web::get().to(route_get_apub::<GetBoard>))
                     .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
                     .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
                     .route("/block", web::post().to(route_post::<BlockBoard>))
@@ -103,10 +106,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             )
             // Post
             .service(
-                web::scope("/posts")
+                web::scope("/post")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
-                    .route("", web::get().to(route_get_crud::<ListPosts>))
+                    .route("/list", web::get().to(route_get_apub::<GetPosts>))
                     .route("/remove", web::post().to(route_post_crud::<RemovePost>))
                     .route("/lock", web::post().to(route_post::<LockPost>))
                     .route("/report", web::post().to(route_post::<CreatePostReport>))
@@ -130,11 +133,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             )
             // Comment
             .service(
-                web::scope("/comments")
+                web::scope("/comment")
                     .wrap(rate_limit.message())
-                    .route("", web::get().to(route_get_crud::<ListComments>))
                     .route("", web::post().to(route_post_crud::<CreateComment>))
                     .route("/remove", web::post().to(route_post_crud::<RemoveComment>))
+                    .route("/list", web::get().to(route_get_apub::<GetComments>))
                     .route("/report", web::post().to(route_post::<CreateCommentReport>))
                     .route("/report/list", web::post().to(route_post::<ListCommentReports>))
                     .route("/report/resolve", web::post().to(route_post::<ResolveCommentReport>))
