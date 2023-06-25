@@ -4051,6 +4051,7 @@ dependencies = [
 name = "tinyboards_api_common"
 version = "0.1.0"
 dependencies = [
+ "actix-files",
  "actix-rt",
  "actix-web",
  "anyhow",
@@ -4061,6 +4062,7 @@ dependencies = [
  "encoding",
  "futures",
  "hmac",
+ "image",
  "jwt",
  "percent-encoding",
  "reqwest",

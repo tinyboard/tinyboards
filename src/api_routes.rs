@@ -7,7 +7,7 @@ use tinyboards_api_common::{
     person::*, post::*, site::*,
 };
 use tinyboards_api_crud::PerformCrud;
-use tinyboards_apub::{SendActivity, api::PerformApub};
+use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
@@ -18,10 +18,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
+            .route("/image/{filename}", web::get().to(GetFile::perform))
             // resolve federated objects (object => post, person, board or comment)
             .route(
-                "/resolve_object", web::get().to(route_get_apub::<ResolveObject>
-                )
+                "/resolve_object",
+                web::get().to(route_get_apub::<ResolveObject>),
             )
             .route(
                 "/password_reset",
@@ -113,8 +114,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/remove", web::post().to(route_post_crud::<RemovePost>))
                     .route("/lock", web::post().to(route_post::<LockPost>))
                     .route("/report", web::post().to(route_post::<CreatePostReport>))
-                    .route("/report/list", web::post().to(route_post::<ListPostReports>))
-                    .route("/report/resolve", web::post().to(route_post::<ResolvePostReport>))
+                    .route(
+                        "/report/list",
+                        web::post().to(route_post::<ListPostReports>),
+                    )
+                    .route(
+                        "/report/resolve",
+                        web::post().to(route_post::<ResolvePostReport>),
+                    )
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route(
                         "/{post_id}",
@@ -139,8 +146,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/remove", web::post().to(route_post_crud::<RemoveComment>))
                     .route("/list", web::get().to(route_get_apub::<GetComments>))
                     .route("/report", web::post().to(route_post::<CreateCommentReport>))
-                    .route("/report/list", web::post().to(route_post::<ListCommentReports>))
-                    .route("/report/resolve", web::post().to(route_post::<ResolveCommentReport>))
+                    .route(
+                        "/report/list",
+                        web::post().to(route_post::<ListCommentReports>),
+                    )
+                    .route(
+                        "/report/resolve",
+                        web::post().to(route_post::<ResolveCommentReport>),
+                    )
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     .route(
                         "/{comment_id}",
@@ -238,7 +251,10 @@ where
         + 'static,
 {
     let auth_header = get_auth(&req);
-    let res = data.clone().perform(&context, path.into_inner(), auth_header).await?;
+    let res = data
+        .clone()
+        .perform(&context, path.into_inner(), auth_header)
+        .await?;
     SendActivity::send_activity(&data, &res, &apub_data, auth_header).await?;
     Ok(HttpResponse::Ok().json(res))
 }
@@ -249,7 +265,7 @@ async fn route_get<'a, Data>(
     apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<Data::Route>,
     req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError> 
+) -> Result<HttpResponse, TinyBoardsError>
 where
     Data: Perform<'a>
         + SendActivity<Response = <Data as Perform<'a>>::Response>
@@ -273,13 +289,12 @@ where
         + Deserialize<'a>
         + Send
         + 'static,
-{   
+{
     let auth_header = get_auth(&req);
     let res = data.perform(&context, auth_header).await?;
     SendActivity::send_activity(&data.0, &res, &context, auth_header).await?;
     Ok(HttpResponse::Ok().json(res))
 }
-
 
 async fn route_post<'a, Data>(
     data: web::Json<Data>,
