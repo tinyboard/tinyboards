@@ -16,8 +16,6 @@ pub mod websocket;
 use crate::data::TinyBoardsContext;
 use actix_files::NamedFile;
 use actix_web::{
-    //body::BodyStream,
-    //http::header::ContentType,
     web::{Data, Path, Query},
     HttpRequest,
     HttpResponse,
@@ -27,8 +25,9 @@ use std::io::Cursor;
 use std::path::PathBuf;
 use tinyboards_db::models::site::uploads::Upload;
 use tinyboards_utils::TinyBoardsError;
+use crate::site::GetFile;
 
-impl site::GetFile {
+impl GetFile {
     pub async fn perform(
         data: Query<Self>,
         context: Data<TinyBoardsContext>,
@@ -82,10 +81,6 @@ impl site::GetFile {
                 return Ok(HttpResponse::Ok().body(buffer.into_inner()));
             }
         }
-
-        // let named_file = NamedFile::open(&path)?;
-        // let content_type = named_file.content_type();
-        // let file_stream = named_file.into_stream();
 
         NamedFile::open(&path)
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "internal server error"))

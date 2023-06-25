@@ -18,7 +18,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            .route("/image/{filename}", web::get().to(GetFile::perform))
+            // image retrieval (so images from the site can be displayed)
+            .route("/media/{filename}", web::get().to(GetFile::perform))
             // resolve federated objects (object => post, person, board or comment)
             .route(
                 "/resolve_object",
@@ -49,8 +50,6 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/upload", web::put().to(upload_file::<Multipart>))
                     .route("/{file_name}", web::delete().to(route_post::<DeleteFile>)),
             )
-            // File Retrieval
-            //.route("/media/{file_name}", web::get().to(route_get::<GetFile>))
             // Authenticate
             .service(
                 web::scope("/auth")
