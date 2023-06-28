@@ -3,13 +3,10 @@
     "https://w3id.org/security/v1",
     {
       "tinyboards": "https://tinyboards.net/ns#",
-      "litepub": "http://litepub.social/ns#",
       "pt": "https://joinpeertube.org/ns#",
       "sc": "http://schema.org/",
-      "ChatMessage": "litepub:ChatMessage",
       "commentsEnabled": "pt:commentsEnabled",
       "sensitive": "as:sensitive",
-      "matrixUserId": "tinyboards:matrixUserId",
       "postingRestrictedToMods": "tinyboards:postingRestrictedToMods",
       "removeData": "tinyboards:removeData",
       "stickied": "tinyboards:stickied",
