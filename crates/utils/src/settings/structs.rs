@@ -20,6 +20,9 @@ pub struct Settings {
   #[default(None)]
   #[doku(example = "Some(Default::default())")]
   pub email: Option<EmailConfig>,
+  /// Parameters to configure how media uploads are stored on the instance
+  #[default(Default::default())]
+  pub media: MediaConfig,
   /// Parameters for automatic configuration of new instance (only used at first start)
   #[default(None)]
   #[doku(example = "Some(Default::default())")]
@@ -138,6 +141,14 @@ pub struct EmailConfig {
   #[default("none")]
   #[doku(example = "none")]
   pub tls_type: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
+#[serde(default)]
+pub struct MediaConfig {
+  /// media file path to which uploads will be stored and served from
+  #[default("/app/tinyboards/media")]
+  pub media_path: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]

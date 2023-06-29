@@ -39,15 +39,18 @@ impl GetFile {
         let f_name = path.into_inner();
         let file = Upload::find_by_name(context.pool(), &f_name).await?;
 
-        let path = PathBuf::from("./static/media").join(&file.file_name.clone());
+        let media_path = &context.settings().get_media_path();
+        let file_name = &file.file_name;
+        let file_path = &format!("{}/{}", media_path, file_name);
+        let fs_path = PathBuf::from(file_path);
 
-        if !path.exists() {
+        if !fs_path.exists() {
             return Err(TinyBoardsError::from_message(404, "file not found"));
         }
 
-        if let Some(ext) = path.extension() {
+        if let Some(ext) = fs_path.extension() {
             if ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "gif" || ext == "webp" {
-                let image = image::open(&path).map_err(|e| {
+                let image = image::open(&fs_path).map_err(|e| {
                     TinyBoardsError::from_error_message(e, 500, "internal server error")
                 })?;
 
@@ -82,7 +85,7 @@ impl GetFile {
             }
         }
 
-        NamedFile::open(&path)
+        NamedFile::open(&fs_path)
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "internal server error"))
             .map(|named_file| named_file.into_response(&req))
     }

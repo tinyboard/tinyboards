@@ -36,6 +36,11 @@ impl Settings {
         env::var("TB_CONFIG_LOCATION").unwrap_or_else(|_| DEFAULT_CONFIG_FILE.to_string())
     }
 
+    pub fn get_media_path(&self) -> String {
+        let conf = &self.media;
+        conf.media_path.clone()
+    }
+
     pub fn read_config_file() -> Result<String, Error> {
         fs::read_to_string(Self::get_config_location())
     }
