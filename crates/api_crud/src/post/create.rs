@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{PostResponse, SubmitPost},
-    utils::{check_board_deleted_or_removed, require_user, generate_local_apub_endpoint, EndpointType}, build_response::build_post_response,
+    utils::{check_board_deleted_or_removed, require_user, generate_local_apub_endpoint, EndpointType}, build_response::build_post_response, request::fetch_site_data,
 };
 use tinyboards_db::{
     models::{post::{
@@ -13,6 +13,9 @@ use tinyboards_db::{
     traits::{Voteable, Crud}, impls::apub::actor_language::default_post_language,
 };
 use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::custom_body_parsing};
+use tracing::{Instrument, log::warn};
+use url::Url;
+use webmention::{Webmention, WebmentionError};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for SubmitPost {
@@ -51,7 +54,16 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         };
 
         BoardLanguage::is_allowed_board_language(context.pool(), language_id, board_id.clone()).await?;
-        
+
+        let data_url = data.url.as_ref().map(|url| url.inner());
+
+        let (metadata_res, thumbnail_url) = 
+            fetch_site_data(context.client(), data_url).await;
+
+        let (_embed_title, _embed_description, _embed_video_url) = metadata_res
+            .map(|u| (u.title, u.description, u.embed_video_url))
+            .unwrap_or_default();
+
         let post_form = PostForm {
             title: Some(data.title),
             type_: data.type_,
@@ -63,6 +75,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             board_id: Some(board_id),
             is_nsfw: Some(data.is_nsfw),
             language_id: language_id.clone(),
+            thumbnail_url,
             ..PostForm::default()
         };
 
@@ -97,7 +110,21 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         // TODO:
         // logic to mark post as read for the poster
 
-        // web mention logic
+        if let Some(url) = updated_post.url {
+            let mut webmention = 
+                Webmention::new::<Url>(updated_post.ap_id.clone().unwrap().into(), url.clone().into())?;
+            webmention.set_checked(true);
+
+            match webmention
+                .send()
+                .instrument(tracing::info_span!("Sending webmention"))
+                .await
+            {
+                Ok(_) => {},
+                Err(WebmentionError::NoEndpointDiscovered(_)) => {},
+                Err(e) => warn!("Failed to send webmention: {}", e),
+            }
+        }
 
         Ok(build_post_response(context, board_id, view.person.id, published_post.id).await?)
     }

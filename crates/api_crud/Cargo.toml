@@ -19,3 +19,4 @@ url = { workspace = true }
 async-trait = { workspace = true }
 regex = { workspace = true }
 uuid = { workspace = true }
+webmention = { workspace = true }
