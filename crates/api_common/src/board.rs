@@ -3,7 +3,7 @@
 //     SortType,
 // };
 use serde::{Deserialize, Serialize};
-use tinyboards_db::models::site::site::Site;
+use tinyboards_db::{models::site::site::Site, newtypes::DbUrl};
 use tinyboards_db_views::structs::{BoardView, BoardModeratorView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -11,6 +11,8 @@ pub struct CreateBoard {
     pub name: String,
     pub title: String,
     pub description: Option<String>,
+    pub icon: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -29,6 +31,8 @@ pub struct EditBoard {
     pub title: Option<String>,
     pub description: Option<String>,
     pub is_nsfw: Option<bool>,
+    pub icon: Option<DbUrl>,
+    pub banner: Option<DbUrl>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
