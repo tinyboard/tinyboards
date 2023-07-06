@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetMembers, GetMembersResponse},
-    utils::{check_private_instance, load_user_opt, load_local_user_opt},
+    utils::{check_private_instance, load_local_user_opt},
 };
 use tinyboards_db_views::person_view::PersonQuery;
 use tinyboards_utils::error::TinyBoardsError;
