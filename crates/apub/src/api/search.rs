@@ -54,7 +54,9 @@ use crate::{
         let creator_id = data.creator_id;
 
         let local_user = view.map(|l| l.local_user);
-        let mut total_count: i64 = 0;
+        
+        // I don't know why but the compiler complains when it is named `total_count`
+        let mut _total_count = 0;
 
         match search_type {
             SearchType::Post => {
@@ -72,7 +74,7 @@ use crate::{
                     .list()
                     .await?;
                 posts = resp.posts;
-                total_count = resp.count;
+                _total_count = resp.count;
             },
             SearchType::Comment => {
                 let resp = CommentQuery::builder()
@@ -88,7 +90,7 @@ use crate::{
                     .list()
                     .await?;
                 comments = resp.comments;
-                total_count = resp.count;
+                _total_count = resp.count;
             },
             SearchType::Person => {
                 let resp = PersonQuery::builder()
@@ -100,7 +102,7 @@ use crate::{
                     .list()
                     .await?;
                 users = resp.persons;
-                total_count = resp.count;
+                _total_count = resp.count;
             },
             SearchType::Board => {
                 let resp = BoardQuery::builder()
@@ -115,7 +117,7 @@ use crate::{
                     .list()
                     .await?;
                 boards = resp.boards;
-                total_count = resp.count;
+                _total_count = resp.count;
             },
         }
 
@@ -125,7 +127,7 @@ use crate::{
             posts, 
             boards, 
             users,
-            total_count, 
+            total_count: _total_count, 
         })
     }
   }
