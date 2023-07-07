@@ -30,6 +30,7 @@ pub struct SearchResponse {
     pub posts: Vec<PostView>,
     pub boards: Vec<BoardView>,
     pub users: Vec<PersonView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

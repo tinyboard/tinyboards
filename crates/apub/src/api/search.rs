@@ -54,10 +54,11 @@ use crate::{
         let creator_id = data.creator_id;
 
         let local_user = view.map(|l| l.local_user);
+        let mut total_count: i64 = 0;
 
         match search_type {
             SearchType::Post => {
-                posts = PostQuery::builder()
+                let resp = PostQuery::builder()
                     .pool(context.pool())
                     .sort(Some(sort))
                     .listing_type(Some(listing_type))
@@ -69,11 +70,12 @@ use crate::{
                     .limit(limit)
                     .build()
                     .list()
-                    .await?
-                    .posts;
+                    .await?;
+                posts = resp.posts;
+                total_count = resp.count;
             },
             SearchType::Comment => {
-                comments = CommentQuery::builder()
+                let resp = CommentQuery::builder()
                     .pool(context.pool())
                     .sort(Some(sort).map(post_to_comment_sort_type))
                     .listing_type(Some(listing_type))
@@ -84,22 +86,24 @@ use crate::{
                     .limit(limit)
                     .build()
                     .list()
-                    .await?
-                    .comments;
+                    .await?;
+                comments = resp.comments;
+                total_count = resp.count;
             },
             SearchType::Person => {
-                users = PersonQuery::builder()
+                let resp = PersonQuery::builder()
                     .pool(context.pool())
                     .search_term(q)
                     .page(page)
                     .limit(limit)
                     .build()
                     .list()
-                    .await?
-                    .persons;
+                    .await?;
+                users = resp.persons;
+                total_count = resp.count;
             },
             SearchType::Board => {
-                boards = BoardQuery::builder()
+                let resp = BoardQuery::builder()
                     .pool(context.pool())
                     .sort(Some(sort))
                     .listing_type(Some(listing_type))
@@ -109,18 +113,19 @@ use crate::{
                     .limit(limit)
                     .build()
                     .list()
-                    .await?
-                    .boards;
+                    .await?;
+                boards = resp.boards;
+                total_count = resp.count;
             },
         }
-
 
         Ok(SearchResponse { 
             kind: search_type.to_string(), 
             comments, 
             posts, 
             boards, 
-            users, 
+            users,
+            total_count, 
         })
     }
   }
