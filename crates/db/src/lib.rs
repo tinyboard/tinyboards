@@ -25,92 +25,142 @@ pub enum SiteMode {
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum RegistrationMode {
     /// Closed to the public
+    #[strum(ascii_case_insensitive)]
     Closed,
     /// Open, but you need to have an approved application,
+    #[strum(ascii_case_insensitive)]
     RequireApplication,
     /// Open, but an invite link is required
+    #[strum(ascii_case_insensitive)]
     RequireInvite,
     /// Open to all
+    #[strum(ascii_case_insensitive)]
     Open,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SortType {
+    #[strum(ascii_case_insensitive)]
     Active,
+    #[strum(ascii_case_insensitive)]
     Hot,
+    #[strum(ascii_case_insensitive)]
     New,
+    #[strum(ascii_case_insensitive)]
     Old,
+    #[strum(ascii_case_insensitive)]
     TopDay,
+    #[strum(ascii_case_insensitive)]
     TopWeek,
+    #[strum(ascii_case_insensitive)]
     TopMonth,
+    #[strum(ascii_case_insensitive)]
     TopYear,
+    #[strum(ascii_case_insensitive)]
     TopAll,
+    #[strum(ascii_case_insensitive)]
     MostComments,
+    #[strum(ascii_case_insensitive)]
     NewComments,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum UserSortType {
+    #[strum(ascii_case_insensitive)]
     New,
+    #[strum(ascii_case_insensitive)]
     Old,
+    #[strum(ascii_case_insensitive)]
     MostRep,
+    #[strum(ascii_case_insensitive)]
     MostPosts,
+    #[strum(ascii_case_insensitive)]
     MostComments,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum CommentSortType {
+    #[strum(ascii_case_insensitive)]
     Hot,
+    #[strum(ascii_case_insensitive)]
     Top,
+    #[strum(ascii_case_insensitive)]
     New,
+    #[strum(ascii_case_insensitive)]
     Old,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum ListingType {
+    #[strum(ascii_case_insensitive)]
     All,
+    #[strum(ascii_case_insensitive)]
     Subscribed,
+    #[strum(ascii_case_insensitive)]
     Local,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SearchType {
+    #[strum(ascii_case_insensitive)]
     Person,
+    #[strum(ascii_case_insensitive)]
     Post,
+    #[strum(ascii_case_insensitive)]
     Comment,
+    #[strum(ascii_case_insensitive)]
     Board,
 }
 
 #[derive(EnumString, Display, Debug, PartialEq, Eq, Serialize, Deserialize, Clone, Copy)]
 pub enum SubscribedType {
+    #[strum(ascii_case_insensitive)]
     Subscribed,
+    #[strum(ascii_case_insensitive)]
     NotSubscribed,
+    #[strum(ascii_case_insensitive)]
     Pending,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum ModLogActionType {
+    #[strum(ascii_case_insensitive)]
     All,
+    #[strum(ascii_case_insensitive)]
     ModRemovePost,
+    #[strum(ascii_case_insensitive)]
     ModLockPost,
+    #[strum(ascii_case_insensitive)]
     ModFeaturePost,
+    #[strum(ascii_case_insensitive)]
     ModRemoveComment,
+    #[strum(ascii_case_insensitive)]
     ModRemoveBoard,
+    #[strum(ascii_case_insensitive)]
     ModBanFromBoard,
+    #[strum(ascii_case_insensitive)]
     ModAddBoardMod,
+    #[strum(ascii_case_insensitive)]
     ModAddAdmin,
+    #[strum(ascii_case_insensitive)]
     ModBan,
+    #[strum(ascii_case_insensitive)]
     AdminPurgeUser,
+    #[strum(ascii_case_insensitive)]
     AdminPurgeBoard,
+    #[strum(ascii_case_insensitive)]
     AdminPurgePost,
+    #[strum(ascii_case_insensitive)]
     AdminPurgeComment,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum PostFeatureType {
     /// Features to the top of the local site
+    #[strum(ascii_case_insensitive)]
     Local,
     /// Features to the top of the board
+    #[strum(ascii_case_insensitive)]
     Board,
 }
 
