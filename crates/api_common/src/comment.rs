@@ -136,4 +136,5 @@ pub struct GetComments {
 /// The comment list response.
 pub struct GetCommentsResponse {
   pub comments: Vec<CommentView>,
+  pub total_count: i64,
 }

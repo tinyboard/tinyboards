@@ -59,7 +59,8 @@ use crate::{
         .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't get comments"))?;
 
       let comments = resp.comments;
+      let total_count = resp.count;
   
-      Ok(GetCommentsResponse { comments })
+      Ok(GetCommentsResponse { comments, total_count })
     }
   }

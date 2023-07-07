@@ -160,4 +160,5 @@ pub struct GetPosts {
 /// The post list response.
 pub struct GetPostsResponse {
   pub posts: Vec<PostView>,
+  pub total_count: i64,
 }
