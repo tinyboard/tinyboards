@@ -196,20 +196,19 @@ pub fn map_to_search_type(match_string: Option<&str>) -> SearchType {
     }
 }
 
-pub fn map_to_sort_type(match_string: Option<&str>) -> SortType {
+pub fn map_to_sort_type(match_string: &str) -> SortType {
     match match_string {
-        Some("active") => SortType::Active,
-        Some("hot") => SortType::Hot,
-        Some("new") => SortType::New,
-        Some("old") => SortType::Old,
-        Some("topday") => SortType::TopDay,
-        Some("topweek") => SortType::TopWeek,
-        Some("topmonth") => SortType::TopMonth,
-        Some("topall") => SortType::TopAll,
-        Some("mostcomments") => SortType::MostComments,
-        Some("newcomments") => SortType::NewComments,
-        Some(&_) => SortType::Hot,
-        None => SortType::Hot,
+        "active" => SortType::Active,
+        "hot" => SortType::Hot,
+        "new" => SortType::New,
+        "old" => SortType::Old,
+        "top_day" => SortType::TopDay,
+        "top_week" => SortType::TopWeek,
+        "top_month" => SortType::TopMonth,
+        "top_all" => SortType::TopAll,
+        "mostcomments" => SortType::MostComments,
+        "newcomments" => SortType::NewComments,
+        _ => SortType::Hot,
     }
 }
 

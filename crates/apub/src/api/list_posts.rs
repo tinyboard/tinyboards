@@ -2,30 +2,45 @@ use crate::{
     api::{listing_type_with_default, PerformApub},
     fetcher::resolve_actor_identifier,
     objects::board::ApubBoard,
-  };
-  use tinyboards_federation::config::Data;
-  use tinyboards_api_common::{
+};
+use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPosts, GetPostsResponse},
     utils::{check_private_instance, require_user_opt},
-  };
-  use tinyboards_db::models::{board::boards::Board, site::local_site::LocalSite};
-  use tinyboards_db_views::post_view::PostQuery;
-  use tinyboards_utils::error::TinyBoardsError;
+};
+use tinyboards_db::{
+    map_to_sort_type,
+    models::{board::boards::Board, site::local_site::LocalSite},
+};
+use tinyboards_db_views::post_view::PostQuery;
+use tinyboards_federation::config::Data;
+use tinyboards_utils::error::TinyBoardsError;
 
-  #[async_trait::async_trait]
-  impl PerformApub for GetPosts {
+#[async_trait::async_trait]
+impl PerformApub for GetPosts {
     type Response = GetPostsResponse;
 
     #[tracing::instrument(skip(context, auth))]
-    async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetPostsResponse, TinyBoardsError> {
+    async fn perform(
+        &self,
+        context: &Data<TinyBoardsContext>,
+        auth: Option<&str>,
+    ) -> Result<GetPostsResponse, TinyBoardsError> {
         let data: &GetPosts = self;
         let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;
         let local_site = LocalSite::read(context.pool()).await?;
 
-        check_private_instance(&local_user_view.clone().map(|u| u.local_user), context.pool()).await?;
+        check_private_instance(
+            &local_user_view.clone().map(|u| u.local_user),
+            context.pool(),
+        )
+        .await?;
 
-        let sort = data.sort;
+        let sort = data.sort.clone().map(|x| x.to_lowercase());
+        let sort = Some(map_to_sort_type(match sort {
+            Some(ref sort) => sort,
+            None => "hot",
+        }));
         let page = data.page;
         let limit = data.limit;
 
@@ -40,7 +55,7 @@ use crate::{
 
         let saved_only = data.saved_only;
         let listing_type = listing_type_with_default(data.type_, &local_site, board_id)?;
-        
+
         let resp = PostQuery::builder()
             .pool(context.pool())
             .user(local_user_view.clone().map(|l| l.local_user).as_ref())
@@ -58,6 +73,6 @@ use crate::{
         let posts = resp.posts;
         let total_count = resp.count;
 
-        Ok( GetPostsResponse { posts, total_count })
+        Ok(GetPostsResponse { posts, total_count })
     }
-  }
+}
