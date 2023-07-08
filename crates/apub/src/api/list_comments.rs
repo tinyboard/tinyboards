@@ -13,6 +13,7 @@ use crate::{
     models::{board::boards::Board, site::local_site::LocalSite},
   };
   use tinyboards_db_views::comment_view::CommentQuery;
+  use tinyboards_db_views::{DeleteableOrRemoveable, structs::CommentView};
   use tinyboards_utils::error::TinyBoardsError;
   
   #[async_trait::async_trait]
@@ -58,8 +59,21 @@ use crate::{
         .await
         .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't get comments"))?;
 
-      let comments = resp.comments;
+      let mut comments = resp.comments;
       let total_count = resp.count;
+
+      let local_user = local_user_view.map(|u| u.local_user);
+
+      // blank out comment info if deleted or removed
+      for cv in comments
+          .iter_mut()
+          .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
+      {
+          cv.hide_if_removed_or_deleted(local_user.as_ref());
+      }
+
+        
+      comments = CommentView::into_tree(comments, parent_id);
   
       Ok(GetCommentsResponse { comments, total_count })
     }
