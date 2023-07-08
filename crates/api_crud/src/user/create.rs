@@ -4,9 +4,12 @@ use regex::Regex;
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
 use tinyboards_api_common::{
-    sensitive::Sensitive,
     person::{Register, SignupResponse},
-    utils::{send_verification_email, generate_inbox_url, generate_shared_inbox_url, generate_local_apub_endpoint, EndpointType},
+    sensitive::Sensitive,
+    utils::{
+        generate_inbox_url, generate_local_apub_endpoint, generate_shared_inbox_url,
+        send_verification_email, EndpointType,
+    },
 };
 use tinyboards_db::models::person::local_user::*;
 use tinyboards_db::models::person::person::*;
@@ -17,7 +20,7 @@ use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::traits::Crud;
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
-use tinyboards_utils::TinyBoardsError;
+use tinyboards_utils::{hash_password, TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
@@ -99,10 +102,12 @@ impl<'des> PerformCrud<'des> for Register {
 
         let person = Person::create(context.pool(), &person_form).await?;
 
+        let passhash = hash_password(data.password.unpack());
+
         let local_user_form = LocalUserForm {
             name: Some(data.username.clone()),
             email: Some(data.email),
-            passhash: Some(data.password.unpack()),
+            passhash: Some(passhash),
             person_id: Some(person.id),
             ..LocalUserForm::default()
         };

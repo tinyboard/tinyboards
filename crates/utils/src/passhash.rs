@@ -1,6 +1,6 @@
+use crate::settings::SETTINGS;
 use argon2::{self, Config};
 use uuid::Uuid;
-use crate::settings::SETTINGS;
 
 pub fn hash_password(pwd: String) -> String {
     let settings = SETTINGS.to_owned();
