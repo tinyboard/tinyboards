@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{models::person::person::Person, ListingType, CommentSortType};
-use tinyboards_db_views::structs::{CommentView, CommentReportView};
+use tinyboards_db::{models::person::person::Person, CommentSortType, ListingType};
+use tinyboards_db_views::structs::{CommentReportView, CommentView};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateComment {
@@ -76,7 +76,7 @@ pub struct GetComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Remove a comment (only doable by mods)
 pub struct RemoveComment {
-    pub comment_id: i32,
+    pub target_id: i32,
     pub removed: bool,
     pub reason: Option<String>,
 }
@@ -84,57 +84,57 @@ pub struct RemoveComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Report a comment.
 pub struct CreateCommentReport {
-  pub comment_id: i32,
-  pub reason: String,
+    pub comment_id: i32,
+    pub reason: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The comment report response.
 pub struct CommentReportResponse {
-  pub comment_report_view: CommentReportView,
+    pub comment_report_view: CommentReportView,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Resolve a comment report (only doable by mods).
 pub struct ResolveCommentReport {
-  pub report_id: i32,
-  pub resolved: bool,
+    pub report_id: i32,
+    pub resolved: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// List comment reports.
 pub struct ListCommentReports {
-  pub page: Option<i64>,
-  pub limit: Option<i64>,
-  /// Only shows the unresolved reports
-  pub unresolved_only: Option<bool>,
-  /// if no board is given, it returns reports for all boards moderated by the auth user
-  pub board_id: Option<i32>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    /// Only shows the unresolved reports
+    pub unresolved_only: Option<bool>,
+    /// if no board is given, it returns reports for all boards moderated by the auth user
+    pub board_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The comment report list response.
 pub struct ListCommentReportsResponse {
-  pub comment_reports: Vec<CommentReportView>,
+    pub comment_reports: Vec<CommentReportView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetComments {
-  pub type_: Option<ListingType>,
-  pub sort: Option<CommentSortType>,
-  pub max_depth: Option<i32>,
-  pub page: Option<i64>,
-  pub limit: Option<i64>,
-  pub board_id: Option<i32>,
-  pub board_name: Option<String>,
-  pub post_id: Option<i32>,
-  pub parent_id: Option<i32>,
-  pub saved_only: Option<bool>,
+    pub type_: Option<ListingType>,
+    pub sort: Option<CommentSortType>,
+    pub max_depth: Option<i32>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub board_id: Option<i32>,
+    pub board_name: Option<String>,
+    pub post_id: Option<i32>,
+    pub parent_id: Option<i32>,
+    pub saved_only: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The comment list response.
 pub struct GetCommentsResponse {
-  pub comments: Vec<CommentView>,
-  pub total_count: i64,
+    pub comments: Vec<CommentView>,
+    pub total_count: i64,
 }

@@ -93,7 +93,7 @@ pub struct FeaturePost {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Remove a post (only doable by mods).
 pub struct RemovePost {
-    pub post_id: i32,
+    pub target_id: i32,
     pub removed: bool,
     pub reason: Option<String>,
 }

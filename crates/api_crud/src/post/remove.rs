@@ -1,12 +1,16 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    post::{RemovePost, PostResponse},
+    build_response::build_post_response,
     data::TinyBoardsContext,
-    utils::{require_user}, build_response::{build_post_response},
+    post::{PostResponse, RemovePost},
+    utils::require_user,
 };
 use tinyboards_db::{
-    models::{moderator::mod_actions::{ModRemovePostForm, ModRemovePost}, post::posts::Post},
+    models::{
+        moderator::mod_actions::{ModRemovePost, ModRemovePostForm},
+        post::posts::Post,
+    },
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -24,7 +28,7 @@ impl<'des> PerformCrud<'des> for RemovePost {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &RemovePost = &self;
-        let orig_post = Post::read(context.pool(), data.post_id).await?;
+        let orig_post = Post::read(context.pool(), data.target_id).await?;
 
         // require board mod
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -43,7 +47,6 @@ impl<'des> PerformCrud<'des> for RemovePost {
             post_id: updated_post.id,
             removed: Some(Some(removed)),
             reason: Some(data.reason.clone()),
-
         };
         ModRemovePost::create(context.pool(), &form).await?;
 

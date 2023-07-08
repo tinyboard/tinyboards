@@ -103,11 +103,12 @@ impl PostView {
             .into_boxed();
         
         // hide deleted or removed posts from non-admin or mods
-        if !is_mod_or_admin.unwrap_or(true) {
+        // we prolly don't want this here though...
+        /*if !is_mod_or_admin.unwrap_or(true) {
             query = query
                 .filter(posts::is_deleted.eq(false))
                 .filter(posts::is_removed.eq(false));
-        }
+        }*/
 
         let (
             post,
