@@ -1,4 +1,4 @@
-use crate::{schema::comments, newtypes::DbUrl};
+use crate::{newtypes::DbUrl, schema::comments};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -28,8 +28,8 @@ pub struct Comment {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = comments)]
 pub struct CommentForm {
-    pub creator_id: i32,
-    pub post_id: i32,
+    pub creator_id: Option<i32>,
+    pub post_id: Option<i32>,
     pub parent_id: Option<i32>,
     pub body: Option<String>,
     pub body_html: Option<String>,

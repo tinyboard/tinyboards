@@ -1,12 +1,14 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
+    build_response::build_comment_response,
     comment::{CommentIdPath, CommentResponse, EditComment},
     data::TinyBoardsContext,
     utils::{
         check_board_deleted_or_removed, check_comment_deleted_or_removed,
         check_post_deleted_or_removed, require_user,
-    }, websocket::send::send_notifications, build_response::build_comment_response,
+    },
+    websocket::send::send_notifications,
 };
 use tinyboards_db::{
     models::comment::comments::{Comment, CommentForm},
@@ -14,7 +16,11 @@ use tinyboards_db::{
     utils::naive_now,
 };
 use tinyboards_db_views::structs::CommentView;
-use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown, utils::{scrape_text_for_mentions, custom_body_parsing}};
+use tinyboards_utils::{
+    error::TinyBoardsError,
+    parser::parse_markdown,
+    utils::{custom_body_parsing, scrape_text_for_mentions},
+};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditComment {
@@ -53,15 +59,18 @@ impl<'des> PerformCrud<'des> for EditComment {
         let body = Some(data.body.clone());
         // we re-parse the markdown right here
         let mut body_html = parse_markdown(&body.clone().unwrap().as_str());
-        body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
+        body_html = Some(custom_body_parsing(
+            &body_html.unwrap_or_default(),
+            context.settings(),
+        ));
 
         let comment_id = path.comment_id;
         // grabbing the current timestamp for the update
         let updated = Some(naive_now());
 
         let form = CommentForm {
-            creator_id: orig_comment.comment.creator_id,
-            post_id: orig_comment.comment.post_id,
+            creator_id: Some(orig_comment.comment.creator_id),
+            post_id: Some(orig_comment.comment.post_id),
             body,
             body_html,
             updated,
@@ -70,17 +79,26 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         let updated_comment = Comment::update(context.pool(), comment_id, &form).await?;
 
-        let comment_view = CommentView::read(context.pool(), comment_id, Some(orig_comment.comment.creator_id)).await?;
+        let comment_view = CommentView::read(
+            context.pool(),
+            comment_id,
+            Some(orig_comment.comment.creator_id),
+        )
+        .await?;
 
         let mentions = scrape_text_for_mentions(&comment_view.comment.body_html);
         let recipient_ids = send_notifications(
-            mentions, 
-            &comment_view.comment, 
-            &view.person, 
-            &orig_comment.post, 
+            mentions,
+            &comment_view.comment,
+            &view.person,
+            &orig_comment.post,
             context,
-        ).await?;
+        )
+        .await?;
 
-        Ok(build_comment_response(context, updated_comment.id, Some(view), None, recipient_ids).await?)
+        Ok(
+            build_comment_response(context, updated_comment.id, Some(view), None, recipient_ids)
+                .await?,
+        )
     }
 }
