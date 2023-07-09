@@ -33,7 +33,7 @@ impl PerformApub for Search {
 
         let _local_site = LocalSite::read(context.pool()).await?;
 
-        check_private_instance(&view.clone().map(|u| u.local_user), context.pool()).await?;
+        check_private_instance(&view, context.pool()).await?;
 
         let mut posts = Vec::new();
         let mut comments = Vec::new();

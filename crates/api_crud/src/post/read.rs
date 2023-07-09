@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPost, GetPostResponse, PostIdPath},
-    utils::{check_private_instance, load_local_user_opt, is_mod_or_admin},
+    utils::{check_private_instance, load_user_opt, is_mod_or_admin},
 };
 
 use tinyboards_db::{models::post::posts::Post, traits::Crud};
@@ -27,13 +27,13 @@ impl<'des> PerformCrud<'des> for GetPost {
     ) -> Result<GetPostResponse, TinyBoardsError> {
         let _data = self;
 
-        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
+        let v = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check to see if instance is set to private before listing post
-        check_private_instance(&local_user, context.pool()).await?;
+        check_private_instance(&v, context.pool()).await?;
 
-        let person_id = match local_user {
-            Some(ref local_user) => Some(local_user.id),
+        let person_id = match v {
+            Some(ref v) => Some(v.person.id),
             None => None,
         };
 
@@ -48,7 +48,7 @@ impl<'des> PerformCrud<'des> for GetPost {
         let mut post_view = PostView::read(context.pool(), post_id, person_id, Some(mod_or_admin)).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
-            post_view.hide_if_removed_or_deleted(local_user.as_ref());
+            post_view.hide_if_removed_or_deleted(v.as_ref());
         }
 
         let _post_id = post_view.post.id;

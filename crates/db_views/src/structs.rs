@@ -57,6 +57,7 @@ pub struct PostView {
     pub read: bool,                 // Left join PostRead
     pub creator_blocked: bool,      // Left join UserBlock
     pub my_vote: Option<i16>,       // Left join PostLike
+    pub report_count: Option<i64>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

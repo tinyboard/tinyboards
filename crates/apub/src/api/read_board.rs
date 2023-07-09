@@ -31,7 +31,7 @@ use crate::{
             return Err(TinyBoardsError::from_message(400, "no id or name given."));
         }
 
-        check_private_instance(&view.clone().map(|u| u.local_user), context.pool()).await?;
+        check_private_instance(&view, context.pool()).await?;
 
         let person_id = view.as_ref().map(|u| u.person.id);
 

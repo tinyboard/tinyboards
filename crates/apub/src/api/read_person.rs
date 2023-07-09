@@ -28,7 +28,7 @@ impl PerformApub for GetPersonDetails {
         let view = require_user_opt(context.pool(), context.master_key(), auth).await?;
         let _is_admin = view.as_ref().map(|luv| is_admin(luv).is_ok());
 
-        check_private_instance(&view.clone().map(|u| u.local_user), context.pool()).await?;
+        check_private_instance(&view, context.pool()).await?;
 
         let person_details_id = match data.person_id {
             Some(id) => id,

@@ -31,7 +31,7 @@ impl PerformApub for GetPosts {
         let local_site = LocalSite::read(context.pool()).await?;
 
         check_private_instance(
-            &local_user_view.clone().map(|u| u.local_user),
+            &local_user_view,
             context.pool(),
         )
         .await?;

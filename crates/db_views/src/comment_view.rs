@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{structs::CommentView, DeleteableOrRemoveable};
+use crate::{structs::{LocalUserView, CommentView}, DeleteableOrRemoveable};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
@@ -277,7 +277,7 @@ impl CommentView {
         }
         
         if person_id.is_some() {
-            let l_user = LocalUser::get_by_person_id(pool, person_id.unwrap()).await?;
+            let l_user = LocalUserView::read(pool, person_id.unwrap()).await?;
             // hide deleted/removed info
             for cv in comments_vec
                 .iter_mut()
@@ -559,20 +559,20 @@ impl<'a> CommentQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for CommentView {
-    fn hide_if_removed_or_deleted(&mut self, local_user: Option<&LocalUser>) {
+    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>) {
         // if the user is admin, nothing is being removed
-        if let Some(local_user) = local_user {
-            if local_user.is_admin {
+        if let Some(user_view) = user_view {
+            if user_view.local_user.is_admin {
                 return;
             }
         }
 
         let blank_out_comment = {
             if self.comment.is_removed || self.comment.is_deleted {
-                match local_user {
-                    Some(local_user) => {
+                match user_view {
+                    Some(user_view) => {
                         // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.is_removed && local_user.person_id == self.comment.creator_id)
+                        !(self.comment.is_removed && user_view.person.id == self.comment.creator_id)
                     }
                     None => true,
                 }
@@ -599,8 +599,8 @@ impl DeleteableOrRemoveable for CommentView {
 
         let blank_out_post = {
             if self.post.is_deleted || self.post.is_removed {
-                match local_user {
-                    Some(local_user) => !(self.post.is_removed && local_user.person_id == self.post.creator_id),
+                match user_view {
+                    Some(user_view) => !(self.post.is_removed && user_view.person.id == self.post.creator_id),
                     None => true,
                 }
             } else {

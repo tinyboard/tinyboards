@@ -27,8 +27,12 @@ impl<'des> PerformCrud<'des> for GetComment {
             .not_banned()
             .unwrap()?;
 
+        let view = Some(view);
+
         // check if the instance is private before listing comments
-        check_private_instance(&Some(view.local_user), context.pool()).await?;
+        check_private_instance(&view, context.pool()).await?;
+
+        let view = view.unwrap();
 
         //let person_id = user.as_ref().map(|u| u.id);
         let comment_id = path.comment_id;

@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     comment::{ListComments, ListCommentsResponse},
     data::TinyBoardsContext,
     post::{GetPostComments, PostIdPath},
-    utils::{check_private_instance, load_local_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{
     map_to_comment_sort_type, map_to_listing_type, models::post::posts::Post, CommentSortType,
@@ -34,13 +34,13 @@ impl<'des> PerformCrud<'des> for ListComments {
     ) -> Result<ListCommentsResponse, TinyBoardsError> {
         let data: ListComments = self;
 
-        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if instance is private before listing comments
         check_private_instance(&local_user, context.pool()).await?;
 
         let person_id = match local_user {
-            Some(ref local_user) => Some(local_user.id),
+            Some(ref local_user) => Some(local_user.person.id),
             None => None,
         };
 
@@ -125,7 +125,7 @@ impl<'des> PerformCrud<'des> for GetPostComments {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let local_user = load_local_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         // check if instance is private before listing comments
         check_private_instance(&local_user, context.pool()).await?;

@@ -17,7 +17,7 @@ pub mod post_report_view;
 
 pub use comment_view::CommentQuery;
 
-use tinyboards_db::models::person::local_user::LocalUser;
+use structs::LocalUserView;
 pub trait DeleteableOrRemoveable {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUser>);
+    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>);
 }

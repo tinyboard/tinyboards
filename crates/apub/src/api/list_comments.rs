@@ -25,7 +25,7 @@ use crate::{
       let data: &GetComments = self;
       let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;
       let local_site = LocalSite::read(context.pool()).await?;
-      check_private_instance(&local_user_view.clone().map(|u| u.local_user), context.pool()).await?;
+      check_private_instance(&local_user_view, context.pool()).await?;
   
       let board_id = if let Some(name) = &data.board_name {
         resolve_actor_identifier::<ApubBoard, Board>(name, context, &None, true)
@@ -62,14 +62,14 @@ use crate::{
       let mut comments = resp.comments;
       let total_count = resp.count;
 
-      let local_user = local_user_view.map(|u| u.local_user);
+      // let local_user = local_user_view.map(|u| u.local_user);
 
       // blank out comment info if deleted or removed
       for cv in comments
           .iter_mut()
           .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
       {
-          cv.hide_if_removed_or_deleted(local_user.as_ref());
+          cv.hide_if_removed_or_deleted(local_user_view.as_ref());
       }
 
         

@@ -1,4 +1,4 @@
-use crate::{structs::PostView, DeleteableOrRemoveable};
+use crate::{structs::{LocalUserView, PostView}, DeleteableOrRemoveable};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
@@ -15,7 +15,7 @@ use tinyboards_db::{
     },
     schema::{
         board_subscriber, board_person_bans, boards, post_aggregates, post_votes, posts,
-        person_blocks, person_board_blocks, post_read, post_saved, person,
+        person_blocks, person_board_blocks, post_read, post_saved, person, post_report
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
@@ -48,7 +48,7 @@ impl PostView {
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let person_id_join = my_person_id.unwrap_or(-1);
-        let mut query = posts::table
+        let query = posts::table
             .find(post_id)
             .inner_join(person::table)
             .inner_join(boards::table)
@@ -129,6 +129,22 @@ impl PostView {
             post_vote
         };
 
+        let is_mod_or_admin = is_mod_or_admin.unwrap_or(false);
+        let report_count = if is_mod_or_admin {
+            let count = post_report::table
+                .filter(post_report::post_id.eq(post_id))
+                .filter(post_report::resolved.eq(false))
+                .select(count(post_report::id))
+                .first::<i64>(conn).await;
+
+            match count {
+                Ok(count) => Some(count),
+                Err(_) => None
+            }
+        } else {
+            None
+        };
+
         Ok(PostView {
             post,
             creator: Some(creator),
@@ -140,6 +156,7 @@ impl PostView {
             read: read.is_some(),
             creator_blocked: creator_blocked.is_some(),
             my_vote,
+            report_count
         })
     }
 }
@@ -416,19 +433,19 @@ impl<'a> PostQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for PostView {
-    fn hide_if_removed_or_deleted(&mut self, local_user: Option<&LocalUser>) {
+    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>) {
         /*if !(self.post.is_deleted || self.post.is_removed) {
             return self;
         }*/
 
-        if let Some(local_user) = local_user {
+        if let Some(user_view) = user_view {
             // admins see everything
-            if local_user.is_admin {
+            if user_view.local_user.is_admin {
                 return;
             }
 
             // person can see their own removed content
-            if self.post.is_removed && local_user.id == self.post.creator_id {
+            if self.post.is_removed && user_view.person.id == self.post.creator_id {
                 return;
             }
         }
@@ -468,6 +485,7 @@ impl ViewToVec for PostView {
                 read: a.7.is_some(),
                 creator_blocked: a.8.is_some(),
                 my_vote: a.9,
+                report_count: None
             })
             .collect::<Vec<Self>>()
     }

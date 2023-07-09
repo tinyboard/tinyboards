@@ -24,7 +24,9 @@ impl PerformApub for ResolveObject {
         let view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
         let person_id = view.person.id;
 
-        check_private_instance(&Some(view.local_user),context.pool()).await?;
+        let view = Some(view);
+        check_private_instance(&view, context.pool()).await?;
+        // let view = view.unwrap();
 
         let res = search_query_to_object_id(&data.q, context)
             .await?;

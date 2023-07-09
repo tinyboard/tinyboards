@@ -401,7 +401,7 @@ pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), Ti
 
 #[tracing::instrument(skip_all)]
 pub async fn check_private_instance(
-    user: &Option<LocalUser>,
+    user: &Option<LocalUserView>,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
