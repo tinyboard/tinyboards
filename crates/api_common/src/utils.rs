@@ -437,8 +437,8 @@ pub async fn check_board_ban(
     pool: &DbPool
 ) -> Result<(), TinyBoardsError> {
     let is_banned = BoardPersonBanView::get(pool, person_id, board_id)
-        .await
-        .is_ok();
+        .await?
+        .is_some();
     if is_banned {
         Err(TinyBoardsError::from_message(400, "banned from board"))
     } else {
