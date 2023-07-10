@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     build_response::build_post_response,
     data::TinyBoardsContext,
-    post::{PostResponse, RemovePost},
+    post::{PostResponse, TogglePostRemove},
     utils::require_user,
 };
 use tinyboards_db::{
@@ -16,7 +16,7 @@ use tinyboards_db::{
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> PerformCrud<'des> for RemovePost {
+impl<'des> PerformCrud<'des> for TogglePostRemove {
     type Response = PostResponse;
     type Route = ();
 
@@ -27,7 +27,7 @@ impl<'des> PerformCrud<'des> for RemovePost {
         _path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &RemovePost = &self;
+        let data: &TogglePostRemove = &self;
         let orig_post = Post::read(context.pool(), data.target_id).await?;
 
         // require board mod
@@ -40,6 +40,8 @@ impl<'des> PerformCrud<'des> for RemovePost {
         let post_id = orig_post.id;
         let removed = data.removed;
         let updated_post = Post::update_removed(context.pool(), post_id, removed).await?;
+
+        Post::resolve_reports(context.pool(), post_id, view.person.id).await?;
 
         // mod log
         let form = ModRemovePostForm {
