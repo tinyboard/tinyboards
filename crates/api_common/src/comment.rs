@@ -116,6 +116,7 @@ pub struct ListCommentReports {
 /// The comment report list response.
 pub struct ListCommentReportsResponse {
     pub comment_reports: Vec<CommentReportView>,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

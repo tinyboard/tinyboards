@@ -153,13 +153,19 @@ pub struct CommentReportQuery<'a> {
   unresolved_only: Option<bool>,
 }
 
+#[derive(Default, Clone)]
+pub struct CommentReportQueryResponse {
+  pub reports: Vec<CommentReportView>,
+  pub count: i64,
+}
+
 impl<'a> CommentReportQuery<'a> {
-    pub async fn list(self) -> Result<Vec<CommentReportView>, Error> {
+    pub async fn list(self) -> Result<CommentReportQueryResponse, Error> {
       let conn = &mut get_conn(self.pool).await?;
   
       let (person_alias_1, person_alias_2) = diesel::alias!(person as person1, person as person2);
   
-      let mut query = comment_report::table
+      let query_ = comment_report::table
         .inner_join(comments::table)
         .inner_join(posts::table.on(comments::post_id.eq(posts::id)))
         .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
@@ -202,15 +208,19 @@ impl<'a> CommentReportQuery<'a> {
           board_person_bans::all_columns.nullable(),
           comment_votes::score.nullable(),
           person_alias_2.fields(PersonSafe::safe_columns_tuple()).nullable(),
-        ))
-        .into_boxed();
-  
+        ));
+
+      let mut query = query_.clone().into_boxed();  
+      let mut count_query = query_.clone().into_boxed();
+        
       if let Some(board_id) = self.board_id {
         query = query.filter(posts::board_id.eq(board_id));
+        count_query = count_query.filter(posts::board_id.eq(board_id));
       }
   
       if self.unresolved_only.unwrap_or(false) {
         query = query.filter(comment_report::resolved.eq(false));
+        count_query = count_query.filter(comment_report::resolved.eq(false));
       }
   
       let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -219,10 +229,14 @@ impl<'a> CommentReportQuery<'a> {
         .order_by(comment_report::creation_date.desc())
         .limit(limit)
         .offset(offset);
-  
+
+      count_query = count_query
+        .limit(limit)
+        .offset(offset);
+
       // If its not an admin, get only the ones you mod
-      let res = if !self.admin {
-        query
+      if !self.admin {
+        let res = query
           .inner_join(
             board_mods::table.on(
               board_mods::board_id
@@ -231,14 +245,30 @@ impl<'a> CommentReportQuery<'a> {
             ),
           )
           .load::<<CommentReportView as JoinView>::JoinTuple>(conn)
-          .await?
+          .await?;
+
+        let count = count_query
+          .inner_join(
+            board_mods::table.on(
+              board_mods::board_id
+                .eq(posts::board_id)
+                .and(board_mods::person_id.eq(self.my_person_id)),
+            ),
+          )
+          .count().get_result::<i64>(conn)
+          .await?;
+
+        let reports = res.into_iter().map(CommentReportView::from_tuple).collect();
+
+        Ok(CommentReportQueryResponse{ reports, count })
       } else {
-        query
+        let res = query
           .load::<<CommentReportView as JoinView>::JoinTuple>(conn)
-          .await?
-      };
-  
-      Ok(res.into_iter().map(CommentReportView::from_tuple).collect())
+          .await?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
+        let reports = res.into_iter().map(CommentReportView::from_tuple).collect();
+        Ok(CommentReportQueryResponse { reports, count })
+      }
     }
 }
 

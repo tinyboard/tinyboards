@@ -48,7 +48,7 @@ impl<'des> Perform<'des> for ListCommentReports {
             let page = data.page;
             let limit = data.limit;
 
-            let comment_reports = CommentReportQuery::builder()
+            let report_reponse = CommentReportQuery::builder()
                 .pool(context.pool())
                 .my_person_id(person_id)
                 .admin(admin)
@@ -60,7 +60,7 @@ impl<'des> Perform<'des> for ListCommentReports {
                 .list()
                 .await?;
 
-            Ok( ListCommentReportsResponse { comment_reports })
+            Ok( ListCommentReportsResponse { comment_reports: report_reponse.reports, total_count: report_reponse.count })
 
         } else {
             return Err(TinyBoardsError::from_message(403, "need to be at least a board moderator to list reports."));
