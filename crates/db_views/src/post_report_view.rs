@@ -172,13 +172,19 @@ pub struct PostReportQuery<'a> {
   unresolved_only: Option<bool>,
 }
 
+#[derive(Default, Clone)]
+pub struct PostReportQueryResponse {
+    pub reports: Vec<PostReportView>,
+    pub count: i64,
+}
+
 impl<'a> PostReportQuery<'a> {
-    pub async fn list(self) -> Result<Vec<PostReportView>, Error> {
+    pub async fn list(self) -> Result<PostReportQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
 
         let (person_alias_1, person_alias_2) = diesel::alias!(person as person1, person as person2);
 
-        let mut query = post_report::table
+        let query_ = post_report::table
             .inner_join(posts::table)
             .inner_join(boards::table.on(posts::board_id.eq(boards::id)))
             .inner_join(person::table.on(post_report::creator_id.eq(person::id)))
@@ -210,15 +216,19 @@ impl<'a> PostReportQuery<'a> {
                 post_votes::score.nullable(),
                 post_aggregates::all_columns,
                 person_alias_2.fields(PersonSafe::safe_columns_tuple().nullable())
-            ))
-            .into_boxed();
+            ));
+
+        let mut query = query_.clone().into_boxed();
+        let mut count_query = query_.clone().into_boxed();
 
         if let Some(board_id) = self.board_id {
             query = query.filter(posts::board_id.eq(board_id));
+            count_query = count_query.filter(posts::board_id.eq(board_id));
         }
 
         if self.unresolved_only.unwrap_or(false) {
             query = query.filter(post_report::resolved.eq(false));
+            count_query = count_query.filter(post_report::resolved.eq(false));
         }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -228,8 +238,12 @@ impl<'a> PostReportQuery<'a> {
             .limit(limit)
             .offset(offset);
 
-        let res: Vec<PostReportViewTuple> = if !self.admin {
-            query
+        count_query = count_query
+            .limit(limit)
+            .offset(offset);
+
+        if !self.admin {
+            let res = query
                 .inner_join(
                     board_mods::table.on(
                         board_mods::board_id
@@ -238,12 +252,28 @@ impl<'a> PostReportQuery<'a> {
                     )
                 )
                 .load::<PostReportViewTuple>(conn)
-                .await?
-        } else {
-            query.load::<PostReportViewTuple>(conn).await?
-        };
+                .await?;
+            let reports = res.into_iter().map(PostReportView::from_tuple).collect();
+            let count = count_query
+                .inner_join(
+                    board_mods::table.on(
+                        board_mods::board_id
+                            .eq(posts::board_id)
+                            .and(board_mods::person_id.eq(self.my_person_id))
+                    )
+                )
+                .count()
+                .get_result::<i64>(conn)
+                .await?;
 
-        Ok(res.into_iter().map(PostReportView::from_tuple).collect())
+            Ok(PostReportQueryResponse { reports, count })    
+        } else {
+            let res = query.load::<PostReportViewTuple>(conn).await?;
+            let reports = res.into_iter().map(PostReportView::from_tuple).collect();
+            let count = count_query.count().get_result::<i64>(conn).await?;
+            
+            Ok(PostReportQueryResponse { reports, count })
+        }
     }
 }
 

@@ -142,6 +142,7 @@ pub struct ListPostReports {
 /// The post reports response.
 pub struct ListPostReportsResponse {
     pub post_reports: Vec<PostReportView>,
+    pub total_count: i64,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
