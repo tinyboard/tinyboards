@@ -168,7 +168,7 @@ pub struct RegistrationApplicationView {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct PostReportView {
-    pub post_report: PostReport,
+    pub data: PostReport,
     pub post: Post,
     pub board: Board,
     pub creator: PersonSafe,

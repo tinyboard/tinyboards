@@ -138,6 +138,14 @@ pub struct ListPostReports {
     pub auth: Sensitive<String>,
 }
 
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// returns all reports for a given post
+pub struct GetPostReports {
+    pub post_id: i32,
+    pub unresolved_only: bool
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The post reports response.
 pub struct ListPostReportsResponse {

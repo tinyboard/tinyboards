@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{ListPostReports, ListPostReportsResponse},
+    post::{ListPostReports, GetPostReports, ListPostReportsResponse},
     utils::require_user,
 };
 use tinyboards_db_views::post_report_view::PostReportQuery;
@@ -66,4 +66,38 @@ impl<'des> Perform<'des> for ListPostReports {
             return Err(TinyBoardsError::from_message(403, "need to be at least a board moderator to list reports."));
         }
     }
+}
+
+#[async_trait::async_trait(?Send)]
+impl<'des> Perform<'des> for GetPostReports {
+    type Response = ListPostReportsResponse;
+    type Route = ();
+
+    #[tracing::instrument(skip(context))]
+    async fn perform(
+        self,
+        context: &Data<TinyBoardsContext>,
+        _: Self::Route,
+        auth: Option<&str>,
+    ) -> Result<Self::Response, TinyBoardsError> {
+        let data: &Self = &self;
+
+        let v = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .require_admin()
+            .unwrap()?;
+
+        let post_reports = PostReportQuery::builder()
+                .pool(context.pool())
+                .my_person_id(v.person.id)
+                .admin(true)
+                .unresolved_only(Some(data.unresolved_only))
+                .post_id(Some(data.post_id))
+                .page(Some(1))
+                .build()
+                .list()
+                .await?;
+
+        Ok( ListPostReportsResponse { post_reports })
+    }    
 }
