@@ -87,7 +87,7 @@ impl<'des> Perform<'des> for GetPostReports {
             .require_admin()
             .unwrap()?;
 
-        let post_reports = PostReportQuery::builder()
+        let query_response = PostReportQuery::builder()
                 .pool(context.pool())
                 .my_person_id(v.person.id)
                 .admin(true)
@@ -98,6 +98,6 @@ impl<'des> Perform<'des> for GetPostReports {
                 .list()
                 .await?;
 
-        Ok( ListPostReportsResponse { post_reports })
+        Ok( ListPostReportsResponse { post_reports: query_response.reports, total_count: query_response.count })
     }    
 }
