@@ -26,6 +26,8 @@ COPY --from=builder /app/config/defaults.hjson /config/defaults.hjson
 
 RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
 
+RUN mkdir -p /app/tinyboards/media
+
 EXPOSE 8536
 
 CMD ["/app/tinyboards"]
