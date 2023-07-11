@@ -25,6 +25,7 @@ services:
     restart: always
     environment:
       - RUST_LOG="info"
+      - TB_CONFIG_LOCATION=/config/defaults.hjson
     links:
       - postgres
     volumes:
