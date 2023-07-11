@@ -4,6 +4,8 @@ ARG RUSTRELEASEDIR="release"
 
 WORKDIR /app
 
+RUN mkdir -p tinyboards/media
+
 COPY ./ ./
 
 RUN cargo build --release
@@ -25,8 +27,6 @@ COPY --from=builder /app/tinyboards_server /app/tinyboards
 COPY --from=builder /app/config/defaults.hjson /config/defaults.hjson
 
 RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
-
-RUN mkdir -p /app/tinyboards/media
 
 EXPOSE 8536
 
