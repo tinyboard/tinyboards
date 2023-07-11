@@ -26,7 +26,7 @@ COPY --from=builder /app/config/defaults.hjson /config/defaults.hjson
 
 WORKDIR /app
 
-RUN mkdir -p tinyboards/media
+RUN mkdir media
 
 RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
 
