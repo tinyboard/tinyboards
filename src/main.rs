@@ -128,11 +128,7 @@ async fn main() -> Result<(), TinyBoardsError> {
             .build()
             .expect("configure federation");
 
-        let cors_config = if cfg!(debug_assertions) {
-            Cors::permissive()
-        } else {
-            Cors::default()
-        };
+        let cors_config = Cors::default().allow_any_origin();
 
         App::new()
             .wrap(actix_web::middleware::Logger::default())
