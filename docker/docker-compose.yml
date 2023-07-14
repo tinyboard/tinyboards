@@ -43,9 +43,8 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     restart: always
-    environment:
-      - NUXT_PUBLIC_DOMAIN=example.com
-      - NUXT_PUBLIC_USE_HTTPS=true
+    volumes:
+      - ./.env:/usr/src/app/.env
     networks:
       tinyboards:
         aliases:
