@@ -45,6 +45,7 @@ services:
     restart: always
     environment:
       - NUXT_PUBLIC_DOMAIN=example.com
+      - NUXT_PUBLIC_USE_HTTPS=true
     networks:
       tinyboards:
         aliases:
