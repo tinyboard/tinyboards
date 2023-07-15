@@ -11,13 +11,13 @@ use tinyboards_api_common::{
     data::TinyBoardsContext, 
 };
 use tinyboards_db::models::moderator::mod_actions::{ModBan, ModRemoveBoard};
-use tinyboards_db_views::structs::LoggedInUserView;
+use tinyboards_db_views::structs::{LoggedInUserView, CommentView};
 use tinyboards_federation::config::Data;
 use tinyboards_utils::TinyBoardsError;
 
 #[async_trait::async_trait]
 impl SendActivity for Register {
-    type Response = LoginResponse;
+    type Response = SignupResponse;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -323,17 +323,6 @@ impl SendActivity for GetCommentReplies {
     ) -> Result<(), TinyBoardsError> { Ok(()) }
 }
 
-// #[async_trait::async_trait]
-// impl SendActivity for BlockPerson {
-//     type Response = BlockPersonResponse;
-//     async fn send_activity(
-//         _request: &Self,
-//         _response: &Self::Response,
-//         _context: &Data<TinyBoardsContext>,
-//         _auth: Option<&str>,
-//     ) -> Result<(), TinyBoardsError> { Ok(()) }
-// }
-
 #[async_trait::async_trait]
 impl SendActivity for GetPersonMentions {
     type Response = GetPersonMentionsResponse;
@@ -557,6 +546,66 @@ impl SendActivity for GetBoard {
 #[async_trait::async_trait]
 impl SendActivity for ResolveObject {
     type Response = ResolveObjectResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for CreateBoard {
+    type Response = BoardResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for GetPostComments {
+    type Response = Vec<CommentView>;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for RemoveBoard {
+    type Response = BoardResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for ListSiteInvites {
+    type Response = ListSiteInvitesResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for DeleteSiteInvite {
+    type Response = ();
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,

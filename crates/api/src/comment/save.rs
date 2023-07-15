@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     comment::{CommentIdPath, CommentResponse, SaveComment},
     data::TinyBoardsContext,
-    utils::{get_local_user_view_from_jwt}, build_response::build_comment_response,
+    utils::get_local_user_view_from_jwt, build_response::build_comment_response,
 };
 use tinyboards_db::{
     models::comment::comment_saved::{CommentSaved, CommentSavedForm},
@@ -45,6 +45,6 @@ impl<'des> Perform<'des> for SaveComment {
 
         let comment_id = path.comment_id;
         
-        Ok(build_comment_response(context, comment_id, Some(local_user_view), None, vec![]).await?)
+        Ok(build_comment_response(context, comment_id, Some(local_user_view), vec![]).await?)
     }
 }

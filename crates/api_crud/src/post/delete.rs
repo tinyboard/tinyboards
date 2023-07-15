@@ -2,16 +2,16 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{DeletePost, PostIdPath},
-    site::Message,
-    utils::{require_user},
+    post::{DeletePost, PostIdPath, PostResponse},
+    utils::require_user, 
+    build_response::build_post_response,
 };
 use tinyboards_db::{models::post::posts::Post, traits::Crud};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeletePost {
-    type Response = Message;
+    type Response = PostResponse;
     type Route = PostIdPath;
 
     #[tracing::instrument(skip(context, auth))]
@@ -45,6 +45,6 @@ impl<'des> PerformCrud<'des> for DeletePost {
 
         Post::update_deleted(context.pool(), post_id, deleted).await?;
 
-        Ok(Message::new("Post deleted!"))
+        Ok(build_post_response(context, orig_post.board_id, orig_post.creator_id, orig_post.id).await?)
     }
 }

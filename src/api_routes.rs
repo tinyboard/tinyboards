@@ -313,34 +313,28 @@ where
     perform::<Data>(data.0, context, apub_data, path, req).await
 }
 
-async fn perform_crud<'des, Request>(
-    data: Request,
+async fn perform_crud<'a, Data>(
+    data: Data,
     context: web::Data<TinyBoardsContext>,
-    path: web::Path<Request::Route>,
+    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
+    path: web::Path<Data::Route>,
     req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
+) -> Result<HttpResponse, Error>
 where
-    Request: PerformCrud<'des>,
-    Request: Send + 'static,
+    Data: PerformCrud<'a>
+        + SendActivity<Response = <Data as PerformCrud<'a>>::Response>
+        + Clone
+        + Deserialize<'a>
+        + Send
+        + 'static
 {
-    let auth_header = req
-        .headers()
-        .get("Authorization")
-        .map(|header| header.to_str());
-    let auth_header = match auth_header {
-        Some(h) => match h {
-            Ok(h) => Some(h),
-            Err(_) => None,
-        },
-        None => None,
-    };
-
+    let auth_header = get_auth(&req);
     let res = data
+        .clone()
         .perform(&context, path.into_inner(), auth_header)
-        .await
-        .map(|json| HttpResponse::Ok().json(json))?;
-
-    Ok(res)
+        .await?;
+    SendActivity::send_activity(&data, &res, &apub_data, auth_header).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 async fn upload_file<'des, Multipart>(
@@ -364,26 +358,38 @@ where
     Ok(HttpResponse::Ok().json(result))
 }
 
-async fn route_get_crud<'des, Request>(
-    data: web::Data<TinyBoardsContext>,
-    query: web::Query<Request>,
-    path: web::Path<Request::Route>,
+async fn route_post_crud<'a, Data>(
+    data: web::Json<Data>,
+    context: web::Data<TinyBoardsContext>,
+    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
+    path: web::Path<Data::Route>,
     req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
+) -> Result<HttpResponse, Error>
 where
-    Request: Deserialize<'des> + Send + 'static + PerformCrud<'des>,
+    Data: PerformCrud<'a>
+        + SendActivity<Response = <Data as PerformCrud<'a>>::Response>
+        + Clone
+        + Deserialize<'a>
+        + Send
+        + 'static
 {
-    perform_crud::<Request>(query.0, data, path, req).await
+    perform_crud::<Data>(data.0, context, apub_data, path, req).await
 }
 
-async fn route_post_crud<'des, Request>(
-    data: web::Data<TinyBoardsContext>,
-    body: web::Json<Request>,
-    path: web::Path<Request::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
+async fn route_get_crud<'a, Data>(
+    data: web::Query<Data>,
+    context: web::Data<TinyBoardsContext>,
+    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
+    path: web::Path<Data::Route>,
+    req: HttpRequest
+) -> Result<HttpResponse, Error> 
 where
-    Request: Deserialize<'des> + PerformCrud<'des> + Send + 'static,
+    Data: PerformCrud<'a>
+        + SendActivity<Response = <Data as PerformCrud<'a>>::Response>
+        + Clone
+        + Deserialize<'a>
+        + Send 
+        + 'static
 {
-    perform_crud::<Request>(body.into_inner(), data, path, req).await
+    perform_crud::<Data>(data.0, context, apub_data, path, req).await
 }

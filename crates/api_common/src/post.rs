@@ -49,7 +49,7 @@ pub struct GetPostResponse {
     pub author_counts: PersonAggregates,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct GetPostComments {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

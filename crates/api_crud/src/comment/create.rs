@@ -1,13 +1,13 @@
 use crate::PerformCrud;
 use actix_web::web;
 use tinyboards_api_common::{
-    comment::CreateComment,
+    comment::{CreateComment, CommentResponse},
     data::TinyBoardsContext,
     utils::{
         check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         generate_local_apub_endpoint, require_user, EndpointType,
     },
-    websocket::send::send_notifications,
+    websocket::send::send_notifications, build_response::build_comment_response,
 };
 use tinyboards_db::{
     models::{
@@ -30,7 +30,7 @@ use tinyboards_utils::{
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateComment {
-    type Response = CommentView;
+    type Response = CommentResponse;
     type Route = ();
 
     #[tracing::instrument(skip(context, auth))]
@@ -39,7 +39,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         context: &web::Data<TinyBoardsContext>,
         _: Self::Route,
         auth: Option<&str>,
-    ) -> Result<CommentView, TinyBoardsError> {
+    ) -> Result<CommentResponse, TinyBoardsError> {
         let data = self;
 
         let post = Post::read(context.pool(), data.post_id).await?;
@@ -177,7 +177,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // send notifications
         let mentions = scrape_text_for_mentions(&new_comment.comment.body_html);
-        let _recipient_ids =
+        let recipient_ids =
             send_notifications(mentions, &new_comment.comment, &view.person, &post, context)
                 .await?;
 
@@ -203,8 +203,6 @@ impl<'des> PerformCrud<'des> for CreateComment {
             }
         }
 
-        // build comment response logic here
-
-        Ok(new_comment)
+        Ok(build_comment_response(context, new_comment.comment.id, Some(view), recipient_ids).await?)
     }
 }

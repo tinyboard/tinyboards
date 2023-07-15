@@ -73,6 +73,6 @@ impl<'des> Perform<'des> for CreateCommentVote {
         }
 
         // mark comment as read here
-        Ok(build_comment_response(context, comment_id, Some(view), None, vec![]).await?)
+        Ok(build_comment_response(context, comment_id, Some(view), vec![]).await?)
     }
 }

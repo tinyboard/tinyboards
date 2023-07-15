@@ -97,7 +97,7 @@ impl<'des> PerformCrud<'des> for EditComment {
         .await?;
 
         Ok(
-            build_comment_response(context, updated_comment.id, Some(view), None, recipient_ids)
+            build_comment_response(context, updated_comment.id, Some(view), recipient_ids)
                 .await?,
         )
     }

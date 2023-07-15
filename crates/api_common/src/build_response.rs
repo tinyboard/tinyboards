@@ -23,12 +23,11 @@ pub async fn build_comment_response(
     context: &Data<TinyBoardsContext>,
     comment_id: i32,
     local_user_view: Option<LocalUserView>,
-    form_id: Option<String>,
     recipient_ids: Vec<i32>,
 ) -> Result<CommentResponse, TinyBoardsError> {
     let person_id = local_user_view.map(|l| l.person.id);
     let comment_view =  CommentView::read(context.pool(), comment_id, person_id).await?;
-    Ok(CommentResponse { comment_view, recipient_ids, form_id })
+    Ok(CommentResponse { comment_view, recipient_ids })
 }
 
 pub async fn build_board_response(

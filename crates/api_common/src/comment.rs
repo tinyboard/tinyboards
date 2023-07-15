@@ -62,8 +62,6 @@ pub struct ListCommentsResponse {
 pub struct CommentResponse {
     pub comment_view: CommentView,
     pub recipient_ids: Vec<i32>,
-    /// optional front end id to tell which is coming back
-    pub form_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

@@ -1,20 +1,19 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    comment::{CommentIdPath, DeleteComment},
+    comment::{CommentIdPath, DeleteComment, CommentResponse},
     data::TinyBoardsContext,
-    site::Message,
-    utils::{require_user},
+    utils::require_user, build_response::build_comment_response,
 };
 use tinyboards_db::{
-    models::{comment::comments::Comment},
+    models::comment::comments::Comment,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for DeleteComment {
-    type Response = Message;
+    type Response = CommentResponse;
     type Route = CommentIdPath;
 
     #[tracing::instrument(skip(context, auth))]
@@ -50,8 +49,8 @@ impl<'des> PerformCrud<'des> for DeleteComment {
 
         let deleted = data.deleted;
 
-        Comment::update_deleted(context.pool(), comment_id, deleted).await?;
+        let deleted_comment = Comment::update_deleted(context.pool(), comment_id, deleted).await?;
 
-        Ok(Message::new("Comment deleted!"))
+        Ok(build_comment_response(context, deleted_comment.id, Some(view), vec![]).await?)
     }
 }

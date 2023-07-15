@@ -27,7 +27,7 @@ use tinyboards_api_common::{
   build_response::send_local_notifs,
   comment::{CommentResponse, CreateComment, EditComment},
   data::TinyBoardsContext,
-  utils::{check_post_deleted_or_removed},
+  utils::check_post_deleted_or_removed,
 };
 use tinyboards_db::{
   models::{
