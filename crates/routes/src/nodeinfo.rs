@@ -42,7 +42,7 @@ async fn node_info(context: web::Data<TinyBoardsContext>) -> Result<HttpResponse
     let json = NodeInfo {
       version: Some("2.0".to_string()),
       software: Some(NodeInfoSoftware {
-        name: Some("lemmy".to_string()),
+        name: Some("tinyboards".to_string()),
         version: Some(version::VERSION.to_string()),
       }),
       protocols,
