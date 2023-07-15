@@ -49,7 +49,7 @@
   # Parameters to configure how media uploads are stored on the instance
   media: {
     # media file path to which uploads will be stored and served from
-    media_path: "/app/tinyboards/media"
+    media_path: "/app/media"
   }
   # Email sending configuration. All options except login/password are mandatory
   email: {

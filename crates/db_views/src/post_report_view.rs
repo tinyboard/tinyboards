@@ -106,7 +106,7 @@ impl PostReportView {
         let my_vote = post_vote;
 
         Ok(Self {
-            post_report,
+            data: post_report,
             post,
             board,
             creator,
@@ -166,6 +166,7 @@ pub struct PostReportQuery<'a> {
   my_person_id: i32,
   #[builder(!default)]
   admin: bool,
+  post_id: Option<i32>,
   board_id: Option<i32>,
   page: Option<i64>,
   limit: Option<i64>,
@@ -220,6 +221,10 @@ impl<'a> PostReportQuery<'a> {
 
         let mut query = query_.clone().into_boxed();
         let mut count_query = query_.clone().into_boxed();
+
+        if let Some(post_id) = self.post_id {
+            query = query.filter(posts::id.eq(post_id));
+        }
 
         if let Some(board_id) = self.board_id {
             query = query.filter(posts::board_id.eq(board_id));
@@ -281,7 +286,7 @@ impl JoinView for PostReportView {
     type JoinTuple = PostReportViewTuple;
     fn from_tuple(a: Self::JoinTuple) -> Self {
       Self {
-        post_report: a.0,
+        data: a.0,
         post: a.1,
         board: a.2,
         creator: a.3,

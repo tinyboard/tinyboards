@@ -1,4 +1,4 @@
-FROM rust:1.64 as builder
+FROM rust:1.65 as builder
 
 ARG RUSTRELEASEDIR="release"
 
@@ -24,9 +24,9 @@ COPY --from=builder /app/tinyboards_server /app/tinyboards
 
 COPY --from=builder /app/config/defaults.hjson /config/defaults.hjson
 
-COPY --from=builder /app/assets/ /assets/
+WORKDIR /app
 
-
+RUN mkdir media
 
 RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
 

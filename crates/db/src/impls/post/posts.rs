@@ -1,9 +1,10 @@
+use crate::models::post::post_report::PostReport;
 use crate::{
     models::moderator::mod_actions::{
         ModLockPost, ModLockPostForm, ModRemovePost, ModRemovePostForm,
     },
     models::post::posts::{Post, PostForm},
-    schema::posts,
+    schema::{posts, post_report},
     traits::{Crud, Moderateable},
     utils::{naive_now, get_conn, DbPool, FETCH_LIMIT_MAX},
     newtypes::DbUrl,
@@ -52,6 +53,18 @@ impl Post {
                 .ok()
                 .map(Into::into)
         )
+    }
+
+    pub async fn resolve_reports(pool: &DbPool, post_id: i32, resolver_id: i32) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        diesel::update(post_report::table.filter(post_report::post_id.eq(post_id)))
+            .set((post_report::resolved.eq(true),
+                post_report::resolver_id.eq(resolver_id)))
+            .get_results::<PostReport>(conn)
+            .await
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not resolve reports"))
     }
 
     pub async fn permadelete_for_creator(

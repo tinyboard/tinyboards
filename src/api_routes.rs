@@ -110,9 +110,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("/list", web::get().to(route_get_apub::<GetPosts>))
-                    .route("/remove", web::post().to(route_post_crud::<RemovePost>))
+                    .route("/toggle_remove", web::post().to(route_post_crud::<TogglePostRemove>))
                     .route("/lock", web::post().to(route_post::<LockPost>))
                     .route("/report", web::post().to(route_post::<CreatePostReport>))
+                    .route("/reports", web::get().to(route_get::<GetPostReports>))
                     .route(
                         "/report/list",
                         web::post().to(route_post::<ListPostReports>),

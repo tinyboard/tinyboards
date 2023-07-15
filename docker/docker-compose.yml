@@ -25,11 +25,12 @@ services:
     restart: always
     environment:
       - RUST_LOG="info"
+      - TB_CONFIG_LOCATION=/config/defaults.hjson
     links:
       - postgres
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson
-      - uploads:/app/tinyboards/uploads
+      - media:/app/media
     networks:
       tinyboards:
         aliases:
@@ -42,6 +43,8 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     restart: always
+    volumes:
+      - ./.env:/usr/src/app/.env
     networks:
       tinyboards:
         aliases:
@@ -70,4 +73,4 @@ services:
 networks:
   tinyboards: {}
 volumes:
-  uploads:
+  media:

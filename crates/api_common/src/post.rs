@@ -91,8 +91,8 @@ pub struct FeaturePost {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-/// Remove a post (only doable by mods).
-pub struct RemovePost {
+/// Remove/approve a post (only doable by mods).
+pub struct TogglePostRemove {
     pub target_id: i32,
     pub removed: bool,
     pub reason: Option<String>,
@@ -136,6 +136,14 @@ pub struct ListPostReports {
     /// if no board is given, it returns reports for all boards moderated by the auth user
     pub board_id: Option<i32>,
     pub auth: Sensitive<String>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// returns all reports for a given post
+pub struct GetPostReports {
+    pub post_id: i32,
+    pub unresolved_only: bool
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

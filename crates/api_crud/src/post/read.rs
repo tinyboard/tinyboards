@@ -42,10 +42,11 @@ impl<'des> PerformCrud<'des> for GetPost {
         let mut mod_or_admin = false;
         if let Some(pid) = person_id {
             mod_or_admin = is_mod_or_admin(context.pool(), pid, post.board_id).await.is_ok();
-        } 
-        
+        }
 
         let mut post_view = PostView::read(context.pool(), post_id, person_id, Some(mod_or_admin)).await?;
+
+        let author = PersonView::read(context.pool(), post_view.post.creator_id).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
             post_view.hide_if_removed_or_deleted(v.as_ref());
@@ -61,8 +62,6 @@ impl<'des> PerformCrud<'des> for GetPost {
         // blank out deleted or removed info here
 
         let moderators = BoardModeratorView::for_board(context.pool(), board_id).await?;
-        
-        let author = PersonView::read(context.pool(), post_view.post.creator_id).await?;
 
         let author_counts = author.counts;
         

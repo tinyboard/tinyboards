@@ -15,7 +15,7 @@ use tinyboards_api_common::{
     board::{BoardResponse, DeleteBoard},
     comment::{CommentResponse, DeleteComment, RemoveComment},
     data::TinyBoardsContext,
-    post::{DeletePost, PostResponse, RemovePost},
+    post::{DeletePost, PostResponse, TogglePostRemove},
     utils::require_user,
 };
 use tinyboards_db::{
@@ -66,7 +66,7 @@ impl SendActivity for DeletePost {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for RemovePost {
+impl SendActivity for TogglePostRemove {
     type Response = PostResponse;
 
     async fn send_activity(
