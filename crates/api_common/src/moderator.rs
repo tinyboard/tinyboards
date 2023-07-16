@@ -49,3 +49,10 @@ pub struct BanBoard {
     pub reason: Option<String>,
     pub banned: bool,
 }
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct PostModQueue {
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+    pub board_id: Option<i32>
+}
