@@ -1,0 +1,1 @@
+alter table boards add column creator_id int references person on update cascade on delete cascade;

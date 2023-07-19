@@ -110,7 +110,6 @@ diesel::table! {
         name -> Varchar,
         title -> Varchar,
         description -> Nullable<Text>,
-        creator_id -> Int4,
         is_banned -> Bool,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
@@ -749,7 +748,6 @@ diesel::joinable!(board_person_bans -> person (person_id));
 diesel::joinable!(board_subscriber -> boards (board_id));
 diesel::joinable!(board_subscriber -> person (person_id));
 diesel::joinable!(boards -> instance (instance_id));
-diesel::joinable!(boards -> person (creator_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
 diesel::joinable!(comment_reply -> comments (comment_id));
 diesel::joinable!(comment_reply -> person (recipient_id));

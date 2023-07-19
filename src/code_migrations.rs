@@ -96,7 +96,6 @@ async fn initialize_local_site_and_admin_user(
             name: Some(setup.default_board_name.clone()),
             title: Some(setup.default_board_name.clone()),
             description: Some(setup.default_board_description.clone()),
-            creator_id: Some(inserted_admin_person.id.clone()),
             public_key: Some(board_key_pair.public_key),
             private_key: Some(board_key_pair.private_key),
             actor_id: Some(board_actor_id.clone()),

@@ -96,7 +96,6 @@ use crate::{
             is_deleted: None,
             is_removed: None,
             updated: Some(self.updated.map(|u| u.naive_local())),
-            creator_id: None,
             is_hidden: None,
             is_banned: None,
             private_key: None,

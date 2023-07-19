@@ -79,7 +79,6 @@ impl<'des> PerformCrud<'des> for CreateBoard {
             name: Some(name),
             title: Some(title),
             description: Some(description),
-            creator_id: Some(view.person.id),
             icon: icon.clone(),
             banner: banner.clone(),
             private_key: Some(keypair.private_key),
