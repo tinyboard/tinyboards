@@ -45,9 +45,7 @@ use crate::{
   };
   use std::ops::Deref;
   use url::Url;
-
-use super::read_from_string_or_source;
-  
+    
   const MAX_TITLE_LENGTH: usize = 200;
 
   #[derive(Clone, Debug)]
