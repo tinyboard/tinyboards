@@ -14,7 +14,7 @@ use tinyboards_federation::{
   pub mod search;
   pub mod user_or_board;
   
-  /// Resolve actor identifier like `!news@example.com` to user or community object.
+  /// Resolve actor identifier like `+news@example.com` to user or board object.
   ///
   /// In case the requesting user is logged in and the object was not found locally, it is attempted
   /// to fetch via webfinger from the original instance.

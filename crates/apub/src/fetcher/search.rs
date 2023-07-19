@@ -35,7 +35,7 @@ use crate::{
           Some('@') => SearchableObjects::Person(
             webfinger_resolve_actor::<TinyBoardsContext, ApubPerson>(identifier, context).await?,
           ),
-          Some('!') => SearchableObjects::Board(
+          Some('+') => SearchableObjects::Board(
             webfinger_resolve_actor::<TinyBoardsContext, ApubBoard>(identifier, context).await?,
           ),
           _ => return Err(TinyBoardsError::from_message(400, "invalid query")),
