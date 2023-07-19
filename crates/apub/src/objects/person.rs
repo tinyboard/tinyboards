@@ -135,7 +135,7 @@ impl Object for ApubPerson {
         let person_form = PersonForm {
             name: Some(person.preferred_username),
             display_name,
-            is_banned: None,
+            is_banned: Some(false),
             is_deleted: Some(false),
             avatar: person.icon.map(|i| i.url.into()),
             banner: person.image.map(|i| i.url.into()),

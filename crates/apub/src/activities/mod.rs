@@ -60,6 +60,8 @@ pub(crate) async fn verify_person_in_board(
     let is_banned = BoardPersonBanView::get(context.pool(), person_id, board_id)
         .await
         .is_ok();
+
+    println!("debugging: person_id - {}, board_id - {}, is_banned - {}", person_id, board_id, is_banned);
     if is_banned {
         return Err(TinyBoardsError::from_message(403, "Person is banned from board"));
     }
