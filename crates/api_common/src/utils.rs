@@ -259,11 +259,11 @@ impl UserResult {
                 
                 let is_banned = BoardPersonBanView::get(pool, u.person.id, board_id)
                     .await
-                    .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
+                    .is_ok();
 
                 let inner = match is_banned {
-                    Ok(ban) => Err(TinyBoardsError::from_message(403, format!("You are banned from +{}", ban.board.name).as_str())),
-                    Err(e) => Err(e),
+                    true => Err(TinyBoardsError::from_message(403, "you are banned from this board.")),
+                    false => Ok(u),
                 };
 
                 Self(inner)
