@@ -12,7 +12,7 @@ use tinyboards_db::{
     }, apub::actor_language::BoardLanguage},
     traits::{Voteable, Crud}, impls::apub::actor_language::default_post_language,
 };
-use tinyboards_utils::{parser::parse_markdown, TinyBoardsError, utils::custom_body_parsing};
+use tinyboards_utils::{parser::parse_markdown_opt, TinyBoardsError, utils::custom_body_parsing};
 use tracing::{Instrument, log::warn};
 use url::Url;
 use webmention::{Webmention, WebmentionError};
@@ -43,7 +43,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         check_board_deleted_or_removed(data.board_id.unwrap_or(1), context.pool()).await?;
 
         let body = data.body.unwrap_or_default();
-        let mut body_html = parse_markdown(&body.as_str());
+        let mut body_html = parse_markdown_opt(&body.as_str());
         body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
 
         let language_id = match data.language_id {

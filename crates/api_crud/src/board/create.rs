@@ -9,14 +9,16 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        board::{boards::{Board, BoardForm}, board_mods::{BoardModeratorForm, BoardModerator}, board_subscriber::{BoardSubscriber, BoardSubscriberForm}},
+        board::boards::{Board, BoardForm}, 
+        board::board_mods::{BoardModeratorForm, BoardModerator}, 
+        board::board_subscriber::{BoardSubscriber, BoardSubscriberForm},
     },
     traits::{Crud, ApubActor, Subscribeable, Joinable},
 };
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::{
-    parser::parse_markdown,
+    parser::parse_markdown_opt,
     TinyBoardsError,
 };
 
@@ -48,7 +50,7 @@ impl<'des> PerformCrud<'des> for CreateBoard {
         let site_view = SiteView::read_local(context.pool()).await?;
 
         if let Some(desc) = description {
-            description = parse_markdown(&desc);
+            description = parse_markdown_opt(&desc);
         }
 
         let icon = &data.icon;

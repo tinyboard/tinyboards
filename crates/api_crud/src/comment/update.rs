@@ -18,7 +18,7 @@ use tinyboards_db::{
 use tinyboards_db_views::structs::CommentView;
 use tinyboards_utils::{
     error::TinyBoardsError,
-    parser::parse_markdown,
+    parser::parse_markdown_opt,
     utils::{custom_body_parsing, scrape_text_for_mentions},
 };
 
@@ -58,7 +58,7 @@ impl<'des> PerformCrud<'des> for EditComment {
 
         let body = Some(data.body.clone());
         // we re-parse the markdown right here
-        let mut body_html = parse_markdown(&body.clone().unwrap().as_str());
+        let mut body_html = parse_markdown_opt(&body.clone().unwrap().as_str());
         body_html = Some(custom_body_parsing(
             &body_html.unwrap_or_default(),
             context.settings(),

@@ -14,7 +14,7 @@ use tinyboards_db::{
     utils::naive_now,
 };
 use tinyboards_db_views::structs::PostView;
-use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown, utils::custom_body_parsing};
+use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown_opt, utils::custom_body_parsing};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for EditPost {
@@ -49,7 +49,7 @@ impl<'des> PerformCrud<'des> for EditPost {
 
         let body = Some(data.body.clone());
         // we need to re-parse the markdown here
-        let mut body_html = parse_markdown(&body.clone().unwrap().as_str());
+        let mut body_html = parse_markdown_opt(&body.clone().unwrap().as_str());
         body_html = Some(custom_body_parsing(&body_html.unwrap_or_default(), context.settings()));
         
         let post_id = path.post_id;

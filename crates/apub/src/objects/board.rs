@@ -22,7 +22,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{
         apub::actor_language::BoardLanguage,
-        board::boards::{Board},
+        board::boards::Board,
     },
     traits::{ApubActor, Crud},
 };
@@ -85,7 +85,7 @@ impl Object for ApubBoard {
             id: self.id().into(),
             preferred_username: self.name.clone(),
             name: Some(self.title.clone()),
-            summary: self.description.as_ref().map(|b| parse_markdown(b)).unwrap(),
+            summary: self.description.as_ref().map(|b| parse_markdown(b)),
             source: self.description.clone().map(Source::new),
             icon: self.icon.clone().map(ImageObject::new),
             image: self.banner.clone().map(ImageObject::new),

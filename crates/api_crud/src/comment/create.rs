@@ -23,7 +23,7 @@ use tinyboards_db::{
 };
 use tinyboards_db_views::structs::CommentView;
 use tinyboards_utils::{
-    parser::parse_markdown,
+    parser::parse_markdown_opt,
     utils::{custom_body_parsing, scrape_text_for_mentions},
     TinyBoardsError,
 };
@@ -97,7 +97,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             level = parent_comment.level + 1;
         }
 
-        let mut body_html = parse_markdown(&data.body);
+        let mut body_html = parse_markdown_opt(&data.body);
         body_html = Some(custom_body_parsing(
             &body_html.unwrap_or_default(),
             context.settings(),

@@ -2,7 +2,7 @@ use crate::{
     check_ap_id_valid_with_strictness,
     fetch_local_site_data, 
     protocol::{objects::{person::{Person, UserTypes}, Endpoints}, ImageObject, Source},
-    objects::{/*instance::fetch_instance_actor_for_object,*/ read_from_string_or_source_opt},
+    objects::{instance::fetch_instance_actor_for_object, read_from_string_or_source_opt},
 };
 use tinyboards_federation::{
     config::Data,
@@ -12,7 +12,7 @@ use tinyboards_federation::{
 use chrono::NaiveDateTime;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    utils::{generate_outbox_url}
+    utils::generate_outbox_url
 };
 use tinyboards_db::{
     models::person::person::{Person as DbPerson, PersonForm},
@@ -85,7 +85,7 @@ impl Object for ApubPerson {
             id: self.actor_id.clone().into(),
             preferred_username: self.name.clone(),
             name: self.display_name.clone(),
-            summary: Some(self.bio.as_ref().map(|b| parse_markdown(b.as_str())).unwrap_or_else(|| None).unwrap_or_else(|| String::new())),
+            summary: self.bio.as_ref().map(|b| parse_markdown(b.as_str())),
             source: self.bio.clone().map(Source::new),
             icon: self.avatar.clone().map(ImageObject::new),
             image: self.banner.clone().map(ImageObject::new),
@@ -127,7 +127,7 @@ impl Object for ApubPerson {
         person: Person,
         context: &Data<Self::DataType>, 
     ) -> Result<ApubPerson, TinyBoardsError> {
-        // let instance_id = fetch_instance_actor_for_object(&person.id, context).await?;
+        let instance_id = Some(fetch_instance_actor_for_object(&person.id, context).await?);
         
         // Some users have `name: ""`, need to convert that to `None`
         let display_name = person.name.filter(|n| !n.is_empty());
@@ -151,7 +151,7 @@ impl Object for ApubPerson {
             last_refreshed_date: Some(naive_now()),
             inbox_url: Some(person.inbox.into()),
             shared_inbox_url: person.endpoints.map(|e| e.shared_inbox.into()),
-            //instance_id
+            instance_id,
             ..PersonForm::default()
         };
         

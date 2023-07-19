@@ -30,7 +30,7 @@ use tinyboards_federation::{
     protocol::{values::MediaTypeMarkdownOrHtml, verification::verify_domains_match},
     traits::Object,
 };
-use tinyboards_utils::{error::TinyBoardsError, parser::parse_markdown, time::convert_datetime};
+use tinyboards_utils::{error::TinyBoardsError, parser::{parse_markdown, parse_markdown_opt}, time::convert_datetime};
 use url::Url;
 
 #[derive(Clone, Debug)]
@@ -108,7 +108,7 @@ impl Object for ApubComment {
             attributed_to: creator.actor_id.into(),
             to: vec![public()],
             cc: maa.ccs,
-            content: parse_markdown(&self.body).unwrap(),
+            content: parse_markdown(&self.body),
             media_type: Some(MediaTypeMarkdownOrHtml::Html),
             source: Some(Source::new(self.body.clone())),
             in_reply_to,
@@ -164,7 +164,7 @@ impl Object for ApubComment {
             &note.media_type,
             &note.source,
         ));
-        let body_html = parse_markdown(&read_from_string_or_source(
+        let body_html = parse_markdown_opt(&read_from_string_or_source(
             &note.content,
             &note.media_type,
             &note.source,

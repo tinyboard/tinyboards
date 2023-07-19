@@ -16,12 +16,12 @@ use tinyboards_federation::{
     traits::{Actor, Object},
 };
 use chrono::NaiveDateTime;
-use tinyboards_api_common::{data::TinyBoardsContext};
+use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db::{
     models::{
         apub::actor_language::SiteLanguage,
-        apub::{instance::Instance as DbInstance},
-        site::{site::{Site, SiteForm}},
+        apub::instance::Instance as DbInstance,
+        site::site::{Site, SiteForm},
     },
     traits::Crud,
     utils::{naive_now, DbPool},
@@ -88,7 +88,7 @@ impl Object for ApubSite {
             kind: ApplicationType::Application,
             id: self.id().into(),
             name: self.name.clone(),
-            content: self.sidebar.as_ref().map(|d| parse_markdown(d)).unwrap(),
+            content: self.sidebar.as_ref().map(|d| parse_markdown(d)),
             source: self.sidebar.clone().map(Source::new),
             summary: self.description.clone(),
             media_type: self.sidebar.as_ref().map(|_| MediaTypeHtml::Html),

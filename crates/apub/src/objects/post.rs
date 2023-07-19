@@ -25,7 +25,7 @@ use crate::{
   use tinyboards_api_common::{
     data::TinyBoardsContext,
     request::fetch_site_data,
-    utils::{is_mod_or_admin},
+    utils::is_mod_or_admin,
   };
   use tinyboards_db::{
     self,
@@ -40,7 +40,7 @@ use crate::{
   };
   use tinyboards_utils::{
     error::TinyBoardsError,
-    parser::parse_markdown,
+    parser::parse_markdown_opt,
     time::convert_datetime,
   };
   use std::ops::Deref;
@@ -111,7 +111,7 @@ impl Object for ApubPost {
       to: vec![board.actor_id.clone().into(), public()],
       cc: vec![],
       name: Some(self.title.clone()),
-      content: parse_markdown(&self.body),
+      content: parse_markdown_opt(&self.body),
       media_type: Some(MediaTypeMarkdownOrHtml::Html),
       source: Some(Source::new(self.body.clone())),
       attachment: self.url.clone().map(Attachment::new).into_iter().collect(),
