@@ -99,7 +99,7 @@ impl Object for ApubSite {
             public_key: self.public_key(),
             language,
             published: convert_datetime(self.creation_date),
-            updated: Some(convert_datetime(self.updated.unwrap())),
+            updated: self.updated.map(|dtm| convert_datetime(dtm)),
         };
         Ok(instance)
     }
