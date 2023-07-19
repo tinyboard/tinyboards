@@ -1,0 +1,1 @@
+drop index idx_user_name_lower;

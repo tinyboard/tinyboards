@@ -1,0 +1,1 @@
+create unique index idx_user_name_lower on person (lower(name));
