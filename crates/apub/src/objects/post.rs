@@ -40,11 +40,13 @@ use crate::{
   };
   use tinyboards_utils::{
     error::TinyBoardsError,
-    parser::parse_markdown_opt,
+    parser::{parse_markdown_opt, parse_markdown},
     time::convert_datetime,
   };
   use std::ops::Deref;
   use url::Url;
+
+use super::read_from_string_or_source;
   
   const MAX_TITLE_LENGTH: usize = 200;
 
@@ -215,6 +217,7 @@ impl Object for ApubPost {
         title: Some(name),
         url: post_url.map(Into::into),
         body: read_from_string_or_source_opt(&page.content, &page.media_type, &page.source),
+        body_html: read_from_string_or_source_opt(&page.content, &page.media_type, &page.source).map(|b| parse_markdown(&b)),
         creator_id: Some(creator.id),
         board_id: Some(board.id),
         is_removed: None,
