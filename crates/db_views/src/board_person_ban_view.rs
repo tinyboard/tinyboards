@@ -15,9 +15,9 @@ impl BoardPersonBanView {
         pool: &DbPool,
         from_person_id: i32,
         from_board_id: i32,
-    ) -> Result<Option<Self>, Error> {
+    ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        let ban = board_person_bans::table
+        let (board, user) = board_person_bans::table
             .inner_join(boards::table)
             .inner_join(person::table)
             .select((
@@ -31,12 +31,10 @@ impl BoardPersonBanView {
                     .is_null()
                     .or(board_person_bans::expires.gt(now)),
             )
-            //.order_by(board_person_bans::creation_date)
+            .order_by(board_person_bans::creation_date)
             .first::<BoardPersonBanViewTuple>(conn)
-            .await
-            .optional()?
-            .map(|(board, user)| BoardPersonBanView { board, user });
+            .await?;
 
-        Ok(ban)
+        Ok(BoardPersonBanView { board, user })
     }
 }
