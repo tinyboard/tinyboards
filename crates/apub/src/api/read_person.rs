@@ -6,7 +6,7 @@ use tinyboards_api_common::{
   utils::{check_private_instance, is_admin, require_user_opt},
 };
 use tinyboards_db::{
-  models::{person::person::Person},
+  models::person::person::Person,
   utils::post_to_comment_sort_type,
 };
 use tinyboards_db_views::{comment_view::CommentQuery, post_view::PostQuery, structs::{BoardModeratorView, PersonView},};

@@ -29,7 +29,7 @@ use tinyboards_utils::{
 use uuid::Uuid;
 use base64::{
     Engine as _,
-    engine::{general_purpose},
+    engine::general_purpose,
 };
 
 use crate::site::FederatedInstances;
@@ -262,12 +262,7 @@ impl UserResult {
                     .map_err(|e| TinyBoardsError::from_error_message(e, 500, "fetching board user ban failed"));
 
                 let inner = match is_banned {
-                    Ok(is_banned) => {
-                        match is_banned {
-                            Some(ban) => Err(TinyBoardsError::from_message(403, format!("You are banned from /b/{}", ban.board.name).as_str())),
-                            None => Ok(u)
-                        }
-                    }
+                    Ok(ban) => Err(TinyBoardsError::from_message(403, format!("You are banned from +{}", ban.board.name).as_str())),
                     Err(e) => Err(e),
                 };
 
@@ -437,8 +432,8 @@ pub async fn check_board_ban(
     pool: &DbPool
 ) -> Result<(), TinyBoardsError> {
     let is_banned = BoardPersonBanView::get(pool, person_id, board_id)
-        .await?
-        .is_some();
+        .await
+        .is_ok();
     if is_banned {
         Err(TinyBoardsError::from_message(400, "banned from board"))
     } else {
