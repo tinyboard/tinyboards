@@ -11,15 +11,19 @@ use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
-    cfg.service(
+    cfg
+    .service(
+            // image retrieval (so images from the site can be displayed)
+        web::scope("")
+            .route("/media/{filename}", web::get().to(GetFile::perform))
+    )
+    .service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/members", web::get().to(route_get::<GetMembers>))
             .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            // image retrieval (so images from the site can be displayed)
-            .route("/media/{filename}", web::get().to(GetFile::perform))
             // resolve federated objects (object => post, person, board or comment)
             .route(
                 "/resolve_object",
