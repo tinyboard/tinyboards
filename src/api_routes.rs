@@ -12,12 +12,7 @@ use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     cfg
-    .service(
-            // image retrieval (so images from the site can be displayed)
-        web::scope("")
-            .route("/media/{filename}", web::get().to(GetFile::perform))
-    )
-    .service(
+        .service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/members", web::get().to(route_get::<GetMembers>))

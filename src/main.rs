@@ -12,7 +12,7 @@ use reqwest_tracing::TracingMiddleware;
 use tinyboards_apub::{FEDERATION_HTTP_FETCH_LIMIT, VerifyUrlData};
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
-use tinyboards_routes::{nodeinfo, webfinger};
+use tinyboards_routes::{nodeinfo, webfinger, media};
 use std::{thread, time::Duration};
 use tinyboards_api_common::{
     data::TinyBoardsContext,
@@ -146,6 +146,7 @@ async fn main() -> Result<(), TinyBoardsError> {
                 }
             })
             .configure(nodeinfo::config)
+            .configure(media::config)
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?
