@@ -180,6 +180,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/feature_post", web::post().to(route_post::<FeaturePost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
+                    .route("/queue/comments", web::get().to(route_get::<CommentModQueue>))
             )
             // Admin Actions
             .service(

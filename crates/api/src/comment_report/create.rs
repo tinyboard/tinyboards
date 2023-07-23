@@ -3,11 +3,10 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     comment::{CreateCommentReport, CommentReportResponse},
-    utils::{require_user, send_new_report_email_to_admins, check_board_ban},
+    utils::{require_user, check_board_ban},
 };
 use tinyboards_db::{
     models::{
-        site::local_site::LocalSite,
         comment::comment_report::{CommentReport, CommentReportForm},
     },
     traits::Reportable,
@@ -32,7 +31,7 @@ impl<'des> Perform<'des> for CreateCommentReport {
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
-        let local_site = LocalSite::read(context.pool()).await?;
+        //let local_site = LocalSite::read(context.pool()).await?;
 
         let reason = data.reason.trim();
         check_report_reason(reason)?;
@@ -55,7 +54,7 @@ impl<'des> Perform<'des> for CreateCommentReport {
 
         let comment_report_view = CommentReportView::read(context.pool(), report.id, Some(person_id)).await?;
 
-        if local_site.reports_email_admins {
+        /*if local_site.reports_email_admins {
             send_new_report_email_to_admins(
                 &comment_report_view.creator.name,
                 &comment_report_view.comment_creator.name,
@@ -63,7 +62,7 @@ impl<'des> Perform<'des> for CreateCommentReport {
                 context.settings(),
             )
             .await?;
-        }
+        }*/
         
         Ok(CommentReportResponse { comment_report_view })    
     }

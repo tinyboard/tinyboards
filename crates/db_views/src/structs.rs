@@ -73,6 +73,7 @@ pub struct CommentView {
     pub creator_blocked: bool,
     pub my_vote: Option<i16>,
     pub replies: Vec<CommentView>,
+    pub report_count: Option<i64>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -291,6 +291,17 @@ impl SendActivity for PostModQueue {
 }
 
 #[async_trait::async_trait]
+impl SendActivity for CommentModQueue {
+    type Response = GetCommentsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+}
+
+#[async_trait::async_trait]
 impl SendActivity for GetPostReports {
     type Response = ListPostReportsResponse;
     async fn send_activity(

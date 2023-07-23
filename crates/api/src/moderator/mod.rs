@@ -7,6 +7,7 @@ pub mod mod_ban_user;
 pub mod mod_remove_board;
 pub mod mod_remove_object;
 pub mod mod_queue_posts;
+pub mod mod_queue_comments;
 
 // ;)
 #[allow(dead_code)]

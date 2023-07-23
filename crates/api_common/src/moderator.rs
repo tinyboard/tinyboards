@@ -56,3 +56,10 @@ pub struct PostModQueue {
     pub page: Option<i64>,
     pub board_id: Option<i32>
 }
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct CommentModQueue {
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+    pub board_id: Option<i32>
+}

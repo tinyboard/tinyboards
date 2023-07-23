@@ -199,6 +199,7 @@ impl CommentView {
             creator_blocked: creator_blocked.is_some(),
             my_vote,
             replies: Vec::with_capacity(0),
+            report_count: None
         })
     }
 
@@ -645,6 +646,7 @@ impl ViewToVec for CommentView {
                 creator_blocked: a.8.is_some(),
                 my_vote: a.9,
                 replies: Vec::with_capacity(0),
+                report_count: None
             })
             .collect::<Vec<Self>>()
     }
