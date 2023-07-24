@@ -7,7 +7,7 @@ use diesel::{dsl::insert_into, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 
 impl Emoji {
-    pub async fn create(pool: &mut DbPool, form: &EmojiForm) -> Result<Self, Error> {
+    pub async fn create(pool: &DbPool, form: &EmojiForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         insert_into(emoji)
             .values(form)
@@ -15,7 +15,7 @@ impl Emoji {
             .await
     }
 
-    pub async fn update(pool: &mut DbPool, emoji_id: i32, form: &EmojiForm) -> Result<Self, Error> {
+    pub async fn update(pool: &DbPool, emoji_id: i32, form: &EmojiForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         diesel::update(emoji.find(emoji_id))
             .set(form)
@@ -23,7 +23,7 @@ impl Emoji {
             .await
     }
 
-    pub async fn delete(pool: &mut DbPool, emoji_id: i32) -> Result<usize, Error> {
+    pub async fn delete(pool: &DbPool, emoji_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
         diesel::delete(emoji.find(emoji_id))
             .execute(conn)

@@ -5,6 +5,7 @@ use serde::Deserialize;
 
 pub mod board;
 pub mod comment;
+pub mod emoji;
 pub mod post;
 pub mod user;
 pub mod invite;

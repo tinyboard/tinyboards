@@ -14,7 +14,7 @@ type EmojiViewTuple = (
 );
 
 impl EmojiView {
-    pub async fn get(pool: &mut DbPool, emoji_id: i32) -> Result<Self, Error> {
+    pub async fn get(pool: &DbPool, emoji_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let emojis = emoji::table
             .find(emoji_id)
@@ -39,7 +39,7 @@ impl EmojiView {
             }
     }
 
-    pub async fn get_all(pool: &mut DbPool, for_local_site_id: i32) -> Result<Vec<Self>, Error> {
+    pub async fn get_all(pool: &DbPool, for_local_site_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let emojis = emoji::table
             .filter(emoji::local_site_id.eq(for_local_site_id))
