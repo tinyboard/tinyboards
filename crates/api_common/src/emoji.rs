@@ -16,18 +16,22 @@ pub struct CreateEmoji {
 /// edit an existing custom emoji.
 pub struct EditEmoji {
     pub id: i32,
+    pub shortcode: String,
     pub category: String,
     pub image_url: DbUrl,
     pub alt_text: String,
     pub keywords: Vec<String>,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Default)]
-/// delete a custom emoji.
-pub struct DeleteEmoji {
-    pub id: i32,
+#[derive(Serialize, Deserialize, Debug, Clone)]
+// emoji id in the request path
+pub struct EmojiIdPath {
+    pub emoji_id: i32,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone, Default)]
+/// delete a custom emoji.
+pub struct DeleteEmoji {}
 
 #[derive(Serialize, Deserialize, Clone)]
 /// the response for deleting an emoji.

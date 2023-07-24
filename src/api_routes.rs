@@ -4,7 +4,7 @@ use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
     admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, moderator::*,
-    person::*, post::*, site::*,
+    person::*, post::*, site::*, emoji::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::{api::PerformApub, SendActivity};
@@ -216,7 +216,11 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route(
                         "/application/{app_id}",
                         web::post().to(route_post::<HandleRegistrationApplication>),
-                    ),
+                    )
+                // Custom Emojis
+                .route("/emoji", web::post().to(route_post_crud::<CreateEmoji>))
+                .route("/emoji", web::put().to(route_post_crud::<EditEmoji>))
+                .route("/emoji/{emoji_id}", web::delete().to(route_post_crud::<DeleteEmoji>)),
             ),
     );
 }
