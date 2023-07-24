@@ -12,7 +12,7 @@ use tinyboards_db::{
             local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit,
             registration_applications::RegistrationApplication, site::Site,
             site_invite::SiteInvite,
-        },
+        }, emoji::{emoji::Emoji, emoji_keyword::EmojiKeyword},
     },
     SubscribedType,
 };
@@ -192,4 +192,10 @@ pub struct CommentReportView {
     pub creator_banned_from_board: bool,
     pub my_vote: Option<i16>,
     pub resolver: Option<PersonSafe>,
+}
+
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
+pub struct EmojiView {
+    pub emoji: Emoji,
+    pub keywords: Vec<EmojiKeyword>,
 }

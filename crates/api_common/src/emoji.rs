@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use tinyboards_db::newtypes::DbUrl;
+use tinyboards_db_views::structs::EmojiView;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// create a custom emoji for the local instance.
@@ -38,5 +39,5 @@ pub struct DeleteEmojiResponse {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 /// the response after creating or editing a custom emoji.
 pub struct EmojiResponse {
-    // pub emoji: EmojiView,
+    pub emoji: EmojiView,
 }

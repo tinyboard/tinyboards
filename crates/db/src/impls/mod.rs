@@ -6,3 +6,4 @@ pub mod comment;
 pub mod site;
 pub mod moderation;
 pub mod apub;
+pub mod emoji;

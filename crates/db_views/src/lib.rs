@@ -16,6 +16,7 @@ pub mod board_subscriber_view;
 pub mod post_report_view;
 pub mod post_mod_queue_view;
 pub mod comment_mod_queue_view;
+pub mod emoji_view;
 
 pub use comment_view::CommentQuery;
 
