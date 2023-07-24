@@ -7,7 +7,8 @@ use tinyboards_api_common::{
     post::*,
     site::*,
     admin::*,
-    applications::*, 
+    applications::*,
+    emoji::*, 
     data::TinyBoardsContext, 
 };
 use tinyboards_db::models::moderator::mod_actions::{ModBan, ModRemoveBoard};
@@ -639,6 +640,42 @@ impl SendActivity for ListSiteInvites {
 #[async_trait::async_trait]
 impl SendActivity for DeleteSiteInvite {
     type Response = ();
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for CreateEmoji {
+    type Response = EmojiResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for EditEmoji {
+    type Response = EmojiResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+
+}
+
+#[async_trait::async_trait]
+impl SendActivity for DeleteEmoji {
+    type Response = DeleteEmojiResponse;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,

@@ -222,6 +222,27 @@ diesel::table! {
 }
 
 diesel::table! {
+    emoji (id) {
+        id -> Int4,
+        local_site_id -> Int4,
+        shortcode -> Varchar,
+        image_url -> Text,
+        alt_text -> Text,
+        category -> Text,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    emoji_keyword (id) {
+        id -> Int4,
+        emoji_id -> Int4,
+        keyword -> Varchar,
+    }
+}
+
+diesel::table! {
     federation_allowlist (id) {
         id -> Int4,
         instance_id -> Int4,
@@ -761,6 +782,8 @@ diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> person (creator_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(email_verification -> person (local_user_id));
+diesel::joinable!(emoji -> local_site (local_site_id));
+diesel::joinable!(emoji_keyword -> emoji (emoji_id));
 diesel::joinable!(federation_allowlist -> instance (instance_id));
 diesel::joinable!(federation_blocklist -> instance (instance_id));
 diesel::joinable!(local_site -> site (site_id));
@@ -827,6 +850,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment_votes,
     comments,
     email_verification,
+    emoji,
+    emoji_keyword,
     federation_allowlist,
     federation_blocklist,
     instance,

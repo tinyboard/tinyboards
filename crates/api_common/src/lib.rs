@@ -3,6 +3,7 @@ pub mod applications;
 pub mod board;
 pub mod build_response;
 pub mod comment;
+pub mod emoji;
 pub mod data;
 pub mod moderator;
 pub mod person;

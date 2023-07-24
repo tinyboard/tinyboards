@@ -6,3 +6,4 @@ pub mod secret;
 pub mod site;
 pub mod person;
 pub mod apub;
+pub mod emoji;
