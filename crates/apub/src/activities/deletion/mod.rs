@@ -13,7 +13,7 @@ use crate::{
 use std::ops::Deref;
 use tinyboards_api_common::{
     board::{BoardResponse, DeleteBoard},
-    comment::{CommentResponse, DeleteComment, RemoveComment},
+    comment::{CommentResponse, DeleteComment, ToggleCommentRemove},
     data::TinyBoardsContext,
     post::{DeletePost, PostResponse, TogglePostRemove},
     utils::require_user,
@@ -115,7 +115,7 @@ impl SendActivity for DeleteComment {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for RemoveComment {
+impl SendActivity for ToggleCommentRemove {
     type Response = CommentResponse;
 
     async fn send_activity(

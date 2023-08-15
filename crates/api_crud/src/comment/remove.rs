@@ -2,7 +2,7 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     build_response::{build_comment_response, send_local_notifs},
-    comment::{CommentResponse, RemoveComment},
+    comment::{CommentResponse, ToggleCommentRemove},
     data::TinyBoardsContext,
     utils::require_user,
 };
@@ -18,7 +18,7 @@ use tinyboards_db::{
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> PerformCrud<'des> for RemoveComment {
+impl<'des> PerformCrud<'des> for ToggleCommentRemove {
     type Response = CommentResponse;
     type Route = ();
 
@@ -29,7 +29,7 @@ impl<'des> PerformCrud<'des> for RemoveComment {
         _path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &RemoveComment = &self;
+        let data: &ToggleCommentRemove = &self;
         let orig_comment = Comment::read(context.pool(), data.target_id).await?;
         let orig_board = Board::read(context.pool(), orig_comment.board_id).await?;
 
@@ -43,6 +43,8 @@ impl<'des> PerformCrud<'des> for RemoveComment {
         let removed = data.removed;
         let updated_comment =
             Comment::update_removed(context.pool(), orig_comment.id, removed).await?;
+
+        Comment::resolve_reports(context.pool(), orig_comment.id, view.person.id).await?;
 
         // mod log
         let form = ModRemoveCommentForm {

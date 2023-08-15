@@ -1,3 +1,4 @@
+use crate::models::comment::comment_report::CommentReport;
 use crate::newtypes::DbUrl;
 use crate::schema::comments::dsl::*;
 use crate::traits::Moderateable;
@@ -7,6 +8,7 @@ use crate::{
     models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
     traits::Crud,
     utils::{get_conn, DbPool},
+    schema::comment_report
 };
 use diesel::{prelude::*, result::Error, QueryDsl};
 use tinyboards_utils::TinyBoardsError;
@@ -158,6 +160,18 @@ impl Comment {
             .map_err(|e| {
                 TinyBoardsError::from_error_message(e, 500, "could not get replies to post")
             })
+    }
+
+    pub async fn resolve_reports(pool: &DbPool, comment_id: i32, resolver_id: i32) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        diesel::update(comment_report::table.filter(comment_report::comment_id.eq(comment_id)))
+            .set((comment_report::resolved.eq(true),
+                comment_report::resolver_id.eq(resolver_id)))
+            .get_results::<CommentReport>(conn)
+            .await
+            .map(|_| ())
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not resolve reports"))
     }
 }
 

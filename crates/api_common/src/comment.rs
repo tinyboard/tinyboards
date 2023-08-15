@@ -73,7 +73,7 @@ pub struct GetComment {
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Remove a comment (only doable by mods)
-pub struct RemoveComment {
+pub struct ToggleCommentRemove {
     pub target_id: i32,
     pub removed: bool,
     pub reason: Option<String>,

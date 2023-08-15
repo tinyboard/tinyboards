@@ -142,7 +142,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/comment")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateComment>))
-                    .route("/remove", web::post().to(route_post_crud::<RemoveComment>))
+                    .route("/toggle_remove", web::post().to(route_post_crud::<ToggleCommentRemove>))
                     .route("/list", web::get().to(route_get_apub::<GetComments>))
                     .route("/report", web::post().to(route_post::<CreateCommentReport>))
                     .route(
