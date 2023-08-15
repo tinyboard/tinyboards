@@ -145,6 +145,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/toggle_remove", web::post().to(route_post_crud::<ToggleCommentRemove>))
                     .route("/list", web::get().to(route_get_apub::<GetComments>))
                     .route("/report", web::post().to(route_post::<CreateCommentReport>))
+                    .route("/reports", web::get().to(route_get::<GetCommentReports>))
                     .route(
                         "/report/list",
                         web::post().to(route_post::<ListCommentReports>),

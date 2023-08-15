@@ -147,6 +147,7 @@ pub struct CommentReportQuery<'a> {
   my_person_id: i32,
   #[builder(!default)]
   admin: bool,
+  comment_id: Option<i32>,
   board_id: Option<i32>,
   page: Option<i64>,
   limit: Option<i64>,
@@ -212,6 +213,11 @@ impl<'a> CommentReportQuery<'a> {
 
       let mut query = query_.clone().into_boxed();  
       let mut count_query = query_.clone().into_boxed();
+        
+      if let Some(comment_id) = self.comment_id {
+        query = query.filter(comments::id.eq(comment_id));
+        count_query = count_query.filter(comments::id.eq(comment_id));
+      }
         
       if let Some(board_id) = self.board_id {
         query = query.filter(posts::board_id.eq(board_id));
@@ -288,7 +294,7 @@ impl JoinView for CommentReportView {
   
     fn from_tuple(a: Self::JoinTuple) -> Self {
       Self {
-        comment_report: a.0,
+        data: a.0,
         comment: a.1,
         post: a.2,
         board: a.3,

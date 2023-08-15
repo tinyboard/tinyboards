@@ -2,7 +2,7 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    comment::{ListCommentReports, ListCommentReportsResponse},
+    comment::{ListCommentReports, GetCommentReports, ListCommentReportsResponse},
     utils::require_user,
 };
 use tinyboards_db_views::comment_report_view::CommentReportQuery;
@@ -60,10 +60,44 @@ impl<'des> Perform<'des> for ListCommentReports {
                 .list()
                 .await?;
 
-            Ok( ListCommentReportsResponse { comment_reports: report_reponse.reports, total_count: report_reponse.count })
+            Ok( ListCommentReportsResponse { reports: report_reponse.reports, total_count: report_reponse.count })
 
         } else {
             return Err(TinyBoardsError::from_message(403, "need to be at least a board moderator to list reports."));
         }
     }
+}
+
+#[async_trait::async_trait(?Send)]
+impl<'des> Perform<'des> for GetCommentReports {
+    type Response = ListCommentReportsResponse;
+    type Route = ();
+
+    #[tracing::instrument(skip(context))]
+    async fn perform(
+        self,
+        context: &Data<TinyBoardsContext>,
+        _: Self::Route,
+        auth: Option<&str>,
+    ) -> Result<Self::Response, TinyBoardsError> {
+        let data: &Self = &self;
+
+        let v = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .require_admin()
+            .unwrap()?;
+
+        let query_response = CommentReportQuery::builder()
+                .pool(context.pool())
+                .my_person_id(v.person.id)
+                .admin(true)
+                .unresolved_only(data.unresolved_only)
+                .comment_id(Some(data.comment_id))
+                .page(Some(1))
+                .build()
+                .list()
+                .await?;
+
+        Ok( ListCommentReportsResponse { reports: query_response.reports, total_count: query_response.count })
+    }    
 }

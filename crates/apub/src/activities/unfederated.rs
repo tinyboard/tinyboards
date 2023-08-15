@@ -336,6 +336,18 @@ impl SendActivity for GetComments {
 }
 
 #[async_trait::async_trait]
+impl SendActivity for GetCommentReports {
+    type Response = ListCommentReportsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>
+    ) -> Result<(), TinyBoardsError> { Ok(()) }
+}
+
+
+#[async_trait::async_trait]
 impl SendActivity for Login {
     type Response = LoginResponse;
     async fn send_activity(

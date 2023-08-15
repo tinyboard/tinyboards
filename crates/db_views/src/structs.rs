@@ -182,7 +182,7 @@ pub struct PostReportView {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct CommentReportView {
-    pub comment_report: CommentReport,
+    pub data: CommentReport,
     pub comment: Comment,
     pub post: Post,
     pub board: Board,

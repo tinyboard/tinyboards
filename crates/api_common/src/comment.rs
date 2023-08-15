@@ -110,10 +110,18 @@ pub struct ListCommentReports {
     pub board_id: Option<i32>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// List comment reports for a given comment.
+pub struct GetCommentReports {
+    pub comment_id: i32,
+    /// Only shows the unresolved reports
+    pub unresolved_only: Option<bool>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The comment report list response.
 pub struct ListCommentReportsResponse {
-    pub comment_reports: Vec<CommentReportView>,
+    pub reports: Vec<CommentReportView>,
     pub total_count: i64,
 }
 

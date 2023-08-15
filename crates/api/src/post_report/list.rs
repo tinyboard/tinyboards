@@ -60,7 +60,7 @@ impl<'des> Perform<'des> for ListPostReports {
                 .list()
                 .await?;
 
-            Ok( ListPostReportsResponse { post_reports: query_response.reports, total_count: query_response.count })
+            Ok( ListPostReportsResponse { reports: query_response.reports, total_count: query_response.count })
 
         } else {
             return Err(TinyBoardsError::from_message(403, "need to be at least a board moderator to list reports."));
@@ -98,6 +98,6 @@ impl<'des> Perform<'des> for GetPostReports {
                 .list()
                 .await?;
 
-        Ok( ListPostReportsResponse { post_reports: query_response.reports, total_count: query_response.count })
+        Ok( ListPostReportsResponse { reports: query_response.reports, total_count: query_response.count })
     }    
 }
