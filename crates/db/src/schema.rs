@@ -520,6 +520,7 @@ diesel::table! {
         last_refreshed_date -> Timestamp,
         instance_id -> Int4,
         is_admin -> Bool,
+        instance -> Nullable<Varchar>,
     }
 }
 

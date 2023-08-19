@@ -119,6 +119,7 @@ pub mod safe_type {
         bot_account,
         last_refreshed_date,
         is_admin,
+        instance
     );
 
     impl ToSafe for PersonSafe {
@@ -145,6 +146,7 @@ pub mod safe_type {
                 bot_account,
                 last_refreshed_date,
                 is_admin,
+                instance
             )
         }
     }

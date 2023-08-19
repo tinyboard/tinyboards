@@ -32,6 +32,7 @@ pub struct Person {
     pub last_refreshed_date: NaiveDateTime,
     pub instance_id: i32,
     pub is_admin: bool,
+    pub instance: Option<String>,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -57,6 +58,7 @@ pub struct PersonSafe {
     pub bot_account: bool,
     pub last_refreshed_date: NaiveDateTime,
     pub is_admin: bool,
+    pub instance: Option<String>,
 }
 
 
@@ -88,4 +90,5 @@ pub struct PersonForm {
     #[builder(!default)]
     pub instance_id: Option<i32>,
     pub creation_date: Option<NaiveDateTime>,
+    pub instance: Option<String>,
 }

@@ -132,6 +132,9 @@ impl Object for ApubPerson {
         // Some users have `name: ""`, need to convert that to `None`
         let display_name = person.name.filter(|n| !n.is_empty());
 
+        // get instance name from person id
+        let instance = person.id.inner().host_str().unwrap().to_owned();
+
         let person_form = PersonForm {
             name: Some(person.preferred_username),
             display_name,
@@ -152,6 +155,7 @@ impl Object for ApubPerson {
             inbox_url: Some(person.inbox.into()),
             shared_inbox_url: person.endpoints.map(|e| e.shared_inbox.into()),
             instance_id,
+            instance: Some(instance),
             ..PersonForm::default()
         };
         
