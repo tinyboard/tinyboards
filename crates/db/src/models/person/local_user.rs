@@ -36,8 +36,6 @@ pub struct LocalUserSettings {
     pub id: i32,
     pub name: String,
     pub email: Option<String>,
-    pub avatar: Option<String>,
-    pub banner: Option<String>,
     pub show_nsfw: bool,
     pub show_bots: bool,
     pub theme: String,

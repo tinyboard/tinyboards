@@ -44,6 +44,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let signature = data.signature.clone();
 
         let bio = data.bio.clone();
+        let display_name = data.display_name.clone();
         let email_deref = data.email.as_deref().map(str::to_lowercase);
         let email = match email_deref {
             Some(email) => {
@@ -117,6 +118,12 @@ impl<'des> Perform<'des> for SaveUserSettings {
             }
         }
 
+        if let Some(display_name) = &display_name {
+            if display_name.chars().count() < 2 || display_name.chars().count() > 30 {
+                return Err(TinyBoardsError::from_message(400, "display name must be between 2 and 30 characters long"));
+            }
+        }
+
         let default_listing_type = data.default_listing_type;
         let default_sort_type = data.default_sort_type;
         // grabbing the current timestamp for the update
@@ -124,6 +131,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let person_form = PersonForm {
             bio,
+            display_name,
             avatar: avatar.clone(),
             signature: signature.clone(),
             banner: banner.clone(),

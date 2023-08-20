@@ -97,6 +97,7 @@ pub struct SaveUserSettings {
     pub banner: Option<DbUrl>,
     pub email: Option<String>,
     pub bio: Option<String>,
+    pub display_name: Option<String>,
 }
 
 /// Struct for changing passwords
