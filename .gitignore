@@ -4,4 +4,5 @@ config.hjson
 docker/volumes/*
 .idea
 docker/nginx/nginx-certbot.env
-app/*
+app/media/*
+!app/media/default_pfp.png

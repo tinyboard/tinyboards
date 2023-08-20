@@ -21,6 +21,7 @@ use tinyboards_db::traits::Crud;
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::{hash_password, TinyBoardsError};
+use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for Register {
@@ -88,6 +89,9 @@ impl<'des> PerformCrud<'des> for Register {
             &context.settings().get_protocol_and_hostname(),
         )?;
 
+        // set default profile pic
+        let pfp_url = Url::parse(format!("{}/media/default_pfp.png", context.settings().get_protocol_and_hostname()).as_str()).unwrap();
+
         // now we need to create both a local_user and a person (for apub)
         let person_form = PersonForm {
             name: Some(data.username.clone()),
@@ -97,6 +101,7 @@ impl<'des> PerformCrud<'des> for Register {
             inbox_url: Some(generate_inbox_url(&actor_id)?),
             shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
             instance_id: Some(site_view.site.instance_id),
+            avatar: Some(pfp_url.into()),
             ..PersonForm::default()
         };
 

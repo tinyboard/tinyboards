@@ -38,10 +38,17 @@ impl GetFile {
         let options = &data.into_inner();
 
         let f_name = path.into_inner();
-        let file = Upload::find_by_name(context.pool(), &f_name).await?;
+
+        // default pfp is assumed to be always present
+        let file_name = if f_name == "default_pfp.png" {
+            f_name
+        } else {
+            let file = Upload::find_by_name(context.pool(), &f_name).await?;
+            file.file_name
+        };
 
         let media_path = &context.settings().get_media_path();
-        let file_name = &file.file_name;
+        //let file_name = &file.file_name;
         let file_path = &format!("./{}/{}", media_path, file_name);
         let fs_path = PathBuf::from(file_path);
 
