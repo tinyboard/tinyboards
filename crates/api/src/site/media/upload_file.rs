@@ -37,8 +37,10 @@ impl<'des> PerformUpload<'des> for Multipart {
         let mut data = self;
         let mut uploads = Vec::new();
 
-        while let Some(item) = data.next().await {
-            let mut field = item.unwrap();
+        while let Some(Ok(mut field)) = data.next().await {
+            //println!("{:#?}", item);
+
+            //let mut field = item.unwrap();
             let content_disposition = field.content_disposition().clone();
             let original_file_name = content_disposition.get_filename().clone().unwrap();
             let content_type = field.content_type().unwrap().to_string();
@@ -60,7 +62,7 @@ impl<'des> PerformUpload<'des> for Multipart {
                 let media_path = context.settings().get_media_path();
 
                 // TODO: make sure that this actually works with Docker
-                let file_path = format!("{}/{}", &media_path, &file_name);
+                let file_path = format!("./{}/{}", &media_path, &file_name);
                 let upload_url = format!("{}/media/{}", context.settings().get_protocol_and_hostname(), file_name.clone());
                 let mut file = File::create(&file_path).await?;
                 file.write_all(&file_bytes).await?;

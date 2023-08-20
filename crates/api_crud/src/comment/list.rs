@@ -15,6 +15,7 @@ use tinyboards_db_views::{
 };
 use tinyboards_utils::error::TinyBoardsError;
 
+#[derive(PartialEq)]
 enum Format {
     List,
     Tree,
@@ -70,7 +71,7 @@ impl<'des> PerformCrud<'des> for ListComments {
         let creator_id = data.creator_id;
         let search_term = data.search_term;
         let saved_only = data.saved_only;
-        let show_deleted_and_removed = data.show_deleted_and_removed;
+        let show_deleted_and_removed = format == Format::Tree || data.show_deleted_and_removed.unwrap_or(true);
 
         let response = CommentQuery::builder()
             .pool(context.pool())
@@ -82,7 +83,7 @@ impl<'des> PerformCrud<'des> for ListComments {
             .creator_id(creator_id)
             .search_term(search_term)
             .saved_only(saved_only)
-            .show_deleted_and_removed(show_deleted_and_removed)
+            .show_deleted_and_removed(Some(show_deleted_and_removed))
             .person_id(person_id)
             .page(page)
             .limit(limit)

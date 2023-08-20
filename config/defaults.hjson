@@ -80,13 +80,13 @@
     default_board_description: ""
   }
   # the domain name of your server (mandatory)
-  hostname: "localhost"
+  hostname: "tinyboards.test"
   # Address where tinyboards should listen for incoming requests
   bind: "0.0.0.0"
   # Port where tinyboards should listen for incoming requests
   port: 8536
   # Whether the site is available over TLS. Needs to be true for federation to work.
-  tls_enabled: true
+  tls_enabled: false
   # Maximum length of local community and user names
   name_max_length: 20
   # The salt suffix used for making password hashes (it still uses a UUID along with this suffix)

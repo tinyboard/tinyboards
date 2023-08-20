@@ -4005,7 +4005,6 @@ dependencies = [
  "http-signature-normalization-actix",
  "itertools",
  "once_cell",
- "regex",
  "reqwest",
  "serde",
  "serde_json",

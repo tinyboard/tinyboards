@@ -4,3 +4,4 @@ config.hjson
 docker/volumes/*
 .idea
 docker/nginx/nginx-certbot.env
+app/*

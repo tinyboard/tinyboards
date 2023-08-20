@@ -47,6 +47,7 @@ use crate::{
         .pool(context.pool())
         .listing_type(Some(listing_type))
         .sort(sort)
+        .show_deleted_and_removed(Some(true))
         .saved_only(saved_only)
         .board_id(board_id)
         .post_id(post_id)

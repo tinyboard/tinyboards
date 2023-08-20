@@ -195,7 +195,9 @@ impl SiteLanguage {
         if is_allowed {
           Ok(())
         } else {
-          Err(TinyBoardsError::from_message(500, "language not allowed"))
+          // turn this off for now
+          Ok(())
+          // Err(TinyBoardsError::from_message(403, "language not allowed"))
         }
       } else {
         Ok(())

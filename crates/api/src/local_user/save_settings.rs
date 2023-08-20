@@ -59,7 +59,11 @@ impl<'des> Perform<'des> for SaveUserSettings {
         if let Some(avatar) = avatar.clone() {
             if let Some(current_avatar) = current_avatar.clone() {
                 if avatar != current_avatar && !avatar.to_string().is_empty() && !current_avatar.to_string().is_empty() {
-                    purge_local_image_by_url(context.pool(), &current_avatar).await?;
+                    let r = purge_local_image_by_url(context.pool(), &current_avatar).await;
+
+                    if let Err(_) = r {
+                        eprintln!("Failed to purge file: {:#?} - ignoring, please delete manually if it's really an error", current_avatar);
+                    }
                 }
             }
         };
@@ -67,7 +71,11 @@ impl<'des> Perform<'des> for SaveUserSettings {
         if let Some(banner) = banner.clone() {
             if let Some(current_banner) = current_banner {
                 if banner != current_banner && !banner.to_string().is_empty() && !current_banner.to_string().is_empty() {
-                    purge_local_image_by_url(context.pool(), &current_banner).await?;
+                    let r = purge_local_image_by_url(context.pool(), &current_banner).await;
+
+                    if let Err(_) = r {
+                        eprintln!("Failed to purge file: {:#?} - ignoring, please delete manually if it's really an error", current_banner);
+                    }
                 }
             }
         };
@@ -75,7 +83,11 @@ impl<'des> Perform<'des> for SaveUserSettings {
         if let Some(signature) = signature.clone() {
             if let Some(current_signature) = current_signature.clone() {
                 if signature != current_signature && !signature.to_string().is_empty() && !current_signature.to_string().is_empty() {
-                    purge_local_image_by_url(context.pool(), &current_signature).await?;
+                    let r = purge_local_image_by_url(context.pool(), &current_signature).await;
+
+                    if let Err(_) = r {
+                        eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_signature);
+                    }
                 }            
             }
         };
