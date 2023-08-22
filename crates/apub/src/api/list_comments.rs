@@ -38,6 +38,7 @@ use crate::{
       let saved_only = data.saved_only;
       let page = data.page;
       let limit = data.limit;
+      let creator_id = data.creator_id;
       let parent_id = data.parent_id;
       let listing_type = listing_type_with_default(data.type_, &local_site, board_id)?;
       let post_id = data.post_id;
@@ -50,6 +51,7 @@ use crate::{
         .saved_only(saved_only)
         .board_id(board_id)
         .post_id(post_id)
+        .creator_id(creator_id)
         .parent_id(parent_id)
         .person_id(local_user_view.clone().map(|u| u.local_user.person_id))
         .page(page)

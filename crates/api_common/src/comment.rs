@@ -135,6 +135,7 @@ pub struct GetComments {
     pub board_id: Option<i32>,
     pub board_name: Option<String>,
     pub post_id: Option<i32>,
+    pub creator_id: Option<i32>,
     pub parent_id: Option<i32>,
     pub saved_only: Option<bool>,
 }
