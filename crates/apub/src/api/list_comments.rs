@@ -9,9 +9,7 @@ use crate::{
     data::TinyBoardsContext,
     utils::{check_private_instance, require_user_opt},
   };
-  use tinyboards_db::{
-    models::{board::boards::Board, site::local_site::LocalSite},
-  };
+  use tinyboards_db::{models::{board::boards::Board, site::local_site::LocalSite}, map_to_comment_sort_type};
   use tinyboards_db_views::comment_view::CommentQuery;
   use tinyboards_db_views::{DeleteableOrRemoveable, structs::CommentView};
   use tinyboards_utils::error::TinyBoardsError;
@@ -35,7 +33,8 @@ use crate::{
       } else {
         data.board_id
       };
-      let sort = data.sort;
+      let sort = data.sort.clone().map(|x| x.to_lowercase());
+      let sort = Some(map_to_comment_sort_type(sort.as_deref()));
       let saved_only = data.saved_only;
       let page = data.page;
       let limit = data.limit;
