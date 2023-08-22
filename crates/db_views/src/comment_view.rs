@@ -259,6 +259,7 @@ impl CommentView {
                 .pool(pool)
                 .parent_ids(Some(&ids))
                 .person_id(person_id)
+                .show_deleted_and_removed(Some(true))
                 .sort(sort)
                 .build()
                 .list().await?;
