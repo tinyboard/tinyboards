@@ -17,7 +17,7 @@ use tinyboards_db::{
     },
     schema::{
         board_subscriber, board_person_bans, boards, comment_aggregates, comment_votes, comments,
-        posts, person_blocks, person_board_blocks, comment_saved, person, local_user_language,
+        posts, person_blocks, person_board_blocks, comment_saved, person,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited, get_conn, DbPool},
@@ -325,9 +325,10 @@ impl<'a> CommentQuery<'a> {
         let conn = &mut get_conn(self.pool).await?;
         use diesel::dsl::*;
 
-        let person_id_join = self.user.map(|l| l.person_id).unwrap_or(-1);
-        let local_user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
-
+        // let person_id_join = self.user.map(|l| l.person_id).unwrap_or(-1);
+        let person_id_join = self.person_id.unwrap_or(-1);
+        // let local_user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
+        
         let mut query = comments::table
             .inner_join(person::table)
             .inner_join(posts::table)
@@ -421,13 +422,6 @@ impl<'a> CommentQuery<'a> {
                 comment_votes::table.on(comments::id
                     .eq(comment_votes::comment_id)
                     .and(comment_votes::person_id.eq(person_id_join))),
-            )
-            .left_join(
-                local_user_language::table.on(
-                    comments::language_id
-                        .eq(local_user_language::language_id)
-                        .and(local_user_language::local_user_id.eq(local_user_id_join))
-                )
             )
             .select((
                 comments::all_columns,
@@ -583,9 +577,9 @@ impl DeleteableOrRemoveable for CommentView {
         if blank_out_comment {
             let obscure_text: String = {
                 if self.comment.is_deleted {
-                    "[ retracted ]"
+                    "[ deleted ]"
                 } else {
-                    "[ purged ]"
+                    "[ removed ]"
                 }
             }
             .into();
