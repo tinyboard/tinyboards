@@ -44,6 +44,8 @@ impl PerformApub for GetPosts {
         let page = data.page;
         let limit = data.limit;
 
+        let creator_id = data.creator_id;
+
         let board_id = if let Some(name) = &data.board_name {
             resolve_actor_identifier::<ApubBoard, Board>(name, context, &None, true)
                 .await
@@ -60,6 +62,7 @@ impl PerformApub for GetPosts {
             .pool(context.pool())
             .user(local_user_view.clone().map(|l| l.local_user).as_ref())
             .listing_type(Some(listing_type))
+            .creator_id(creator_id)
             .sort(sort)
             .board_id(board_id)
             .saved_only(saved_only)

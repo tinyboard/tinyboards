@@ -157,13 +157,13 @@ pub struct ListPostReportsResponse {
 /// Get a list of posts.
 pub struct GetPosts {
     pub type_: Option<ListingType>,
-    //pub sort: Option<SortType>,
     pub sort: Option<String>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
     pub board_id: Option<i32>,
     pub board_name: Option<String>,
     pub saved_only: Option<bool>,
+    pub creator_id: Option<i32>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
