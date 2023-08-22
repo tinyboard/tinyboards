@@ -49,7 +49,7 @@ impl GetFile {
 
         let media_path = &context.settings().get_media_path();
         //let file_name = &file.file_name;
-        let file_path = &format!("./{}/{}", media_path, file_name);
+        let file_path = &format!("{}/{}", media_path, file_name);
         let fs_path = PathBuf::from(file_path);
 
         if !fs_path.exists() {
