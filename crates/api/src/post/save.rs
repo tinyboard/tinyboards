@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{PostIdPath, PostResponse, SavePost},
-    utils::{get_local_user_view_from_jwt, is_mod_or_admin},
+    utils::{require_user, is_mod_or_admin},
 };
 use tinyboards_db::{
     models::post::{post_saved::{PostSaved, PostSavedForm}, posts::Post},
@@ -26,7 +26,7 @@ impl<'des> Perform<'des> for SavePost {
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &SavePost = &self;
 
-        let local_user_view = get_local_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+        let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
 
         let saved_form = PostSavedForm {
             post_id: path.post_id,

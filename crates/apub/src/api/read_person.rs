@@ -3,7 +3,7 @@ use tinyboards_federation::config::Data;
 use tinyboards_api_common::{
   data::TinyBoardsContext,
   person::{GetPersonDetails, GetPersonDetailsResponse},
-  utils::{check_private_instance, is_admin, require_user_opt},
+  utils::{check_private_instance, is_admin, load_user_opt},
 };
 use tinyboards_db::{
   models::person::person::Person,
@@ -25,7 +25,7 @@ impl PerformApub for GetPersonDetails {
             return Err(TinyBoardsError::from_message(400, "no id provided."));
         }
 
-        let view = require_user_opt(context.pool(), context.master_key(), auth).await?;
+        let view = load_user_opt(context.pool(), context.master_key(), auth).await?;
         let _is_admin = view.as_ref().map(|luv| is_admin(luv).is_ok());
 
         check_private_instance(&view, context.pool()).await?;

@@ -6,7 +6,7 @@ use crate::{
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{GetPosts, GetPostsResponse},
-    utils::{check_private_instance, require_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{
     map_to_sort_type,
@@ -27,7 +27,7 @@ impl PerformApub for GetPosts {
         auth: Option<&str>,
     ) -> Result<GetPostsResponse, TinyBoardsError> {
         let data: &GetPosts = self;
-        let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;
+        let local_user_view = load_user_opt(context.pool(), context.master_key(), auth).await?;
         let local_site = LocalSite::read(context.pool()).await?;
 
         check_private_instance(

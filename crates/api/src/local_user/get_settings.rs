@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     person::{GetUserSettings, GetUserSettingsResponse},
     utils::{
-        get_local_user_view_from_jwt,
+        require_user,
     },
 };
 use tinyboards_db_views::structs::LocalUserSettingsView;
@@ -24,7 +24,7 @@ impl<'des> Perform<'des> for GetUserSettings {
     ) -> Result<Self::Response, TinyBoardsError> {
 
         let local_user_view = 
-            get_local_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+            require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
             
         let settings = LocalUserSettingsView::read(context.pool(), local_user_view.person.id).await?;
         

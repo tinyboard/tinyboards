@@ -7,7 +7,7 @@ use tinyboards_federation::config::Data;
 use tinyboards_api_common::{
   comment::{GetComments, GetCommentsResponse},
   data::TinyBoardsContext,
-  utils::{check_private_instance, require_user_opt},
+  utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{models::{board::boards::Board, site::local_site::LocalSite}, map_to_comment_sort_type};
 use tinyboards_db_views::comment_view::CommentQuery;
@@ -27,7 +27,7 @@ impl PerformApub for GetComments {
   #[tracing::instrument(skip(context, auth))]
   async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetCommentsResponse, TinyBoardsError> {
     let data: &GetComments = self;
-    let local_user_view = require_user_opt(context.pool(), context.master_key(), auth).await?;
+    let local_user_view = load_user_opt(context.pool(), context.master_key(), auth).await?;
     let local_site = LocalSite::read(context.pool()).await?;
     check_private_instance(&local_user_view, context.pool()).await?;
 

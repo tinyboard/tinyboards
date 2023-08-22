@@ -2,7 +2,7 @@ use crate::{api::PerformApub, fetcher::resolve_actor_identifier, objects::board:
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{Search, SearchResponse},
-    utils::{check_private_instance, require_user_opt},
+    utils::{check_private_instance, load_user_opt},
 };
 use tinyboards_db::{
     map_to_listing_type, map_to_search_type, map_to_sort_type,
@@ -29,7 +29,7 @@ impl PerformApub for Search {
     ) -> Result<SearchResponse, TinyBoardsError> {
         let data: &Search = self;
 
-        let view = require_user_opt(context.pool(), context.master_key(), auth).await?;
+        let view = load_user_opt(context.pool(), context.master_key(), auth).await?;
 
         let _local_site = LocalSite::read(context.pool()).await?;
 

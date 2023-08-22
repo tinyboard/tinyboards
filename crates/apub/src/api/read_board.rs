@@ -7,7 +7,7 @@ use crate::{
   use tinyboards_api_common::{
     board::{GetBoard, GetBoardResponse},
     data::TinyBoardsContext,
-    utils::{check_private_instance, require_user_opt, is_mod_or_admin_opt},
+    utils::{check_private_instance, load_user_opt, is_mod_or_admin_opt},
   };
   use tinyboards_db::models::{
     apub::actor_language::BoardLanguage,
@@ -25,7 +25,7 @@ use crate::{
     async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetBoardResponse, TinyBoardsError> {
         let data: &GetBoard = self;
 
-        let view = require_user_opt(context.pool(), context.master_key(), auth).await?;
+        let view = load_user_opt(context.pool(), context.master_key(), auth).await?;
         
         if data.name.is_none() && data.id.is_none() {
             return Err(TinyBoardsError::from_message(400, "no id or name given."));

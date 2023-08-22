@@ -4,7 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     sensitive::Sensitive,
     person::{LoginResponse, SaveUserSettings},
-    utils::{get_local_user_view_from_jwt, require_user, send_verification_email, purge_local_image_by_url},
+    utils::{require_user, send_verification_email, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::{person::person::PersonForm},
@@ -30,6 +30,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
+            .not_banned()
             .unwrap()?;
 
         let site = LocalSite::read(context.pool()).await?;
@@ -161,7 +162,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
 
         let updated_user_view =
-            get_local_user_view_from_jwt(auth, context.pool(), context.master_key()).await?;
+            require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
 
         let new_jwt = Claims::jwt(
             updated_user_view.local_user.id,

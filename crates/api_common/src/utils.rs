@@ -108,8 +108,6 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
         return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
     }
     // Reference to the string stored in `auth` skipping the `Bearer ` part
-    // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
-    // maybe there's a better solution to this but I feel like this is too memory-consuming.
     let token = String::from(&auth[7..]);
     let master_key = master_key.jwt.clone();
 
@@ -118,31 +116,6 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
 
     Ok(Some(view))
 
-}
-
-pub async fn load_local_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUser>, TinyBoardsError> {
-    if auth.is_none() {
-        return Ok(None);
-    };
-
-    // here it is safe to unwrap, because the above check ensures that `auth` isn't None here
-    let auth = auth.unwrap();
-    if auth.is_empty() {
-        return Ok(None);
-    }
-
-    if !auth.starts_with("Bearer ") {
-        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
-    }
-    // Reference to the string stored in `auth` skipping the `Bearer ` part
-    // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
-    // maybe there's a better solution to this but I feel like this is too memory-consuming.
-    let token = String::from(&auth[7..]);
-    let master_key = master_key.jwt.clone();
-
-    let local_user = LocalUser::from_jwt(pool, token, master_key).await?;
-
-    Ok(local_user)  
 }
 
 /**
@@ -164,9 +137,9 @@ pub async fn require_user(pool: &DbPool, master_key: &Secret, auth: Option<&str>
     load_user_opt(pool, master_key, auth).await.into()
 }
 
-pub async fn require_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUserView>, TinyBoardsError> {
-    get_local_user_view_from_jwt_opt(auth, pool, master_key).await
-}
+/*pub async fn require_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUserView>, TinyBoardsError> {
+    require_user_opt(auth, pool, master_key).await
+}*/
 
 impl From<UResultOpt> for UserResult {
     fn from(r: UResultOpt) -> Self {
@@ -300,62 +273,6 @@ impl UserResult {
             }
             Err(e) => Self(Err(e)),
         }
-    }
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn get_local_user_view_from_jwt_opt(
-    auth: Option<&str>,
-    pool: &DbPool,
-    master_key: &Secret,
-) -> Result<Option<LocalUserView>, TinyBoardsError> {
-    if auth.is_none() {
-        return Ok(None);
-    }
-
-    // safe unwrap: previous block returns if None
-    let auth = auth.unwrap();
-    if auth.is_empty() {
-        return Ok(None);
-    }
-
-    if !auth.starts_with("Bearer ") {
-        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should follow this pattern: `Authorization: Bearer <access token>`"));
-    }
-    // Reference to the string stored in `auth` skipping the `Bearer ` part
-    // this part makes me cringe so much, I don't want all these to be owned, but they have to be sent to another thread and the references are valid only here
-    // maybe there's a better solution to this but I feel like this is too memory-consuming.
-    let token = String::from(&auth[7..]);
-    let master_key = master_key.jwt.clone();
-
-
-    let local_user = LocalUser::from_jwt(pool, token, master_key).await?.unwrap();
-
-    let local_user_view = LocalUserView::read(pool, local_user.id.clone()).await?;
-
-    Ok(Some(local_user_view))
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn get_local_user_view_from_jwt(
-    auth: Option<&str>,
-    pool: &DbPool,
-    master_key: &Secret,
-) -> Result<LocalUserView, TinyBoardsError> {
-    if auth.is_none() {
-        return Err(TinyBoardsError::from_message(
-            401,
-            "you need to be logged in to do that",
-        ));
-    }
-
-    let local_user_view = get_local_user_view_from_jwt_opt(auth, pool, master_key).await?;
-    match local_user_view {
-        Some(local_user_view) => Ok(local_user_view),
-        None => Err(TinyBoardsError::from_message(
-            401,
-            "you need to be logged in to do that",
-        )),
     }
 }
 
