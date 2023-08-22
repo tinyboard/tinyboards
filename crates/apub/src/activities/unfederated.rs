@@ -315,7 +315,7 @@ impl SendActivity for GetPostReports {
 
 #[async_trait::async_trait]
 impl SendActivity for GetComment {
-    type Response = CommentResponse;
+    type Response = ListCommentsResponse;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,

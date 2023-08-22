@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{models::person::person::Person, CommentSortType, ListingType};
+use tinyboards_db::{models::person::person::Person, ListingType};
 use tinyboards_db_views::structs::{CommentReportView, CommentView};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
