@@ -132,6 +132,7 @@ pub struct GetComments {
     pub max_depth: Option<i32>,
     pub page: Option<i64>,
     pub limit: Option<i64>,
+    pub format: Option<String>,
     pub board_id: Option<i32>,
     pub board_name: Option<String>,
     pub post_id: Option<i32>,

@@ -3,7 +3,7 @@ use actix_web::web;
 use tinyboards_api_common::{
     comment::{CommentIdPath, GetComment, CommentResponse},
     data::TinyBoardsContext,
-    utils::{check_private_instance, require_user}, build_response::build_comment_response,
+    utils::{check_private_instance, load_user_opt}, build_response::build_comment_response,
 };
 use tinyboards_utils::TinyBoardsError;
 
@@ -20,12 +20,8 @@ impl<'des> PerformCrud<'des> for GetComment {
     ) -> Result<Self::Response, TinyBoardsError> {
         let _data = self;
 
-        let view = require_user(context.pool(), context.master_key(), auth)
-            .await
-            .not_banned()
-            .unwrap()?;
-
-        let view = Some(view);
+        let view = load_user_opt(context.pool(), context.master_key(), auth)
+            .await?;
 
         // check if the instance is private before listing comments
         check_private_instance(&view, context.pool()).await?;
