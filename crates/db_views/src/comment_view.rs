@@ -210,13 +210,13 @@ impl CommentView {
         pool: &DbPool,
         comment_id: i32,
         sort: Option<CommentSortType>,
-        person: Option<&Person>,
+        person: Option<&LocalUserView>,
         context: Option<i32>,
         parent_post_id: Option<i32>,
     ) -> Result<CommentQueryResponse, TinyBoardsError> {
         // max allowed value for context is 4
         let context = std::cmp::min(context.unwrap_or(0), 4);
-        let person_id = person.as_ref().map(|u| u.id);
+        let person_id = person.map(|u| u.person.id);
         let top_comment = Self::read(pool, comment_id, person_id).await?;
 
         if let Some(parent_post_id) = parent_post_id {
@@ -277,15 +277,12 @@ impl CommentView {
             comments_vec.append(&mut comments);
         }
         
-        if person_id.is_some() {
-            let l_user = LocalUserView::read(pool, person_id.unwrap()).await?;
-            // hide deleted/removed info
-            for cv in comments_vec
-                .iter_mut()
-                .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
-            {
-                cv.hide_if_removed_or_deleted(Some(&l_user));
-            }
+        // hide deleted/removed info
+        for cv in comments_vec
+            .iter_mut()
+            .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
+        {
+            cv.hide_if_removed_or_deleted(person);
         }
 
         Ok(CommentQueryResponse {
