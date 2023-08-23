@@ -28,7 +28,7 @@ impl<'des> PerformCrud<'des> for GetComment {
         // check if the instance is private before listing comments
         check_private_instance(&v, context.pool()).await?;
 
-        let person = v.as_ref();
+        let person = v.map(|v| v.person);
         let comment_id = path.comment_id;
         let post_id = data.post;
 
@@ -43,7 +43,7 @@ impl<'des> PerformCrud<'des> for GetComment {
                 context.pool(),
                 comment_id,
                 Some(sort),
-                person,
+                person.as_ref(),
                 comment_context,
                 post_id
             ).await?;
