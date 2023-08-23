@@ -1,7 +1,7 @@
 use doku::Document;
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
-use std::{net::{IpAddr, Ipv4Addr}};
+use std::net::{IpAddr, Ipv4Addr};
 use url::Url;
 
 

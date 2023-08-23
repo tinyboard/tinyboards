@@ -1,6 +1,4 @@
-use actix_web::HttpResponse;
 use encoding::{all::encodings, DecoderTrap};
-use reqwest::{Response, StatusCode};
 use reqwest_middleware::ClientWithMiddleware;
 use tinyboards_db::newtypes::DbUrl;
 use tinyboards_utils::{
@@ -148,20 +146,5 @@ pub async fn fetch_site_data(
       (meta_option, image_url.cloned())
     }
     None => (None, None),
-  }
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn fetch_remote_user(
-  client: &ClientWithMiddleware,
-  fetch_url: &Url,
-) -> Result<Response, TinyBoardsError> {
-  info!("Fetching remote user for url: {}", fetch_url);
-  let resp = client.get(fetch_url.as_str()).send().await?;
-
-  if resp.status() != StatusCode::OK {
-    return Err(TinyBoardsError::from_message(500, "could not fetch remote user"));
-  }  else {
-    Ok(resp)
   }
 }

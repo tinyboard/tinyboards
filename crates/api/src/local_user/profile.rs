@@ -3,11 +3,10 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     person::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
-    utils::require_user, request::fetch_remote_user,
+    utils::require_user,
 };
-use tinyboards_db_views::structs::{LoggedInUserView, LocalUserView, PersonView};
+use tinyboards_db_views::structs::{LoggedInUserView, LocalUserView};
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
-use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for GetLoggedInUser {
@@ -44,61 +43,47 @@ impl<'des> Perform<'des> for Profile {
     ) -> Result<Self::Response, TinyBoardsError> {
         let rcopy = route.clone();
 
-        let username = &rcopy.username;
-        let is_local_user = LocalUserView::get_by_name(context.pool(), username).await.is_ok();
-
-        if !is_local_user && username.contains("@") {
-            let fetch_url = format!("{}/api/v1/user?username={}", context.settings().get_protocol_and_hostname(), username);
-            let _response = fetch_remote_user(context.client(), &Url::parse(&fetch_url)?).await?;
-        } else {
-            return Err(TinyBoardsError::from_message(404, "username not found in local database"));
-        }
-
-        let person_view = PersonView::read_from_name(context.pool(), username).await?;
-
-        //let local_user_view = LocalUserView::get_by_name(context.pool(), username).await?;
+        let local_user_view = LocalUserView::get_by_name(context.pool(), &rcopy.username).await?;
 
         let settings = SETTINGS.to_owned();
         let domain = settings.hostname;
-        let id = person_view.person.id;
-        let avatar_url = person_view.person.avatar;
-        let bio = person_view.person.bio.unwrap_or("".to_string());
-        let banner_url = person_view.person.banner;
+        let id = local_user_view.person.id;
+        let avatar_url = local_user_view.person.avatar;
+        let bio = local_user_view.person.bio.unwrap_or("".to_string());
+        let banner_url = local_user_view.person.banner;
         let url = format!(
             "https://{domain}/api/v1/users/{name}",
             domain = &domain,
-            name = &person_view.person.name
+            name = &local_user_view.person.name
         );
         let html_url = format!(
             "https://{domain}/@{name}",
             domain = &domain,
-            name = &person_view.person.name
+            name = &local_user_view.person.name
         );
         let saved_url = format!(
             "https://{domain}/api/v1/users/{name}/saved",
             domain = &domain,
-            name = &person_view.person.name
+            name = &local_user_view.person.name
         );
         let posts_url = format!(
             "https://{domain}/api/v1/users/{name}/posts",
             domain = &domain,
-            name = &person_view.person.name
+            name = &local_user_view.person.name
         );
         let comments_url = format!(
             "https://{domain}/api/v1/users/{name}/comments",
             domain = &domain,
-            name = &person_view.person.name
+            name = &local_user_view.person.name
         );
         let mut _user_type = String::new();
-
-        if person_view.person.is_admin {
+        if local_user_view.local_user.is_admin {
             _user_type = String::from("Admin");
         } else {
             _user_type = String::from("User");
         }
-
-        let is_admin = person_view.person.is_admin;
-        let display_name = person_view.person.display_name.unwrap_or(person_view.person.name);
+        let is_admin = local_user_view.local_user.is_admin;
+        let display_name = local_user_view.person.display_name.unwrap_or(local_user_view.person.name);
 
         let rcopy2 = route.clone();
         let view = LocalUserView::get_by_name(context.pool(), &rcopy2.username).await?;
