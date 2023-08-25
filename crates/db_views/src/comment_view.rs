@@ -259,7 +259,8 @@ impl CommentView {
                 .pool(pool)
                 .parent_ids(Some(&ids))
                 .person_id(person_id)
-                .show_deleted_and_removed(Some(true))
+                .show_deleted(Some(true))
+                .show_removed(Some(true))
                 .sort(sort)
                 .build()
                 .list().await?;
@@ -309,7 +310,8 @@ pub struct CommentQuery<'a> {
     person_id: Option<i32>,
     search_term: Option<String>,
     saved_only: Option<bool>,
-    show_deleted_and_removed: Option<bool>,
+    show_deleted: Option<bool>,
+    show_removed: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
 }
@@ -501,12 +503,16 @@ impl<'a> CommentQuery<'a> {
             count_query = count_query.filter(comment_saved::id.is_not_null());
         }
 
-        if !self.show_deleted_and_removed.unwrap_or(false) {
-            query = query.filter(comments::is_removed.eq(false));
+        if !self.show_deleted.unwrap_or(false) {
             query = query.filter(comments::is_deleted.eq(false));
 
-            count_query = count_query.filter(comments::is_removed.eq(false));
             count_query = count_query.filter(comments::is_deleted.eq(false));
+        }
+
+        if !self.show_removed.unwrap_or(false) {
+            query = query.filter(comments::is_removed.eq(false));
+
+            count_query = count_query.filter(comments::is_removed.eq(false));
         }
 
         if self.person_id.is_some() {

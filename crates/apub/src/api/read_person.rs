@@ -53,6 +53,16 @@ impl PerformApub for GetPersonDetails {
             None => "hot",
         }));
 
+        let show_deleted = match view {
+            Some(ref v) => v.local_user.is_admin,
+            None => false
+        };
+
+        let show_removed = match view {
+            Some(ref v) => v.local_user.is_admin || v.person.id == person_view.person.id,
+            None => false
+        };
+
         let page = data.page;
         let limit = data.limit;
         let saved_only = data.saved_only;
@@ -65,6 +75,8 @@ impl PerformApub for GetPersonDetails {
             .sort(sort)
             .saved_only(saved_only)
             .user(local_user.as_ref())
+            .show_deleted(Some(show_deleted))
+            .show_removed(Some(show_removed))
             .board_id(board_id)
             .page(page)
             .limit(limit);
@@ -89,7 +101,8 @@ impl PerformApub for GetPersonDetails {
             .user(local_user_clone.as_ref())
             .sort(sort.map(post_to_comment_sort_type))
             .saved_only(saved_only)
-            .show_deleted_and_removed(Some(false))
+            .show_deleted(Some(show_deleted))
+            .show_removed(Some(show_removed))
             .board_id(board_id)
             .page(page)
             .limit(limit);

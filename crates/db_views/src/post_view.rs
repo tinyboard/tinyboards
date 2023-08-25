@@ -170,7 +170,8 @@ pub struct PostQuery<'a> {
     sort: Option<SortType>,
     creator_id: Option<i32>,
     board_id: Option<i32>,
-    show_deleted_or_removed: Option<bool>,
+    show_deleted: Option<bool>,
+    show_removed: Option<bool>,
     search_term: Option<String>,
     url_search: Option<String>,
     saved_only: Option<bool>,
@@ -324,10 +325,14 @@ impl<'a> PostQuery<'a> {
             }
         }
 
-        if !self.show_deleted_or_removed.unwrap_or(false) {
+        if !self.show_deleted.unwrap_or(false) {
             query = query
-                .filter(posts::is_removed.eq(false))
                 .filter(posts::is_deleted.eq(false));
+        }
+
+        if !self.show_removed.unwrap_or(false) {
+            query = query
+                .filter(posts::is_removed.eq(false));
         }
 
         if let Some(board_id) = self.board_id {
@@ -418,8 +423,6 @@ impl<'a> PostQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(posts::is_removed.eq(false))
-            .filter(posts::is_deleted.eq(false))
             .filter(boards::is_banned.eq(false))
             .filter(boards::is_deleted.eq(false));
 
@@ -452,9 +455,9 @@ impl DeleteableOrRemoveable for PostView {
 
         let obscure_text: String = {
             if self.post.is_deleted {
-                "[ retracted ]"
+                "[ deleted by author ]"
             } else {
-                "[ purged ]"
+                "[ removed by mod ]"
             }
         }
         .into();
