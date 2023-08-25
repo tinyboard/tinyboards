@@ -10,7 +10,7 @@ use tinyboards_db::{
   utils::post_to_comment_sort_type,
   map_to_sort_type
 };
-use tinyboards_db_views::{comment_view::CommentQuery, post_view::PostQuery, structs::{BoardModeratorView, PersonView},};
+use tinyboards_db_views::{comment_view::{CommentQuery, CommentQueryResponse}, post_view::{PostQuery, PostQueryResponse}, structs::{BoardModeratorView, PersonView},};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait]
@@ -83,7 +83,7 @@ impl PerformApub for GetPersonDetails {
 
         // If its saved only, you don't care what creator it was. 
         // Or, if it is not saved, then you only want it for a specific creator
-        let posts = if !saved_only.unwrap_or(false) {
+        let PostQueryResponse { posts, count: posts_count_total } = if !saved_only.unwrap_or(false) {
             posts_query
                 .creator_id(Some(person_details_id))
                 .build()
@@ -93,8 +93,7 @@ impl PerformApub for GetPersonDetails {
                 .build()
                 .list()
         }
-        .await?
-        .posts;
+        .await?;
 
         let comments_query = CommentQuery::builder()
             .pool(context.pool())
@@ -109,7 +108,7 @@ impl PerformApub for GetPersonDetails {
 
         // If its saved only, you don't care what creator it was
         // Or, if its not saved, then you only want it for that specific creator
-        let comments = if !saved_only.unwrap_or(false) {
+        let CommentQueryResponse { comments, count: comments_count_total } = if !saved_only.unwrap_or(false) {
             comments_query
             .creator_id(Some(person_details_id))
             .build()
@@ -117,11 +116,17 @@ impl PerformApub for GetPersonDetails {
         } else {
             comments_query.build().list()
         }
-        .await?
-        .comments;
+        .await?;
 
         let moderates = BoardModeratorView::for_user(context.pool(), person_details_id).await?;
 
-        Ok(GetPersonDetailsResponse { person_view, comments, posts, moderates })
+        Ok(GetPersonDetailsResponse {
+            person_view,
+            comments,
+            posts,
+            comments_count_total,
+            posts_count_total,
+            moderates
+        })
     }
 }

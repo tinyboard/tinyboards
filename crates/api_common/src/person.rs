@@ -240,5 +240,7 @@ pub struct GetPersonDetailsResponse {
   pub person_view: PersonView,
   pub comments: Vec<CommentView>,
   pub posts: Vec<PostView>,
+  pub comments_count_total: i64,
+  pub posts_count_total: i64,
   pub moderates: Vec<BoardModeratorView>,
 }

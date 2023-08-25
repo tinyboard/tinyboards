@@ -255,7 +255,7 @@ impl<'a> PostQuery<'a> {
             ))
             .into_boxed();
 
-        let count_query = posts::table
+        let mut count_query = posts::table
             .inner_join(person::table)
             .inner_join(boards::table)
             .left_join(
@@ -300,8 +300,6 @@ impl<'a> PostQuery<'a> {
                     .and(post_votes::person_id.eq(person_id_join))),
             )
             .select((posts::all_columns,))
-            .filter(posts::is_deleted.eq(false))
-            .filter(posts::is_removed.eq(false))
             .into_boxed();
 
         if let Some(listing_type) = self.listing_type {
@@ -328,11 +326,15 @@ impl<'a> PostQuery<'a> {
         if !self.show_deleted.unwrap_or(false) {
             query = query
                 .filter(posts::is_deleted.eq(false));
+
+            count_query = count_query.filter(posts::is_deleted.eq(false));
         }
 
         if !self.show_removed.unwrap_or(false) {
             query = query
                 .filter(posts::is_removed.eq(false));
+
+            count_query = count_query.filter(posts::is_removed.eq(false));
         }
 
         if let Some(board_id) = self.board_id {
@@ -358,6 +360,8 @@ impl<'a> PostQuery<'a> {
         // If query is for specific person show the removed/deleted
         if let Some(creator_id) = self.creator_id {
             query = query.filter(posts::creator_id.eq(creator_id));
+
+            count_query = count_query.filter(posts::creator_id.eq(creator_id));
         }
 
         if self.saved_only.unwrap_or(false) {
