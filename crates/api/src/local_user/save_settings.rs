@@ -8,11 +8,12 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{person::person::PersonForm},
-    models::{person::{local_user::*, person::Person}, site::local_site::LocalSite},
+    models::{person::{local_user::*, person::Person}, site::{local_site::LocalSite, uploads::*}},
     utils::{naive_now},
 };
 use tinyboards_db_views::structs::LoggedInUserView;
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
+
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveUserSettings {
@@ -64,9 +65,24 @@ impl<'des> Perform<'des> for SaveUserSettings {
                     let r = purge_local_image_by_url(context.pool(), &current_avatar).await;
 
                     if let Err(_) = r {
-                        eprintln!("Failed to purge file: {:#?} - ignoring, please delete manually if it's really an error", current_avatar);
+                        eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_avatar.path());
                     }
                 }
+            }
+
+            // Check if avatar is valid
+            let db_avatar = Upload::find_by_url(context.pool(), &avatar)
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Something went wrong while checking profile picture"))?;
+
+            // Ownership check
+            if db_avatar.person_id != view.person.id {
+                return Err(TinyBoardsError::from_message(400, "That image is NOT yours."));
+            }
+
+            // Size check
+            if db_avatar.size > 1024 * 1024 {
+                return Err(TinyBoardsError::from_message(403, "Max size for avatars is 1MB. Please."));
             }
         };
 
@@ -76,9 +92,24 @@ impl<'des> Perform<'des> for SaveUserSettings {
                     let r = purge_local_image_by_url(context.pool(), &current_banner).await;
 
                     if let Err(_) = r {
-                        eprintln!("Failed to purge file: {:#?} - ignoring, please delete manually if it's really an error", current_banner);
+                        eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_banner.path());
                     }
                 }
+            }
+
+            // Check if banner is valid
+            let db_banner = Upload::find_by_url(context.pool(), &banner)
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Something went wrong while checking banner"))?;
+
+            // Ownership check
+            if db_banner.person_id != view.person.id {
+                return Err(TinyBoardsError::from_message(400, "That image is NOT yours."));
+            }
+
+            // Size check
+            if db_banner.size > 3 * 1024 * 1024 {
+                return Err(TinyBoardsError::from_message(403, "Stop trying to get past the 3MB size limit, nerd."));
             }
         };
 
