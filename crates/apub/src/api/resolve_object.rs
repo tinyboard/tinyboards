@@ -46,7 +46,7 @@ async fn convert_response(
     match object {
         Person(p) => {
             removed_or_deleted = p.is_deleted;
-            res = ResolveObjectResponse { object: FederatedObject::Person(Some(PersonView::read(pool, p.id).await?)) };
+            res = ResolveObjectResponse { object: FederatedObject::Person(Some(PersonView::read(pool, p.id, false).await?)) };
         },
         Board(b) => {
             removed_or_deleted = b.is_deleted || b.is_removed;

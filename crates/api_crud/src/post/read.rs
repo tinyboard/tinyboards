@@ -46,7 +46,7 @@ impl<'des> PerformCrud<'des> for GetPost {
 
         let mut post_view = PostView::read(context.pool(), post_id, person_id, Some(mod_or_admin)).await?;
 
-        let author = PersonView::read(context.pool(), post_view.post.creator_id).await?;
+        let author = PersonView::read(context.pool(), post_view.post.creator_id, false).await?;
 
         if post_view.post.is_removed || post_view.post.is_deleted {
             post_view.hide_if_removed_or_deleted(v.as_ref());

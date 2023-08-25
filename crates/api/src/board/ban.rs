@@ -81,7 +81,7 @@ impl<'des> Perform<'des> for BanFromBoard {
         
         // get person_view for response
         let person_id = data.person_id;
-        let person_view = PersonView::read(context.pool(), person_id).await?;
+        let person_view = PersonView::read(context.pool(), person_id, false).await?;
 
         Ok(BanFromBoardResponse { person_view, banned: data.ban })
     }

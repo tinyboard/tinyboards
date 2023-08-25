@@ -25,6 +25,7 @@ impl PersonView {
     pub async fn read_opt(
         pool: &DbPool,
         person_id: i32,
+        get_settings: bool,
     ) -> Result<Option<Self>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         let person_view_tuple = person::table
@@ -41,11 +42,15 @@ impl PersonView {
             .optional()
             .map_err(|e| TinyBoardsError::from(e))?;
 
-        Ok(person_view_tuple.map(|(person, settings, counts)| Self { person, settings, counts }))
+        if get_settings {
+            Ok(person_view_tuple.map(|(person, settings, counts)| Self { person, settings, counts }))    
+        } else {
+            Ok(person_view_tuple.map(|(person, _, counts)| Self { person, settings: None, counts }))
+        }
     }
 
-    pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
-        match Self::read_opt(pool, person_id).await {
+    pub async fn read(pool: &DbPool, person_id: i32, get_settings:bool) -> Result<Self, TinyBoardsError> {
+        match Self::read_opt(pool, person_id, get_settings).await {
             Ok(opt) => match opt {
                 Some(u) => Ok(u),
                 None => Err(TinyBoardsError::from_message(404, "no user view found")),
@@ -66,7 +71,7 @@ impl PersonView {
 
         let uid = claims["uid"].parse::<i32>()?;
 
-        Self::read_opt(pool, uid).await
+        Self::read_opt(pool, uid, true).await
     }
 
     pub async fn read_from_name(pool: &DbPool, name: &str) -> Result<Self, Error> {
@@ -138,7 +143,7 @@ impl LoggedInUserView {
     
     pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
 
-        let person_view = PersonView::read(pool, person_id)
+        let person_view = PersonView::read(pool, person_id, true)
             .await    
             .map_err(|e| TinyBoardsError::from(e))?;
 

@@ -8,6 +8,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
   models::person::person::Person,
   utils::post_to_comment_sort_type,
+  map_to_sort_type
 };
 use tinyboards_db_views::{comment_view::CommentQuery, post_view::PostQuery, structs::{BoardModeratorView, PersonView},};
 use tinyboards_utils::error::TinyBoardsError;
@@ -44,9 +45,14 @@ impl PerformApub for GetPersonDetails {
         };
 
         // no need to return settings for the user, since this comes back with GetSite
-        let person_view = PersonView::read(context.pool(), person_details_id).await?;
+        let person_view = PersonView::read(context.pool(), person_details_id, false).await?;
 
-        let sort = data.sort;
+        let sort = data.sort.clone().map(|x| x.to_lowercase());
+        let sort = Some(map_to_sort_type(match sort {
+            Some(ref sort) => sort,
+            None => "hot",
+        }));
+
         let page = data.page;
         let limit = data.limit;
         let saved_only = data.saved_only;

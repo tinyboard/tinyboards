@@ -1,7 +1,7 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{newtypes::DbUrl, SortType};
+use tinyboards_db::{newtypes::DbUrl};
 use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView, PersonView, CommentView, PostView, BoardModeratorView};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -227,7 +227,7 @@ pub struct GetPersonDetails {
   pub person_id: Option<i32>,
   /// Example: kroner , or kroner@xyz.tld
   pub username: Option<String>,
-  pub sort: Option<SortType>,
+  pub sort: Option<String>,
   pub page: Option<i64>,
   pub limit: Option<i64>,
   pub board_id: Option<i32>,

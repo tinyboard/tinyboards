@@ -73,7 +73,7 @@ pub async fn send_notifications(
         // don't send a notification to yourself dummy
         if parent_comment.creator_id != person.id && !creator_blocked {
 
-            let person_view = PersonView::read(context.pool(), parent_creator_id).await?;
+            let person_view = PersonView::read(context.pool(), parent_creator_id, false).await?;
             recipient_ids.push(person_view.person.id);
 
             let comment_reply_form = CommentReplyForm {
@@ -95,7 +95,7 @@ pub async fn send_notifications(
 
         if post.creator_id != person.id && !creator_blocked {
             let creator_id = post.creator_id;
-            let parent_person_view = PersonView::read(context.pool(), creator_id).await?;
+            let parent_person_view = PersonView::read(context.pool(), creator_id, false).await?;
 
             let comment_reply_form = CommentReplyForm {
                 recipient_id: Some(parent_person_view.person.id),
