@@ -73,6 +73,7 @@ impl<'des> PerformUpload<'des> for Multipart {
                     file_name: file_name.clone(),
                     file_path: file_path.clone(),
                     upload_url: Some(Url::parse(&upload_url)?.into()),
+                    size: file_bytes.len().try_into().unwrap()
                 };
 
                 let upload = Upload::create(context.pool(), &upload_form).await?;

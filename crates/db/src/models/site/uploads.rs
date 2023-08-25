@@ -13,6 +13,7 @@ pub struct Upload {
     pub file_path: String,
     pub upload_url: DbUrl,
     pub creation_date: NaiveDateTime,
+    pub size: i64,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -23,4 +24,5 @@ pub struct UploadForm {
     pub file_name: String,
     pub file_path: String,
     pub upload_url: Option<DbUrl>,
+    pub size: i64,
 }

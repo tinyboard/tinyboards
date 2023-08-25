@@ -751,6 +751,7 @@ diesel::table! {
         file_path -> Text,
         upload_url -> Text,
         creation_date -> Timestamp,
+        size -> Int8,
     }
 }
 
