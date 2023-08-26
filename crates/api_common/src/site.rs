@@ -121,7 +121,10 @@ pub struct GetSiteResponse {
 pub struct GetSiteSettingsResponse {
     pub site_mode: SiteMode,
     pub name: String,
-    pub color: Option<String>,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
+    pub description: Option<String>,
     pub enable_downvotes: bool,
     pub enable_nsfw: bool,
     pub application_question: String,
@@ -133,7 +136,10 @@ pub struct GetSiteSettingsResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SaveSiteSettings {
     pub name: Option<String>,
-    pub color: Option<String>,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
+    pub description: Option<String>,
     pub site_mode: Option<SiteMode>,
     pub enable_downvotes: Option<bool>,
     pub enable_nsfw: Option<bool>,

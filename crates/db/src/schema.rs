@@ -309,7 +309,10 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         reports_email_admins -> Bool,
         name -> Varchar,
-        color -> Nullable<Varchar>,
+        primary_color -> Nullable<Varchar>,
+        secondary_color -> Nullable<Varchar>,
+        hover_color -> Nullable<Varchar>,
+        description -> Nullable<Varchar>,
     }
 }
 

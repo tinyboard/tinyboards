@@ -36,7 +36,10 @@ pub struct LocalSite {
     pub updated: Option<NaiveDateTime>,
     pub reports_email_admins: bool,
     pub name: String,
-    pub color: Option<String>,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
+    pub description: Option<String>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -70,5 +73,8 @@ pub struct LocalSiteForm {
     pub updated: Option<NaiveDateTime>,
     pub reports_email_admins: Option<bool>,
     pub name: Option<String>,
-    pub color: Option<Option<String>>,
+    pub primary_color: Option<Option<String>>,
+    pub secondary_color: Option<Option<String>>,
+    pub hover_color: Option<Option<String>>,
+    pub description: Option<Option<String>>,
 }

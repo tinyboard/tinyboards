@@ -38,7 +38,10 @@ impl<'des> Perform<'des> for GetSiteSettings {
         Ok(GetSiteSettingsResponse {
             site_mode,
             name: site.name,
-            color: site.color,
+            primary_color: site.primary_color,
+            secondary_color: site.secondary_color,
+            hover_color: site.hover_color,
+            description: site.description,
             enable_downvotes: site.enable_downvotes,
             enable_nsfw: site.enable_nsfw,
             application_question: site.application_question.unwrap_or_default(),
