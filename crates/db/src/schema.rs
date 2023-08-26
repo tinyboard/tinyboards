@@ -308,6 +308,8 @@ diesel::table! {
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
         reports_email_admins -> Bool,
+        name -> Varchar,
+        color -> Nullable<Varchar>,
     }
 }
 

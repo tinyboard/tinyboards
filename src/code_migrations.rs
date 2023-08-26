@@ -112,13 +112,14 @@ async fn initialize_local_site_and_admin_user(
         // add an entry to the site table
         let site_key_pair = generate_actor_keypair()?;
         let site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
+        let site_name = settings
+            .setup
+            .clone()
+            .map(|s| s.site_name)
+            .unwrap_or_else(|| "New Site".to_string());
 
         let site_form = SiteForm {
-            name: Some(settings
-                    .setup
-                    .clone()
-                    .map(|s| s.site_name)
-                    .unwrap_or_else(|| "New Site".to_string())),
+            name: Some(site_name.clone()),
             instance_id: Some(instance.id.clone()),
             actor_id: Some(site_actor_id.clone().into()),
             last_refreshed_date: Some(naive_now()),
@@ -132,6 +133,7 @@ async fn initialize_local_site_and_admin_user(
 
         let local_site_form = LocalSiteForm {
             site_id: Some(inserted_site.id),
+            name: Some(site_name),
             site_setup: Some(settings.setup.is_some()),
             open_registration: Some(true),
             invite_only: Some(false),

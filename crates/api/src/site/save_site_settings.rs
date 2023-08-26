@@ -35,7 +35,10 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let site = LocalSite::read(context.pool()).await?;
 
         let current_require_app = site.require_application;
+        let current_name = site.name.clone();
 
+        let new_name = data.name.clone();
+        let new_color = data.color.clone();
         let site_mode = data.site_mode;
         let enable_downvotes = data.enable_downvotes;
         let enable_nsfw = data.enable_nsfw;
@@ -43,6 +46,18 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let private_instance = data.private_instance;
         let email_verification_required = data.require_email_verification;
         let default_avatar = data.default_avatar.clone();
+
+        if let Some(ref new_name) = new_name {
+            if new_name.to_lowercase() != current_name.to_lowercase() {
+                return Err(TinyBoardsError::from_message(400, "You can only change the capitalization of your site's name!"));
+            }
+        }
+
+        if let Some(ref new_color) = new_color {
+            if new_color.len() > 12 {
+                return Err(TinyBoardsError::from_message(400, "Color must be a valid RGB value"));
+            }
+        }
 
         if let Some(application_question) = &application_question {
             if application_question.chars().count() > 300 {
@@ -79,6 +94,8 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         };
 
         let form = LocalSiteForm {
+            name: new_name,
+            color: Some(new_color),
             enable_downvotes,
             open_registration,
             enable_nsfw,
@@ -96,6 +113,8 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let updated_local_site = LocalSite::update(context.pool(), &form).await?;
 
         Ok(GetSiteSettingsResponse {
+            name: updated_local_site.name,
+            color: updated_local_site.color,
             site_mode: get_current_site_mode(&site, &site_mode),
             enable_downvotes: updated_local_site.enable_downvotes,
             enable_nsfw: updated_local_site.enable_nsfw,

@@ -35,6 +35,8 @@ pub struct LocalSite {
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub reports_email_admins: bool,
+    pub name: String,
+    pub color: Option<String>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -67,4 +69,6 @@ pub struct LocalSiteForm {
     pub captcha_difficulty: Option<String>,
     pub updated: Option<NaiveDateTime>,
     pub reports_email_admins: Option<bool>,
+    pub name: Option<String>,
+    pub color: Option<Option<String>>,
 }
