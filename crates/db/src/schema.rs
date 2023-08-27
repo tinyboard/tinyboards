@@ -313,6 +313,7 @@ diesel::table! {
         secondary_color -> Nullable<Varchar>,
         hover_color -> Nullable<Varchar>,
         description -> Nullable<Varchar>,
+        icon -> Nullable<Varchar>,
     }
 }
 

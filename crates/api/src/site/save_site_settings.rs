@@ -1,9 +1,10 @@
+use url::Url;
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetSiteSettingsResponse, SaveSiteSettings},
-    utils::{get_current_site_mode, require_user},
+    utils::{get_current_site_mode, require_user, purge_local_image_by_url},
 };
 use tinyboards_db::{
     models::{person::local_user::LocalUser, site::local_site::{LocalSite, LocalSiteForm}},
@@ -35,6 +36,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let site = LocalSite::read(context.pool()).await?;
 
         let current_require_app = site.require_application;
+        let current_icon = site.icon.clone();
         let _current_name = site.name.clone();
 
         let new_name = data.name.clone();
@@ -42,6 +44,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let secondary_color = data.secondary_color.clone();
         let hover_color = data.hover_color.clone();
         let description = data.description.clone();
+        let icon = data.icon.clone();
         let site_mode = data.site_mode;
         let enable_downvotes = data.enable_downvotes;
         let enable_nsfw = data.enable_nsfw;
@@ -61,6 +64,18 @@ impl<'des> Perform<'des> for SaveSiteSettings {
                 return Err(TinyBoardsError::from_message(400, "Color must be a valid RGB value"));
             }
         }*/
+
+        if let Some(ref icon) = icon {
+            if let Some(ref current_icon) = current_icon {
+                if icon != current_icon && !icon.is_empty() && !current_icon.is_empty() {
+                    let r = purge_local_image_by_url(context.pool(), &Url::parse(current_icon).unwrap().into()).await;
+
+                    if let Err(_) = r {
+                        eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_icon);
+                    }
+                }
+            }
+        }
 
         if let Some(application_question) = &application_question {
             if application_question.chars().count() > 300 {
@@ -102,6 +117,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             secondary_color: Some(secondary_color),
             hover_color: Some(hover_color),
             description: Some(description),
+            icon: Some(icon),
             enable_downvotes,
             open_registration,
             enable_nsfw,
@@ -124,6 +140,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             secondary_color: updated_local_site.secondary_color,
             hover_color: updated_local_site.hover_color,
             description: updated_local_site.description,
+            icon: updated_local_site.icon,
             site_mode: get_current_site_mode(&site, &site_mode),
             enable_downvotes: updated_local_site.enable_downvotes,
             enable_nsfw: updated_local_site.enable_nsfw,
