@@ -589,6 +589,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    pm_notif (id) {
+        id -> Int4,
+        recipient_id -> Int4,
+        pm_id -> Int4,
+        read -> Bool,
+        creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
     post_aggregates (id) {
         id -> Int4,
         post_id -> Int4,
@@ -669,6 +679,19 @@ diesel::table! {
         local -> Bool,
         featured_board -> Bool,
         featured_local -> Bool,
+    }
+}
+
+diesel::table! {
+    private_message (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        recipient_user_id -> Nullable<Int4>,
+        recipient_board_id -> Nullable<Int4>,
+        body -> Text,
+        body_html -> Text,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
     }
 }
 
@@ -822,6 +845,8 @@ diesel::joinable!(person_board_blocks -> boards (board_id));
 diesel::joinable!(person_board_blocks -> person (person_id));
 diesel::joinable!(person_mentions -> comments (comment_id));
 diesel::joinable!(person_mentions -> person (recipient_id));
+diesel::joinable!(pm_notif -> person (recipient_id));
+diesel::joinable!(pm_notif -> private_message (pm_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
 diesel::joinable!(post_read -> person (person_id));
 diesel::joinable!(post_read -> posts (post_id));
@@ -887,12 +912,14 @@ diesel::allow_tables_to_appear_in_same_query!(
     person_board_blocks,
     person_mentions,
     person_subscriber,
+    pm_notif,
     post_aggregates,
     post_read,
     post_report,
     post_saved,
     post_votes,
     posts,
+    private_message,
     registration_applications,
     secret,
     site,
