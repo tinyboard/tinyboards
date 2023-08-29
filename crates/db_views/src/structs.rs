@@ -4,15 +4,17 @@ use tinyboards_db::{
         BoardAggregates, CommentAggregates, PersonAggregates, PostAggregates, SiteAggregates,
     },
     models::{
-        board::boards::{BoardSafe, Board},
-        comment::{comment_reply::CommentReply, comments::Comment, comment_report::CommentReport},
+        board::boards::{Board, BoardSafe},
+        comment::{comment_reply::CommentReply, comment_report::CommentReport, comments::Comment},
+        emoji::{emoji::Emoji, emoji_keyword::EmojiKeyword},
+        message::message::Message,
         person::{local_user::*, person::*, person_mentions::*},
-        post::{posts::Post, post_report::PostReport},
+        post::{post_report::PostReport, posts::Post},
         site::{
             local_site::LocalSite, local_site_rate_limit::LocalSiteRateLimit,
             registration_applications::RegistrationApplication, site::Site,
             site_invite::SiteInvite,
-        }, emoji::{emoji::Emoji, emoji_keyword::EmojiKeyword},
+        },
     },
     SubscribedType,
 };
@@ -57,7 +59,7 @@ pub struct PostView {
     pub read: bool,                 // Left join PostRead
     pub creator_blocked: bool,      // Left join UserBlock
     pub my_vote: Option<i16>,       // Left join PostLike
-    pub report_count: Option<i64>
+    pub report_count: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -73,7 +75,7 @@ pub struct CommentView {
     pub creator_blocked: bool,
     pub my_vote: Option<i16>,
     pub replies: Vec<CommentView>,
-    pub report_count: Option<i64>
+    pub report_count: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -130,6 +132,16 @@ pub struct PersonMentionView {
     pub my_vote: Option<i16>,            // Left join to CommentLike
 }
 
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct MessageView {
+    pub message: Message,
+    pub creator: PersonSafe,
+    pub recipient_user: Option<PersonSafe>,
+    pub recipient_board: Option<BoardSafe>,
+    pub creator_banned_from_board: bool,
+    pub creator_blocked: bool,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SiteInviteView {
     pub invite: SiteInvite,
@@ -161,10 +173,10 @@ pub struct CommentReplyView {
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 pub struct RegistrationApplicationView {
-  pub application: RegistrationApplication,
-  pub applicant_settings: LocalUserSettings,
-  pub applicant: LocalUserSafe,
-  pub admin: Option<LocalUserSafe>,
+    pub application: RegistrationApplication,
+    pub applicant_settings: LocalUserSettings,
+    pub applicant: LocalUserSafe,
+    pub admin: Option<LocalUserSafe>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]

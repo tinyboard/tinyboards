@@ -3,7 +3,7 @@ use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = private_message)]
 pub struct Message {
     id: i32,
