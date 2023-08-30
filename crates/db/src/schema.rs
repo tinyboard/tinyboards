@@ -314,6 +314,7 @@ diesel::table! {
         hover_color -> Nullable<Varchar>,
         description -> Nullable<Varchar>,
         icon -> Nullable<Varchar>,
+        welcome_message -> Nullable<Varchar>,
     }
 }
 

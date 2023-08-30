@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     site::{GetSiteSettings, GetSiteSettingsResponse},
 };
 use tinyboards_db::{
-    models::{site::local_site::LocalSite}, SiteMode
+    models::site::local_site::LocalSite, SiteMode
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -48,7 +48,8 @@ impl<'des> Perform<'des> for GetSiteSettings {
             application_question: site.application_question.unwrap_or_default(),
             private_instance: site.private_instance,
             require_email_verification: site.require_email_verification,
-            default_avatar: site.default_avatar.unwrap_or_default(),            
+            default_avatar: site.default_avatar.unwrap_or_default(),
+            welcome_message: site.welcome_message,            
         })
     }
 }

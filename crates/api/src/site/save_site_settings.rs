@@ -52,6 +52,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let private_instance = data.private_instance;
         let email_verification_required = data.require_email_verification;
         let default_avatar = data.default_avatar.clone();
+        let welcome_message = data.welcome_message.clone();
 
         /*if let Some(ref new_name) = new_name {
             if new_name.to_lowercase() != current_name.to_lowercase() {
@@ -80,6 +81,12 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         if let Some(application_question) = &application_question {
             if application_question.chars().count() > 300 {
                 return Err(TinyBoardsError::from_message(400, "question too long"));
+            }
+        }
+
+        if let Some(welcome_message) = &welcome_message {
+            if welcome_message.chars().count() > 255 {
+                return Err(TinyBoardsError::from_message(400, "welcome message too long"))
             }
         }
 
@@ -127,6 +134,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             require_email_verification: email_verification_required,
             invite_only,
             default_avatar: Some(default_avatar),
+            welcome_message,
             updated: Some(naive_now()),
             ..LocalSiteForm::default()
         };
@@ -148,6 +156,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             private_instance: updated_local_site.private_instance,
             require_email_verification: updated_local_site.require_email_verification,
             default_avatar: updated_local_site.default_avatar.unwrap_or_default(),
+            welcome_message: updated_local_site.welcome_message,
         })
     }
 }

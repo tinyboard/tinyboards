@@ -1,0 +1,1 @@
+alter table local_site add column welcome_message varchar(255) default '';

@@ -41,6 +41,7 @@ pub struct LocalSite {
     pub hover_color: Option<String>,
     pub description: Option<String>,
     pub icon: Option<String>,
+    pub welcome_message: Option<String>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -79,4 +80,5 @@ pub struct LocalSiteForm {
     pub hover_color: Option<Option<String>>,
     pub description: Option<Option<String>>,
     pub icon: Option<Option<String>>,
+    pub welcome_message: Option<String>,
 }
