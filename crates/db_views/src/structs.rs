@@ -7,7 +7,7 @@ use tinyboards_db::{
         board::boards::{Board, BoardSafe},
         comment::{comment_reply::CommentReply, comment_report::CommentReport, comments::Comment},
         emoji::{emoji::Emoji, emoji_keyword::EmojiKeyword},
-        message::message::Message,
+        message::message::{Message, MessageNotif},
         person::{local_user::*, person::*, person_mentions::*},
         post::{post_report::PostReport, posts::Post},
         site::{
@@ -135,6 +135,7 @@ pub struct PersonMentionView {
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct MessageView {
     pub message: Message,
+    pub notif: Option<MessageNotif>,
     pub creator: PersonSafe,
     pub recipient_user: Option<PersonSafe>,
     pub recipient_board: Option<BoardSafe>,

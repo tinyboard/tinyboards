@@ -27,7 +27,7 @@ pub struct MessageForm {
     pub updated: Option<Option<NaiveDateTime>>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = pm_notif)]
 pub struct MessageNotif {
     id: i32,
