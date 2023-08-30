@@ -1,5 +1,15 @@
 {
     "rust-analyzer.linkedProjects": [
         "./crates/db/Cargo.toml"
-    ]
+    ],
+    "rust-analyzer.files.excludeDirs": [
+        "./target"
+    ],
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/node_modules/*/**": true,
+        "**/.hg/store/**": true,
+        "**/target/**": true
+    }
 }

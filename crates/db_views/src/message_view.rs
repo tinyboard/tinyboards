@@ -1,24 +1,18 @@
 use tinyboards_db::{
     models::{
-        board::{
-            board_person_bans::BoardPersonBan,
-            boards::{Board, BoardSafe},
-        },
+        board::{board_person_bans::BoardPersonBan, boards::BoardSafe},
         message::message::Message,
-        person::{
-            person::{Person, PersonSafe},
-            person_blocks::PersonBlock,
-        },
+        person::{person::PersonSafe, person_blocks::PersonBlock},
     },
-    schema::{board_person_bans, boards, person, person_blocks, private_message},
+    schema::{board_person_bans, boards, person, person_blocks, pm_notif, private_message},
     traits::ToSafe,
     utils::{get_conn, DbPool},
 };
 use tinyboards_utils::TinyBoardsError;
 
 use diesel::{
-    dsl::now, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
-    PgExpressionMethods, QueryDsl,
+    dsl::{count, now},
+    BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl,
 };
 
 use diesel_async::RunQueryDsl;
@@ -97,5 +91,40 @@ impl MessageView {
             creator_banned_from_board: banned.is_some(),
             creator_blocked: blocked.is_some(),
         })
+    }
+
+    pub async fn get_unread_count(pool: &DbPool, person_id: i32) -> Result<i64, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        pm_notif::table
+            .filter(
+                pm_notif::recipient_id
+                    .eq(person_id)
+                    .and(pm_notif::read.eq(false)),
+            )
+            .select(count(pm_notif::id))
+            .first::<i64>(conn)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to get unread message count")
+            })
+    }
+
+    /// Marks all unread messages as read for a user
+    pub async fn mark_all_messages_as_read(
+        pool: &DbPool,
+        person_id: i32,
+    ) -> Result<usize, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        diesel::update(pm_notif::table)
+            .filter(pm_notif::read.eq(false))
+            .filter(pm_notif::recipient_id.eq(person_id))
+            .set(pm_notif::read.eq(true))
+            .execute(conn)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to mark messages as read")
+            })
     }
 }
