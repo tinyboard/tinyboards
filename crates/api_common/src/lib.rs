@@ -3,8 +3,9 @@ pub mod applications;
 pub mod board;
 pub mod build_response;
 pub mod comment;
-pub mod emoji;
 pub mod data;
+pub mod emoji;
+pub mod message;
 pub mod moderator;
 pub mod person;
 pub mod post;
@@ -15,18 +16,17 @@ pub mod utils;
 pub mod websocket;
 
 use crate::data::TinyBoardsContext;
+use crate::site::GetFile;
 use actix_files::NamedFile;
 use actix_web::{
     web::{Data, Path, Query},
-    HttpRequest,
-    HttpResponse,
+    HttpRequest, HttpResponse,
 };
 use image::{DynamicImage, GenericImageView, ImageFormat};
 use std::io::Cursor;
 use std::path::PathBuf;
 use tinyboards_db::models::site::uploads::Upload;
 use tinyboards_utils::TinyBoardsError;
-use crate::site::GetFile;
 
 impl GetFile {
     pub async fn perform(

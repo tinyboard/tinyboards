@@ -1,18 +1,19 @@
 use crate::SendActivity;
 use tinyboards_api_common::{
-    comment::*,
-    moderator::*,
-    person::*,
-    board::*,
-    post::*,
-    site::*,
     admin::*,
     applications::*,
-    emoji::*, 
-    data::TinyBoardsContext, 
+    board::*,
+    comment::*,
+    data::TinyBoardsContext,
+    emoji::*,
+    message::{GetMessages, GetMessagesResponse},
+    moderator::*,
+    person::*,
+    post::*,
+    site::*,
 };
 use tinyboards_db::models::moderator::mod_actions::{ModBan, ModRemoveBoard};
-use tinyboards_db_views::structs::{LoggedInUserView, CommentView};
+use tinyboards_db_views::structs::{CommentView, LoggedInUserView};
 use tinyboards_federation::config::Data;
 use tinyboards_utils::TinyBoardsError;
 
@@ -24,7 +25,9 @@ impl SendActivity for Register {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -35,7 +38,9 @@ impl SendActivity for GetFederatedInstances {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -46,7 +51,9 @@ impl SendActivity for PurgeBoard {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -57,7 +64,9 @@ impl SendActivity for PurgePost {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -68,7 +77,9 @@ impl SendActivity for PurgeComment {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -79,7 +90,9 @@ impl SendActivity for PurgePerson {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -90,7 +103,9 @@ impl SendActivity for HandleRegistrationApplication {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -101,7 +116,9 @@ impl SendActivity for ListRegistrationApplications {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -112,7 +129,9 @@ impl SendActivity for Search {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -123,7 +142,9 @@ impl SendActivity for AddAdmin {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -134,7 +155,9 @@ impl SendActivity for LeaveAdmin {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -145,7 +168,9 @@ impl SendActivity for GetSite {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -156,7 +181,9 @@ impl SendActivity for ListComments {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -167,7 +194,9 @@ impl SendActivity for Profile {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -178,7 +207,9 @@ impl SendActivity for GetLoggedInUser {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -189,7 +220,9 @@ impl SendActivity for GetMembers {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -200,7 +233,9 @@ impl SendActivity for GetUserSettings {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -211,7 +246,9 @@ impl SendActivity for SaveUserSettings {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -222,7 +259,9 @@ impl SendActivity for PasswordResetRequest {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -233,7 +272,9 @@ impl SendActivity for ExecutePasswordReset {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -244,7 +285,9 @@ impl SendActivity for CreateSiteInvite {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -255,7 +298,9 @@ impl SendActivity for ValidateSiteInvite {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -266,7 +311,9 @@ impl SendActivity for GetPost {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -277,7 +324,9 @@ impl SendActivity for GetPosts {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -288,7 +337,9 @@ impl SendActivity for PostModQueue {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -299,7 +350,9 @@ impl SendActivity for CommentModQueue {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -309,8 +362,10 @@ impl SendActivity for GetPostReports {
         _request: &Self,
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
-        _auth: Option<&str>
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -321,7 +376,9 @@ impl SendActivity for GetComment {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -332,7 +389,9 @@ impl SendActivity for GetComments {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -342,10 +401,11 @@ impl SendActivity for GetCommentReports {
         _request: &Self,
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
-        _auth: Option<&str>
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
-
 
 #[async_trait::async_trait]
 impl SendActivity for Login {
@@ -355,7 +415,9 @@ impl SendActivity for Login {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -366,7 +428,9 @@ impl SendActivity for GetCommentReplies {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -377,7 +441,22 @@ impl SendActivity for GetPersonMentions {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl SendActivity for GetMessages {
+    type Response = GetMessagesResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -388,7 +467,9 @@ impl SendActivity for SearchNames {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -399,7 +480,9 @@ impl SendActivity for SavePost {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -410,7 +493,9 @@ impl SendActivity for SaveComment {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -421,7 +506,9 @@ impl SendActivity for BanUser {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -432,7 +519,9 @@ impl SendActivity for BanBoard {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -443,7 +532,9 @@ impl SendActivity for DeleteFile {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -454,9 +545,10 @@ impl SendActivity for VerifyEmail {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
-
 
 #[async_trait::async_trait]
 impl SendActivity for GetSiteSettings {
@@ -466,7 +558,9 @@ impl SendActivity for GetSiteSettings {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -477,8 +571,9 @@ impl SendActivity for SaveSiteSettings {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -489,8 +584,9 @@ impl SendActivity for GetUnreadCount {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -501,8 +597,22 @@ impl SendActivity for MarkAllMentionsRead {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
 
+#[async_trait::async_trait]
+impl SendActivity for MarkAllMessagesRead {
+    type Response = ();
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -513,8 +623,9 @@ impl SendActivity for MarkAllRepliesRead {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -525,8 +636,9 @@ impl SendActivity for ListPostReports {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -537,8 +649,9 @@ impl SendActivity for ResolvePostReport {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -549,8 +662,9 @@ impl SendActivity for ListCommentReports {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -561,8 +675,9 @@ impl SendActivity for ResolveCommentReport {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -573,8 +688,9 @@ impl SendActivity for GetPersonDetails {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -585,8 +701,9 @@ impl SendActivity for GetBoard {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -597,8 +714,9 @@ impl SendActivity for ResolveObject {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -609,8 +727,9 @@ impl SendActivity for CreateBoard {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -621,8 +740,9 @@ impl SendActivity for GetPostComments {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -633,8 +753,9 @@ impl SendActivity for RemoveBoard {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -645,8 +766,9 @@ impl SendActivity for ListSiteInvites {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -657,8 +779,9 @@ impl SendActivity for DeleteSiteInvite {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -669,8 +792,9 @@ impl SendActivity for CreateEmoji {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -681,8 +805,9 @@ impl SendActivity for EditEmoji {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]
@@ -693,6 +818,7 @@ impl SendActivity for DeleteEmoji {
         _response: &Self::Response,
         _context: &Data<TinyBoardsContext>,
         _auth: Option<&str>,
-    ) -> Result<(), TinyBoardsError> { Ok(()) }
-
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
 }

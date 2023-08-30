@@ -143,9 +143,9 @@ impl MessageView {
 pub struct MessageQuery<'a> {
     #[builder(!default)]
     pool: &'a DbPool,
-    person_id: Option<i32>,
+    #[builder(!default)]
+    person_id: i32,
     board_id: Option<i32>,
-    // creator_id: Option<i32>,
     unread_only: Option<bool>,
     page: Option<i64>,
     limit: Option<i64>,
@@ -164,7 +164,7 @@ impl<'a> MessageQuery<'a> {
 
         let person_alias = diesel::alias!(person as person_alias);
 
-        let person_id_join = self.person_id.unwrap_or(-1);
+        let person_id_join = self.person_id;
 
         let mut query = private_message::table
             .left_join(

@@ -1,8 +1,11 @@
 use crate::sensitive::Sensitive;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{newtypes::DbUrl};
-use tinyboards_db_views::structs::{LocalUserSettingsView, PersonMentionView, CommentReplyView, LoggedInUserView, PersonView, CommentView, PostView, BoardModeratorView};
+use tinyboards_db::newtypes::DbUrl;
+use tinyboards_db_views::structs::{
+    BoardModeratorView, CommentReplyView, CommentView, LocalUserSettingsView, LoggedInUserView,
+    PersonMentionView, PersonView, PostView,
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct Login {
@@ -84,7 +87,6 @@ pub struct GetUserSettingsResponse {
     pub settings: LocalUserSettingsView,
 }
 
-
 /// Struct for saving user settings, update this with any additional settings we need to be able to set
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SaveUserSettings {
@@ -160,9 +162,10 @@ pub struct GetUnreadCount {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetUnreadCountResponse {
-  pub replies: i64,
-  pub mentions: i64,
-  pub total_count: i64,
+    pub replies: i64,
+    pub mentions: i64,
+    pub messages: i64,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -171,6 +174,8 @@ pub struct MarkAllMentionsRead {}
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct MarkAllRepliesRead {}
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct MarkAllMessagesRead {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UsernameInfo {
@@ -198,18 +203,17 @@ pub struct BanPerson {
     pub expires: Option<i64>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// A response for a banned person.
 pub struct BanPersonResponse {
-  pub person_view: PersonView,
-  pub banned: bool,
+    pub person_view: PersonView,
+    pub banned: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Delete your account.
 pub struct DeleteAccount {
-  pub password: String,
+    pub password: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -218,29 +222,28 @@ pub struct DeleteAccount {
 /// The response of deleting your account.
 pub struct DeleteAccountResponse {}
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Gets a person's details.
 ///
 /// Either person_id, or username are required.
 pub struct GetPersonDetails {
-  pub person_id: Option<i32>,
-  /// Example: kroner , or kroner@xyz.tld
-  pub username: Option<String>,
-  pub sort: Option<String>,
-  pub page: Option<i64>,
-  pub limit: Option<i64>,
-  pub board_id: Option<i32>,
-  pub saved_only: Option<bool>,
+    pub person_id: Option<i32>,
+    /// Example: kroner , or kroner@xyz.tld
+    pub username: Option<String>,
+    pub sort: Option<String>,
+    pub page: Option<i64>,
+    pub limit: Option<i64>,
+    pub board_id: Option<i32>,
+    pub saved_only: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// A person's details response.
 pub struct GetPersonDetailsResponse {
-  pub person_view: PersonView,
-  pub comments: Vec<CommentView>,
-  pub posts: Vec<PostView>,
-  pub comments_count_total: i64,
-  pub posts_count_total: i64,
-  pub moderates: Vec<BoardModeratorView>,
+    pub person_view: PersonView,
+    pub comments: Vec<CommentView>,
+    pub posts: Vec<PostView>,
+    pub comments_count_total: i64,
+    pub posts_count_total: i64,
+    pub moderates: Vec<BoardModeratorView>,
 }

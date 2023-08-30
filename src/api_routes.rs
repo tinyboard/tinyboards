@@ -3,22 +3,22 @@ use actix_web::*;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
-    admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, moderator::*,
-    person::*, post::*, site::*, emoji::*,
+    admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, emoji::*,
+    message::GetMessages, moderator::*, person::*, post::*, site::*,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
-    cfg
-        .service(
+    cfg.service(
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/members", web::get().to(route_get::<GetMembers>))
             .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
+            .route("/messages", web::get().to(route_get_crud::<GetMessages>))
             // resolve federated objects (object => post, person, board or comment)
             .route(
                 "/resolve_object",
@@ -86,6 +86,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route(
                         "/replies/mark_read",
                         web::post().to(route_post::<MarkAllRepliesRead>),
+                    )
+                    .route(
+                        "/messages/mark_read",
+                        web::post().to(route_post::<MarkAllMessagesRead>),
                     ),
             )
             // Board
@@ -109,7 +113,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
                     .route("/list", web::get().to(route_get_apub::<GetPosts>))
-                    .route("/toggle_remove", web::post().to(route_post_crud::<TogglePostRemove>))
+                    .route(
+                        "/toggle_remove",
+                        web::post().to(route_post_crud::<TogglePostRemove>),
+                    )
                     .route("/lock", web::post().to(route_post::<LockPost>))
                     .route("/report", web::post().to(route_post::<CreatePostReport>))
                     .route("/reports", web::get().to(route_get::<GetPostReports>))
@@ -142,7 +149,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/comment")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateComment>))
-                    .route("/toggle_remove", web::post().to(route_post_crud::<ToggleCommentRemove>))
+                    .route(
+                        "/toggle_remove",
+                        web::post().to(route_post_crud::<ToggleCommentRemove>),
+                    )
                     .route("/list", web::get().to(route_get_apub::<GetComments>))
                     .route("/report", web::post().to(route_post::<CreateCommentReport>))
                     .route("/reports", web::get().to(route_get::<GetCommentReports>))
@@ -181,7 +191,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/feature_post", web::post().to(route_post::<FeaturePost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
-                    .route("/queue/comments", web::get().to(route_get::<CommentModQueue>))
+                    .route(
+                        "/queue/comments",
+                        web::get().to(route_get::<CommentModQueue>),
+                    ),
             )
             // Admin Actions
             .service(
@@ -218,10 +231,13 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/application/{app_id}",
                         web::post().to(route_post::<HandleRegistrationApplication>),
                     )
-                // Custom Emojis
-                .route("/emoji", web::post().to(route_post_crud::<CreateEmoji>))
-                .route("/emoji", web::put().to(route_post_crud::<EditEmoji>))
-                .route("/emoji/{emoji_id}", web::delete().to(route_post_crud::<DeleteEmoji>)),
+                    // Custom Emojis
+                    .route("/emoji", web::post().to(route_post_crud::<CreateEmoji>))
+                    .route("/emoji", web::put().to(route_post_crud::<EditEmoji>))
+                    .route(
+                        "/emoji/{emoji_id}",
+                        web::delete().to(route_post_crud::<DeleteEmoji>),
+                    ),
             ),
     );
 }
@@ -333,7 +349,7 @@ where
         + Clone
         + Deserialize<'a>
         + Send
-        + 'static
+        + 'static,
 {
     let auth_header = get_auth(&req);
     let res = data
@@ -378,7 +394,7 @@ where
         + Clone
         + Deserialize<'a>
         + Send
-        + 'static
+        + 'static,
 {
     perform_crud::<Data>(data.0, context, apub_data, path, req).await
 }
@@ -388,15 +404,15 @@ async fn route_get_crud<'a, Data>(
     context: web::Data<TinyBoardsContext>,
     apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<Data::Route>,
-    req: HttpRequest
-) -> Result<HttpResponse, Error> 
+    req: HttpRequest,
+) -> Result<HttpResponse, Error>
 where
     Data: PerformCrud<'a>
         + SendActivity<Response = <Data as PerformCrud<'a>>::Response>
         + Clone
         + Deserialize<'a>
-        + Send 
-        + 'static
+        + Send
+        + 'static,
 {
     perform_crud::<Data>(data.0, context, apub_data, path, req).await
 }
