@@ -13,7 +13,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload, local_site_rate_limit::LocalSiteRateLimit},
-        person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance,
+        person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance, message::message::{MessageForm, Message},
     },
     traits::Crud, SiteMode, 
     utils::{DbPool, naive_now},
@@ -24,7 +24,7 @@ use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
     settings::structs::{RateLimitSettings, Settings},
-    email::{send_email, /*translations::Lang*/}, location_info,
+    email::{send_email, /*translations::Lang*/}, location_info, parser::parse_markdown_opt,
 };
 use uuid::Uuid;
 use base64::{
@@ -484,6 +484,24 @@ pub fn is_admin(local_user_view: &LocalUserView) -> Result<(), TinyBoardsError> 
     if !local_user_view.person.is_admin {
         return Err(TinyBoardsError::from_message(400, "not an admin"));
     }
+    Ok(())
+}
+
+pub async fn send_system_message(pool: &DbPool, recipient_user_id: Option<i32>, recipient_board_id: Option<i32>, body: String) -> Result<(), TinyBoardsError> {
+    let body = body + "\n\n*This message was sent automatically. Contact the admins if you have any questions.*";
+    let body_html = parse_markdown_opt(&body);
+
+    let form = MessageForm {
+        creator_id: Some(1),
+        recipient_user_id: Some(recipient_user_id),
+        recipient_board_id: Some(recipient_board_id),
+        body: Some(body),
+        body_html,
+        ..MessageForm::default()
+    };
+
+    Message::submit(pool, form).await?;
+
     Ok(())
 }
 

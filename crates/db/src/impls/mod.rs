@@ -1,9 +1,10 @@
+pub mod apub;
+pub mod board;
+pub mod comment;
+pub mod emoji;
+pub mod message;
+pub mod moderation;
 pub mod person;
 pub mod post;
-pub mod board;
 pub mod secret;
-pub mod comment;
 pub mod site;
-pub mod moderation;
-pub mod apub;
-pub mod emoji;
