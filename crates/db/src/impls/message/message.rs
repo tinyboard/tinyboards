@@ -1,4 +1,5 @@
-use crate::schema::private_message::dsl::*;
+use crate::models::message::message::{MessageNotif, MessageNotifForm};
+use crate::schema::{pm_notif::dsl::*, private_message::dsl::*};
 use crate::{
     models::message::message::{Message, MessageForm},
     traits::Crud,
@@ -42,6 +43,36 @@ impl Crud for Message {
     async fn update(pool: &DbPool, message_id: i32, form: &MessageForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         diesel::update(private_message.find(message_id))
+            .set(form)
+            .get_result::<Self>(conn)
+            .await
+    }
+}
+
+#[async_trait::async_trait]
+impl Crud for MessageNotif {
+    type Form = MessageNotifForm;
+    type IdType = i32;
+
+    async fn read(pool: &DbPool, notif_id: i32) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        pm_notif.find(notif_id).first::<Self>(conn).await
+    }
+    async fn delete(pool: &DbPool, notif_id: i32) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
+        diesel::delete(pm_notif.find(notif_id)).execute(conn).await
+    }
+    async fn create(pool: &DbPool, form: &MessageNotifForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        let new_notif = diesel::insert_into(pm_notif)
+            .values(form)
+            .get_result::<Self>(conn)
+            .await?;
+        Ok(new_notif)
+    }
+    async fn update(pool: &DbPool, notif_id: i32, form: &MessageNotifForm) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(pm_notif.find(notif_id))
             .set(form)
             .get_result::<Self>(conn)
             .await

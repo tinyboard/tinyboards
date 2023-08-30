@@ -13,7 +13,7 @@ use tinyboards_db::{
         post::posts::Post,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload, local_site_rate_limit::LocalSiteRateLimit},
-        person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance, message::message::{MessageForm, Message},
+        person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance, message::message::{MessageForm, Message, MessageNotifForm, MessageNotif},
     },
     traits::Crud, SiteMode, 
     utils::{DbPool, naive_now},
@@ -500,7 +500,20 @@ pub async fn send_system_message(pool: &DbPool, recipient_user_id: Option<i32>, 
         ..MessageForm::default()
     };
 
-    Message::submit(pool, form).await?;
+    let message = Message::submit(pool, form).await?;
+
+    if let Some(user_id) = recipient_user_id {
+        // create notification
+        let form = MessageNotifForm {
+            recipient_id: Some(user_id),
+            pm_id: Some(message.id),
+            ..MessageNotifForm::default()
+        };
+
+        MessageNotif::create(pool, &form)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to save message notification :("))?;
+    }
 
     Ok(())
 }

@@ -2,7 +2,7 @@ use crate::PerformCrud;
 use actix_web::web::Data;
 use regex::Regex;
 use tinyboards_api_common::data::TinyBoardsContext;
-use tinyboards_api_common::utils::send_new_applicant_email_to_admins;
+use tinyboards_api_common::utils::{send_new_applicant_email_to_admins, send_system_message};
 use tinyboards_api_common::{
     person::{Register, SignupResponse},
     sensitive::Sensitive,
@@ -90,7 +90,14 @@ impl<'des> PerformCrud<'des> for Register {
         )?;
 
         // set default profile pic
-        let pfp_url = Url::parse(format!("{}/media/default_pfp.png", context.settings().get_protocol_and_hostname()).as_str()).unwrap();
+        let pfp_url = Url::parse(
+            format!(
+                "{}/media/default_pfp.png",
+                context.settings().get_protocol_and_hostname()
+            )
+            .as_str(),
+        )
+        .unwrap();
 
         // now we need to create both a local_user and a person (for apub)
         let person_form = PersonForm {
@@ -108,6 +115,17 @@ impl<'des> PerformCrud<'des> for Register {
         let person = Person::create(context.pool(), &person_form).await?;
 
         let passhash = hash_password(data.password.unpack());
+
+        // send welcome message
+        // TODO: make this customizable
+        let _ = send_system_message(
+            context.pool(),
+            Some(person.id),
+            None,
+            String::from("Welcome aboard!"),
+        )
+        .await
+        .map_err(|e| eprintln!("Sending welcome message failed: {}", e));
 
         let local_user_form = LocalUserForm {
             name: Some(data.username.clone()),

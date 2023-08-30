@@ -6,14 +6,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = private_message)]
 pub struct Message {
-    id: i32,
-    creator_id: i32,
-    recipient_user_id: Option<i32>,
-    recipient_board_id: Option<i32>,
-    body: String,
-    body_html: String,
-    published: NaiveDateTime,
-    updated: Option<NaiveDateTime>,
+    pub id: i32,
+    pub creator_id: i32,
+    pub recipient_user_id: Option<i32>,
+    pub recipient_board_id: Option<i32>,
+    pub body: String,
+    pub body_html: String,
+    pub published: NaiveDateTime,
+    pub updated: Option<NaiveDateTime>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -40,7 +40,7 @@ pub struct MessageNotif {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = pm_notif)]
 pub struct MessageNotifForm {
-    recipient_id: Option<i32>,
-    pm_id: Option<i32>,
-    read: Option<bool>,
+    pub recipient_id: Option<i32>,
+    pub pm_id: Option<i32>,
+    pub read: Option<bool>,
 }
