@@ -117,15 +117,16 @@ impl<'des> PerformCrud<'des> for Register {
         let passhash = hash_password(data.password.unpack());
 
         // send welcome message
-        // TODO: make this customizable
-        let _ = send_system_message(
-            context.pool(),
-            Some(person.id),
-            None,
-            String::from("Welcome aboard!"),
-        )
-        .await
-        .map_err(|e| eprintln!("Sending welcome message failed: {}", e));
+        if let Some(ref welcome_message) = local_site.welcome_message {
+            let _ = send_system_message(
+                context.pool(),
+                Some(person.id),
+                None,
+                welcome_message.clone(),
+            )
+            .await
+            .map_err(|e| eprintln!("Sending welcome message failed: {}", e));
+        }
 
         let local_user_form = LocalUserForm {
             name: Some(data.username.clone()),
