@@ -159,7 +159,7 @@ impl Object for ApubPerson {
             ..PersonForm::default()
         };
         
-        let person = DbPerson::create(context.pool(), &person_form).await?;
+        let person = DbPerson::upsert(context.pool(), &person_form).await?;
         
         Ok(person.into())
     }

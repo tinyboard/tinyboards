@@ -133,10 +133,7 @@ impl CreateOrUpdateNote {
       .collect();
     let mut inboxes = vec![];
     for t in tagged_users {
-
-      info!("Trying to dereference a mentioned person: {}", t);
       let person = t.dereference(context).await?;
-      info!("Person was successfully dereferenced");
       inboxes.push(person.shared_inbox_or_inbox());
     }
 

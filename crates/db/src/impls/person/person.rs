@@ -55,7 +55,22 @@ impl Person {
           ))
           .get_result::<Self>(conn)
           .await
-      }
+    }
+
+    /// Update or insert the person.
+    /// 
+    /// necessary for federation because Apub does not distinguish between these actions
+    pub async fn upsert(pool: &DbPool, form: &PersonForm) -> Result<Person, Error> {
+        let conn = &mut get_conn(pool).await?;
+        diesel::insert_into(person::table)
+            .values(form)
+            .on_conflict(person::actor_id)
+            .do_update()
+            .set(form)
+            .get_result::<Self>(conn)
+            .await
+    }
+
 }
 
 
