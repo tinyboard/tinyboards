@@ -44,6 +44,7 @@ use tinyboards_db::{
 use tinyboards_utils::{error::TinyBoardsError, utils::scrape_text_for_mentions};
 use url::Url;
 
+use tracing::debug;
 
 #[async_trait::async_trait]
 impl SendActivity for CreateComment {
@@ -132,7 +133,10 @@ impl CreateOrUpdateNote {
       .collect();
     let mut inboxes = vec![];
     for t in tagged_users {
+
+      debug!("Trying to dereference a mentioned person: {}", t);
       let person = t.dereference(context).await?;
+      debug!("Person was successfully dereferenced");
       inboxes.push(person.shared_inbox_or_inbox());
     }
 

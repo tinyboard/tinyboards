@@ -2,6 +2,7 @@ use crate::{config::Data, error::Error, fetch::fetch_object_http, traits::Object
 use anyhow::anyhow;
 use chrono::{Duration as ChronoDuration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use std::{
     fmt::{Debug, Display, Formatter},
     marker::PhantomData,
@@ -92,7 +93,9 @@ where
     ) -> Result<Kind, <Kind as Object>::Error>
     where
         <Kind as Object>::Error: From<Error> + From<anyhow::Error>,
-    {
+    {   
+
+        info!("before dereferencing from the database...");
         let db_object = self.dereference_from_db(data).await?;
 
         // if its a local object, only fetch it from the database and not over http
@@ -115,6 +118,7 @@ where
         }
         // object not found, need to fetch over http
         else {
+            info!("actually need to try and dereference over HTTP...");
             self.dereference_from_http(data, None).await
         }
     }
