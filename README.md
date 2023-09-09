@@ -1,6 +1,6 @@
 # TinyBoards Backend
 
-# NOTE: this is a severely outdated readme, we need to update this at some point because the deployment method has changed a lot :(
+# NOTE: this is a severely outdated readme, we need to update this at some point because the deployment method has changed a lot 
 
 ## Local Installation for Development: 
 
