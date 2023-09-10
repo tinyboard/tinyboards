@@ -59,3 +59,15 @@ pub struct AddAdminResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct LeaveAdmin {}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ListBannedPersons {
+    pub limit: Option<i64>,
+    pub page: Option<i64>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ListBannedPersonsResponse {
+    pub persons: Vec<PersonView>,
+    pub total_count: i64,
+}

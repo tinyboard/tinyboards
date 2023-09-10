@@ -2,8 +2,8 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    admin::{LeaveAdmin},
-    utils::{require_user}, 
+    admin::LeaveAdmin,
+    utils::require_user, 
     site::GetSiteResponse
 };
 use tinyboards_db::{
