@@ -35,7 +35,7 @@ Each Tinyboards server can set it's own moderation policies and be ran however t
    2. `CTRL+X`in order to save and exit the file (type Y and press enter when it asks if you want to save)
    3. `source ~/.bashrc`(reloads the bashrc file)
 7. Install Diesel CLI by opening a terminal in your IDE and then enter `cargo install diesel_cli --no-default-features --features postgres`
-8. Try running all the migrations to see if the database setup is working: `diesel migrations run`
+8. Try running all the migrations to see if the database setup is working: `diesel migration run`
 9. If the migrations work then you should now have everything you need to start developing locally, you can try building the server now by using `cargo build` and if you want to try running the webserver to test things you can use `cargo run`
 
 ---
