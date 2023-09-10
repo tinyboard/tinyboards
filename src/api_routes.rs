@@ -203,7 +203,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
                     .route("/hide_board", web::post().to(route_post::<HideBoard>))
-                    .route("/list_bans", web::post().to(route_post::<ListBannedPersons>))
+                    .route("/list_bans", web::get().to(route_get::<ListBannedPersons>))
                     .route(
                         "/site_settings",
                         web::get().to(route_get::<GetSiteSettings>),
