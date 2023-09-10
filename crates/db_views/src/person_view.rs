@@ -272,7 +272,6 @@ impl<'a> PersonQuery<'a> {
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .select(PersonSafe::safe_columns_tuple())
             .filter(person::is_deleted.eq(false))
-            .filter(person::is_banned.eq(false))
             .into_boxed();
 
         if let Some(search_term) = self.search_term {
@@ -300,8 +299,7 @@ impl<'a> PersonQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(person::is_deleted.eq(false))
-            .filter(person::is_banned.eq(false));
+            .filter(person::is_deleted.eq(false));
 
         let res = query.load::<PersonViewTuple>(conn).await?;
 
