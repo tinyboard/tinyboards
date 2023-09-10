@@ -186,16 +186,12 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .service(
                 web::scope("/mod")
                     .route("/ban", web::post().to(route_post::<ToggleBan>))
-                    .route("/list_bans", web::post().to(route_post::<ListBannedPersons>))
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     .route("/ban_board", web::post().to(route_post::<BanBoard>))
                     .route("/feature_post", web::post().to(route_post::<FeaturePost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
-                    .route(
-                        "/queue/comments",
-                        web::get().to(route_get::<CommentModQueue>),
-                    ),
+                    .route("/queue/comments", web::get().to(route_get::<CommentModQueue>)),
             )
             // Admin Actions
             .service(
@@ -207,6 +203,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
                     .route("/hide_board", web::post().to(route_post::<HideBoard>))
+                    .route("/list_bans", web::post().to(route_post::<ListBannedPersons>))
                     .route(
                         "/site_settings",
                         web::get().to(route_get::<GetSiteSettings>),
