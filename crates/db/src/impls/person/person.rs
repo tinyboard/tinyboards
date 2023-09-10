@@ -32,6 +32,19 @@ impl Person {
             .await
     }
 
+    pub async fn update_ban(
+        pool: &DbPool,
+        id_: i32,
+        new_banned: bool,
+    ) -> Result<Self, Error> {
+        use crate::schema::person::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(person.find(id_))
+            .set((is_banned.eq(new_banned), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
+
     pub async fn delete_account(pool: &DbPool, person_id: i32) -> Result<Person, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::local_user;

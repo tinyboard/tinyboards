@@ -3,7 +3,7 @@ use tinyboards_db::traits::{Crud, Moderateable};
 use tinyboards_db::utils::DbPool;
 use tinyboards_utils::TinyBoardsError;
 
-pub mod mod_ban_user;
+pub mod mod_ban_person;
 pub mod mod_remove_board;
 pub mod mod_remove_object;
 pub mod mod_queue_posts;

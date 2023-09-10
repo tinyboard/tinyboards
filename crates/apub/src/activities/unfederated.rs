@@ -499,7 +499,7 @@ impl SendActivity for SaveComment {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for BanUser {
+impl SendActivity for ToggleBan {
     type Response = ModActionResponse<ModBan>;
     async fn send_activity(
         _request: &Self,

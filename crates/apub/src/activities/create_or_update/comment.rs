@@ -44,8 +44,6 @@ use tinyboards_db::{
 use tinyboards_utils::{error::TinyBoardsError, utils::scrape_text_for_mentions};
 use url::Url;
 
-use tracing::info;
-
 #[async_trait::async_trait]
 impl SendActivity for CreateComment {
   type Response = CommentResponse;

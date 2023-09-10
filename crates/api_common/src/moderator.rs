@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
-use tinyboards_db_views::structs::{PersonView};
+use tinyboards_db_views::structs::PersonView;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ModActionResponse<T> {
@@ -9,7 +9,7 @@ pub struct ModActionResponse<T> {
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct BanUser {
+pub struct ToggleBan {
     pub target_person_id: i32,
     pub banned: bool,
     pub expires: Option<NaiveDateTime>,

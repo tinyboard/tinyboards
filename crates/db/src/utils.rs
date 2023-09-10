@@ -1,7 +1,7 @@
 use crate::{newtypes::DbUrl, CommentSortType, SortType};
 use diesel::{
     result::{Error as DieselError, Error::QueryBuilderError},
-    PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::{Backend}, deserialize::FromSql,
+    PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::Backend, deserialize::FromSql,
 };
 use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
 use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};

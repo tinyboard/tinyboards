@@ -2,18 +2,19 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{BanUser, ModActionResponse},
+    moderator::{ToggleBan, ModActionResponse},
     utils::require_user,
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
     models::person::local_user::LocalUser,
+    models::person::person::Person,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for BanUser {
+impl<'des> Perform<'des> for ToggleBan {
     type Response = ModActionResponse<ModBan>;
     type Route = ();
 
@@ -24,7 +25,7 @@ impl<'des> Perform<'des> for BanUser {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &BanUser = &self;
+        let data: &ToggleBan = &self;
         let target_person_id = data.target_person_id;
         let banned = data.banned;
         let reason = &data.reason;
@@ -35,8 +36,14 @@ impl<'des> Perform<'des> for BanUser {
             .require_admin()
             .unwrap()?;
 
-        // update the user in the database to be banned
-        LocalUser::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
+        // update the person in the database to be banned/unbanned
+        let banned_person = Person::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
+        
+        // update the local user in the database to be banned/unbanned (if required)
+        if banned_person.local {
+            let target_local_user_id = LocalUser::get_by_person_id(context.pool(), target_person_id.clone()).await?.id;
+            LocalUser::update_ban(context.pool(), target_local_user_id.clone(), banned.clone()).await?;
+        }
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {

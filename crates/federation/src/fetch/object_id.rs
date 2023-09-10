@@ -2,7 +2,6 @@ use crate::{config::Data, error::Error, fetch::fetch_object_http, traits::Object
 use anyhow::anyhow;
 use chrono::{Duration as ChronoDuration, NaiveDateTime, Utc};
 use serde::{Deserialize, Serialize};
-use tracing::info;
 use std::{
     fmt::{Debug, Display, Formatter},
     marker::PhantomData,
