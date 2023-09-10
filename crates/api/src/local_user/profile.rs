@@ -95,7 +95,7 @@ impl<'des> Perform<'des> for Profile {
         let comments_score = view.counts.comment_score;
         let created_at = view.local_user.creation_date;
         let updated_at = view.local_user.updated;
-        let is_banned = view.local_user.is_banned;
+        let is_banned = view.person.is_banned;
         let is_deleted = view.local_user.is_deleted;
         let username = route.clone().username;
 

@@ -193,7 +193,7 @@ impl UserResult {
     pub fn not_banned(self) -> Self {
         match self.0 {
             Ok(u) => {
-                return Self(if u.local_user.is_banned {
+                return Self(if u.person.is_banned {
                     Err(TinyBoardsError::from_message(
                         403,
                         "you are banned from the site",

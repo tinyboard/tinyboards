@@ -20,7 +20,7 @@ use tinyboards_federation::{
     traits::{ActivityHandler, Actor},
 };
 use anyhow::anyhow;
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::{remove_user_data, remove_user_data_in_board},

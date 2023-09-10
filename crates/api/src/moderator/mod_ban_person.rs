@@ -7,7 +7,6 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
-    models::person::local_user::LocalUser,
     models::person::person::Person,
     traits::Crud,
 };
@@ -37,14 +36,8 @@ impl<'des> Perform<'des> for ToggleBan {
             .unwrap()?;
 
         // update the person in the database to be banned/unbanned
-        let banned_person = Person::update_ban(context.pool(), target_person_id.clone(), banned.clone()).await?;
+        Person::update_ban(context.pool(), target_person_id.clone(), banned.clone(), expires.clone()).await?;
         
-        // update the local user in the database to be banned/unbanned (if required)
-        if banned_person.local {
-            let target_local_user_id = LocalUser::get_by_person_id(context.pool(), target_person_id.clone()).await?.id;
-            LocalUser::update_ban(context.pool(), target_local_user_id.clone(), banned.clone()).await?;
-        }
-
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
             mod_person_id: view.person.id,

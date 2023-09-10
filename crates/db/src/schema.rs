@@ -359,7 +359,6 @@ diesel::table! {
         passhash -> Text,
         email -> Nullable<Text>,
         is_admin -> Bool,
-        is_banned -> Bool,
         is_deleted -> Bool,
         unban_date -> Nullable<Timestamp>,
         show_nsfw -> Bool,

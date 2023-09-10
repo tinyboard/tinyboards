@@ -5,6 +5,7 @@ use crate::{
     utils::{fuzzy_search, DbPool, get_conn, functions::lower, naive_now}, newtypes::DbUrl,
 };
 
+use chrono::NaiveDateTime;
 use diesel::{prelude::*, result::Error};
 //use tinyboards_utils::TinyBoardsError;
 use diesel_async::RunQueryDsl;
@@ -36,13 +37,21 @@ impl Person {
         pool: &DbPool,
         id_: i32,
         new_banned: bool,
+        expires: Option<NaiveDateTime>,
     ) -> Result<Self, Error> {
         use crate::schema::person::dsl::*;
         let conn = &mut get_conn(pool).await?;
-        diesel::update(person.find(id_))
-            .set((is_banned.eq(new_banned), updated.eq(naive_now())))
-            .get_result::<Self>(conn)
-            .await
+        if let Some(expires) = expires {
+            diesel::update(person.find(id_))
+                .set((is_banned.eq(new_banned), unban_date.eq(expires), updated.eq(naive_now())))
+                .get_result::<Self>(conn)
+                .await
+        } else {
+            diesel::update(person.find(id_))
+                .set((is_banned.eq(new_banned), updated.eq(naive_now())))
+                .get_result::<Self>(conn)
+                .await
+        }
     }
 
     pub async fn delete_account(pool: &DbPool, person_id: i32) -> Result<Person, Error> {

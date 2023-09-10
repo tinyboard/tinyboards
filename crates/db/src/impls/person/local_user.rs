@@ -86,18 +86,6 @@ impl LocalUser {
             .map_err(|e| TinyBoardsError::from_error_message(e, 401, "error getting user from jwt"))
     }
 
-    pub async fn update_ban(
-        pool: &DbPool,
-        id_: i32,
-        new_banned: bool,
-    ) -> Result<Self, Error> {
-        let conn = &mut get_conn(pool).await?;
-        diesel::update(local_user.find(id_))
-            .set((is_banned.eq(new_banned), updated.eq(naive_now())))
-            .get_result::<Self>(conn)
-            .await
-    }
-
     pub async fn update_passhash(
         pool: &DbPool,
         id_: i32,
@@ -234,7 +222,6 @@ impl LocalUser {
             person_id: self.person_id,
             name: self.name,
             is_admin: self.is_admin,
-            is_banned: self.is_banned,
             is_deleted: self.is_deleted,
             creation_date: self.creation_date,
             updated: self.updated,
@@ -295,7 +282,6 @@ pub mod safe_type {
         person_id,
         name,
         is_admin,
-        is_banned,
         is_deleted,
         creation_date,
         updated,
@@ -332,7 +318,6 @@ pub mod safe_type {
                 person_id,
                 name,
                 is_admin,
-                is_banned,
                 is_deleted,
                 creation_date,
                 updated,

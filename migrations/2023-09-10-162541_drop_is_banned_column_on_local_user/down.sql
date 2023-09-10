@@ -1,0 +1,1 @@
+ALTER TABLE local_user ADD COLUMN is_banned boolean default false NOT NULL;
