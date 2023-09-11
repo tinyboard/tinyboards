@@ -7,12 +7,11 @@ pub struct ModActionResponse<T> {
     pub mod_action: T,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ToggleBan {
     pub target_person_id: i32,
     pub banned: bool,
-    pub expires: Option<NaiveDateTime>,
+    pub expires: Option<i64>,
     pub reason: Option<String>,
 }
 
@@ -28,8 +27,8 @@ pub struct BanFromBoard {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BanFromBoardResponse {
-  pub person_view: PersonView,
-  pub banned: bool,
+    pub person_view: PersonView,
+    pub banned: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -54,12 +53,12 @@ pub struct BanBoard {
 pub struct PostModQueue {
     pub limit: Option<i64>,
     pub page: Option<i64>,
-    pub board_id: Option<i32>
+    pub board_id: Option<i32>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct CommentModQueue {
     pub limit: Option<i64>,
     pub page: Option<i64>,
-    pub board_id: Option<i32>
+    pub board_id: Option<i32>,
 }

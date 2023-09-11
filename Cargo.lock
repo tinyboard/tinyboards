@@ -3918,6 +3918,7 @@ dependencies = [
  "async-trait",
  "bcrypt",
  "bigdecimal",
+ "chrono",
  "diesel",
  "futures",
  "image",

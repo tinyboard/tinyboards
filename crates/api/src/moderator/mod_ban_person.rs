@@ -1,8 +1,9 @@
 use crate::Perform;
 use actix_web::web::Data;
+use chrono::NaiveDateTime;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    moderator::{ToggleBan, ModActionResponse},
+    moderator::{ModActionResponse, ToggleBan},
     utils::require_user,
 };
 use tinyboards_db::{
@@ -30,14 +31,22 @@ impl<'des> Perform<'des> for ToggleBan {
         let reason = &data.reason;
         let expires = data.expires;
 
+        let expires = expires.map(|ts| NaiveDateTime::from_timestamp_opt(ts, 0).unwrap());
+
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .require_admin()
             .unwrap()?;
 
         // update the person in the database to be banned/unbanned
-        Person::update_ban(context.pool(), target_person_id.clone(), banned.clone(), expires.clone()).await?;
-        
+        Person::update_ban(
+            context.pool(),
+            target_person_id.clone(),
+            banned.clone(),
+            expires.clone(),
+        )
+        .await?;
+
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {
             mod_person_id: view.person.id,
