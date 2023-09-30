@@ -1,10 +1,12 @@
 use crate::Perform;
 use actix_web::web::Data;
 use chrono::NaiveDateTime;
+use std::fmt::Write;
+use std::time::SystemTime;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{ModActionResponse, ToggleBan},
-    utils::require_user,
+    utils::{require_user, send_system_message},
 };
 use tinyboards_db::{
     models::moderator::mod_actions::{ModBan, ModBanForm},
@@ -29,9 +31,23 @@ impl<'des> Perform<'des> for ToggleBan {
         let target_person_id = data.target_person_id;
         let banned = data.banned;
         let reason = &data.reason;
-        let expires = data.expires;
+        let duration_days = data.duration_days;
 
-        let expires = expires.map(|ts| NaiveDateTime::from_timestamp_opt(ts, 0).unwrap());
+        // timestamp of the date when the ban expires
+        let expires = duration_days.clone().map(|days| {
+            let now = SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .map(|n| n.as_secs())
+                .map_err(|e| {
+                    TinyBoardsError::from_error_message(e, 500, "Invalid expiry timestamp")
+                })
+                .unwrap();
+
+            let expiry_timestamp = now + (days * 60 * 60 * 24) as u64;
+
+            NaiveDateTime::from_timestamp_opt(expiry_timestamp as i64, 0)
+                .expect("Invalid value for `duration_days`")
+        });
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
@@ -46,6 +62,32 @@ impl<'des> Perform<'des> for ToggleBan {
             expires.clone(),
         )
         .await?;
+
+        // send ban/unban notif
+        let message = if banned {
+            let mut text = String::from("Your account has been ");
+
+            match duration_days {
+                Some(days) => {
+                    write!(&mut text, "suspended for {} day(s) for ", days)
+                        .expect("...there is no way this went wrong.");
+                }
+                None => text.push_str("permanently banned for "),
+            }
+
+            text.push_str(match reason {
+                Some(reason) => reason,
+                None => "breaking the rules",
+            });
+
+            text.push_str(".");
+
+            text
+        } else {
+            "Your account has been unbanned! 🎉".into()
+        };
+
+        send_system_message(context.pool(), Some(target_person_id), None, message).await?;
 
         // form for submitting ban action for mod log
         let ban_form = ModBanForm {

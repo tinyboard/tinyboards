@@ -11,7 +11,7 @@ pub struct ModActionResponse<T> {
 pub struct ToggleBan {
     pub target_person_id: i32,
     pub banned: bool,
-    pub expires: Option<i64>,
+    pub duration_days: Option<i32>,
     pub reason: Option<String>,
 }
 
