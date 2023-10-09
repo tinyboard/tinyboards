@@ -51,6 +51,19 @@ impl Person {
             .await
     }
 
+    pub async fn update_admin(
+        pool: &DbPool,
+        id_: i32,
+        new_admin: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person::dsl::*;
+        diesel::update(person.find(id_))
+            .set((is_admin.eq(new_admin), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
+
     pub async fn delete_account(pool: &DbPool, person_id: i32) -> Result<Person, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::local_user;

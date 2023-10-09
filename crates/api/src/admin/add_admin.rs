@@ -40,7 +40,9 @@ impl<'des> Perform<'des> for AddAdmin {
         let added_person_id = data.added_person_id;
 
         // update added user to be an admin
-        LocalUser::update_admin(context.pool(), added_person_id.clone(), added.clone()).await?;
+        let updated_local_user = LocalUser::update_admin(context.pool(), added_person_id.clone(), added.clone()).await?;
+        // update added person to be an admin
+        Person::update_admin(context.pool(), updated_local_user.person_id.clone(), added.clone()).await?;
 
         // log this mod action
         let mod_add_admin_form = ModAddAdminForm {
