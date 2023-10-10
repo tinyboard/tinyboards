@@ -308,7 +308,7 @@ async fn receive_delete_action(
             if board.local {
                 let mod_: Person = actor.dereference(context).await?.deref().clone();
                 let object = DeletableObjects::Board(board.clone());
-                let b: Board = board.deref().deref().clone();
+                let b: Board = board.deref().clone();
                 send_apub_delete_in_board(mod_, b, object, None, true, context).await?;
             }
             Board::update_deleted(context.pool(), board.id, deleted).await?;

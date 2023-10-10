@@ -8,11 +8,11 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::{
         moderator::mod_actions::{ModAddAdmin, ModAddAdminForm},
-        person::local_user::LocalUser,
+        person::{local_user::LocalUser, person::Person},
     },
     traits::Crud,
 };
-use tinyboards_db_views::structs::{PersonView};
+use tinyboards_db_views::structs::PersonView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
