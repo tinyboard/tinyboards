@@ -9,7 +9,7 @@ use tinyboards_db::{
     map_to_comment_sort_type,
     CommentSortType
 };
-use tinyboards_db_views::comment_reply_view::CommentReplyQuery;
+use tinyboards_db_views::{comment_reply_view::CommentReplyQuery, structs::CommentReplyView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -52,6 +52,9 @@ impl<'des> Perform<'des> for GetCommentReplies {
                 .build()
                 .list()
                 .await?;
+
+            // mark all replies as read when visiting the inbox
+            CommentReplyView::mark_all_replies_as_read(context.pool(), person.id.clone()).await?;
 
             Ok(GetCommentRepliesResponse { replies: resp.replies, total_count: resp.count, unread_count: resp.unread })
     }

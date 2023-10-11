@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     message::{GetMessages, GetMessagesResponse},
     utils::require_user,
 };
-use tinyboards_db_views::message_view::{MessageQuery, MessageQueryResponse};
+use tinyboards_db_views::{message_view::{MessageQuery, MessageQueryResponse}, structs::MessageView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -42,6 +42,9 @@ impl<'des> PerformCrud<'des> for GetMessages {
             .build()
             .list()
             .await?;
+
+        // mark all messages as read when visiting it in the inbox
+        MessageView::mark_all_messages_as_read(context.pool(), v.person.id.clone()).await?;
 
         Ok(GetMessagesResponse {
             messages,
