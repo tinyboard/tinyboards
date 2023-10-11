@@ -124,6 +124,7 @@ pub fn get_file_type(content_type: &str) -> &str {
     let file_type = match content_type {
         "image/gif" => "gif",
         "image/jpeg" => "jpeg",
+        "image/jpg" => "jpg",
         "image/webp" => "webp",
         "image/png" => "png",
         _ => "invalid",
@@ -133,7 +134,7 @@ pub fn get_file_type(content_type: &str) -> &str {
 }
 
 pub fn is_acceptable_file_type(content_type: &str) -> bool {
-    let acceptable_types = ["image/gif", "image/jpeg", "image/webp", "image/png"];
+    let acceptable_types = ["image/gif", "image/jpeg", "image/jpg", "image/webp", "image/png"];
 
     acceptable_types.contains(&content_type)
 }

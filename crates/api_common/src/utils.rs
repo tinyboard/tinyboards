@@ -757,6 +757,7 @@ pub async fn send_new_report_email_to_admins(
     let img_fmt_string = match img_info {
         "data:image/png;" => Some("png"),
         "data:image/jpeg;" => Some("jpeg"),
+        "data:image/jpg;" => Some("jpg"),
         "data:image/gif;" => Some("gif"),
         "data:image/webp;" => Some("webp"),
         _ => None,
