@@ -61,7 +61,6 @@ impl<'des> PerformUpload<'des> for Multipart {
 
                 let media_path = context.settings().get_media_path();
 
-                // TODO: make sure that this actually works with Docker
                 let file_path = format!("{}/{}", &media_path, &file_name);
                 let upload_url = format!("{}/media/{}", context.settings().get_protocol_and_hostname(), file_name.clone());
                 let mut file = File::create(&file_path).await?;

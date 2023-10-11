@@ -57,7 +57,8 @@ impl GetFile {
         }
 
         if let Some(ext) = fs_path.extension() {
-            if ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "gif" || ext == "webp" {
+            // gif is not included here because it just needs to be opened, no image manipulation should apply
+            if ext == "jpg" || ext == "jpeg" || ext == "png" || ext == "webp" {
                 let image = image::open(&fs_path).map_err(|e| {
                     TinyBoardsError::from_error_message(e, 500, "internal server error")
                 })?;
@@ -90,7 +91,7 @@ impl GetFile {
                 })?;
 
                 return Ok(HttpResponse::Ok().body(buffer.into_inner()));
-            }
+            } 
         }
 
         NamedFile::open(&fs_path)
