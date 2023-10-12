@@ -425,6 +425,7 @@ impl<'a> PostQuery<'a> {
 
         if let Some(_id) = self.board_id {
             query = query
+                .then_order_by(posts::featured_local.desc())
                 .then_order_by(posts::featured_board.desc());
         } else {
             query = query
