@@ -422,6 +422,16 @@ impl<'a> PostQuery<'a> {
                 .then_order_by(post_aggregates::creation_date.desc()),
         };
 
+
+        if let Some(_id) = self.board_id {
+            query = query
+                .then_order_by(posts::featured_board.desc());
+        } else {
+            query = query
+                .then_order_by(posts::featured_local.desc());
+
+        }
+
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
 
         query = query
