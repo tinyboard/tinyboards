@@ -379,8 +379,12 @@ impl<'a> PostQuery<'a> {
             query = query.filter(person_blocks::person_id.is_null());
         }
 
-        // sticky posts on top
-        query = query.then_order_by(post_aggregates::is_stickied.desc());
+        // featured posts on top
+        query = query.then_order_by(posts::featured_local.desc());
+        
+        if let Some(_id) = self.board_id {
+            query = query.then_order_by(posts::featured_board.desc());
+        } 
 
         query = match self.sort.unwrap_or(SortType::Hot) {
             SortType::Active => query
@@ -421,17 +425,6 @@ impl<'a> PostQuery<'a> {
                 .then_order_by(post_aggregates::score.desc())
                 .then_order_by(post_aggregates::creation_date.desc()),
         };
-
-
-        if let Some(_id) = self.board_id {
-            query = query
-                .then_order_by(posts::featured_local.desc())
-                .then_order_by(posts::featured_board.desc());
-        } else {
-            query = query
-                .then_order_by(posts::featured_local.desc());
-
-        }
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
 
