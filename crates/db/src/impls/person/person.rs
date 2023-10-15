@@ -87,6 +87,17 @@ impl Person {
             .await
     }
 
+    pub async fn update_default_avatar(pool: &DbPool, old_default_url: String, new_default_url: String) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person::dsl::*;
+
+        diesel::update(person)
+            .filter(avatar.eq(old_default_url))
+            .set((avatar.eq(new_default_url), updated.eq(naive_now())))
+            .execute(conn)
+            .await
+    }
+
     /// Update or insert the person.
     ///
     /// necessary for federation because Apub does not distinguish between these actions

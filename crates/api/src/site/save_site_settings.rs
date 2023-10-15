@@ -7,7 +7,7 @@ use tinyboards_api_common::{
     utils::{get_current_site_mode, require_user, purge_local_image_by_url},
 };
 use tinyboards_db::{
-    models::{person::local_user::LocalUser, site::local_site::{LocalSite, LocalSiteForm}},
+    models::{person::{local_user::LocalUser, person::Person}, site::local_site::{LocalSite, LocalSiteForm}},
     utils::naive_now,
     SiteMode,
 };
@@ -38,6 +38,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let current_require_app = site.require_application;
         let current_icon = site.icon.clone();
         let _current_name = site.name.clone();
+        let current_default_avatar = site.default_avatar.clone();
 
         let new_name = data.name.clone();
         let primary_color = data.primary_color.clone();
@@ -88,6 +89,19 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             if welcome_message.chars().count() > 255 {
                 return Err(TinyBoardsError::from_message(400, "welcome message too long"))
             }
+        }
+
+        // update the default avatar url if it is provided and different then the current one set in local_site
+        if current_default_avatar.is_none() && default_avatar.is_some() {
+            let old_avatar_url = format!("{}/media/default_pfp.png", context.settings().get_protocol_and_hostname());
+            let new_avatar_url = default_avatar.clone().unwrap();
+            Person::update_default_avatar(context.pool(), old_avatar_url, new_avatar_url).await?;
+        }
+
+        if current_default_avatar.is_some() && default_avatar.is_some() {
+            let old_avatar_url = current_default_avatar.unwrap();
+            let new_avatar_url = default_avatar.clone().unwrap();
+            Person::update_default_avatar(context.pool(), old_avatar_url, new_avatar_url).await?;
         }
 
         let open_registration = match site_mode {

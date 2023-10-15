@@ -17,7 +17,6 @@ use tinyboards_db::models::site::registration_applications::{
     RegistrationApplication, RegistrationApplicationForm,
 };
 use tinyboards_db::models::site::site_invite::SiteInvite;
-use tinyboards_db::schema::local_site::default_avatar;
 use tinyboards_db::traits::Crud;
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
