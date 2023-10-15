@@ -29,7 +29,7 @@ services:
     links:
       - postgres
     volumes:
-      - ./tinyboards.hjson:/config/defaults.hjson
+      - ./tinyboards.hjson:/app/config/defaults.hjson
       - uploads:/app/uploads
     networks:
       tinyboards:
@@ -47,6 +47,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ../../tinyboards-fe/package.json:/usr/src/app/package.json
+      - ./.env:/usr/src/app/.env
     networks:
       tinyboards:
         aliases:
