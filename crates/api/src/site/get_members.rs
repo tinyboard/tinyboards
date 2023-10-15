@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db_views::person_view::PersonQuery;
 use tinyboards_utils::error::TinyBoardsError;
-use tinyboards_db::{UserSortType, map_to_user_sort_type};
+use tinyboards_db::{UserSortType, map_to_user_sort_type, models::site::local_site::LocalSite};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for GetMembers {
@@ -39,7 +39,10 @@ impl<'des> Perform<'des> for GetMembers {
         let is_admin = params.is_admin;
         let is_banned = params.is_banned;
 
-        let response = PersonQuery::builder()
+        let local_site = LocalSite::read(context.pool()).await?;
+        
+        if local_site.open_registration == false && local_site.invite_only == false && local_site.require_application == true {
+            let response = PersonQuery::builder()
             .pool(context.pool())
             .sort(Some(sort))
             .is_admin(is_admin)
@@ -51,9 +54,26 @@ impl<'des> Perform<'des> for GetMembers {
             .list()
             .await?;
 
-        let members = response.persons;
-        let total_count = response.count;
+            let members = response.persons;
+            let total_count = response.count;
 
-        Ok(GetMembersResponse { members, total_count })
+            Ok(GetMembersResponse { members, total_count })
+        } else {
+            let response = PersonQuery::builder()
+            .pool(context.pool())
+            .sort(Some(sort))
+            .is_admin(is_admin)
+            .is_banned(is_banned)
+            .limit(limit)
+            .page(page)
+            .build()
+            .list()
+            .await?;
+
+            let members = response.persons;
+            let total_count = response.count;
+
+            Ok(GetMembersResponse { members, total_count })
+        }        
     }
 }
