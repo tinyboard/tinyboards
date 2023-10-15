@@ -17,6 +17,7 @@ use tinyboards_db::models::site::registration_applications::{
     RegistrationApplication, RegistrationApplicationForm,
 };
 use tinyboards_db::models::site::site_invite::SiteInvite;
+use tinyboards_db::schema::local_site::default_avatar;
 use tinyboards_db::traits::Crud;
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
@@ -89,15 +90,12 @@ impl<'des> PerformCrud<'des> for Register {
             &context.settings().get_protocol_and_hostname(),
         )?;
 
-        // set default profile pic
-        let pfp_url = Url::parse(
-            format!(
-                "{}/media/default_pfp.png",
-                context.settings().get_protocol_and_hostname()
-            )
-            .as_str(),
-        )
-        .unwrap();
+        let mut avatar_url = Url::parse(format!("{}/media/default_pfp.png", context.settings().get_protocol_and_hostname()).as_str())?;
+
+        // if we have a default avatar for the site, then use it
+        if local_site.default_avatar.is_some() {
+            avatar_url = Url::parse(&local_site.default_avatar.unwrap().clone())?;
+        }
 
         // now we need to create both a local_user and a person (for apub)
         let person_form = PersonForm {
@@ -108,7 +106,7 @@ impl<'des> PerformCrud<'des> for Register {
             inbox_url: Some(generate_inbox_url(&actor_id)?),
             shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
             instance_id: Some(site_view.site.instance_id),
-            avatar: Some(pfp_url.into()),
+            avatar: Some(avatar_url.into()),
             ..PersonForm::default()
         };
 
