@@ -33,20 +33,20 @@ diesel::table! {
 }
 
 diesel::table! {
-    admin_purge_post (id) {
+    admin_purge_person (id) {
         id -> Int4,
         admin_id -> Int4,
-        post_id -> Int4,
+        person_id -> Int4,
         reason -> Nullable<Text>,
         when_ -> Timestamp,
     }
 }
 
 diesel::table! {
-    admin_purge_user (id) {
+    admin_purge_post (id) {
         id -> Int4,
         admin_id -> Int4,
-        person_id -> Int4,
+        post_id -> Int4,
         reason -> Nullable<Text>,
         when_ -> Timestamp,
     }
@@ -886,8 +886,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     activity,
     admin_purge_board,
     admin_purge_comment,
+    admin_purge_person,
     admin_purge_post,
-    admin_purge_user,
     board_aggregates,
     board_language,
     board_mods,

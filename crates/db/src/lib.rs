@@ -145,7 +145,7 @@ pub enum ModLogActionType {
     #[strum(ascii_case_insensitive)]
     ModBan,
     #[strum(ascii_case_insensitive)]
-    AdminPurgeUser,
+    AdminPurgePerson,
     #[strum(ascii_case_insensitive)]
     AdminPurgeBoard,
     #[strum(ascii_case_insensitive)]
@@ -179,7 +179,7 @@ pub fn map_to_modlog_type(match_string: Option<&str>) -> ModLogActionType {
         Some("adminpurgeboard") => ModLogActionType::AdminPurgeBoard,
         Some("adminpurgecomment") => ModLogActionType::AdminPurgeComment,
         Some("adminpurgepost") => ModLogActionType::AdminPurgePost,
-        Some("adminpurgeuser") => ModLogActionType::AdminPurgeUser,
+        Some("adminpurgeperson") => ModLogActionType::AdminPurgePerson,
         Some(&_) => ModLogActionType::All,
         None => ModLogActionType::All,
     }

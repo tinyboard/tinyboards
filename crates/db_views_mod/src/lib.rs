@@ -1,7 +1,7 @@
 pub mod admin_purge_board_view;
 pub mod admin_purge_comment_view;
 pub mod admin_purge_post_view;
-pub mod admin_purge_user_view;
+pub mod admin_purge_person_view;
 pub mod mod_add_admin_view;
 pub mod mod_add_board_mod_view;
 pub mod mod_add_board_view;

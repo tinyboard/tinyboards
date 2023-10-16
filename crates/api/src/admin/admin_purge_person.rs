@@ -7,9 +7,9 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        moderator::admin_actions::{AdminPurgeUser, AdminPurgeUserForm},
+        moderator::admin_actions::{AdminPurgePerson, AdminPurgePersonForm},
         person::local_user::LocalUser,
-        person::person::Person,
+        person::person::Person, site::local_site::LocalSite,
     },
     traits::Crud,
 };
@@ -57,9 +57,18 @@ impl<'des> Perform<'des> for PurgePerson {
             purge_local_image_by_url(context.pool(), &banner).await.ok();
         }
 
-        // purge user avatar
+
+        let local_site = LocalSite::read(context.pool()).await?;
+
+        // purge user avatar, but only if it is not equal to the default avatar on the local site
         if let Some(avatar) = target_person.avatar {
-            purge_local_image_by_url(context.pool(), &avatar).await.ok();
+            if let Some(default_avatar) = local_site.default_avatar {
+                if avatar.to_string() != default_avatar {
+                    purge_local_image_by_url(context.pool(), &avatar).await.ok();
+                }
+            } else {
+                purge_local_image_by_url(context.pool(), &avatar).await.ok();
+            }            
         }
 
         // purge all submitted media/images from user
@@ -75,13 +84,13 @@ impl<'des> Perform<'des> for PurgePerson {
 
         let reason = data.reason.clone();
 
-        let form = AdminPurgeUserForm {
+        let form = AdminPurgePersonForm {
             admin_id: view.person.id,
             person_id: target_person_id.clone(),
             reason: Some(reason),
         };
 
-        AdminPurgeUser::create(context.pool(), &form).await?;
+        AdminPurgePerson::create(context.pool(), &form).await?;
 
         Ok(PurgeItemResponse { success: true })
     }

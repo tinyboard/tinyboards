@@ -3,7 +3,7 @@ use tinyboards_db::models::{
     board::boards::BoardSafe,
     comment::comments::Comment,
     moderator::{
-        admin_actions::{AdminPurgeBoard, AdminPurgeComment, AdminPurgePost, AdminPurgeUser},
+        admin_actions::{AdminPurgeBoard, AdminPurgeComment, AdminPurgePost, AdminPurgePerson},
         mod_actions::{
             ModAddAdmin, ModAddBoard, ModAddBoardMod, ModBan, ModBanFromBoard, ModLockPost,
             ModRemoveBoard, ModRemoveComment, ModRemovePost, ModFeaturePost,
@@ -104,8 +104,8 @@ pub struct AdminPurgeCommentView {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AdminPurgeUserView {
-    pub admin_purge_user: AdminPurgeUser,
+pub struct AdminPurgePersonView {
+    pub admin_purge_person: AdminPurgePerson,
     pub admin: Option<PersonSafe>,
 }
 

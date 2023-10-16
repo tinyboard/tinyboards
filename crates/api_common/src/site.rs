@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use tinyboards_db::{SiteMode, newtypes::DbUrl, models::apub::{instance::Instance, language::Language}};
 use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView, SiteView};
 use tinyboards_db_views_mod::structs::{
-    AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgeUserView,
+    AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgePersonView,
     ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
     ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModFeaturePostView,
 };
@@ -86,7 +86,7 @@ pub struct GetModLogResponse {
     pub banned_from_site: Vec<ModBanView>,
     pub mods_added: Vec<ModAddBoardModView>,
     pub admins_added: Vec<ModAddAdminView>,
-    pub admin_purged_users: Vec<AdminPurgeUserView>,
+    pub admin_purged_persons: Vec<AdminPurgePersonView>,
     pub admin_purged_boards: Vec<AdminPurgeBoardView>,
     pub admin_purged_posts: Vec<AdminPurgePostView>,
     pub admin_purged_comments: Vec<AdminPurgeCommentView>,

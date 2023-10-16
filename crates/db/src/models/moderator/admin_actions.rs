@@ -5,7 +5,7 @@ use crate::schema::{
     admin_purge_board,
     admin_purge_comment,
     admin_purge_post,
-    admin_purge_user,
+    admin_purge_person,
 };
 
 
@@ -64,8 +64,8 @@ pub struct AdminPurgePostForm {
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
-#[diesel(table_name = admin_purge_user)]
-pub struct AdminPurgeUser {
+#[diesel(table_name = admin_purge_person)]
+pub struct AdminPurgePerson {
     pub id: i32,
     pub admin_id: i32,
     pub person_id: i32,
@@ -74,8 +74,8 @@ pub struct AdminPurgeUser {
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
-#[diesel(table_name = admin_purge_user)]
-pub struct AdminPurgeUserForm {
+#[diesel(table_name = admin_purge_person)]
+pub struct AdminPurgePersonForm {
     pub admin_id: i32,
     pub person_id: i32,
     pub reason: Option<Option<String>>,
