@@ -32,7 +32,7 @@ impl<'des> PerformCrud<'des> for EditBoard {
         let title = data.title.clone();
         let icon = data.icon.clone();
         let banner = data.banner.clone();
-        let mut description = data.description.clone();
+        let description = data.description.clone();
         let is_nsfw = data.is_nsfw.clone();
 
         // board update restricted to board mod or admin (may provide other options in the future)
@@ -42,9 +42,9 @@ impl<'des> PerformCrud<'des> for EditBoard {
             .await
             .unwrap()?;
 
-        if let Some(desc) = description {
-            description = parse_markdown_opt(&desc);
-        }
+        // if let Some(desc) = description {
+        //     description = parse_markdown_opt(&desc);
+        // }
 
         let form = BoardForm {
             title,
