@@ -30,6 +30,8 @@ impl<'des> PerformCrud<'des> for EditBoard {
         let data: &EditBoard = &self;
 
         let title = data.title.clone();
+        let icon = data.icon.clone();
+        let banner = data.banner.clone();
         let mut description = data.description.clone();
         let is_nsfw = data.is_nsfw.clone();
 
@@ -48,6 +50,8 @@ impl<'des> PerformCrud<'des> for EditBoard {
             title,
             description: Some(description),
             is_nsfw,
+            icon,
+            banner,
             updated: Some(Some(naive_now())),
             ..BoardForm::default()
         };
