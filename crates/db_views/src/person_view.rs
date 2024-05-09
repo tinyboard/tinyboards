@@ -1,5 +1,9 @@
-use crate::structs::{
-    CommentReplyView, LocalUserSettingsView, LoggedInUserView, PersonMentionView, PersonView,
+use crate::{
+    local_user_view,
+    structs::{
+        CommentReplyView, LocalUserSettingsView, LocalUserView, LoggedInUserView,
+        PersonMentionView, PersonView,
+    },
 };
 use diesel::{result::Error, *};
 use tinyboards_db::{
@@ -178,7 +182,11 @@ impl PersonView {
 }
 
 impl LoggedInUserView {
-    pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
+    pub async fn read(
+        pool: &DbPool,
+        local_user_view: LocalUserView,
+    ) -> Result<Self, TinyBoardsError> {
+        let person_id = local_user_view.local_user.id;
         let person_view = PersonView::read(pool, person_id, true)
             .await
             .map_err(|e| TinyBoardsError::from(e))?;
@@ -192,6 +200,7 @@ impl LoggedInUserView {
             settings: person_view.settings,
             counts: person_view.counts,
             unread_notifications: mentions + replies,
+            admin_level: local_user_view.local_user.admin_level,
         })
     }
 }

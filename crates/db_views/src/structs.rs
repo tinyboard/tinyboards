@@ -39,6 +39,7 @@ pub struct LoggedInUserView {
     pub settings: Option<LocalUserSettings>,
     pub counts: PersonAggregates,
     pub unread_notifications: i64,
+    pub admin_level: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

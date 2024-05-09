@@ -23,7 +23,7 @@ impl<'des> Perform<'des> for GetLoggedInUser {
             .await
             .unwrap()?;
 
-        let logged_in_view = LoggedInUserView::read(context.pool(), view.person.id).await?;
+        let logged_in_view = LoggedInUserView::read(context.pool(), view).await?;
 
         Ok(logged_in_view)
     }
@@ -81,7 +81,7 @@ impl<'des> Perform<'des> for Profile {
         } else {
             _user_type = String::from("User");
         }
-        let is_admin = local_user_view.local_user.admin_level > 0;
+        let admin_level = local_user_view.local_user.admin_level;
         let display_name = local_user_view
             .person
             .display_name
@@ -113,7 +113,7 @@ impl<'des> Perform<'des> for Profile {
             posts_url,
             comments_url,
             user_type: _user_type,
-            is_admin,
+            admin_level,
             display_name,
             rep,
             posts_count,

@@ -2,18 +2,20 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    sensitive::Sensitive,
     person::{LoginResponse, SaveUserSettings},
-    utils::{require_user, send_verification_email, purge_local_image_by_url},
+    sensitive::Sensitive,
+    utils::{purge_local_image_by_url, require_user, send_verification_email},
 };
 use tinyboards_db::{
-    models::{person::person::PersonForm},
-    models::{person::{local_user::*, person::Person}, site::{local_site::LocalSite, uploads::*}},
-    utils::{naive_now},
+    models::person::person::PersonForm,
+    models::{
+        person::{local_user::*, person::Person},
+        site::{local_site::LocalSite, uploads::*},
+    },
+    utils::naive_now,
 };
 use tinyboards_db_views::structs::LoggedInUserView;
 use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
-
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveUserSettings {
@@ -35,12 +37,12 @@ impl<'des> Perform<'des> for SaveUserSettings {
             .unwrap()?;
 
         let site = LocalSite::read(context.pool()).await?;
-        
+
         // delete old images if new images applied
         let current_avatar = view.person.avatar.clone();
         let current_banner = view.person.banner.clone();
         let current_signature = view.person.signature.clone();
-        
+
         let avatar = data.avatar.clone();
         let banner = data.banner.clone();
         let signature = data.signature.clone();
@@ -61,7 +63,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         if let Some(avatar) = avatar.clone() {
             if let Some(current_avatar) = current_avatar.clone() {
-                if avatar != current_avatar && !avatar.to_string().is_empty() && !current_avatar.to_string().is_empty() {
+                if avatar != current_avatar
+                    && !avatar.to_string().is_empty()
+                    && !current_avatar.to_string().is_empty()
+                {
                     let r = purge_local_image_by_url(context.pool(), &current_avatar).await;
 
                     if let Err(_) = r {
@@ -73,22 +78,37 @@ impl<'des> Perform<'des> for SaveUserSettings {
             // Check if avatar is valid
             let db_avatar = Upload::find_by_url(context.pool(), &avatar)
                 .await
-                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Something went wrong while checking profile picture"))?;
+                .map_err(|e| {
+                    TinyBoardsError::from_error_message(
+                        e,
+                        500,
+                        "Something went wrong while checking profile picture",
+                    )
+                })?;
 
             // Ownership check
             if db_avatar.person_id != view.person.id {
-                return Err(TinyBoardsError::from_message(400, "That image is NOT yours."));
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "That image is NOT yours.",
+                ));
             }
 
             // Size check
             if db_avatar.size > 1024 * 1024 {
-                return Err(TinyBoardsError::from_message(403, "Max size for avatars is 1MB. Please."));
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "Max size for avatars is 1MB. Please.",
+                ));
             }
         };
 
         if let Some(banner) = banner.clone() {
             if let Some(current_banner) = current_banner {
-                if banner != current_banner && !banner.to_string().is_empty() && !current_banner.to_string().is_empty() {
+                if banner != current_banner
+                    && !banner.to_string().is_empty()
+                    && !current_banner.to_string().is_empty()
+                {
                     let r = purge_local_image_by_url(context.pool(), &current_banner).await;
 
                     if let Err(_) = r {
@@ -100,28 +120,43 @@ impl<'des> Perform<'des> for SaveUserSettings {
             // Check if banner is valid
             let db_banner = Upload::find_by_url(context.pool(), &banner)
                 .await
-                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Something went wrong while checking banner"))?;
+                .map_err(|e| {
+                    TinyBoardsError::from_error_message(
+                        e,
+                        500,
+                        "Something went wrong while checking banner",
+                    )
+                })?;
 
             // Ownership check
             if db_banner.person_id != view.person.id {
-                return Err(TinyBoardsError::from_message(400, "That image is NOT yours."));
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "That image is NOT yours.",
+                ));
             }
 
             // Size check
             if db_banner.size > 3 * 1024 * 1024 {
-                return Err(TinyBoardsError::from_message(403, "Stop trying to get past the 3MB size limit, nerd."));
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "Stop trying to get past the 3MB size limit, nerd.",
+                ));
             }
         };
 
         if let Some(signature) = signature.clone() {
             if let Some(current_signature) = current_signature.clone() {
-                if signature != current_signature && !signature.to_string().is_empty() && !current_signature.to_string().is_empty() {
+                if signature != current_signature
+                    && !signature.to_string().is_empty()
+                    && !current_signature.to_string().is_empty()
+                {
                     let r = purge_local_image_by_url(context.pool(), &current_signature).await;
 
                     if let Err(_) = r {
                         eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_signature);
                     }
-                }            
+                }
             }
         };
 
@@ -133,8 +168,13 @@ impl<'des> Perform<'des> for SaveUserSettings {
                     None => String::from(""),
                 };
                 if previous_email.ne(email) {
-                    send_verification_email(&view.local_user, email, context.pool(), context.settings())
-                        .await?;
+                    send_verification_email(
+                        &view.local_user,
+                        email,
+                        context.pool(),
+                        context.settings(),
+                    )
+                    .await?;
                 }
             }
         }
@@ -152,7 +192,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         if let Some(display_name) = &display_name {
             if display_name.chars().count() < 2 || display_name.chars().count() > 30 {
-                return Err(TinyBoardsError::from_message(400, "display name must be between 2 and 30 characters long"));
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "display name must be between 2 and 30 characters long",
+                ));
             }
         }
 
@@ -184,16 +227,16 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // perform settings update for local_user
         LocalUser::update_settings(context.pool(), view.local_user.id, &local_user_form)
             .await
-            .map_err(|_| TinyBoardsError::from_message(500, "could not update local user settings"))?;
+            .map_err(|_| {
+                TinyBoardsError::from_message(500, "could not update local user settings")
+            })?;
 
         // perform settings update for person
         Person::update_settings(context.pool(), view.person.id, &person_form)
             .await
             .map_err(|_| TinyBoardsError::from_message(500, "could not update person settings"))?;
 
-
-        let updated_user_view =
-            require_user(context.pool(), context.master_key(), auth)
+        let updated_user_view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
 
@@ -202,9 +245,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
             &context.master_key().jwt,
             &context.settings().hostname,
         )?;
-        
+
         // get the LoggedInUserView
-        let logged_in_view = LoggedInUserView::read(context.pool(), updated_user_view.person.id).await?;
+        let logged_in_view = LoggedInUserView::read(context.pool(), updated_user_view).await?;
 
         // return the jwt
         Ok(LoginResponse {

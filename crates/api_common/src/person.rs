@@ -50,7 +50,7 @@ pub struct ProfileResponse {
     pub posts_url: String,
     pub comments_url: String,
     pub user_type: String,
-    pub is_admin: bool,
+    pub admin_level: i32,
     pub display_name: String,
     pub rep: i64,
     pub posts_count: i64,
