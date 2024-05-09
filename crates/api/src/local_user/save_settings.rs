@@ -247,7 +247,12 @@ impl<'des> Perform<'des> for SaveUserSettings {
         )?;
 
         // get the LoggedInUserView
-        let logged_in_view = LoggedInUserView::read(context.pool(), updated_user_view).await?;
+        let logged_in_view = LoggedInUserView::read(
+            context.pool(),
+            updated_user_view.person.id,
+            updated_user_view.local_user.admin_level,
+        )
+        .await?;
 
         // return the jwt
         Ok(LoginResponse {

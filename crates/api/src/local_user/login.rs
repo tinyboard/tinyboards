@@ -49,7 +49,12 @@ impl<'des> Perform<'des> for Login {
             .local_user
             .get_jwt(&context.master_key().jwt);
 
-        let logged_in_view = LoggedInUserView::read(context.pool(), local_user_view).await?;
+        let logged_in_view = LoggedInUserView::read(
+            context.pool(),
+            local_user_view.person.id,
+            local_user_view.local_user.admin_level,
+        )
+        .await?;
 
         Ok(LoginResponse {
             jwt: Sensitive::new(jwt),

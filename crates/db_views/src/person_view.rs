@@ -184,9 +184,10 @@ impl PersonView {
 impl LoggedInUserView {
     pub async fn read(
         pool: &DbPool,
-        local_user_view: LocalUserView,
+        person_id: i32,
+        local_user_admin_level: i32,
     ) -> Result<Self, TinyBoardsError> {
-        let person_id = local_user_view.local_user.id;
+        //let person_id = local_user_view.local_user.id;
         let person_view = PersonView::read(pool, person_id, true)
             .await
             .map_err(|e| TinyBoardsError::from(e))?;
@@ -200,7 +201,7 @@ impl LoggedInUserView {
             settings: person_view.settings,
             counts: person_view.counts,
             unread_notifications: mentions + replies,
-            admin_level: local_user_view.local_user.admin_level,
+            admin_level: local_user_admin_level,
         })
     }
 }

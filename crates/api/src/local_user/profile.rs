@@ -23,7 +23,9 @@ impl<'des> Perform<'des> for GetLoggedInUser {
             .await
             .unwrap()?;
 
-        let logged_in_view = LoggedInUserView::read(context.pool(), view).await?;
+        let logged_in_view =
+            LoggedInUserView::read(context.pool(), view.person.id, view.local_user.admin_level)
+                .await?;
 
         Ok(logged_in_view)
     }
