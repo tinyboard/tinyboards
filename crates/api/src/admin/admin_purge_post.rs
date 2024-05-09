@@ -1,13 +1,14 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    admin::{PurgePost, PurgeItemResponse},
+    admin::{PurgeItemResponse, PurgePost},
     data::TinyBoardsContext,
-    utils::{require_user, purge_local_image_by_url},
+    utils::{purge_local_image_by_url, require_user},
 };
 use tinyboards_db::{
     models::{
         moderator::admin_actions::{AdminPurgePost, AdminPurgePostForm},
+        person::local_user::AdminPerms,
         post::posts::Post,
     },
     traits::Crud,
@@ -30,13 +31,13 @@ impl<'des> Perform<'des> for PurgePost {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Content)
             .unwrap()?;
 
         let target_post_id = data.post_id;
         let reason = data.reason.clone();
 
-        let post = Post::read(context.pool(), target_post_id).await?; 
+        let post = Post::read(context.pool(), target_post_id).await?;
 
         // purge image
         if let Some(url) = post.url {
@@ -45,7 +46,9 @@ impl<'des> Perform<'des> for PurgePost {
 
         // purge thumbnail
         if let Some(thumbnail_url) = post.thumbnail_url {
-            purge_local_image_by_url(context.pool(), &thumbnail_url).await.ok();
+            purge_local_image_by_url(context.pool(), &thumbnail_url)
+                .await
+                .ok();
         }
 
         // delete post

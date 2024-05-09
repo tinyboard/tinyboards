@@ -1,31 +1,28 @@
 use std::collections::HashMap;
 
-use crate::{structs::{LocalUserView, CommentView}, DeleteableOrRemoveable};
+use crate::{
+    structs::{CommentView, LocalUserView},
+    DeleteableOrRemoveable,
+};
 use diesel::{dsl::*, result::Error, *};
+use diesel_async::RunQueryDsl;
 use tinyboards_db::{
     aggregates::structs::CommentAggregates,
     models::{
-        board::board_subscriber::BoardSubscriber,
-        board::board_person_bans::BoardPersonBan,
-        board::boards::BoardSafe,
-        comment::comments::Comment,
-        comment::comment_saved::CommentSaved,
-        post::posts::Post,
-        person::person_blocks::*,
-        person::person::*,
-        person::local_user::*,
+        board::board_person_bans::BoardPersonBan, board::board_subscriber::BoardSubscriber,
+        board::boards::BoardSafe, comment::comment_saved::CommentSaved, comment::comments::Comment,
+        person::local_user::*, person::person::*, person::person_blocks::*, post::posts::Post,
     },
     schema::{
-        board_subscriber, board_person_bans, boards, comment_aggregates, comment_votes, comments,
-        posts, person_blocks, person_board_blocks, comment_saved, person,
+        board_person_bans, board_subscriber, boards, comment_aggregates, comment_saved,
+        comment_votes, comments, person, person_blocks, person_board_blocks, posts,
     },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, fuzzy_search, limit_and_offset_unlimited, get_conn, DbPool},
+    utils::{functions::hot_rank, fuzzy_search, get_conn, limit_and_offset_unlimited, DbPool},
     CommentSortType, ListingType,
 };
 use tinyboards_utils::TinyBoardsError;
 use typed_builder::TypedBuilder;
-use diesel_async::RunQueryDsl;
 
 type CommentViewTuple = (
     Comment,
@@ -199,7 +196,7 @@ impl CommentView {
             creator_blocked: creator_blocked.is_some(),
             my_vote,
             replies: Vec::with_capacity(0),
-            report_count: None
+            report_count: None,
         })
     }
 
@@ -263,7 +260,8 @@ impl CommentView {
                 .show_removed(Some(true))
                 .sort(sort)
                 .build()
-                .list().await?;
+                .list()
+                .await?;
 
             total_count += count;
             ids = comments
@@ -278,7 +276,7 @@ impl CommentView {
 
             comments_vec.append(&mut comments);
         }
-        
+
         // hide deleted/removed info
         for cv in comments_vec
             .iter_mut()
@@ -330,7 +328,7 @@ impl<'a> CommentQuery<'a> {
         // let person_id_join = self.user.map(|l| l.person_id).unwrap_or(-1);
         let person_id_join = self.person_id.unwrap_or(-1);
         // let local_user_id_join = self.user.map(|l| l.id).unwrap_or(-1);
-        
+
         let mut query = comments::table
             .inner_join(person::table)
             .inner_join(posts::table)
@@ -481,14 +479,10 @@ impl<'a> CommentQuery<'a> {
                             .eq(false)
                             .or(board_subscriber::person_id.eq(person_id_join)),
                     );
-                },
+                }
                 ListingType::Local => {
-                    query = query.filter(
-                        boards::local.eq(true)
-                    );
-                    count_query = count_query.filter(
-                        boards::local.eq(true)
-                    );
+                    query = query.filter(boards::local.eq(true));
+                    count_query = count_query.filter(boards::local.eq(true));
                 }
             }
         };
@@ -550,8 +544,7 @@ impl<'a> CommentQuery<'a> {
             .await?;
 
         let comments = CommentView::from_tuple_to_vec(res);
-        let count = count_query.count().get_result::<i64>(conn)
-            .await?;
+        let count = count_query.count().get_result::<i64>(conn).await?;
 
         Ok(CommentQueryResponse { comments, count })
     }
@@ -561,7 +554,7 @@ impl DeleteableOrRemoveable for CommentView {
     fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>) {
         // if the user is admin, nothing is being removed
         if let Some(user_view) = user_view {
-            if user_view.local_user.is_admin {
+            if user_view.local_user.has_permission(AdminPerms::Content) {
                 return;
             }
         }
@@ -599,7 +592,9 @@ impl DeleteableOrRemoveable for CommentView {
         let blank_out_post = {
             if self.post.is_deleted || self.post.is_removed {
                 match user_view {
-                    Some(user_view) => !(self.post.is_removed && user_view.person.id == self.post.creator_id),
+                    Some(user_view) => {
+                        !(self.post.is_removed && user_view.person.id == self.post.creator_id)
+                    }
                     None => true,
                 }
             } else {
@@ -644,7 +639,7 @@ impl ViewToVec for CommentView {
                 creator_blocked: a.8.is_some(),
                 my_vote: a.9,
                 replies: Vec::with_capacity(0),
-                report_count: None
+                report_count: None,
             })
             .collect::<Vec<Self>>()
     }

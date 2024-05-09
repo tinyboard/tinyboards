@@ -1,15 +1,16 @@
-use crate::structs::{RegistrationApplicationView};
+use crate::structs::RegistrationApplicationView;
 use diesel::{result::Error, *};
+use diesel_async::RunQueryDsl;
 use tinyboards_db::{
     models::{
-        site::registration_applications::RegistrationApplication, person::local_user::{LocalUserSafe, LocalUserSettings},
+        person::local_user::{LocalUserSafe, LocalUserSettings},
+        site::registration_applications::RegistrationApplication,
     },
     schema::{local_user, registration_applications},
-    traits::{ViewToVec, ToSafe},
-    utils::{limit_and_offset, get_conn, DbPool},
+    traits::{ToSafe, ViewToVec},
+    utils::{get_conn, limit_and_offset, DbPool},
 };
 use typed_builder::TypedBuilder;
-use diesel_async::RunQueryDsl;
 
 type RegistrationApplicationViewTuple = (
     RegistrationApplication,
@@ -19,30 +20,30 @@ type RegistrationApplicationViewTuple = (
 );
 
 impl RegistrationApplicationView {
-    pub async fn read (
-        pool: &DbPool,
-        app_id: i32,
-    ) -> Result<Self, Error> {
+    pub async fn read(pool: &DbPool, app_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let local_user_alias = diesel::alias!(local_user as local_user_alias);
-        let (
-            application,
-            applicant_settings,
-            applicant,
-            admin,
-        ) = registration_applications::table
-        .find(app_id)
-        .inner_join(local_user::table.on(registration_applications::person_id.eq(local_user::person_id)))
-        .left_join(local_user_alias.on(registration_applications::admin_id.eq(local_user_alias.field(local_user::person_id).nullable())))
-        .order_by(registration_applications::creation_date.desc())
-        .select((
-            registration_applications::all_columns,
-            LocalUserSettings::safe_columns_tuple(),
-            LocalUserSafe::safe_columns_tuple(),
-            local_user_alias.fields(LocalUserSafe::safe_columns_tuple()).nullable(),
-        ))
-        .first::<RegistrationApplicationViewTuple>(conn)
-        .await?;
+        let (application, applicant_settings, applicant, admin) = registration_applications::table
+            .find(app_id)
+            .inner_join(
+                local_user::table
+                    .on(registration_applications::person_id.eq(local_user::person_id)),
+            )
+            .left_join(
+                local_user_alias.on(registration_applications::admin_id
+                    .eq(local_user_alias.field(local_user::person_id).nullable())),
+            )
+            .order_by(registration_applications::creation_date.desc())
+            .select((
+                registration_applications::all_columns,
+                LocalUserSettings::safe_columns_tuple(),
+                LocalUserSafe::safe_columns_tuple(),
+                local_user_alias
+                    .fields(LocalUserSafe::safe_columns_tuple())
+                    .nullable(),
+            ))
+            .first::<RegistrationApplicationViewTuple>(conn)
+            .await?;
 
         Ok(RegistrationApplicationView {
             application,
@@ -52,7 +53,6 @@ impl RegistrationApplicationView {
         })
     }
 }
-
 
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
@@ -72,24 +72,37 @@ pub struct ApplicationQueryResponse {
 impl<'a> ApplicationQuery<'a> {
     pub async fn list(self) -> Result<ApplicationQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
-        
+
         let user_alias = diesel::alias!(local_user as users_alias);
         let query = registration_applications::table
-            .inner_join(local_user::table.on(registration_applications::person_id.eq(local_user::person_id)))
-            .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(local_user::person_id).nullable())))
+            .inner_join(
+                local_user::table
+                    .on(registration_applications::person_id.eq(local_user::person_id)),
+            )
+            .left_join(
+                user_alias.on(registration_applications::admin_id
+                    .eq(user_alias.field(local_user::person_id).nullable())),
+            )
             .order_by(registration_applications::creation_date.desc())
             .select((
                 registration_applications::all_columns,
                 LocalUserSettings::safe_columns_tuple(),
                 LocalUserSafe::safe_columns_tuple(),
-                user_alias.fields(LocalUserSafe::safe_columns_tuple()).nullable(),
+                user_alias
+                    .fields(LocalUserSafe::safe_columns_tuple())
+                    .nullable(),
             ))
             .into_boxed();
 
-
         let count_query = registration_applications::table
-            .inner_join(local_user::table.on(registration_applications::person_id.eq(local_user::person_id)))
-            .left_join(user_alias.on(registration_applications::admin_id.eq(user_alias.field(local_user::person_id).nullable())))
+            .inner_join(
+                local_user::table
+                    .on(registration_applications::person_id.eq(local_user::person_id)),
+            )
+            .left_join(
+                user_alias.on(registration_applications::admin_id
+                    .eq(user_alias.field(local_user::person_id).nullable())),
+            )
             .into_boxed();
 
         let (limit, offset) = limit_and_offset(self.page, self.limit)?;
@@ -103,8 +116,10 @@ impl<'a> ApplicationQuery<'a> {
         let applications = RegistrationApplicationView::from_tuple_to_vec(res);
         let count = count_query.count().get_result::<i64>(conn).await?;
 
-        Ok(ApplicationQueryResponse { applications, count })
-        
+        Ok(ApplicationQueryResponse {
+            applications,
+            count,
+        })
     }
 }
 

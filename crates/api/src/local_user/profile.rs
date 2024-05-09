@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     person::{GetLoggedInUser, GetUserNamePath, Profile, ProfileResponse},
     utils::require_user,
 };
-use tinyboards_db_views::structs::{LoggedInUserView, LocalUserView};
+use tinyboards_db_views::structs::{LocalUserView, LoggedInUserView};
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 
 #[async_trait::async_trait(?Send)]
@@ -19,7 +19,6 @@ impl<'des> Perform<'des> for GetLoggedInUser {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
@@ -77,13 +76,16 @@ impl<'des> Perform<'des> for Profile {
             name = &local_user_view.person.name
         );
         let mut _user_type = String::new();
-        if local_user_view.local_user.is_admin {
+        if local_user_view.local_user.admin_level > 0 {
             _user_type = String::from("Admin");
         } else {
             _user_type = String::from("User");
         }
-        let is_admin = local_user_view.local_user.is_admin;
-        let display_name = local_user_view.person.display_name.unwrap_or(local_user_view.person.name);
+        let is_admin = local_user_view.local_user.admin_level > 0;
+        let display_name = local_user_view
+            .person
+            .display_name
+            .unwrap_or(local_user_view.person.name);
 
         let rcopy2 = route.clone();
         let view = LocalUserView::get_by_name(context.pool(), &rcopy2.username).await?;

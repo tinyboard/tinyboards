@@ -51,15 +51,11 @@ impl Person {
             .await
     }
 
-    pub async fn update_admin(
-        pool: &DbPool,
-        id_: i32,
-        new_admin: bool,
-    ) -> Result<Self, Error> {
+    pub async fn update_admin(pool: &DbPool, id_: i32, admin_level: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::person::dsl::*;
         diesel::update(person.find(id_))
-            .set((is_admin.eq(new_admin), updated.eq(naive_now())))
+            .set((is_admin.eq(admin_level > 0), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }
@@ -87,7 +83,11 @@ impl Person {
             .await
     }
 
-    pub async fn update_default_avatar(pool: &DbPool, old_default_url: String, new_default_url: String) -> Result<usize, Error> {
+    pub async fn update_default_avatar(
+        pool: &DbPool,
+        old_default_url: String,
+        new_default_url: String,
+    ) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::person::dsl::*;
 

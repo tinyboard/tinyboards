@@ -1,19 +1,19 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    data::TinyBoardsContext,
-    admin::LeaveAdmin,
-    utils::require_user, 
-    site::GetSiteResponse
+    admin::LeaveAdmin, data::TinyBoardsContext, site::GetSiteResponse, utils::require_user,
 };
 use tinyboards_db::{
     models::{
-        apub::actor_language::SiteLanguage,
-        apub::language::Language,
+        apub::{actor_language::SiteLanguage, language::Language},
         moderator::mod_actions::{ModAddAdmin, ModAddAdminForm},
-        person::person::{Person, PersonForm},
+        person::{
+            local_user::AdminPerms,
+            person::{Person, PersonForm},
+        },
     },
-    traits::Crud, utils::naive_now
+    traits::Crud,
+    utils::naive_now,
 };
 use tinyboards_db_views::structs::{PersonView, SiteView};
 use tinyboards_utils::{error::TinyBoardsError, version};
@@ -30,23 +30,32 @@ impl<'des> Perform<'des> for LeaveAdmin {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
+        let view = require_user(context.pool(), context.master_key(), auth)
+            .await
+            //.require_admin()
+            .unwrap()?;
 
-        let view = require_user(
-            context.pool(), 
-            context.master_key(), 
-            auth
-        )
-        .await
-        .require_admin()
-        .unwrap()?;
-        
+        if view.local_user.admin_level < 1 {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "You cannot step leave admin if you're not even one.",
+            ));
+        }
+
+        if view.local_user.has_permission(AdminPerms::Owner) {
+            return Err(TinyBoardsError::from_message(400, "You cannot leave admin because you're the owner of this instance. You must transfer ownership to someone else before you can step down."));
+        }
+
         let admins = PersonView::admins(context.pool()).await?;
         if admins.len() == 1 {
-            return Err(TinyBoardsError::from_message(400, "cannot leave admin if you are the only admin."));
+            return Err(TinyBoardsError::from_message(
+                400,
+                "cannot leave admin if you are the only admin.",
+            ));
         }
 
         let person_id = view.person.id;
-        
+
         let form = PersonForm {
             is_admin: Some(false),
             updated: Some(naive_now()),

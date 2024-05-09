@@ -1,23 +1,25 @@
-use crate::structs::{LoggedInUserView, LocalUserSettingsView, PersonView, PersonMentionView, CommentReplyView};
+use crate::structs::{
+    CommentReplyView, LocalUserSettingsView, LoggedInUserView, PersonMentionView, PersonView,
+};
 use diesel::{result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PersonAggregates,
     //map_to_user_sort_type,
     models::person::local_user::*,
     models::person::person::*,
-    schema::{person_aggregates, person, local_user},
+    schema::{local_user, person, person_aggregates},
     traits::{ToSafe, ViewToVec},
-    utils::{functions::lower, fuzzy_search, limit_and_offset, get_conn, DbPool},
+    utils::{functions::lower, fuzzy_search, get_conn, limit_and_offset, DbPool},
     UserSortType,
 };
 use tinyboards_utils::TinyBoardsError;
 
+use diesel_async::RunQueryDsl;
 use hmac::{Hmac, Mac};
 use jwt::VerifyWithKey;
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use typed_builder::TypedBuilder;
-use diesel_async::RunQueryDsl;
 
 type PersonViewTuple = (PersonSafe, Option<LocalUserSettings>, PersonAggregates);
 
@@ -31,25 +33,37 @@ impl PersonView {
         let person_view_tuple = person::table
             .find(person_id)
             .inner_join(person_aggregates::table)
-            .left_join(
-                local_user::table.on(
-                    person::id.eq(local_user::person_id)
-                )
-            )
-            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
+            .select((
+                PersonSafe::safe_columns_tuple(),
+                LocalUserSettings::safe_columns_tuple().nullable(),
+                person_aggregates::all_columns,
+            ))
             .first::<PersonViewTuple>(conn)
             .await
             .optional()
             .map_err(|e| TinyBoardsError::from(e))?;
 
         if get_settings {
-            Ok(person_view_tuple.map(|(person, settings, counts)| Self { person, settings, counts }))    
+            Ok(person_view_tuple.map(|(person, settings, counts)| Self {
+                person,
+                settings,
+                counts,
+            }))
         } else {
-            Ok(person_view_tuple.map(|(person, _, counts)| Self { person, settings: None, counts }))
+            Ok(person_view_tuple.map(|(person, _, counts)| Self {
+                person,
+                settings: None,
+                counts,
+            }))
         }
     }
 
-    pub async fn read(pool: &DbPool, person_id: i32, get_settings:bool) -> Result<Self, TinyBoardsError> {
+    pub async fn read(
+        pool: &DbPool,
+        person_id: i32,
+        get_settings: bool,
+    ) -> Result<Self, TinyBoardsError> {
         match Self::read_opt(pool, person_id, get_settings).await {
             Ok(opt) => match opt {
                 Some(u) => Ok(u),
@@ -80,17 +94,22 @@ impl PersonView {
             .filter(person::name.eq(name))
             .inner_join(person_aggregates::table)
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
-            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .select((
+                PersonSafe::safe_columns_tuple(),
+                LocalUserSettings::safe_columns_tuple().nullable(),
+                person_aggregates::all_columns,
+            ))
             .first::<PersonViewTuple>(conn)
             .await?;
 
-        Ok(Self { person, settings, counts })
+        Ok(Self {
+            person,
+            settings,
+            counts,
+        })
     }
 
-    pub async fn find_by_email_or_name(
-        pool: &DbPool,
-        name_or_email: &str,
-    ) -> Result<Self, Error> {
+    pub async fn find_by_email_or_name(pool: &DbPool, name_or_email: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let (person, settings, counts) = person::table
             .inner_join(person_aggregates::table)
@@ -101,11 +120,19 @@ impl PersonView {
                     .or(local_user::email.eq(name_or_email)),
             )
             .filter(person::local.eq(true))
-            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .select((
+                PersonSafe::safe_columns_tuple(),
+                LocalUserSettings::safe_columns_tuple().nullable(),
+                person_aggregates::all_columns,
+            ))
             .first::<PersonViewTuple>(conn)
             .await?;
 
-        Ok(Self { person, settings, counts })
+        Ok(Self {
+            person,
+            settings,
+            counts,
+        })
     }
 
     pub async fn find_by_email(pool: &DbPool, from_email: &str) -> Result<Self, Error> {
@@ -114,11 +141,19 @@ impl PersonView {
             .inner_join(person_aggregates::table)
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .filter(local_user::email.eq(from_email).and(person::local.eq(true)))
-            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .select((
+                PersonSafe::safe_columns_tuple(),
+                LocalUserSettings::safe_columns_tuple().nullable(),
+                person_aggregates::all_columns,
+            ))
             .first::<PersonViewTuple>(conn)
             .await?;
 
-        Ok(Self { person, settings, counts })
+        Ok(Self {
+            person,
+            settings,
+            counts,
+        })
     }
 
     pub async fn admins(pool: &DbPool) -> Result<Vec<Self>, Error> {
@@ -126,9 +161,13 @@ impl PersonView {
         let admins = person::table
             .inner_join(person_aggregates::table)
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
-            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .select((
+                PersonSafe::safe_columns_tuple(),
+                LocalUserSettings::safe_columns_tuple().nullable(),
+                person_aggregates::all_columns,
+            ))
             .filter(person::local.eq(true))
-            .filter(local_user::is_admin.eq(true))
+            .filter(local_user::admin_level.gt(0))
             .filter(local_user::is_deleted.eq(false))
             .order_by(person::creation_date)
             .load::<PersonViewTuple>(conn)
@@ -138,28 +177,23 @@ impl PersonView {
     }
 }
 
-
 impl LoggedInUserView {
-    
     pub async fn read(pool: &DbPool, person_id: i32) -> Result<Self, TinyBoardsError> {
-
         let person_view = PersonView::read(pool, person_id, true)
-            .await    
+            .await
             .map_err(|e| TinyBoardsError::from(e))?;
 
         let mentions = PersonMentionView::get_unread_mentions(pool, person_id).await?;
 
         let replies = CommentReplyView::get_unread_replies(pool, person_id).await?;
 
-        Ok( LoggedInUserView { 
-            person: person_view.person, 
+        Ok(LoggedInUserView {
+            person: person_view.person,
             settings: person_view.settings,
-            counts: person_view.counts, 
-            unread_notifications: mentions + replies 
+            counts: person_view.counts,
+            unread_notifications: mentions + replies,
         })
-
     }
-
 }
 
 type LocalUserSettingsViewTuple = (LocalUserSettings, PersonAggregates);
@@ -186,9 +220,11 @@ impl LocalUserSettingsView {
     pub async fn list_admins_with_email(pool: &DbPool) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let res = local_user::table
-            .filter(local_user::is_admin.eq(true))
+            .filter(local_user::admin_level.gt(0))
             .filter(local_user::email.is_not_null())
-            .inner_join(person_aggregates::table.on(local_user::person_id.eq(person_aggregates::person_id)))
+            .inner_join(
+                person_aggregates::table.on(local_user::person_id.eq(person_aggregates::person_id)),
+            )
             .select((
                 LocalUserSettings::safe_columns_tuple(),
                 person_aggregates::all_columns,
@@ -196,7 +232,7 @@ impl LocalUserSettingsView {
             .load::<LocalUserSettingsViewTuple>(conn)
             .await?;
 
-            Ok(LocalUserSettingsView::from_tuple_to_vec(res))
+        Ok(LocalUserSettingsView::from_tuple_to_vec(res))
     }
 }
 
@@ -253,14 +289,17 @@ impl<'a> PersonQuery<'a> {
         let mut query = person::table
             .inner_join(person_aggregates::table)
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
-            .select((PersonSafe::safe_columns_tuple(), LocalUserSettings::safe_columns_tuple().nullable(), person_aggregates::all_columns))
+            .select((
+                PersonSafe::safe_columns_tuple(),
+                LocalUserSettings::safe_columns_tuple().nullable(),
+                person_aggregates::all_columns,
+            ))
             .into_boxed();
 
         query = match self.sort.unwrap_or(UserSortType::MostRep) {
             UserSortType::New => query.then_order_by(person::creation_date.desc()),
             UserSortType::Old => query.then_order_by(person::creation_date.asc()),
-            UserSortType::MostRep => query
-                .then_order_by(person_aggregates::rep.desc()),
+            UserSortType::MostRep => query.then_order_by(person_aggregates::rep.desc()),
             UserSortType::MostPosts => query.then_order_by(person_aggregates::post_count.desc()),
             UserSortType::MostComments => {
                 query.then_order_by(person_aggregates::comment_count.desc())
@@ -284,9 +323,12 @@ impl<'a> PersonQuery<'a> {
             count_query = count_query.filter(person::is_banned.eq(is_banned));
         };
 
-        if let Some(is_admin) = self.is_admin {
-            query = query.filter(local_user::is_admin.eq(is_admin));
-            count_query = count_query.filter(local_user::is_admin.eq(is_admin));
+        if let Some(_) = self.is_admin {
+            query = query.filter(local_user::admin_level.gt(0));
+            count_query = count_query.filter(local_user::admin_level.gt(0));
+
+            // order by decreasing admin level, put system acc & owner on top
+            query = query.then_order_by(local_user::admin_level.desc());
         };
 
         if self.approved_only.unwrap_or(false) {

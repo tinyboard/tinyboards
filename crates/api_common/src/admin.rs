@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
-use tinyboards_db_views::structs::{RegistrationApplicationView, PersonView};
+use serde::{Deserialize, Serialize};
+use tinyboards_db_views::structs::{PersonView, RegistrationApplicationView};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct PurgePost {
@@ -49,7 +49,7 @@ pub struct HandleRegistrationApplicationResponse {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddAdmin {
     pub added_person_id: i32,
-    pub added: bool,
+    pub level: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

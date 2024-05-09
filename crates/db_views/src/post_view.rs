@@ -1,24 +1,22 @@
-use crate::{structs::{LocalUserView, PostView}, DeleteableOrRemoveable};
+use crate::{
+    structs::{LocalUserView, PostView},
+    DeleteableOrRemoveable,
+};
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
-        board::board_subscriber::BoardSubscriber,
-        board::board_person_bans::BoardPersonBan,
-        board::boards::BoardSafe,
+        board::board_person_bans::BoardPersonBan, board::board_subscriber::BoardSubscriber,
+        board::boards::BoardSafe, person::local_user::*, person::person::*,
+        person::person_blocks::PersonBlock, post::post_read::PostRead, post::post_saved::PostSaved,
         post::posts::Post,
-        post::post_read::PostRead,
-        post::post_saved::PostSaved,
-        person::person_blocks::PersonBlock,
-        person::person::*,
-        person::local_user::*,
     },
     schema::{
-        board_subscriber, board_person_bans, boards, post_aggregates, post_votes, posts,
-        person_blocks, person_board_blocks, post_read, post_saved, person, post_report
+        board_person_bans, board_subscriber, boards, person, person_blocks, person_board_blocks,
+        post_aggregates, post_read, post_report, post_saved, post_votes, posts,
     },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
+    utils::{functions::hot_rank, fuzzy_search, get_conn, limit_and_offset, DbPool},
     ListingType, SortType,
 };
 use typed_builder::TypedBuilder;
@@ -101,7 +99,7 @@ impl PostView {
                 post_votes::score.nullable(),
             ))
             .into_boxed();
-        
+
         // hide deleted or removed posts from non-admin or mods
         // we prolly don't want this here though...
         /*if !is_mod_or_admin.unwrap_or(true) {
@@ -135,11 +133,12 @@ impl PostView {
                 .filter(post_report::post_id.eq(post_id))
                 .filter(post_report::resolved.eq(false))
                 .select(count(post_report::id))
-                .first::<i64>(conn).await;
+                .first::<i64>(conn)
+                .await;
 
             match count {
                 Ok(count) => Some(count),
-                Err(_) => None
+                Err(_) => None,
             }
         } else {
             None
@@ -156,7 +155,7 @@ impl PostView {
             read: read.is_some(),
             creator_blocked: creator_blocked.is_some(),
             my_vote,
-            report_count
+            report_count,
         })
     }
 }
@@ -313,26 +312,19 @@ impl<'a> PostQuery<'a> {
                             .eq(false)
                             .or(board_subscriber::person_id.eq(person_id_join)),
                     )
-                },
-                ListingType::Local => {
-                    query = query.filter(
-                        boards::local
-                            .eq(true),
-                    )
                 }
+                ListingType::Local => query = query.filter(boards::local.eq(true)),
             }
         }
 
         if !self.show_deleted.unwrap_or(false) {
-            query = query
-                .filter(posts::is_deleted.eq(false));
+            query = query.filter(posts::is_deleted.eq(false));
 
             count_query = count_query.filter(posts::is_deleted.eq(false));
         }
 
         if !self.show_removed.unwrap_or(false) {
-            query = query
-                .filter(posts::is_removed.eq(false));
+            query = query.filter(posts::is_removed.eq(false));
 
             count_query = count_query.filter(posts::is_removed.eq(false));
         }
@@ -381,10 +373,10 @@ impl<'a> PostQuery<'a> {
 
         // featured posts on top
         query = query.then_order_by(posts::featured_local.desc());
-        
+
         if let Some(_id) = self.board_id {
             query = query.then_order_by(posts::featured_board.desc());
-        } 
+        }
 
         query = match self.sort.unwrap_or(SortType::Hot) {
             SortType::Active => query
@@ -451,7 +443,7 @@ impl DeleteableOrRemoveable for PostView {
 
         if let Some(user_view) = user_view {
             // admins see everything
-            if user_view.local_user.is_admin {
+            if user_view.local_user.has_permission(AdminPerms::Content) {
                 return;
             }
 
@@ -496,7 +488,7 @@ impl ViewToVec for PostView {
                 read: a.7.is_some(),
                 creator_blocked: a.8.is_some(),
                 my_vote: a.9,
-                report_count: None
+                report_count: None,
             })
             .collect::<Vec<Self>>()
     }

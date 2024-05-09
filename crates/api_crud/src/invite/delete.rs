@@ -6,7 +6,7 @@ use tinyboards_api_common::{
     utils::require_user,
 };
 use tinyboards_db::{
-    models::site::site_invite::SiteInvite, 
+    models::{person::local_user::AdminPerms, site::site_invite::SiteInvite},
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -23,14 +23,13 @@ impl<'des> PerformCrud<'des> for DeleteSiteInvite {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-
         let id = path.invite_id.clone();
 
         // only admins should be able to delete invites
         require_user(context.pool(), context.master_key(), auth)
-        .await
-        .require_admin()
-        .unwrap()?;
+            .await
+            .require_admin(AdminPerms::Users)
+            .unwrap()?;
 
         // delete site invite
         SiteInvite::delete(context.pool(), id).await?;

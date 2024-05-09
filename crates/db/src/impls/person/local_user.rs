@@ -2,16 +2,81 @@ use hmac::{Hmac, Mac};
 use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
+use std::ops::Add;
 
-use crate::models::person::local_user::{LocalUser, LocalUserForm, LocalUserSafe};
+use crate::models::person::local_user::{AdminPerms, LocalUser, LocalUserForm, LocalUserSafe};
 use crate::schema::local_user::dsl::*;
 use crate::traits::Crud;
-use crate::utils::{naive_now, fuzzy_search, DbPool, get_conn};
+use crate::utils::{fuzzy_search, get_conn, naive_now, DbPool};
 use diesel::{prelude::*, result::Error};
-use tinyboards_utils::{hash_password, TinyBoardsError};
 use diesel_async::RunQueryDsl;
+use tinyboards_utils::{hash_password, TinyBoardsError};
+
+impl AdminPerms {
+    pub fn as_i32(&self) -> i32 {
+        use AdminPerms::*;
+
+        match self {
+            Null => 0,
+            Appearance => 2,
+            Config => 4,
+            Content => 8,
+            Users => 16,
+            Boards => 32,
+            Full => 64,
+            Owner => 128,
+            System => 256,
+        }
+    }
+}
+
+impl Add for AdminPerms {
+    type Output = i32;
+
+    fn add(self, other: Self) -> i32 {
+        self.as_i32() + other.as_i32()
+    }
+}
 
 impl LocalUser {
+    /**
+       Check permission using the bitwise or operator.
+       Always true for full perms and the owner account.
+    */
+    pub fn has_permission(&self, permission: AdminPerms) -> bool {
+        if (self.admin_level & AdminPerms::Owner.as_i32()) > 0
+            || (self.admin_level & AdminPerms::Full.as_i32()) > 0
+            || (self.admin_level & permission.as_i32()) > 0
+        {
+            true
+        } else {
+            false
+        }
+    }
+
+    /**
+     An alternative for `has_permission` for cases where any of the given permissions are enough.
+     For example, admins who have either the Content or Boards permission (or both) can bypass board bans.
+       Example usage: `u.has_permissions_any(AdminPerms::Content + AdminPerms::Boards)`
+    */
+    pub fn has_permissions_any(&self, permissions: i32) -> bool {
+        if (self.admin_level & AdminPerms::Owner.as_i32()) > 0
+            || (self.admin_level & AdminPerms::Full.as_i32()) > 0
+            || (self.admin_level & permissions) > 0
+        {
+            true
+        } else {
+            false
+        }
+    }
+
+    /**
+     * For when only the owner has permissions to do something. (duh)
+     */
+    pub fn is_owner(&self) -> bool {
+        self.admin_level & AdminPerms::Owner.as_i32() > 0
+    }
+
     pub async fn check_name_and_email(
         pool: &DbPool,
         username: &str,
@@ -105,30 +170,32 @@ impl LocalUser {
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         diesel::update(local_user.find(id_))
-            .set((is_application_accepted.eq(new_is_application_accepted), updated.eq(naive_now())))
+            .set((
+                is_application_accepted.eq(new_is_application_accepted),
+                updated.eq(naive_now()),
+            ))
             .get_result::<Self>(conn)
             .await
     }
 
-    pub async fn search_by_name(
-        pool: &DbPool,
-        query: &str
-    ) -> Result<Vec<Self>, Error> {
+    pub async fn search_by_name(pool: &DbPool, query: &str) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::local_user::dsl::*;
-        local_user.filter(name.ilike(fuzzy_search(query))).load(conn)
-        .await
+        local_user
+            .filter(name.ilike(fuzzy_search(query)))
+            .load(conn)
+            .await
     }
 
     pub async fn update_admin(
         pool: &DbPool,
         id_: i32,
-        new_admin: bool,
+        new_admin_level: i32,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::local_user::dsl::*;
         diesel::update(local_user.find(id_))
-            .set((is_admin.eq(new_admin), updated.eq(naive_now())))
+            .set((admin_level.eq(new_admin_level), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }
@@ -177,7 +244,12 @@ impl LocalUser {
 
     pub async fn register(pool: &DbPool, form: LocalUserForm) -> Result<Self, TinyBoardsError> {
         let email_addr = &form.email.unwrap();
-        Self::check_name_and_email(pool, &form.name.clone().unwrap_or_default(), &email_addr.clone()).await?;
+        Self::check_name_and_email(
+            pool,
+            &form.name.clone().unwrap_or_default(),
+            &email_addr.clone(),
+        )
+        .await?;
 
         let unencrypted = form.passhash.unwrap();
 
@@ -189,7 +261,7 @@ impl LocalUser {
         };
 
         Self::create(pool, &form)
-            .await    
+            .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create user"))
     }
 
@@ -221,7 +293,6 @@ impl LocalUser {
             id: self.id,
             person_id: self.person_id,
             name: self.name,
-            is_admin: self.is_admin,
             is_deleted: self.is_deleted,
             creation_date: self.creation_date,
             updated: self.updated,
@@ -233,6 +304,7 @@ impl LocalUser {
             show_nsfw: self.show_nsfw,
             show_bots: self.show_bots,
             is_application_accepted: self.is_application_accepted,
+            admin_level: self.admin_level,
         }
     }
 }
@@ -244,13 +316,11 @@ impl Crud for LocalUser {
 
     async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        local_user.find(id_).first::<Self>(conn)
-        .await
+        local_user.find(id_).first::<Self>(conn).await
     }
     async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(local_user.find(id_)).execute(conn)
-        .await
+        diesel::delete(local_user.find(id_)).execute(conn).await
     }
     async fn create(pool: &DbPool, form: &LocalUserForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -272,7 +342,7 @@ impl Crud for LocalUser {
 
 pub mod safe_type {
     use crate::{
-        models::person::local_user::{LocalUserSettings, LocalUserSafe},
+        models::person::local_user::{LocalUserSafe, LocalUserSettings},
         schema::local_user::*,
         traits::ToSafe,
     };
@@ -281,7 +351,6 @@ pub mod safe_type {
         id,
         person_id,
         name,
-        is_admin,
         is_deleted,
         creation_date,
         updated,
@@ -293,6 +362,7 @@ pub mod safe_type {
         show_nsfw,
         show_bots,
         is_application_accepted,
+        admin_level,
     );
 
     type SettingColumns = (
@@ -317,7 +387,6 @@ pub mod safe_type {
                 id,
                 person_id,
                 name,
-                is_admin,
                 is_deleted,
                 creation_date,
                 updated,
@@ -329,6 +398,7 @@ pub mod safe_type {
                 show_nsfw,
                 show_bots,
                 is_application_accepted,
+                admin_level,
             )
         }
     }

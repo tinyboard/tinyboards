@@ -3,11 +3,15 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{CreateSiteInvite, CreateSiteInviteResponse},
-    utils::{require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::{
-        site::site_invite::{SiteInvite, SiteInviteForm}, site::local_site::LocalSite,
+        person::local_user::AdminPerms,
+        site::{
+            local_site::LocalSite,
+            site_invite::{SiteInvite, SiteInviteForm},
+        },
     },
     traits::Crud,
 };
@@ -28,7 +32,7 @@ impl<'des> PerformCrud<'des> for CreateSiteInvite {
         // only admins should be able to create invites
         let _user = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Users)
             .unwrap()?;
 
         // we only create invites if site is in invite mode

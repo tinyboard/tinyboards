@@ -1,12 +1,17 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    board::{RemoveBoard, BoardResponse},
+    board::{BoardResponse, RemoveBoard},
+    build_response::build_board_response,
     data::TinyBoardsContext,
-    utils::{require_user}, build_response::{build_board_response},
+    utils::require_user,
 };
 use tinyboards_db::{
-    models::{moderator::mod_actions::{ModRemoveBoard, ModRemoveBoardForm}, board::boards::Board},
+    models::{
+        board::boards::Board,
+        moderator::mod_actions::{ModRemoveBoard, ModRemoveBoardForm},
+        person::local_user::AdminPerms,
+    },
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -29,7 +34,7 @@ impl<'des> PerformCrud<'des> for RemoveBoard {
         // require admin (only admin may remove a board)
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Boards)
             .unwrap()?;
 
         let board_id = orig_board.id;

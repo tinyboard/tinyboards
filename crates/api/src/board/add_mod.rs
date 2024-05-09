@@ -1,14 +1,15 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    data::TinyBoardsContext,
     board::{AddBoardMod, AddBoardModResponse},
+    data::TinyBoardsContext,
     utils::require_user,
 };
 use tinyboards_db::{
     models::{
         board::board_mods::{BoardModerator, BoardModeratorForm},
         moderator::mod_actions::{ModAddBoardMod, ModAddBoardModForm},
+        person::local_user::AdminPerms,
     },
     traits::Crud,
 };
@@ -32,7 +33,7 @@ impl<'des> Perform<'des> for AddBoardMod {
         // require admin to add board moderator
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Boards)
             .unwrap()?;
 
         let added = data.added;

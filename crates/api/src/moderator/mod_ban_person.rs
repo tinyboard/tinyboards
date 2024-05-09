@@ -9,8 +9,10 @@ use tinyboards_api_common::{
     utils::{require_user, send_system_message},
 };
 use tinyboards_db::{
-    models::moderator::mod_actions::{ModBan, ModBanForm},
-    models::person::person::Person,
+    models::{
+        moderator::mod_actions::{ModBan, ModBanForm},
+        person::{local_user::AdminPerms, person::Person},
+    },
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -51,7 +53,7 @@ impl<'des> Perform<'des> for ToggleBan {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Users)
             .unwrap()?;
 
         // update the person in the database to be banned/unbanned

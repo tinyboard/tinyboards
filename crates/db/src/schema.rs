@@ -107,9 +107,7 @@ diesel::table! {
 diesel::table! {
     boards (id) {
         id -> Int4,
-        #[max_length = 50]
         name -> Varchar,
-        #[max_length = 150]
         title -> Varchar,
         description -> Nullable<Text>,
         is_banned -> Bool,
@@ -227,7 +225,6 @@ diesel::table! {
     emoji (id) {
         id -> Int4,
         local_site_id -> Int4,
-        #[max_length = 128]
         shortcode -> Varchar,
         image_url -> Text,
         alt_text -> Text,
@@ -241,7 +238,6 @@ diesel::table! {
     emoji_keyword (id) {
         id -> Int4,
         emoji_id -> Int4,
-        #[max_length = 128]
         keyword -> Varchar,
     }
 }
@@ -308,24 +304,16 @@ diesel::table! {
         federation_http_fetch_retry_limit -> Int4,
         federation_worker_count -> Int4,
         captcha_enabled -> Bool,
-        #[max_length = 255]
         captcha_difficulty -> Varchar,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
         reports_email_admins -> Bool,
-        #[max_length = 50]
         name -> Varchar,
-        #[max_length = 25]
         primary_color -> Nullable<Varchar>,
-        #[max_length = 25]
         secondary_color -> Nullable<Varchar>,
-        #[max_length = 25]
         hover_color -> Nullable<Varchar>,
-        #[max_length = 255]
         description -> Nullable<Varchar>,
-        #[max_length = 255]
         icon -> Nullable<Varchar>,
-        #[max_length = 255]
         welcome_message -> Nullable<Varchar>,
     }
 }
@@ -358,7 +346,6 @@ diesel::table! {
         person_id -> Int4,
         passhash -> Text,
         email -> Nullable<Text>,
-        is_admin -> Bool,
         is_deleted -> Bool,
         unban_date -> Nullable<Timestamp>,
         show_nsfw -> Bool,
@@ -373,6 +360,7 @@ diesel::table! {
         email_verified -> Bool,
         updated -> Nullable<Timestamp>,
         creation_date -> Timestamp,
+        admin_level -> Int4,
     }
 }
 
@@ -517,9 +505,7 @@ diesel::table! {
 diesel::table! {
     person (id) {
         id -> Int4,
-        #[max_length = 30]
         name -> Varchar,
-        #[max_length = 30]
         display_name -> Nullable<Varchar>,
         is_banned -> Bool,
         creation_date -> Timestamp,
@@ -540,7 +526,6 @@ diesel::table! {
         last_refreshed_date -> Timestamp,
         instance_id -> Int4,
         is_admin -> Bool,
-        #[max_length = 256]
         instance -> Nullable<Varchar>,
     }
 }
@@ -673,9 +658,7 @@ diesel::table! {
 diesel::table! {
     posts (id) {
         id -> Int4,
-        #[max_length = 200]
         title -> Varchar,
-        #[max_length = 10]
         type_ -> Varchar,
         url -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
@@ -733,7 +716,6 @@ diesel::table! {
 diesel::table! {
     site (id) {
         id -> Int4,
-        #[max_length = 20]
         name -> Varchar,
         sidebar -> Nullable<Text>,
         creation_date -> Timestamp,

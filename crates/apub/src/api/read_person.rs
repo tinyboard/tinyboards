@@ -1,16 +1,20 @@
 use crate::{api::PerformApub, fetcher::resolve_actor_identifier, objects::person::ApubPerson};
-use tinyboards_federation::config::Data;
 use tinyboards_api_common::{
-  data::TinyBoardsContext,
-  person::{GetPersonDetails, GetPersonDetailsResponse},
-  utils::{check_private_instance, is_admin, load_user_opt},
+    data::TinyBoardsContext,
+    person::{GetPersonDetails, GetPersonDetailsResponse},
+    utils::{check_private_instance, is_admin, load_user_opt},
 };
 use tinyboards_db::{
-  models::person::person::Person,
-  utils::post_to_comment_sort_type,
-  map_to_sort_type
+    map_to_sort_type,
+    models::person::{local_user::AdminPerms, person::Person},
+    utils::post_to_comment_sort_type,
 };
-use tinyboards_db_views::{comment_view::{CommentQuery, CommentQueryResponse}, post_view::{PostQuery, PostQueryResponse}, structs::{BoardModeratorView, PersonView},};
+use tinyboards_db_views::{
+    comment_view::{CommentQuery, CommentQueryResponse},
+    post_view::{PostQuery, PostQueryResponse},
+    structs::{BoardModeratorView, PersonView},
+};
+use tinyboards_federation::config::Data;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait]
@@ -18,7 +22,11 @@ impl PerformApub for GetPersonDetails {
     type Response = GetPersonDetailsResponse;
 
     #[tracing::instrument(skip(context, auth))]
-    async fn perform(&self, context: &Data<TinyBoardsContext>, auth: Option<&str>) -> Result<GetPersonDetailsResponse, TinyBoardsError> {
+    async fn perform(
+        &self,
+        context: &Data<TinyBoardsContext>,
+        auth: Option<&str>,
+    ) -> Result<GetPersonDetailsResponse, TinyBoardsError> {
         let data: &GetPersonDetails = self;
 
         // check to make sure a person name or id is given
@@ -39,7 +47,10 @@ impl PerformApub for GetPersonDetails {
                         .await?
                         .id
                 } else {
-                    return Err(TinyBoardsError::from_message(400, "couldn't find that username or email."));
+                    return Err(TinyBoardsError::from_message(
+                        400,
+                        "couldn't find that username or email.",
+                    ));
                 }
             }
         };
@@ -54,13 +65,16 @@ impl PerformApub for GetPersonDetails {
         }));
 
         let show_deleted = match view {
-            Some(ref v) => v.local_user.is_admin,
-            None => false
+            Some(ref v) => v.local_user.has_permission(AdminPerms::Users),
+            None => false,
         };
 
         let show_removed = match view {
-            Some(ref v) => v.local_user.is_admin || v.person.id == person_view.person.id,
-            None => false
+            Some(ref v) => {
+                v.local_user.has_permission(AdminPerms::Users)
+                    || v.person.id == person_view.person.id
+            }
+            None => false,
         };
 
         let page = data.page;
@@ -81,17 +95,18 @@ impl PerformApub for GetPersonDetails {
             .page(page)
             .limit(limit);
 
-        // If its saved only, you don't care what creator it was. 
+        // If its saved only, you don't care what creator it was.
         // Or, if it is not saved, then you only want it for a specific creator
-        let PostQueryResponse { posts, count: posts_count_total } = if !saved_only.unwrap_or(false) {
+        let PostQueryResponse {
+            posts,
+            count: posts_count_total,
+        } = if !saved_only.unwrap_or(false) {
             posts_query
                 .creator_id(Some(person_details_id))
                 .build()
                 .list()
         } else {
-            posts_query
-                .build()
-                .list()
+            posts_query.build().list()
         }
         .await?;
 
@@ -108,11 +123,14 @@ impl PerformApub for GetPersonDetails {
 
         // If its saved only, you don't care what creator it was
         // Or, if its not saved, then you only want it for that specific creator
-        let CommentQueryResponse { comments, count: comments_count_total } = if !saved_only.unwrap_or(false) {
+        let CommentQueryResponse {
+            comments,
+            count: comments_count_total,
+        } = if !saved_only.unwrap_or(false) {
             comments_query
-            .creator_id(Some(person_details_id))
-            .build()
-            .list()
+                .creator_id(Some(person_details_id))
+                .build()
+                .list()
         } else {
             comments_query.build().list()
         }
@@ -126,7 +144,7 @@ impl PerformApub for GetPersonDetails {
             posts,
             comments_count_total,
             posts_count_total,
-            moderates
+            moderates,
         })
     }
 }

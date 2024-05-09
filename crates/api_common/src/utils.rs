@@ -206,15 +206,15 @@ impl UserResult {
         }
     }
 
-    pub fn require_admin(self) -> Self {
+    pub fn require_admin(self, permission: AdminPerms) -> Self {
         Self(match self.0 {
             Ok(u) => {
-                if u.local_user.is_admin {
+                if u.local_user.has_permission(permission) {
                     Ok(u)
                 } else {
                     Err(TinyBoardsError::from_message(
                         403,
-                        "you need to be an admin to do this",
+                        "insufficient permissions",
                     ))
                 }
             }
@@ -225,8 +225,8 @@ impl UserResult {
     pub async fn not_banned_from_board(self, board_id: i32, pool: &DbPool) -> Self {
         match self.0 {
             Ok(u) => {
-                // skip this check for admins :))))
-                if u.local_user.is_admin {
+                // skip this check for admins :)))) (if they have either the Content or the Boards permission, or both)
+                if u.local_user.has_permissions_any(AdminPerms::Content + AdminPerms::Boards) {
                     return Self(Ok(u));
                 }
                 
@@ -248,8 +248,8 @@ impl UserResult {
     pub async fn require_board_mod(self, board_id: i32, pool: &DbPool) -> Self {
         match self.0 {
             Ok(u) => {
-                // admins can do everything
-                if u.local_user.is_admin {
+                // admins can do everything (in this case, only ones with the Content permission)
+                if u.local_user.has_permission(AdminPerms::Content) {
                     return Self(Ok(u));
                 }
 
@@ -282,7 +282,7 @@ pub async fn check_registration_application(
     local_user_view: &LocalUserView,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
-    if site.require_application && !local_user_view.local_user.is_admin && !local_user_view.local_user.is_application_accepted {
+    if site.require_application && local_user_view.local_user.admin_level == 0 && !local_user_view.local_user.is_application_accepted {
         let person_id = local_user_view.local_user.person_id;
         let registration = RegistrationApplication::find_by_person_id(pool, person_id).await?;
 

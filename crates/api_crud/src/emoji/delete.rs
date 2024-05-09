@@ -5,9 +5,9 @@ use tinyboards_api_common::{
     emoji::{DeleteEmoji, DeleteEmojiResponse, EmojiIdPath},
     utils::require_user,
 };
-use tinyboards_db::models::emoji::{
-        emoji::Emoji,
-        emoji_keyword::EmojiKeyword,
+use tinyboards_db::models::{
+    emoji::{emoji::Emoji, emoji_keyword::EmojiKeyword},
+    person::local_user::AdminPerms,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -26,12 +26,15 @@ impl<'des> PerformCrud<'des> for DeleteEmoji {
         // only admins should be deleting emojis
         let _view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Config)
             .unwrap()?;
 
         EmojiKeyword::delete(context.pool(), path.emoji_id.clone()).await?;
         Emoji::delete(context.pool(), path.emoji_id.clone()).await?;
 
-        Ok(DeleteEmojiResponse { id: path.emoji_id.clone(), success: true, })
+        Ok(DeleteEmojiResponse {
+            id: path.emoji_id.clone(),
+            success: true,
+        })
     }
 }

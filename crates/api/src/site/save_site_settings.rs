@@ -1,17 +1,23 @@
-use url::Url;
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetSiteSettingsResponse, SaveSiteSettings},
-    utils::{get_current_site_mode, require_user, purge_local_image_by_url},
+    utils::{get_current_site_mode, purge_local_image_by_url, require_user},
 };
 use tinyboards_db::{
-    models::{person::{local_user::LocalUser, person::Person}, site::local_site::{LocalSite, LocalSiteForm}},
+    models::{
+        person::{
+            local_user::{AdminPerms, LocalUser},
+            person::Person,
+        },
+        site::local_site::{LocalSite, LocalSiteForm},
+    },
     utils::naive_now,
     SiteMode,
 };
 use tinyboards_utils::error::TinyBoardsError;
+use url::Url;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveSiteSettings {
@@ -30,7 +36,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         // only an admin should be able to change site settings (TODO - make this owner only)
         require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Config)
             .unwrap()?;
 
         let site = LocalSite::read(context.pool()).await?;
@@ -70,7 +76,11 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         if let Some(ref icon) = icon {
             if let Some(ref current_icon) = current_icon {
                 if icon != current_icon && !icon.is_empty() && !current_icon.is_empty() {
-                    let r = purge_local_image_by_url(context.pool(), &Url::parse(current_icon).unwrap().into()).await;
+                    let r = purge_local_image_by_url(
+                        context.pool(),
+                        &Url::parse(current_icon).unwrap().into(),
+                    )
+                    .await;
 
                     if let Err(_) = r {
                         eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_icon);
@@ -87,13 +97,19 @@ impl<'des> Perform<'des> for SaveSiteSettings {
 
         if let Some(welcome_message) = &welcome_message {
             if welcome_message.chars().count() > 255 {
-                return Err(TinyBoardsError::from_message(400, "welcome message too long"))
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "welcome message too long",
+                ));
             }
         }
 
         // update the default avatar url if it is provided and different then the current one set in local_site
         if current_default_avatar.is_none() && default_avatar.is_some() {
-            let old_avatar_url = format!("{}/media/default_pfp.png", context.settings().get_protocol_and_hostname());
+            let old_avatar_url = format!(
+                "{}/media/default_pfp.png",
+                context.settings().get_protocol_and_hostname()
+            );
             let new_avatar_url = default_avatar.clone().unwrap();
             Person::update_default_avatar(context.pool(), old_avatar_url, new_avatar_url).await?;
         }

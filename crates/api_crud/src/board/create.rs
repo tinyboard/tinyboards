@@ -1,26 +1,29 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
+    board::{BoardResponse, CreateBoard},
+    build_response::build_board_response,
     data::TinyBoardsContext,
-    board::{CreateBoard, BoardResponse},
     utils::{
-        require_user, generate_local_apub_endpoint, EndpointType, generate_subscribers_url, generate_inbox_url, generate_featured_url, generate_moderators_url, generate_shared_inbox_url,
-    }, build_response::build_board_response,
+        generate_featured_url, generate_inbox_url, generate_local_apub_endpoint,
+        generate_moderators_url, generate_shared_inbox_url, generate_subscribers_url, require_user,
+        EndpointType,
+    },
 };
 use tinyboards_db::{
     models::{
-        board::boards::{Board, BoardForm}, 
-        board::board_mods::{BoardModeratorForm, BoardModerator}, 
-        board::board_subscriber::{BoardSubscriber, BoardSubscriberForm},
+        board::{
+            board_mods::{BoardModerator, BoardModeratorForm},
+            board_subscriber::{BoardSubscriber, BoardSubscriberForm},
+            boards::{Board, BoardForm},
+        },
+        person::local_user::AdminPerms,
     },
-    traits::{Crud, ApubActor, Subscribeable, Joinable},
+    traits::{ApubActor, Crud, Joinable, Subscribeable},
 };
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
-use tinyboards_utils::{
-    parser::parse_markdown_opt,
-    TinyBoardsError,
-};
+use tinyboards_utils::{parser::parse_markdown_opt, TinyBoardsError};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateBoard {
@@ -40,11 +43,10 @@ impl<'des> PerformCrud<'des> for CreateBoard {
         let title = data.title.clone();
         let mut description = data.description.clone();
 
-
         // board creation restricted to admins (may provide other options in the future)
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Boards)
             .unwrap()?;
 
         let site_view = SiteView::read_local(context.pool()).await?;
@@ -57,18 +59,14 @@ impl<'des> PerformCrud<'des> for CreateBoard {
         let banner = &data.banner;
 
         let board_actor_id = generate_local_apub_endpoint(
-            EndpointType::Board, 
-            &data.name, 
+            EndpointType::Board,
+            &data.name,
             &context.settings().get_protocol_and_hostname(),
         )?;
 
         // check for dupe actor id
-        let board_dupe = Board::read_from_apub_id(
-            context.pool(), 
-            &board_actor_id
-        )
-        .await?;
-        
+        let board_dupe = Board::read_from_apub_id(context.pool(), &board_actor_id).await?;
+
         if board_dupe.is_some() {
             return Err(TinyBoardsError::from_message(400, "board already exists."));
         }
@@ -88,7 +86,7 @@ impl<'des> PerformCrud<'des> for CreateBoard {
             shared_inbox_url: Some(Some(generate_shared_inbox_url(&board_actor_id)?)),
             featured_url: Some(generate_featured_url(&board_actor_id)?),
             moderators_url: Some(generate_moderators_url(&board_actor_id)?),
-            instance_id: Some(site_view.site.instance_id),            
+            instance_id: Some(site_view.site.instance_id),
             ..BoardForm::default()
         };
 

@@ -1,12 +1,13 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    data::TinyBoardsContext,
     admin::{ListBannedPersons, ListBannedPersonsResponse},
-    utils::require_user, 
+    data::TinyBoardsContext,
+    utils::require_user,
 };
-use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_db::models::person::local_user::AdminPerms;
 use tinyboards_db_views::person_view::PersonQuery;
+use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for ListBannedPersons {
@@ -20,20 +21,15 @@ impl<'des> Perform<'des> for ListBannedPersons {
         _: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-
         let data: &ListBannedPersons = &self;
         let limit = data.limit;
         let page = data.page;
 
         // require admin to view banned persons
-        let _view = require_user(
-            context.pool(), 
-            context.master_key(), 
-            auth
-        )
-        .await
-        .require_admin()
-        .unwrap()?;
+        let _view = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .require_admin(AdminPerms::Users)
+            .unwrap()?;
 
         // grab the list of persons that are banned
         let person_query = PersonQuery::builder()

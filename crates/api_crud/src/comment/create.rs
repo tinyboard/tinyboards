@@ -1,13 +1,14 @@
 use crate::PerformCrud;
 use actix_web::web;
 use tinyboards_api_common::{
-    comment::{CreateComment, CommentResponse},
+    build_response::build_comment_response,
+    comment::{CommentResponse, CreateComment},
     data::TinyBoardsContext,
     utils::{
         check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         generate_local_apub_endpoint, require_user, EndpointType,
     },
-    websocket::send::send_notifications, build_response::build_comment_response,
+    websocket::send::send_notifications,
 };
 use tinyboards_db::{
     models::{
@@ -16,7 +17,10 @@ use tinyboards_db::{
             comment_votes::{CommentVote, CommentVoteForm},
             comments::{Comment, CommentForm},
         },
-        person::person_mentions::{PersonMention, PersonMentionForm},
+        person::{
+            local_user::AdminPerms,
+            person_mentions::{PersonMention, PersonMentionForm},
+        },
         post::posts::Post,
     },
     traits::{Crud, Voteable},
@@ -86,7 +90,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             }
 
             if (parent_comment.is_removed || parent_comment.is_deleted || parent_comment.is_locked)
-                && !view.local_user.is_admin
+                && !view.local_user.has_permission(AdminPerms::Content)
             {
                 return Err(TinyBoardsError::from_message(
                     403,
@@ -203,6 +207,9 @@ impl<'des> PerformCrud<'des> for CreateComment {
             }
         }
 
-        Ok(build_comment_response(context, new_comment.comment.id, Some(view), recipient_ids).await?)
+        Ok(
+            build_comment_response(context, new_comment.comment.id, Some(view), recipient_ids)
+                .await?,
+        )
     }
 }

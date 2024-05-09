@@ -1,15 +1,18 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    admin::{PurgePerson, PurgeItemResponse},
+    admin::{PurgeItemResponse, PurgePerson},
     data::TinyBoardsContext,
-    utils::{purge_local_image_posts_for_user, require_user, purge_local_image_by_url},
+    utils::{purge_local_image_by_url, purge_local_image_posts_for_user, require_user},
 };
 use tinyboards_db::{
     models::{
         moderator::admin_actions::{AdminPurgePerson, AdminPurgePersonForm},
-        person::local_user::LocalUser,
-        person::person::Person, site::local_site::LocalSite,
+        person::{
+            local_user::{AdminPerms, LocalUser},
+            person::Person,
+        },
+        site::local_site::LocalSite,
     },
     traits::Crud,
 };
@@ -34,17 +37,18 @@ impl<'des> Perform<'des> for PurgePerson {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Users)
             .unwrap()?;
 
-        let target_user = LocalUser::get_by_person_id(context.pool(), target_person_id.clone()).await?;
+        let target_user =
+            LocalUser::get_by_person_id(context.pool(), target_person_id.clone()).await?;
         let target_person = Person::read(context.pool(), target_person_id.clone()).await?;
 
         if target_user
             .name
             .to_lowercase()
             .contains(settings.owner_name.to_lowercase().as_str())
-            || target_user.is_admin
+            || target_user.has_permissions_any(AdminPerms::Full + AdminPerms::Owner)
         {
             return Err(TinyBoardsError::from_message(
                 403,
@@ -57,7 +61,6 @@ impl<'des> Perform<'des> for PurgePerson {
             purge_local_image_by_url(context.pool(), &banner).await.ok();
         }
 
-
         let local_site = LocalSite::read(context.pool()).await?;
 
         // purge user avatar, but only if it is not equal to the default avatar on the local site
@@ -68,15 +71,11 @@ impl<'des> Perform<'des> for PurgePerson {
                 }
             } else {
                 purge_local_image_by_url(context.pool(), &avatar).await.ok();
-            }            
+            }
         }
 
         // purge all submitted media/images from user
-        purge_local_image_posts_for_user(
-            target_person_id,
-            context.pool(),
-        )
-        .await?;
+        purge_local_image_posts_for_user(target_person_id, context.pool()).await?;
 
         // delete person & local user
         Person::delete(context.pool(), target_person_id).await?;

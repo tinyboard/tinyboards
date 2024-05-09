@@ -1,13 +1,16 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    admin::{ApplicationIdPath, HandleRegistrationApplication, HandleRegistrationApplicationResponse},
+    admin::{
+        ApplicationIdPath, HandleRegistrationApplication, HandleRegistrationApplicationResponse,
+    },
     data::TinyBoardsContext,
     utils::{require_user, send_application_approval_email},
 };
 use tinyboards_db::{
     models::{
-        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm}, person::local_user::LocalUser,
+        person::local_user::{AdminPerms, LocalUser},
+        site::registration_applications::{RegistrationApplication, RegistrationApplicationForm},
     },
     traits::Crud,
 };
@@ -24,21 +27,21 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
         self,
         context: &Data<TinyBoardsContext>,
         path: Self::Route,
-        auth: Option<&str>
+        auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &HandleRegistrationApplication = &self;
 
         // only admin should be the one to approve/deny the application
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Users)
             .unwrap()?;
 
         let approve = data.approve.clone();
         let reason = data.reason.clone();
 
         let app_id = path.app_id.clone();
-        
+
         let app = RegistrationApplicationView::read(context.pool(), app_id.clone()).await?;
 
         if approve == true {
@@ -46,15 +49,20 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
             let app_username = app.applicant.name.clone();
             let app_email = app.applicant_settings.email.clone();
             if let Some(app_email) = app_email {
-                send_application_approval_email(&app_username, &app_email, context.settings()).await?;
+                send_application_approval_email(&app_username, &app_email, context.settings())
+                    .await?;
             }
             // update user in the db so that their is_application_approved value is true so they can login
-            LocalUser::update_is_application_accepted(context.pool(), app.applicant.id.clone(), true).await?;
+            LocalUser::update_is_application_accepted(
+                context.pool(),
+                app.applicant.id.clone(),
+                true,
+            )
+            .await?;
             // at this point we no longer need the app in the db, so delete it
             RegistrationApplication::delete(context.pool(), app_id.clone()).await?;
 
             Ok(HandleRegistrationApplicationResponse { application: None })
-
         } else {
             // if we are denying the application, update the app in the DB with admin who denied it and reason
             let form = RegistrationApplicationForm {
@@ -66,9 +74,12 @@ impl<'des> Perform<'des> for HandleRegistrationApplication {
             // update the application
             RegistrationApplication::update(context.pool(), app_id.clone(), &form).await?;
             // get the updated app view
-            let application = RegistrationApplicationView::read(context.pool(), app_id.clone()).await?;
-            
-            Ok(HandleRegistrationApplicationResponse { application: Some(application) })
+            let application =
+                RegistrationApplicationView::read(context.pool(), app_id.clone()).await?;
+
+            Ok(HandleRegistrationApplicationResponse {
+                application: Some(application),
+            })
         }
     }
 }

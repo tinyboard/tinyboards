@@ -9,6 +9,7 @@ use tinyboards_db::{
     models::{
         board::boards::Board,
         moderator::admin_actions::{AdminPurgeBoard, AdminPurgeBoardForm},
+        person::local_user::AdminPerms,
     },
     traits::Crud,
 };
@@ -30,7 +31,7 @@ impl<'des> Perform<'des> for PurgeBoard {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Boards)
             .unwrap()?;
 
         let target_board_id = data.board_id;
@@ -44,11 +45,7 @@ impl<'des> Perform<'des> for PurgeBoard {
         // TODO - add in purging of board banner/icon
 
         // purge image posts for board
-        purge_local_image_posts_for_board(
-            target_board_id,
-            context.pool(),
-        )
-        .await?;
+        purge_local_image_posts_for_board(target_board_id, context.pool()).await?;
 
         // delete board
         Board::delete(context.pool(), target_board_id).await?;

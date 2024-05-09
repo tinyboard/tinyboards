@@ -3,12 +3,13 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     admin::{PurgeComment, PurgeItemResponse},
     data::TinyBoardsContext,
-    utils::{require_user},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::{
         comment::comments::Comment,
         moderator::admin_actions::{AdminPurgeComment, AdminPurgeCommentForm},
+        person::local_user::AdminPerms,
     },
     traits::Crud,
 };
@@ -30,7 +31,7 @@ impl<'des> Perform<'des> for PurgeComment {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_admin()
+            .require_admin(AdminPerms::Content)
             .unwrap()?;
 
         let target_comment_id = data.comment_id;
