@@ -17,7 +17,7 @@ use tinyboards_db::{
     traits::Crud,
 };
 use tinyboards_db_views::structs::{LocalUserView, PersonView};
-use tinyboards_utils::error::TinyBoardsError;
+use tinyboards_utils::{error::TinyBoardsError, passhash::verify_password};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for AddAdmin {
@@ -42,6 +42,7 @@ impl<'des> Perform<'des> for AddAdmin {
 
         let level = data.level;
         let target_name = &data.username;
+        let password = data.password.as_ref();
 
         // only the owner can add an admin with full permissions, or transfer ownership
         let can_add_full_perms = view.local_user.is_owner();
@@ -54,8 +55,17 @@ impl<'des> Perform<'des> for AddAdmin {
             ));
         }
 
-        // in case of ownership transfer, demote the logged in user (former owner) to only full permissions from owner
+        // ownership transfer
         if can_add_full_perms && (level & AdminPerms::Owner.as_i32() > 0) {
+            // this requires password confirmation
+            if !verify_password(
+                &view.local_user.passhash,
+                password.unwrap_or(&String::new()),
+            ) {
+                return Err(TinyBoardsError::from_message(403, "Invalid password"));
+            }
+
+            // demote the logged in user (former owner) to only full permissions from owner
             LocalUser::update_admin(
                 context.pool(),
                 view.local_user.id,

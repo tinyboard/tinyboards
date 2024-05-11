@@ -50,6 +50,7 @@ pub struct HandleRegistrationApplicationResponse {
 pub struct AddAdmin {
     pub username: String,
     pub level: i32,
+    pub password: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
