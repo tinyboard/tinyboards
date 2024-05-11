@@ -45,8 +45,8 @@ impl<'des> Perform<'des> for AddAdmin {
         let password = data.password.as_ref();
 
         // only the owner can add an admin with full permissions, or transfer ownership
-        let can_add_full_perms = view.local_user.is_owner();
-        if !can_add_full_perms
+        let is_owner = view.local_user.is_owner();
+        if !is_owner
             & ((level & AdminPerms::Full + AdminPerms::Owner + AdminPerms::System.as_i32()) > 0)
         {
             return Err(TinyBoardsError::from_message(
@@ -56,7 +56,7 @@ impl<'des> Perform<'des> for AddAdmin {
         }
 
         // ownership transfer
-        if can_add_full_perms && (level & AdminPerms::Owner.as_i32() > 0) {
+        if is_owner && (level & AdminPerms::Owner.as_i32() > 0) {
             // this requires password confirmation
             if !verify_password(
                 &view.local_user.passhash,
@@ -78,6 +78,18 @@ impl<'des> Perform<'des> for AddAdmin {
 
         // get the user to be updated
         let target_user_view = LocalUserView::get_by_name(context.pool(), target_name).await?;
+
+        // higher up or equal admins cannot be removed
+        if !is_owner
+            && (target_user_view.local_user.admin_level
+                & (AdminPerms::Full + AdminPerms::Owner + AdminPerms::System.as_i32()))
+                > 0
+        {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Equal or higher up admins cannot be edited or removed",
+            ));
+        }
 
         // update added user to be an admin
         LocalUser::update_admin(
@@ -105,7 +117,9 @@ impl<'des> Perform<'des> for AddAdmin {
         ModAddAdmin::create(context.pool(), &mod_add_admin_form).await?;
 
         // send notification
-        let message = String::from(if level > 0 {
+        let message = String::from(if (level & AdminPerms::Owner.as_i32()) > 0 {
+            "👑👑👑 You are now the **owner** of this instance. No one stands in your way anymore."
+        } else if level > 0 {
             "👑 You have been promoted and are now an **admin** of this instance. Welcome to the team."
         } else {
             "❌ You are no longer an admin."
