@@ -56,8 +56,14 @@ impl<'des> Perform<'des> for AddAdmin {
 
         // in case of ownership transfer, demote the logged in user (former owner) to only full permissions from owner
         if can_add_full_perms && (level & AdminPerms::Owner.as_i32() > 0) {
-            LocalUser::update_admin(context.pool(), view.person.id, AdminPerms::Full.as_i32())
-                .await?;
+            LocalUser::update_admin(
+                context.pool(),
+                view.local_user.id,
+                AdminPerms::Full.as_i32(),
+            )
+            .await?;
+
+            Person::update_admin(context.pool(), view.person.id, AdminPerms::Full.as_i32()).await?;
         }
 
         // get the user to be updated
@@ -96,7 +102,7 @@ impl<'des> Perform<'des> for AddAdmin {
         });
         send_system_message(
             context.pool(),
-            Some(target_user_view.local_user.id),
+            Some(target_user_view.person.id),
             None,
             message,
         )
