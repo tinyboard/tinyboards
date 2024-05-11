@@ -333,7 +333,7 @@ impl<'a> PersonQuery<'a> {
             count_query = count_query.filter(person::is_banned.eq(is_banned));
         };
 
-        if let Some(_) = self.is_admin {
+        if let Some(true) = self.is_admin {
             query = query.filter(person::admin_level.gt(0));
             count_query = count_query.filter(person::admin_level.gt(0));
 

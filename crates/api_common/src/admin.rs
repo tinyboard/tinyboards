@@ -48,7 +48,7 @@ pub struct HandleRegistrationApplicationResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddAdmin {
-    pub added_person_id: i32,
+    pub username: String,
     pub level: i32,
 }
 

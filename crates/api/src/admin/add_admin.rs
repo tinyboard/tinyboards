@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     admin::{AddAdmin, AddAdminResponse},
     data::TinyBoardsContext,
-    utils::require_user,
+    utils::{require_user, send_system_message},
 };
 use tinyboards_db::{
     models::{
@@ -16,7 +16,7 @@ use tinyboards_db::{
     //schema::comments::level,
     traits::Crud,
 };
-use tinyboards_db_views::structs::PersonView;
+use tinyboards_db_views::structs::{LocalUserView, PersonView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -41,7 +41,7 @@ impl<'des> Perform<'des> for AddAdmin {
             .unwrap()?;
 
         let level = data.level;
-        let added_person_id = data.added_person_id;
+        let target_name = &data.username;
 
         // only the owner can add an admin with full permissions, or transfer ownership
         let can_add_full_perms = view.local_user.is_owner();
@@ -60,13 +60,20 @@ impl<'des> Perform<'des> for AddAdmin {
                 .await?;
         }
 
+        // get the user to be updated
+        let target_user_view = LocalUserView::get_by_name(context.pool(), target_name).await?;
+
         // update added user to be an admin
-        let updated_local_user =
-            LocalUser::update_admin(context.pool(), added_person_id.clone(), level.clone()).await?;
+        LocalUser::update_admin(
+            context.pool(),
+            target_user_view.local_user.id,
+            level.clone(),
+        )
+        .await?;
         // update added person to be an admin
         Person::update_admin(
             context.pool(),
-            updated_local_user.person_id.clone(),
+            target_user_view.person.id.clone(),
             level.clone(),
         )
         .await?;
@@ -74,12 +81,26 @@ impl<'des> Perform<'des> for AddAdmin {
         // log this mod action
         let mod_add_admin_form = ModAddAdminForm {
             mod_person_id: view.person.id,
-            other_person_id: added_person_id.clone(),
+            other_person_id: target_user_view.person.id,
             removed: Some(Some(level.clone() == 0)),
         };
 
         // submit to the mod log
         ModAddAdmin::create(context.pool(), &mod_add_admin_form).await?;
+
+        // send notification
+        let message = String::from(if level < 0 {
+            "👑 You have been promoted and are now an **admin** of this instance. Welcome to the team."
+        } else {
+            "❌ You are no longer an admin."
+        });
+        send_system_message(
+            context.pool(),
+            Some(target_user_view.local_user.id),
+            None,
+            message,
+        )
+        .await?;
 
         // get list of admins
         let admins = PersonView::admins(context.pool()).await?;

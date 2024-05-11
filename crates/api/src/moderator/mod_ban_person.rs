@@ -15,6 +15,7 @@ use tinyboards_db::{
     },
     traits::Crud,
 };
+use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -30,7 +31,7 @@ impl<'des> Perform<'des> for ToggleBan {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &ToggleBan = &self;
-        let target_person_id = data.target_person_id;
+        let target_name = &data.username;
         let banned = data.banned;
         let reason = &data.reason;
         let duration_days = data.duration_days;
@@ -55,6 +56,9 @@ impl<'des> Perform<'des> for ToggleBan {
             .await
             .require_admin(AdminPerms::Users)
             .unwrap()?;
+
+        let target_user_view = LocalUserView::get_by_name(context.pool(), target_name).await?;
+        let target_person_id = target_user_view.person.id;
 
         // update the person in the database to be banned/unbanned
         Person::update_ban(

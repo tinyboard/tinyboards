@@ -8,7 +8,7 @@ pub struct ModActionResponse<T> {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ToggleBan {
-    pub target_person_id: i32,
+    pub username: String,
     pub banned: bool,
     pub duration_days: Option<i32>,
     pub reason: Option<String>,
