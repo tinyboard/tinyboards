@@ -105,7 +105,7 @@ impl<'des> Perform<'des> for AddAdmin {
         ModAddAdmin::create(context.pool(), &mod_add_admin_form).await?;
 
         // send notification
-        let message = String::from(if level < 0 {
+        let message = String::from(if level > 0 {
             "👑 You have been promoted and are now an **admin** of this instance. Welcome to the team."
         } else {
             "❌ You are no longer an admin."
