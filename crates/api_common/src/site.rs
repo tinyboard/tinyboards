@@ -1,10 +1,16 @@
 use serde::{Deserialize, Serialize};
-use tinyboards_db::{SiteMode, newtypes::DbUrl, models::apub::{instance::Instance, language::Language}};
-use tinyboards_db_views::structs::{BoardView, CommentView, PostView, SiteInviteView, PersonView, SiteView};
+use tinyboards_db::{
+    models::apub::{instance::Instance, language::Language},
+    newtypes::DbUrl,
+    SiteMode,
+};
+use tinyboards_db_views::structs::{
+    BoardView, CommentView, PersonView, PostView, SiteInviteView, SiteView,
+};
 use tinyboards_db_views_mod::structs::{
-    AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePostView, AdminPurgePersonView,
-    ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModLockPostView,
-    ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView, ModFeaturePostView,
+    AdminPurgeBoardView, AdminPurgeCommentView, AdminPurgePersonView, AdminPurgePostView,
+    ModAddAdminView, ModAddBoardModView, ModBanFromBoardView, ModBanView, ModFeaturePostView,
+    ModLockPostView, ModRemoveBoardView, ModRemoveCommentView, ModRemovePostView,
 };
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
@@ -40,6 +46,7 @@ pub struct GetMembers {
     pub page: Option<i64>,
     pub is_admin: Option<bool>,
     pub is_banned: Option<bool>,
+    pub search_term: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -103,7 +110,7 @@ pub struct SiteResponse {
     pub site_view: SiteView,
     //pub taglines: Vec<TagLine>,
 }
-  
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct GetSiteResponse {
     pub site_view: SiteView,
@@ -203,7 +210,7 @@ pub struct PasswordResetTokenPath {
 pub struct ExecutePasswordReset {
     pub new_password: String,
     pub new_password_verify: String,
-} 
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ExecutePasswordResetResponse {
@@ -216,7 +223,7 @@ pub struct FileUploadResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct GetFile{
+pub struct GetFile {
     pub thumbnail: Option<u32>,
     pub blur: Option<f32>,
     pub width: Option<u32>,
@@ -224,7 +231,7 @@ pub struct GetFile{
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DeleteFile{}
+pub struct DeleteFile {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct FileNamePath {
@@ -247,12 +254,11 @@ pub struct GetFederatedInstancesResponse {
     pub federated_instances: Option<FederatedInstances>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Does an apub fetch for an object.
 pub struct ResolveObject {
-  /// Can be the full url, or a shortened version like: !fediverse@tinyboards.net
-  pub q: String,
+    /// Can be the full url, or a shortened version like: !fediverse@tinyboards.net
+    pub q: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -265,5 +271,5 @@ pub enum FederatedObject {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ResolveObjectResponse {
-    pub object: FederatedObject
+    pub object: FederatedObject,
 }
