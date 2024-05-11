@@ -527,6 +527,7 @@ diesel::table! {
         instance_id -> Int4,
         is_admin -> Bool,
         instance -> Nullable<Varchar>,
+        admin_level -> Int4,
     }
 }
 

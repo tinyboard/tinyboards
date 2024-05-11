@@ -51,11 +51,15 @@ impl Person {
             .await
     }
 
-    pub async fn update_admin(pool: &DbPool, id_: i32, admin_level: i32) -> Result<Self, Error> {
+    pub async fn update_admin(pool: &DbPool, id_: i32, admin_level_: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::person::dsl::*;
         diesel::update(person.find(id_))
-            .set((is_admin.eq(admin_level > 0), updated.eq(naive_now())))
+            .set((
+                is_admin.eq(admin_level_ > 0),
+                admin_level.eq(admin_level_),
+                updated.eq(naive_now()),
+            ))
             .get_result::<Self>(conn)
             .await
     }
@@ -168,6 +172,7 @@ pub mod safe_type {
         last_refreshed_date,
         is_admin,
         instance,
+        admin_level,
     );
 
     impl ToSafe for PersonSafe {
@@ -195,6 +200,7 @@ pub mod safe_type {
                 last_refreshed_date,
                 is_admin,
                 instance,
+                admin_level,
             )
         }
     }

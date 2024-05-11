@@ -334,11 +334,11 @@ impl<'a> PersonQuery<'a> {
         };
 
         if let Some(_) = self.is_admin {
-            query = query.filter(local_user::admin_level.gt(0));
-            count_query = count_query.filter(local_user::admin_level.gt(0));
+            query = query.filter(person::admin_level.gt(0));
+            count_query = count_query.filter(person::admin_level.gt(0));
 
             // order by decreasing admin level, put system acc & owner on top
-            query = query.then_order_by(local_user::admin_level.desc());
+            query = query.then_order_by(person::admin_level.desc());
         };
 
         if self.approved_only.unwrap_or(false) {

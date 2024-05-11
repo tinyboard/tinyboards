@@ -1,10 +1,10 @@
+use crate::newtypes::DbUrl;
 use crate::schema::person;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
-use crate::newtypes::DbUrl;
-use typed_builder::TypedBuilder;
 use serde_with::skip_serializing_none;
+use typed_builder::TypedBuilder;
 
 #[skip_serializing_none]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
@@ -33,6 +33,7 @@ pub struct Person {
     pub instance_id: i32,
     pub is_admin: bool,
     pub instance: Option<String>,
+    pub admin_level: i32,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -59,10 +60,21 @@ pub struct PersonSafe {
     pub last_refreshed_date: NaiveDateTime,
     pub is_admin: bool,
     pub instance: Option<String>,
+    pub admin_level: i32,
 }
 
-
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset, TypedBuilder)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    Debug,
+    Serialize,
+    Deserialize,
+    Default,
+    Insertable,
+    AsChangeset,
+    TypedBuilder,
+)]
 #[builder(field_defaults(default))]
 #[diesel(table_name = person)]
 pub struct PersonForm {
@@ -91,4 +103,5 @@ pub struct PersonForm {
     pub instance_id: Option<i32>,
     pub creation_date: Option<NaiveDateTime>,
     pub instance: Option<String>,
+    pub admin_level: Option<i32>,
 }
