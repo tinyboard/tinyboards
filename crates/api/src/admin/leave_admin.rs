@@ -7,13 +7,9 @@ use tinyboards_db::{
     models::{
         apub::{actor_language::SiteLanguage, language::Language},
         moderator::mod_actions::{ModAddAdmin, ModAddAdminForm},
-        person::{
-            local_user::AdminPerms,
-            person::{Person, PersonForm},
-        },
+        person::{local_user::LocalUser, person::Person},
     },
     traits::Crud,
-    utils::naive_now,
 };
 use tinyboards_db_views::structs::{PersonView, SiteView};
 use tinyboards_utils::{error::TinyBoardsError, version};
@@ -42,7 +38,7 @@ impl<'des> Perform<'des> for LeaveAdmin {
             ));
         }
 
-        if view.local_user.has_permission(AdminPerms::Owner) {
+        if view.local_user.is_owner() {
             return Err(TinyBoardsError::from_message(400, "You cannot leave admin because you're the owner of this instance. You must transfer ownership to someone else before you can step down."));
         }
 
@@ -54,14 +50,10 @@ impl<'des> Perform<'des> for LeaveAdmin {
             ));
         }
 
-        let person_id = view.person.id;
+        LocalUser::update_admin(context.pool(), view.local_user.id, 0).await?;
 
-        let form = PersonForm {
-            is_admin: Some(false),
-            updated: Some(naive_now()),
-            ..PersonForm::default()
-        };
-        Person::update(context.pool(), person_id, &form).await?;
+        let person_id = view.person.id;
+        Person::update_admin(context.pool(), person_id, 0).await?;
 
         let form = ModAddAdminForm {
             mod_person_id: person_id,
