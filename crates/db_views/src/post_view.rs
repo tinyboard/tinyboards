@@ -423,7 +423,7 @@ impl<'a> PostQuery<'a> {
         query = query
             .limit(limit)
             .offset(offset)
-            .filter(boards::is_banned.eq(false))
+            .filter(boards::is_removed.eq(false))
             .filter(boards::is_deleted.eq(false));
 
         let res = query.load::<PostViewTuple>(conn).await?;

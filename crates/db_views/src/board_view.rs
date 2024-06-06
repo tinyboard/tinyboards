@@ -225,7 +225,7 @@ impl<'a> BoardQuery<'a> {
         let res = query
             .limit(limit)
             .offset(offset)
-            .filter(boards::is_banned.eq(false))
+            .filter(boards::is_removed.eq(false))
             .filter(boards::is_deleted.eq(false))
             .load::<BoardViewTuple>(conn)
             .await?;

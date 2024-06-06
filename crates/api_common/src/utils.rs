@@ -335,7 +335,7 @@ pub async fn check_board_deleted_or_removed(
 ) -> Result<(), TinyBoardsError> {
     let board = Board::read(pool, board_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
 
-    if board.is_deleted || board.is_banned {
+    if board.is_deleted || board.is_removed {
         Err(TinyBoardsError::from_message(404, "board deleted or banned"))
     } else {
         Ok(())

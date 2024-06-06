@@ -60,6 +60,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         let email_verification_required = data.require_email_verification;
         let default_avatar = data.default_avatar.clone();
         let welcome_message = data.welcome_message.clone();
+        let boards_enabled = data.boards_enabled.clone();
 
         /*if let Some(ref new_name) = new_name {
             if new_name.to_lowercase() != current_name.to_lowercase() {
@@ -165,6 +166,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             invite_only,
             default_avatar: Some(default_avatar),
             welcome_message,
+            boards_enabled,
             updated: Some(naive_now()),
             ..LocalSiteForm::default()
         };

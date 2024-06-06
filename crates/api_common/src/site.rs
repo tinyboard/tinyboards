@@ -158,6 +158,7 @@ pub struct SaveSiteSettings {
     pub require_email_verification: Option<bool>,
     pub default_avatar: Option<String>,
     pub welcome_message: Option<String>,
+    pub boards_enabled: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -97,7 +97,7 @@ use crate::{
             is_removed: None,
             updated: Some(self.updated.map(|u| u.naive_local())),
             is_hidden: None,
-            is_banned: None,
+            //is_banned: None,
             private_key: None,
             public_key: Some(self.public_key.public_key_pem),
             last_refreshed_date: Some(naive_now()),
@@ -113,6 +113,12 @@ use crate::{
             actor_id: Some(self.id.into()),
             icon: self.icon.map(|i| i.url.into()),
             banner: self.image.map(|i| i.url.into()),
+            ban_reason: None,
+            primary_color: None,
+            secondary_color: None,
+            hover_color: None,
+            sidebar: None,
+            sidebar_html: None,
         }
     }
   }

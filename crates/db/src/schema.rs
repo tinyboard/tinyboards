@@ -110,7 +110,6 @@ diesel::table! {
         name -> Varchar,
         title -> Varchar,
         description -> Nullable<Text>,
-        is_banned -> Bool,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
         is_deleted -> Bool,
@@ -131,6 +130,12 @@ diesel::table! {
         banner -> Nullable<Text>,
         posting_restricted_to_mods -> Bool,
         is_removed -> Bool,
+        ban_reason -> Nullable<Varchar>,
+        primary_color -> Varchar,
+        secondary_color -> Varchar,
+        hover_color -> Varchar,
+        sidebar -> Nullable<Varchar>,
+        sidebar_html -> Nullable<Text>,
     }
 }
 
@@ -315,6 +320,7 @@ diesel::table! {
         description -> Nullable<Varchar>,
         icon -> Nullable<Varchar>,
         welcome_message -> Nullable<Varchar>,
+        boards_enabled -> Bool,
     }
 }
 

@@ -4,8 +4,8 @@ use crate::utils::functions::lower;
 use crate::{
     models::board::board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     models::board::boards::{Board, BoardForm},
-    traits::{Bannable, Crud, ApubActor},
-    utils::{get_conn, DbPool, naive_now},
+    traits::{ApubActor, Bannable, Crud},
+    utils::{get_conn, naive_now, DbPool},
 };
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
@@ -36,27 +36,27 @@ impl Board {
     pub async fn get_by_collection_url(
         pool: &DbPool,
         url: &DbUrl,
-      ) -> Result<(Board, CollectionType), Error> {
+    ) -> Result<(Board, CollectionType), Error> {
         use crate::schema::boards::dsl::{featured_url, moderators_url};
         use CollectionType::*;
         let conn = &mut get_conn(pool).await?;
         let res = boards::table
-          .filter(moderators_url.eq(url))
-          .first::<Self>(conn)
-          .await;
+            .filter(moderators_url.eq(url))
+            .first::<Self>(conn)
+            .await;
         if let Ok(b) = res {
-          return Ok((b, Moderators));
+            return Ok((b, Moderators));
         }
         let res = boards::table
-          .filter(featured_url.eq(url))
-          .first::<Self>(conn)
-          .await;
+            .filter(featured_url.eq(url))
+            .first::<Self>(conn)
+            .await;
         if let Ok(b) = res {
-          return Ok((b, Featured));
+            return Ok((b, Featured));
         }
         Err(diesel::NotFound)
     }
-    
+
     /// Takes a board id and an user id, and returns true if the user is banned from the board with the given id
     pub async fn board_has_ban(
         pool: &DbPool,
@@ -118,7 +118,7 @@ impl Board {
             .get_result::<Self>(conn)
             .await
     }
-    
+
     pub async fn update_banned(
         pool: &DbPool,
         board_id: i32,
@@ -127,7 +127,7 @@ impl Board {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::boards::dsl::*;
         diesel::update(boards.find(board_id))
-            .set((is_banned.eq(new_banned), updated.eq(naive_now())))
+            .set((is_removed.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }
@@ -155,6 +155,12 @@ pub mod safe_type {
         shared_inbox_url,
         moderators_url,
         featured_url,
+        ban_reason,
+        primary_color,
+        secondary_color,
+        hover_color,
+        sidebar,
+        sidebar_html
     );
 
     impl ToSafe for BoardSafe {
@@ -179,6 +185,12 @@ pub mod safe_type {
                 shared_inbox_url,
                 moderators_url,
                 featured_url,
+                ban_reason,
+                primary_color,
+                secondary_color,
+                hover_color,
+                sidebar,
+                sidebar_html
             )
         }
     }
@@ -191,13 +203,13 @@ impl Crud for Board {
 
     async fn read(pool: &DbPool, board_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        boards::table.find(board_id).first::<Self>(conn)
-        .await
+        boards::table.find(board_id).first::<Self>(conn).await
     }
     async fn delete(pool: &DbPool, board_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(boards::table.find(board_id)).execute(conn)
-        .await
+        diesel::delete(boards::table.find(board_id))
+            .execute(conn)
+            .await
     }
     async fn create(pool: &DbPool, form: &BoardForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -250,45 +262,42 @@ impl Bannable for BoardPersonBan {
 impl ApubActor for Board {
     async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
-        Ok(
-          boards::table
+        Ok(boards::table
             .filter(boards::actor_id.eq(object_id.to_string()))
             .first::<Board>(conn)
             .await
             .ok()
-            .map(Into::into),
-        )
-      }
-    
-      async fn read_from_name(
+            .map(Into::into))
+    }
+
+    async fn read_from_name(
         pool: &DbPool,
         board_name: &str,
         include_deleted: bool,
-      ) -> Result<Board, Error> {
+    ) -> Result<Board, Error> {
         let conn = &mut get_conn(pool).await?;
         let mut q = boards::table
-          .into_boxed()
-          .filter(boards::local.eq(true))
-          .filter(lower(boards::name).eq(board_name.to_lowercase()));
+            .into_boxed()
+            .filter(boards::local.eq(true))
+            .filter(lower(boards::name).eq(board_name.to_lowercase()));
         if !include_deleted {
-          q = q
-            .filter(boards::is_deleted.eq(false));
+            q = q.filter(boards::is_deleted.eq(false));
         }
         q.first::<Self>(conn).await
-      }
-    
-      async fn read_from_name_and_domain(
+    }
+
+    async fn read_from_name_and_domain(
         pool: &DbPool,
         board_name: &str,
         for_domain: &str,
-      ) -> Result<Board, Error> {
+    ) -> Result<Board, Error> {
         let conn = &mut get_conn(pool).await?;
         boards::table
-          .inner_join(instance::table)
-          .filter(lower(boards::name).eq(board_name.to_lowercase()))
-          .filter(instance::domain.eq(for_domain))
-          .select(boards::all_columns)
-          .first::<Self>(conn)
-          .await
-      } 
+            .inner_join(instance::table)
+            .filter(lower(boards::name).eq(board_name.to_lowercase()))
+            .filter(instance::domain.eq(for_domain))
+            .select(boards::all_columns)
+            .first::<Self>(conn)
+            .await
+    }
 }

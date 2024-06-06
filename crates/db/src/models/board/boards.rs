@@ -1,4 +1,4 @@
-use crate::{schema::boards, newtypes::DbUrl};
+use crate::{newtypes::DbUrl, schema::boards};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,6 @@ pub struct Board {
     pub name: String,
     pub title: String,
     pub description: Option<String>,
-    pub is_banned: bool,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: bool,
@@ -31,6 +30,12 @@ pub struct Board {
     pub banner: Option<DbUrl>,
     pub posting_restricted_to_mods: bool,
     pub is_removed: bool,
+    pub ban_reason: Option<String>,
+    pub primary_color: String,
+    pub secondary_color: String,
+    pub hover_color: String,
+    pub sidebar: Option<String>,
+    pub sidebar_html: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -39,7 +44,6 @@ pub struct BoardForm {
     pub name: Option<String>,
     pub title: Option<String>,
     pub description: Option<Option<String>>,
-    pub is_banned: Option<bool>,
     pub updated: Option<Option<NaiveDateTime>>,
     pub is_deleted: Option<bool>,
     pub is_nsfw: Option<bool>,
@@ -59,6 +63,12 @@ pub struct BoardForm {
     pub banner: Option<DbUrl>,
     pub posting_restricted_to_mods: Option<bool>,
     pub is_removed: Option<bool>,
+    pub ban_reason: Option<Option<String>>,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
+    pub sidebar: Option<Option<String>>,
+    pub sidebar_html: Option<Option<String>>,
 }
 
 /// A safe representation of board, without the sensitive info
@@ -83,4 +93,10 @@ pub struct BoardSafe {
     pub shared_inbox_url: Option<DbUrl>,
     pub moderators_url: Option<DbUrl>,
     pub featured_url: Option<DbUrl>,
+    pub ban_reason: Option<String>,
+    pub primary_color: String,
+    pub secondary_color: String,
+    pub hover_color: String,
+    pub sidebar: Option<String>,
+    pub sidebar_html: Option<String>,
 }

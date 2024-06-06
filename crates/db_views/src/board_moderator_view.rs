@@ -39,7 +39,7 @@ impl BoardModeratorView {
             .filter(board_mods::person_id.eq(person_id))
             .filter(boards::is_deleted.eq(false))
             .filter(boards::is_removed.eq(false))
-            .filter(boards::is_banned.eq(false))
+            .filter(boards::is_removed.eq(false))
             .order_by(board_mods::creation_date)
             .load::<BoardModeratorViewTuple>(conn)
             .await?;

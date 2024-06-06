@@ -42,6 +42,7 @@ pub struct LocalSite {
     pub description: Option<String>,
     pub icon: Option<String>,
     pub welcome_message: Option<String>,
+    pub boards_enabled: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -81,4 +82,5 @@ pub struct LocalSiteForm {
     pub description: Option<Option<String>>,
     pub icon: Option<Option<String>>,
     pub welcome_message: Option<String>,
+    pub boards_enabled: Option<bool>,
 }
