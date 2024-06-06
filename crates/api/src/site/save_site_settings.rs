@@ -225,6 +225,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
             require_email_verification: updated_local_site.require_email_verification,
             default_avatar: updated_local_site.default_avatar.unwrap_or_default(),
             welcome_message: updated_local_site.welcome_message,
+            boards_enabled: updated_local_site.boards_enabled,
         })
     }
 }

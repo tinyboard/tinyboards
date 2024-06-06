@@ -4,9 +4,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     site::{GetSiteSettings, GetSiteSettingsResponse},
 };
-use tinyboards_db::{
-    models::site::local_site::LocalSite, SiteMode
-};
+use tinyboards_db::{models::site::local_site::LocalSite, SiteMode};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
@@ -21,9 +19,8 @@ impl<'des> Perform<'des> for GetSiteSettings {
         _: Self::Route,
         _: Option<&str>,
     ) -> Result<GetSiteSettingsResponse, TinyBoardsError> {
-
         let site = LocalSite::read(context.pool()).await?;
-        
+
         let mut site_mode = SiteMode::OpenMode;
 
         if site.require_application {
@@ -34,7 +31,6 @@ impl<'des> Perform<'des> for GetSiteSettings {
             site_mode = SiteMode::InviteMode;
         }
 
-            
         Ok(GetSiteSettingsResponse {
             site_mode,
             name: site.name,
@@ -49,7 +45,8 @@ impl<'des> Perform<'des> for GetSiteSettings {
             private_instance: site.private_instance,
             require_email_verification: site.require_email_verification,
             default_avatar: site.default_avatar.unwrap_or_default(),
-            welcome_message: site.welcome_message,            
+            welcome_message: site.welcome_message,
+            boards_enabled: site.boards_enabled,
         })
     }
 }

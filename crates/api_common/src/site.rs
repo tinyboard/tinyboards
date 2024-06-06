@@ -140,6 +140,7 @@ pub struct GetSiteSettingsResponse {
     pub require_email_verification: bool,
     pub default_avatar: String,
     pub welcome_message: Option<String>,
+    pub boards_enabled: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
