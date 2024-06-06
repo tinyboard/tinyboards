@@ -43,6 +43,11 @@ impl<'des> Perform<'des> for SaveSiteSettings {
 
         let current_require_app = site.require_application;
         let current_icon = site.icon.clone();
+        let current_description = site.description.clone();
+        let current_primary_color = site.primary_color.clone();
+        let current_secondary_color = site.secondary_color.clone();
+        let current_hover_color = site.hover_color.clone();
+
         let _current_name = site.name.clone();
         let current_default_avatar = site.default_avatar.clone();
 
@@ -75,6 +80,7 @@ impl<'des> Perform<'des> for SaveSiteSettings {
         }*/
 
         if let Some(ref icon) = icon {
+            //println!("request has icon: \"{}\"", icon);
             if let Some(ref current_icon) = current_icon {
                 if icon != current_icon && !icon.is_empty() && !current_icon.is_empty() {
                     let r = purge_local_image_by_url(
@@ -89,6 +95,36 @@ impl<'des> Perform<'des> for SaveSiteSettings {
                 }
             }
         }
+
+        let icon = if let Some(_) = icon {
+            icon
+        } else {
+            current_icon
+        };
+
+        let description = if let Some(_) = description {
+            description
+        } else {
+            current_description
+        };
+
+        let primary_color = if let Some(_) = primary_color {
+            primary_color
+        } else {
+            current_primary_color
+        };
+
+        let secondary_color = if let Some(_) = secondary_color {
+            secondary_color
+        } else {
+            current_secondary_color
+        };
+
+        let hover_color = if let Some(_) = hover_color {
+            hover_color
+        } else {
+            current_hover_color
+        };
 
         if let Some(application_question) = &application_question {
             if application_question.chars().count() > 300 {
