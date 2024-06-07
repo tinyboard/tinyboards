@@ -4,7 +4,17 @@
 // };
 use serde::{Deserialize, Serialize};
 use tinyboards_db::{models::site::site::Site, newtypes::DbUrl};
-use tinyboards_db_views::structs::{BoardView, BoardModeratorView};
+use tinyboards_db_views::structs::{BoardModeratorView, BoardView};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct CheckBoardExists {
+    pub board_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BoardExistsResponse {
+    pub result: bool,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct CreateBoard {
@@ -13,6 +23,9 @@ pub struct CreateBoard {
     pub description: Option<String>,
     pub icon: Option<DbUrl>,
     pub banner: Option<DbUrl>,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -41,10 +54,10 @@ pub struct DeleteBoard {}
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Remove a board (only doable by moderators).
 pub struct RemoveBoard {
-  pub board_id: i32,
-  pub removed: bool,
-  pub reason: Option<String>,
-  pub expires: Option<i64>,
+    pub board_id: i32,
+    pub removed: bool,
+    pub reason: Option<String>,
+    pub expires: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -90,16 +103,16 @@ pub struct AddBoardModResponse {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Get a board. Must provide either an id, or a name.
 pub struct GetBoard {
-  pub id: Option<i32>,
-  /// Example: campfire, or campfire@xyz.tld
-  pub name: Option<String>,
+    pub id: Option<i32>,
+    /// Example: campfire, or campfire@xyz.tld
+    pub name: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// The board response.
 pub struct GetBoardResponse {
-  pub board_view: BoardView,
-  pub site: Option<Site>,
-  pub moderators: Vec<BoardModeratorView>,
-  pub discussion_languages: Vec<i32>,
+    pub board_view: BoardView,
+    pub site: Option<Site>,
+    pub moderators: Vec<BoardModeratorView>,
+    pub discussion_languages: Vec<i32>,
 }

@@ -47,6 +47,7 @@ impl<'des> Perform<'des> for GetSiteSettings {
             default_avatar: site.default_avatar.unwrap_or_default(),
             welcome_message: site.welcome_message,
             boards_enabled: site.boards_enabled,
+            board_creation_admin_only: site.board_creation_admin_only,
         })
     }
 }

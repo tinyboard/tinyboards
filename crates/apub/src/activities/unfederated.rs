@@ -512,6 +512,19 @@ impl SendActivity for ToggleBan {
 }
 
 #[async_trait::async_trait]
+impl SendActivity for CheckBoardExists {
+    type Response = BoardExistsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
 impl SendActivity for BanBoard {
     type Response = ModActionResponse<ModRemoveBoard>;
     async fn send_activity(

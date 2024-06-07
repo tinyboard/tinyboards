@@ -16,6 +16,26 @@ pub enum CollectionType {
 }
 
 impl Board {
+    /// Check if a board with a name exists
+    pub async fn board_exists(pool: &DbPool, board_name: &str) -> Result<bool, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+        let c = boards
+            .filter(
+                name.ilike(
+                    board_name
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<Self>(conn)
+            .await
+            .optional();
+
+        c.map(|b| b.is_some())
+    }
+
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin
     pub async fn board_has_mod(
         pool: &DbPool,
@@ -160,7 +180,7 @@ pub mod safe_type {
         secondary_color,
         hover_color,
         sidebar,
-        sidebar_html
+        sidebar_html,
     );
 
     impl ToSafe for BoardSafe {
@@ -190,7 +210,7 @@ pub mod safe_type {
                 secondary_color,
                 hover_color,
                 sidebar,
-                sidebar_html
+                sidebar_html,
             )
         }
     }

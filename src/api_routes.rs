@@ -98,6 +98,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateBoard>))
                     .route("", web::get().to(route_get_apub::<GetBoard>))
+                    .route("/exists", web::get().to(route_get_crud::<CheckBoardExists>))
                     .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
                     .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
                     .route("/block", web::post().to(route_post::<BlockBoard>))
@@ -191,7 +192,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/feature_post", web::post().to(route_post::<FeaturePost>))
                     .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
-                    .route("/queue/comments", web::get().to(route_get::<CommentModQueue>)),
+                    .route(
+                        "/queue/comments",
+                        web::get().to(route_get::<CommentModQueue>),
+                    ),
             )
             // Admin Actions
             .service(

@@ -1,7 +1,7 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    board::{BoardResponse, CreateBoard},
+    board::{BoardExistsResponse, BoardResponse, CheckBoardExists, CreateBoard},
     build_response::build_board_response,
     data::TinyBoardsContext,
     utils::{
@@ -10,6 +10,7 @@ use tinyboards_api_common::{
         EndpointType,
     },
 };
+use tinyboards_db::models::site::local_site::LocalSite;
 use tinyboards_db::{
     models::{
         board::{
@@ -23,7 +24,28 @@ use tinyboards_db::{
 };
 use tinyboards_db_views::structs::SiteView;
 use tinyboards_federation::http_signatures::generate_actor_keypair;
-use tinyboards_utils::{parser::parse_markdown_opt, TinyBoardsError};
+use tinyboards_utils::TinyBoardsError;
+
+#[async_trait::async_trait(?Send)]
+impl<'des> PerformCrud<'des> for CheckBoardExists {
+    type Response = BoardExistsResponse;
+    type Route = ();
+
+    #[tracing::instrument(skip(context))]
+    async fn perform(
+        self,
+        context: &Data<TinyBoardsContext>,
+        _: Self::Route,
+        _auth: Option<&str>,
+    ) -> Result<Self::Response, TinyBoardsError> {
+        let data = &self;
+        let existence = Board::board_exists(context.pool(), &data.board_name)
+            .await
+            .map_err(|_| TinyBoardsError::from_message(500, "Server Error while checking board"))?;
+
+        Ok(BoardExistsResponse { result: existence })
+    }
+}
 
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateBoard {
@@ -39,21 +61,39 @@ impl<'des> PerformCrud<'des> for CreateBoard {
     ) -> Result<BoardResponse, TinyBoardsError> {
         let data: &CreateBoard = &self;
 
+        let local_site = LocalSite::read(context.pool()).await?;
+
         let name = data.name.clone();
         let title = data.title.clone();
-        let mut description = data.description.clone();
+        let description = data.description.clone();
+        let primary_color = data.primary_color.clone().unwrap_or(
+            local_site
+                .primary_color
+                .unwrap_or("60, 105, 145".to_string()),
+        );
+        let secondary_color = data.secondary_color.clone().unwrap_or(
+            local_site
+                .secondary_color
+                .unwrap_or("96, 128, 63".to_string()),
+        );
+        let hover_color = data
+            .hover_color
+            .clone()
+            .unwrap_or(local_site.hover_color.unwrap_or("54, 94, 129".to_string()));
 
-        // board creation restricted to admins (may provide other options in the future)
-        let view = require_user(context.pool(), context.master_key(), auth)
-            .await
-            .require_admin(AdminPerms::Boards)
-            .unwrap()?;
+        let mut view = require_user(context.pool(), context.master_key(), auth).await;
+
+        if local_site.board_creation_admin_only {
+            view = view.require_admin(AdminPerms::Boards);
+        }
+
+        let view = view.unwrap()?;
 
         let site_view = SiteView::read_local(context.pool()).await?;
 
-        if let Some(desc) = description {
+        /*if let Some(desc) = description {
             description = parse_markdown_opt(&desc);
-        }
+        }*/
 
         let icon = &data.icon;
         let banner = &data.banner;
@@ -87,6 +127,9 @@ impl<'des> PerformCrud<'des> for CreateBoard {
             featured_url: Some(generate_featured_url(&board_actor_id)?),
             moderators_url: Some(generate_moderators_url(&board_actor_id)?),
             instance_id: Some(site_view.site.instance_id),
+            primary_color: Some(primary_color),
+            secondary_color: Some(secondary_color),
+            hover_color: Some(hover_color),
             ..BoardForm::default()
         };
 

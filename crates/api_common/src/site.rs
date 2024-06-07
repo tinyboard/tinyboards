@@ -141,6 +141,7 @@ pub struct GetSiteSettingsResponse {
     pub default_avatar: String,
     pub welcome_message: Option<String>,
     pub boards_enabled: bool,
+    pub board_creation_admin_only: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -160,6 +161,7 @@ pub struct SaveSiteSettings {
     pub default_avatar: Option<String>,
     pub welcome_message: Option<String>,
     pub boards_enabled: Option<bool>,
+    pub board_creation_admin_only: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
