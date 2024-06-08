@@ -4,18 +4,18 @@ use crate::{
         ModLockPost, ModLockPostForm, ModRemovePost, ModRemovePostForm,
     },
     models::post::posts::{Post, PostForm},
-    schema::{posts, post_report},
-    traits::{Crud, Moderateable},
-    utils::{naive_now, get_conn, DbPool, FETCH_LIMIT_MAX},
     newtypes::DbUrl,
+    schema::{post_report, posts},
+    traits::{Crud, Moderateable},
+    utils::{get_conn, naive_now, DbPool, FETCH_LIMIT_MAX},
 };
 use diesel::{prelude::*, result::Error};
-use tinyboards_utils::TinyBoardsError;
 use diesel_async::RunQueryDsl;
+use regex::Regex;
+use tinyboards_utils::TinyBoardsError;
 use url::Url;
 
 impl Post {
-
     pub async fn list_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         posts::table
@@ -29,7 +29,10 @@ impl Post {
             .await
     }
 
-    pub async fn list_featured_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
+    pub async fn list_featured_for_board(
+        pool: &DbPool,
+        the_board_id: i32,
+    ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         posts::table
             .filter(posts::board_id.eq(the_board_id))
@@ -45,22 +48,26 @@ impl Post {
     pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let object_id: DbUrl = object_id.into();
-        Ok(
-            posts::table
-                .filter(posts::ap_id.eq(object_id))
-                .first::<Post>(conn)
-                .await
-                .ok()
-                .map(Into::into)
-        )
+        Ok(posts::table
+            .filter(posts::ap_id.eq(object_id))
+            .first::<Post>(conn)
+            .await
+            .ok()
+            .map(Into::into))
     }
 
-    pub async fn resolve_reports(pool: &DbPool, post_id: i32, resolver_id: i32) -> Result<(), TinyBoardsError> {
+    pub async fn resolve_reports(
+        pool: &DbPool,
+        post_id: i32,
+        resolver_id: i32,
+    ) -> Result<(), TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
 
         diesel::update(post_report::table.filter(post_report::post_id.eq(post_id)))
-            .set((post_report::resolved.eq(true),
-                post_report::resolver_id.eq(resolver_id)))
+            .set((
+                post_report::resolved.eq(true),
+                post_report::resolver_id.eq(resolver_id),
+            ))
             .get_results::<PostReport>(conn)
             .await
             .map(|_| ())
@@ -70,27 +77,27 @@ impl Post {
     pub async fn permadelete_for_creator(
         pool: &DbPool,
         for_creator_id: i32,
-      ) -> Result<Vec<Self>, Error> {
+    ) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         let perma_deleted = "*Permananently Deleted*";
         let perma_deleted_url = "https://deleted.com";
-    
+
         diesel::update(posts.filter(creator_id.eq(for_creator_id)))
-          .set((
-            title.eq(perma_deleted),
-            url.eq(perma_deleted_url),
-            body.eq(perma_deleted),
-            is_deleted.eq(true),
-            updated.eq(naive_now()),
-          ))
-          .get_results::<Self>(conn)
-          .await
+            .set((
+                title.eq(perma_deleted),
+                url.eq(perma_deleted_url),
+                body.eq(perma_deleted),
+                is_deleted.eq(true),
+                updated.eq(naive_now()),
+            ))
+            .get_results::<Self>(conn)
+            .await
     }
 
     pub async fn submit(pool: &DbPool, form: PostForm) -> Result<Self, TinyBoardsError> {
         Self::create(pool, &form)
-            .await    
+            .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit posts"))
     }
 
@@ -170,11 +177,36 @@ impl Post {
         .await
     }
 
+    /// Takes the title and generates a chunk for use in the post's URL.
+    pub fn generate_chunk(title: String) -> String {
+        let title = &title.split(" ").collect::<Vec<&str>>();
+        let slice_max_index = if title.len() >= 7 { 7 } else { title.len() };
+        let mut title = title[0..slice_max_index].join("-").to_lowercase();
+
+        // these are all I could think of at the moment, feel free to expand this
+        let replaces = [
+            ["á", "a"],
+            ["ä", "ae"],
+            ["é", "e"],
+            ["ó", "o"],
+            ["ú", "u"],
+            ["ö", "oe"],
+            ["ü", "ue"],
+            ["ő", "o"],
+            ["ű", "u"],
+            ["ß", "ss"],
+        ];
+
+        for [from, to] in replaces.iter() {
+            title = str::replace(&title, from, to);
+        }
+
+        let chunk_regex = Regex::new(r"[^a-zA-Z0-9\-]").unwrap();
+        chunk_regex.replace_all(&title, "_").to_string()
+    }
+
     /// Checks if a posts with a given id exists. Don't use if you need a whole posts object.
-    pub async fn check_if_exists(
-        pool: &DbPool,
-        pid: i32,
-    ) -> Result<Option<i32>, TinyBoardsError> {
+    pub async fn check_if_exists(pool: &DbPool, pid: i32) -> Result<Option<i32>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::posts::dsl::*;
         posts
@@ -285,13 +317,13 @@ impl Crud for Post {
 
     async fn read(pool: &DbPool, post_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        posts::table.find(post_id).first::<Self>(conn)
-        .await
+        posts::table.find(post_id).first::<Self>(conn).await
     }
     async fn delete(pool: &DbPool, post_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(posts::table.find(post_id)).execute(conn)
-        .await
+        diesel::delete(posts::table.find(post_id))
+            .execute(conn)
+            .await
     }
     async fn create(pool: &DbPool, form: &PostForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -340,16 +372,14 @@ impl Moderateable for Post {
         };
 
         // submit mod action to mod log
-        ModRemovePost::create(pool, &remove_post_form).await.map_err(|e| TinyBoardsError::from(e))?;
+        ModRemovePost::create(pool, &remove_post_form)
+            .await
+            .map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }
 
-    async fn approve(
-        &self,
-        admin_id: Option<i32>,
-        pool: &DbPool,
-    ) -> Result<(), TinyBoardsError> {
+    async fn approve(&self, admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError> {
         Self::update_removed(pool, self.id, false)
             .await
             .map(|_| ())
@@ -364,7 +394,9 @@ impl Moderateable for Post {
         };
 
         // submit mod action to mod log
-        ModRemovePost::create(pool, &remove_post_form).await.map_err(|e| TinyBoardsError::from(e))?;
+        ModRemovePost::create(pool, &remove_post_form)
+            .await
+            .map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }
@@ -382,16 +414,14 @@ impl Moderateable for Post {
             locked: Some(Some(true)),
         };
 
-        ModLockPost::create(pool, &lock_form).await.map_err(|e| TinyBoardsError::from(e))?;
+        ModLockPost::create(pool, &lock_form)
+            .await
+            .map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }
 
-    async fn unlock(
-        &self,
-        admin_id: Option<i32>,
-        pool: &DbPool,
-    ) -> Result<(), TinyBoardsError> {
+    async fn unlock(&self, admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError> {
         Self::update_locked(pool, self.id, false)
             .await
             .map(|_| ())
@@ -404,7 +434,9 @@ impl Moderateable for Post {
             locked: Some(Some(false)),
         };
 
-        ModLockPost::create(pool, &lock_form).await.map_err(|e| TinyBoardsError::from(e))?;
+        ModLockPost::create(pool, &lock_form)
+            .await
+            .map_err(|e| TinyBoardsError::from(e))?;
 
         Ok(())
     }

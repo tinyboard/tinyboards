@@ -1,4 +1,4 @@
-use crate::{schema::posts, newtypes::DbUrl};
+use crate::{newtypes::DbUrl, schema::posts};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -28,6 +28,7 @@ pub struct Post {
     pub local: bool,
     pub featured_board: bool,
     pub featured_local: bool,
+    pub title_chunk: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -54,4 +55,5 @@ pub struct PostForm {
     pub local: Option<bool>,
     pub featured_board: Option<bool>,
     pub featured_local: Option<bool>,
+    pub title_chunk: Option<String>,
 }

@@ -1,0 +1,1 @@
+alter table boards drop column title_chunk;

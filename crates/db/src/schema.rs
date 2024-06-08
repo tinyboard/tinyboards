@@ -686,6 +686,7 @@ diesel::table! {
         local -> Bool,
         featured_board -> Bool,
         featured_local -> Bool,
+        title_chunk -> Varchar,
     }
 }
 

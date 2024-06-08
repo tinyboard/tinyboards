@@ -4040,6 +4040,7 @@ dependencies = [
  "hmac",
  "jwt",
  "r2d2",
+ "regex",
  "serde",
  "serde_json",
  "serde_with",
