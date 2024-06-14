@@ -58,7 +58,7 @@ impl<'des> PerformCrud<'des> for Register {
         }
 
         // USERNAME CHECK
-        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{2,29}$").unwrap();
+        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{1,29}$").unwrap();
         if !re.is_match(&data.username) {
             return Err(TinyBoardsError::from_message(400, "invalid username"));
         }
@@ -89,7 +89,13 @@ impl<'des> PerformCrud<'des> for Register {
             &context.settings().get_protocol_and_hostname(),
         )?;
 
-        let mut avatar_url = Url::parse(format!("{}/media/default_pfp.png", context.settings().get_protocol_and_hostname()).as_str())?;
+        let mut avatar_url = Url::parse(
+            format!(
+                "{}/media/default_pfp.png",
+                context.settings().get_protocol_and_hostname()
+            )
+            .as_str(),
+        )?;
 
         // if we have a default avatar for the site, then use it
         if local_site.default_avatar.is_some() {

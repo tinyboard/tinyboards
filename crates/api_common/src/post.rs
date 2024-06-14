@@ -24,7 +24,7 @@ pub struct SubmitPost {
     pub url: Option<DbUrl>,
     pub image: Option<DbUrl>,
     pub body: Option<String>,
-    pub board_id: Option<i32>,
+    pub board_name: Option<String>,
     pub is_nsfw: bool,
     pub language_id: Option<i32>,
 }
@@ -138,12 +138,11 @@ pub struct ListPostReports {
     pub auth: Sensitive<String>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// returns all reports for a given post
 pub struct GetPostReports {
     pub post_id: i32,
-    pub unresolved_only: bool
+    pub unresolved_only: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -13,6 +13,7 @@ use tinyboards_db::{
     impls::apub::actor_language::default_post_language,
     models::{
         apub::actor_language::BoardLanguage,
+        board::boards::Board,
         post::{
             post_votes::{PostVote, PostVoteForm},
             posts::{Post, PostForm},
@@ -38,7 +39,18 @@ impl<'des> PerformCrud<'des> for SubmitPost {
         auth: Option<&str>,
     ) -> Result<PostResponse, TinyBoardsError> {
         let data: SubmitPost = self;
-        let board_id = data.board_id.unwrap_or(1);
+
+        let board_id = if let Some(ref board_name) = data.board_name {
+            let board = Board::get_by_name(context.pool(), board_name)
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 400, "Board doesn't exist."))?;
+
+            board.id
+        } else {
+            1
+        };
+
+        //let board_id = board.id;
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
@@ -48,7 +60,7 @@ impl<'des> PerformCrud<'des> for SubmitPost {
             .unwrap()?;
 
         // check to see if board is removed or deleted
-        check_board_deleted_or_removed(data.board_id.unwrap_or(1), context.pool()).await?;
+        check_board_deleted_or_removed(board_id, context.pool()).await?;
 
         let body = data.body.unwrap_or_default();
         let mut body_html = parse_markdown_opt(&body.as_str());

@@ -77,6 +77,22 @@ impl Board {
         Err(diesel::NotFound)
     }
 
+    pub async fn get_by_name(pool: &DbPool, board_name: &str) -> Result<Self, Error> {
+        use crate::schema::boards::dsl::name;
+        let conn = &mut get_conn(pool).await?;
+        boards::table
+            .filter(
+                name.ilike(
+                    board_name
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<Self>(conn)
+            .await
+    }
+
     /// Takes a board id and an user id, and returns true if the user is banned from the board with the given id
     pub async fn board_has_ban(
         pool: &DbPool,

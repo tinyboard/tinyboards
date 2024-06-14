@@ -1,5 +1,6 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
+use regex::Regex;
 use tinyboards_api_common::{
     board::{BoardExistsResponse, BoardResponse, CheckBoardExists, CreateBoard},
     build_response::build_board_response,
@@ -88,6 +89,12 @@ impl<'des> PerformCrud<'des> for CreateBoard {
         }
 
         let view = view.unwrap()?;
+
+        // Check name
+        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{1,29}$").unwrap();
+        if !re.is_match(&name) {
+            return Err(TinyBoardsError::from_message(400, "Board name contains disallowed characters. Allowed: alphanumerics and underscores, except as the first character."));
+        }
 
         let site_view = SiteView::read_local(context.pool()).await?;
 
