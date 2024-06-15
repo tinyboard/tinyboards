@@ -1,24 +1,29 @@
 use crate::structs::{BoardModeratorView, BoardView, PersonView};
 use diesel::{result::Error, *};
+use diesel_async::RunQueryDsl;
+//use tinyboards_db::schema::board_mods::dsl::board_mods;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
-        board::board_subscriber::BoardSubscriber, board::boards::BoardSafe,
-        board::board_block::BoardBlock, person::local_user::*,
+        board::board_block::BoardBlock, board::board_mods::BoardModerator,
+        board::board_subscriber::BoardSubscriber, board::boards::BoardSafe, person::local_user::*,
     },
-    schema::{board_aggregates, board_subscriber, boards, person_board_blocks, person, local_user},
+    schema::{
+        board_aggregates, board_mods, board_subscriber, boards, local_user, person,
+        person_board_blocks,
+    },
     traits::{ToSafe, ViewToVec},
-    utils::{functions::hot_rank, fuzzy_search, limit_and_offset, get_conn, DbPool},
+    utils::{functions::hot_rank, fuzzy_search, get_conn, limit_and_offset, DbPool},
     ListingType, SortType,
 };
 use typed_builder::TypedBuilder;
-use diesel_async::RunQueryDsl;
 
 type BoardViewTuple = (
     BoardSafe,
     BoardAggregates,
     Option<BoardSubscriber>,
     Option<BoardBlock>,
+    Option<BoardModerator>,
 );
 
 impl BoardView {
@@ -44,14 +49,20 @@ impl BoardView {
                     .eq(person_board_blocks::board_id)
                     .and(person_board_blocks::person_id.eq(person_id_join))),
             )
+            .left_join(
+                board_mods::table.on(boards::id
+                    .eq(board_mods::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
                 board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
+                board_mods::all_columns.nullable(),
             ))
             .into_boxed();
-        
+
         // hide deleted and removed boards for non-admins or mods
         if !is_mod_or_admin.unwrap_or(true) {
             query = query
@@ -59,13 +70,15 @@ impl BoardView {
                 .filter(boards::is_deleted.eq(false));
         }
 
-        let (board, counts, subscriber, blocked) = query.first::<BoardViewTuple>(conn).await?;
+        let (board, counts, subscriber, blocked, moderator) =
+            query.first::<BoardViewTuple>(conn).await?;
 
         Ok(BoardView {
             board,
             subscribed: BoardSubscriber::to_subscribed_type(&subscriber),
             blocked: blocked.is_some(),
             counts,
+            moderator,
         })
     }
 
@@ -82,7 +95,7 @@ impl BoardView {
     pub async fn is_mod_or_admin(pool: &DbPool, person_id: i32, board_id: i32) -> bool {
         // check board moderators for person_id
         let is_mod = BoardModeratorView::for_board(pool, board_id)
-            .await    
+            .await
             .map(|v| v.into_iter().map(|m| m.moderator.id).collect::<Vec<i32>>())
             .unwrap_or_default()
             .contains(&person_id);
@@ -123,13 +136,11 @@ impl<'a> BoardQuery<'a> {
     pub async fn list(self) -> Result<BoardQueryResponse, Error> {
         let conn = &mut get_conn(self.pool).await?;
 
-
         let mut person_id_join = -1;
 
         if self.user.is_some() {
             person_id_join = self.user.unwrap().person_id;
         }
-        
 
         let l_user = LocalUser::get_by_person_id(self.pool, person_id_join.clone()).await?;
 
@@ -147,11 +158,17 @@ impl<'a> BoardQuery<'a> {
                     .eq(person_board_blocks::board_id)
                     .and(person_board_blocks::person_id.eq(person_id_join))),
             )
+            .left_join(
+                board_mods::table.on(boards::id
+                    .eq(board_mods::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
                 board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
+                board_mods::all_columns.nullable(),
             ))
             .into_boxed();
 
@@ -247,6 +264,7 @@ impl ViewToVec for BoardView {
                 counts: a.1,
                 subscribed: BoardSubscriber::to_subscribed_type(&a.2),
                 blocked: a.3.is_some(),
+                moderator: a.4,
             })
             .collect::<Vec<Self>>()
     }

@@ -2,45 +2,31 @@ use std::collections::HashMap;
 
 use diesel::dsl::count;
 use tinyboards_db::models::board::board_subscriber::BoardSubscriber;
-use tinyboards_db::models::post::post_saved::PostSaved;
-use tinyboards_db::models::post::post_read::PostRead;
 use tinyboards_db::models::person::person_blocks::PersonBlock;
+use tinyboards_db::models::post::post_read::PostRead;
+use tinyboards_db::models::post::post_saved::PostSaved;
 
-use tinyboards_db::models::board::boards::BoardSafe;
-use diesel::dsl::now;
 use crate::structs::PostView;
+use diesel::dsl::now;
+use tinyboards_db::models::board::boards::BoardSafe;
 
 use diesel::{
-    result::Error,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    JoinOnDsl,
-    NullableExpressionMethods,
+    result::Error, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, NullableExpressionMethods,
     QueryDsl,
 };
 use diesel_async::RunQueryDsl;
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
-    schema::{
-        boards,
-        board_subscriber,
-        post_read,
-        post_saved,
-        board_mods,
-        board_person_bans,
-        person,
-        person_blocks, person_board_blocks, 
-        posts,
-        post_aggregates,
-        post_votes,
-        post_report,
-    },
     models::{
-        board::board_person_bans::BoardPersonBan,
-        person::person::PersonSafe,
-        post::posts::Post,
+        board::board_mods::BoardModerator, board::board_person_bans::BoardPersonBan,
+        person::person::PersonSafe, post::posts::Post,
     },
-    traits::{ToSafe},
+    schema::{
+        board_mods, board_person_bans, board_subscriber, boards, person, person_blocks,
+        person_board_blocks, post_aggregates, post_read, post_report, post_saved, post_votes,
+        posts,
+    },
+    traits::ToSafe,
     utils::{get_conn, limit_and_offset, DbPool},
 };
 use typed_builder::TypedBuilder;
@@ -56,22 +42,23 @@ type PostViewTuple = (
     Option<PostRead>,
     Option<PersonBlock>,
     Option<i16>,
+    Option<BoardModerator>,
 );
 
 #[derive(TypedBuilder)]
 #[builder(field_defaults(default))]
 pub struct PostModQuery<'a> {
-  #[builder(!default)]
-  pool: &'a DbPool,
-  #[builder(!default)]
-  my_person_id: i32,
-  #[builder(!default)]
-  admin: bool,
-  post_id: Option<i32>,
-  board_id: Option<i32>,
-  page: Option<i64>,
-  limit: Option<i64>,
-  unresolved_only: Option<bool>,
+    #[builder(!default)]
+    pool: &'a DbPool,
+    #[builder(!default)]
+    my_person_id: i32,
+    #[builder(!default)]
+    admin: bool,
+    post_id: Option<i32>,
+    board_id: Option<i32>,
+    page: Option<i64>,
+    limit: Option<i64>,
+    unresolved_only: Option<bool>,
 }
 
 #[derive(Default, Clone)]
@@ -98,7 +85,11 @@ impl<'a> PostModQuery<'a> {
         let query_ = posts::table
             .inner_join(person::table)
             .inner_join(boards::table)
-            .inner_join(post_report::table.on(posts::id.eq(post_report::post_id).and(post_report::resolved.eq(false))))
+            .inner_join(
+                post_report::table.on(posts::id
+                    .eq(post_report::post_id)
+                    .and(post_report::resolved.eq(false))),
+            )
             .left_join(
                 board_person_bans::table.on(posts::board_id
                     .eq(board_person_bans::board_id)
@@ -140,6 +131,11 @@ impl<'a> PostModQuery<'a> {
                     .eq(post_votes::post_id)
                     .and(post_votes::person_id.eq(person_id_join))),
             )
+            .left_join(
+                board_mods::table.on(posts::board_id
+                    .eq(board_mods::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
             .select((
                 posts::all_columns,
                 PersonSafe::safe_columns_tuple(),
@@ -151,6 +147,7 @@ impl<'a> PostModQuery<'a> {
                 post_read::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
+                board_mods::all_columns.nullable(),
             ));
 
         let mut query = query_.clone().into_boxed();
@@ -177,52 +174,62 @@ impl<'a> PostModQuery<'a> {
             .limit(limit)
             .offset(offset);
 
-        count_query = count_query
-            .limit(limit)
-            .offset(offset);
+        count_query = count_query.limit(limit).offset(offset);
 
         if !self.admin {
+            /*let res = query
+            .inner_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(posts::board_id)
+                    .and(board_mods::person_id.eq(self.my_person_id))),
+            )
+            .load::<PostViewTuple>(conn)
+            .await?;*/
             let res = query
-                .inner_join(
-                    board_mods::table.on(
-                        board_mods::board_id
-                            .eq(posts::board_id)
-                            .and(board_mods::person_id.eq(self.my_person_id))
-                    )
-                )
+                .filter(board_mods::person_id.eq(person_id_join))
                 .load::<PostViewTuple>(conn)
                 .await?;
             let posts = Self::load_report_counts(res, self.pool).await?;
+            /*let count = count_query
+            .inner_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(posts::board_id)
+                    .and(board_mods::person_id.eq(self.my_person_id))),
+            )
+            .count()
+            .get_result::<i64>(conn)
+            .await?;*/
             let count = count_query
-                .inner_join(
-                    board_mods::table.on(
-                        board_mods::board_id
-                            .eq(posts::board_id)
-                            .and(board_mods::person_id.eq(self.my_person_id))
-                    )
-                )
+                .filter(board_mods::person_id.eq(person_id_join))
                 .count()
                 .get_result::<i64>(conn)
                 .await?;
 
-            Ok(PostModQueryResponse { posts, count })    
+            Ok(PostModQueryResponse { posts, count })
         } else {
             let res = query.load::<PostViewTuple>(conn).await?;
             let posts = Self::load_report_counts(res, self.pool).await?;
             let count = count_query.count().get_result::<i64>(conn).await?;
-            
+
             Ok(PostModQueryResponse { posts, count })
         }
     }
 
-    async fn load_report_counts(items: Vec<PostViewTuple>, pool: &DbPool) -> Result<Vec<PostView>, Error> {
+    async fn load_report_counts(
+        items: Vec<PostViewTuple>,
+        pool: &DbPool,
+    ) -> Result<Vec<PostView>, Error> {
         let conn = &mut get_conn(pool).await?;
 
         let ids: Vec<i32> = items.iter().map(|p| p.0.id).collect();
 
         let counts_query = posts::table
             .filter(posts::id.eq_any(ids))
-            .inner_join(post_report::table.on(post_report::post_id.eq(posts::id).and(post_report::resolved.eq(false))))
+            .inner_join(
+                post_report::table.on(post_report::post_id
+                    .eq(posts::id)
+                    .and(post_report::resolved.eq(false))),
+            )
             .group_by(posts::id)
             .select((posts::id, count(post_report::id)))
             .load::<(i32, i64)>(conn)
@@ -234,10 +241,11 @@ impl<'a> PostModQuery<'a> {
             map.insert(post_id, report_count);
         }
 
-        Ok(
-            items.into_iter().map(|a| {
+        Ok(items
+            .into_iter()
+            .map(|a| {
                 let pid = a.0.id;
-        
+
                 PostView {
                     post: a.0,
                     creator: Some(a.1),
@@ -249,9 +257,10 @@ impl<'a> PostModQuery<'a> {
                     read: a.7.is_some(),
                     creator_blocked: a.8.is_some(),
                     my_vote: a.9,
-                    report_count: map.remove(&pid)
+                    report_count: map.remove(&pid),
+                    moderator: a.10,
                 }
-            }).collect()
-        )
+            })
+            .collect())
     }
 }

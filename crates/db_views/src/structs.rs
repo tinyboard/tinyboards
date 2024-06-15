@@ -4,6 +4,7 @@ use tinyboards_db::{
         BoardAggregates, CommentAggregates, PersonAggregates, PostAggregates, SiteAggregates,
     },
     models::{
+        board::board_mods::BoardModerator,
         board::boards::{Board, BoardSafe},
         comment::{comment_reply::CommentReply, comment_report::CommentReport, comments::Comment},
         emoji::{emoji::Emoji, emoji_keyword::EmojiKeyword},
@@ -61,6 +62,7 @@ pub struct PostView {
     pub creator_blocked: bool,      // Left join UserBlock
     pub my_vote: Option<i16>,       // Left join PostLike
     pub report_count: Option<i64>,
+    pub moderator: Option<BoardModerator>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -109,6 +111,7 @@ pub struct BoardView {
     pub subscribed: SubscribedType,
     pub blocked: bool,
     pub counts: BoardAggregates,
+    pub moderator: Option<BoardModerator>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
