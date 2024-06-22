@@ -41,11 +41,16 @@ pub struct BoardIdPath {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EditBoard {
+    pub name: Option<String>,
     pub title: Option<String>,
     pub description: Option<String>,
     pub is_nsfw: Option<bool>,
     pub icon: Option<DbUrl>,
     pub banner: Option<DbUrl>,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
+    pub sidebar: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

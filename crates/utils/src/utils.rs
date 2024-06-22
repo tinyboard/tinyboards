@@ -18,7 +18,10 @@ pub fn get_ip(conn_info: &ConnectionInfo) -> IpAddr {
 }
 
 static MENTIONS_REGEX: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"@(?P<name>[\w.]+)").expect("compile regex"));
+    Lazy::new(|| Regex::new(r"@(?P<name>[\w.]+)").expect("compile username mention regex"));
+
+static BOARDS_REGEX: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"\+(?P<name>[\w.]+)").expect("compile board mention regex"));
 
 static IMG_TAG_REGEX: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"<img src=").expect("compile img tag regex"));
@@ -72,6 +75,19 @@ pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
         );
         //let nuxt_ref = format!("<NuxtLink to='/user/{}'>@{}</NuxtLink>", uname, uname);
         result = result.replace(&format!("@{}", uname), &profile_ref);
+    }
+
+    let rcopy = result.clone();
+
+    for cap in BOARDS_REGEX.captures_iter(rcopy.as_str()) {
+        let board_name = cap["name"].to_string();
+        let board_link = format!("{}/+{}", base_url, board_name);
+        let board_ref = format!(
+            "<a id=\"ref-board-{}\" class=\"board-reference\" href='{}'>+{}</a>",
+            board_name, board_link, board_name
+        );
+        //let nuxt_ref = format!("<NuxtLink to='/user/{}'>@{}</NuxtLink>", uname, uname);
+        result = result.replace(&format!("+{}", board_name), &board_ref);
     }
 
     let rcopy = result.clone();
@@ -134,7 +150,13 @@ pub fn get_file_type(content_type: &str) -> &str {
 }
 
 pub fn is_acceptable_file_type(content_type: &str) -> bool {
-    let acceptable_types = ["image/gif", "image/jpeg", "image/jpg", "image/webp", "image/png"];
+    let acceptable_types = [
+        "image/gif",
+        "image/jpeg",
+        "image/jpg",
+        "image/webp",
+        "image/png",
+    ];
 
     acceptable_types.contains(&content_type)
 }
