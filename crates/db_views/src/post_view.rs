@@ -330,6 +330,7 @@ impl<'a> PostQuery<'a> {
                     )
                 }
                 ListingType::Local => query = query.filter(boards::local.eq(true)),
+                ListingType::Moderated => query = query.filter(board_mods::person_id.is_not_null()),
             }
         }
 

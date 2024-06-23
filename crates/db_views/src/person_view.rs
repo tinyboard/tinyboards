@@ -1,9 +1,5 @@
-use crate::{
-    local_user_view,
-    structs::{
-        CommentReplyView, LocalUserSettingsView, LocalUserView, LoggedInUserView,
-        PersonMentionView, PersonView,
-    },
+use crate::structs::{
+    CommentReplyView, LocalUserSettingsView, LoggedInUserView, PersonMentionView, PersonView,
 };
 use diesel::{result::Error, *};
 use tinyboards_db::{

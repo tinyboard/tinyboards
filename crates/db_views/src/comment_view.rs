@@ -14,7 +14,7 @@ use tinyboards_db::{
         person::local_user::*, person::person::*, person::person_blocks::*, post::posts::Post,
     },
     schema::{
-        board_person_bans, board_subscriber, boards, comment_aggregates, comment_saved,
+        board_mods, board_person_bans, board_subscriber, boards, comment_aggregates, comment_saved,
         comment_votes, comments, person, person_blocks, person_board_blocks, posts,
     },
     traits::{ToSafe, ViewToVec},
@@ -350,6 +350,11 @@ impl<'a> CommentQuery<'a> {
                     .and(board_subscriber::person_id.eq(person_id_join))),
             )
             .left_join(
+                board_mods::table.on(comments::board_id
+                    .eq(board_mods::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
+            .left_join(
                 comment_saved::table.on(comments::id
                     .eq(comment_saved::comment_id)
                     .and(comment_saved::person_id.eq(person_id_join))),
@@ -397,6 +402,11 @@ impl<'a> CommentQuery<'a> {
                             .is_null()
                             .or(board_person_bans::expires.gt(now)),
                     )),
+            )
+            .left_join(
+                board_mods::table.on(comments::board_id
+                    .eq(board_mods::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
             )
             .left_join(
                 board_subscriber::table.on(posts::board_id
@@ -483,6 +493,10 @@ impl<'a> CommentQuery<'a> {
                 ListingType::Local => {
                     query = query.filter(boards::local.eq(true));
                     count_query = count_query.filter(boards::local.eq(true));
+                }
+                ListingType::Moderated => {
+                    query = query.filter(board_mods::person_id.is_not_null());
+                    count_query = count_query.filter(board_mods::person_id.is_not_null());
                 }
             }
         };

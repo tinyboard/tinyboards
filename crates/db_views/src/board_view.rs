@@ -227,6 +227,7 @@ impl<'a> BoardQuery<'a> {
                 ListingType::Subscribed => query.filter(board_subscriber::person_id.is_not_null()),
                 ListingType::All => query,
                 ListingType::Local => query,
+                ListingType::Moderated => query.filter(board_mods::person_id.is_not_null()),
             };
         }
 

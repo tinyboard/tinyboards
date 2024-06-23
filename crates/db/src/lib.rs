@@ -98,6 +98,8 @@ pub enum ListingType {
     Subscribed,
     #[strum(ascii_case_insensitive)]
     Local,
+    #[strum(ascii_case_insensitive)]
+    Moderated,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
@@ -239,6 +241,7 @@ pub fn map_to_listing_type(match_string: Option<&str>) -> ListingType {
     match match_string {
         Some("all") => ListingType::All,
         Some("subscribed") => ListingType::Subscribed,
+        Some("moderated") => ListingType::Moderated,
         Some(&_) => ListingType::All,
         None => ListingType::All,
     }
