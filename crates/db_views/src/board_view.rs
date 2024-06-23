@@ -5,8 +5,8 @@ use diesel_async::RunQueryDsl;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates,
     models::{
-        board::board_block::BoardBlock, board::board_mods::BoardModerator,
-        board::board_subscriber::BoardSubscriber, board::boards::BoardSafe, person::local_user::*,
+        board::board_block::BoardBlock, board::board_subscriber::BoardSubscriber,
+        board::boards::BoardSafe, person::local_user::*,
     },
     schema::{
         board_aggregates, board_mods, board_subscriber, boards, local_user, person,
@@ -23,7 +23,8 @@ type BoardViewTuple = (
     BoardAggregates,
     Option<BoardSubscriber>,
     Option<BoardBlock>,
-    Option<BoardModerator>,
+    //Option<BoardModerator>,
+    Option<i32>,
 );
 
 impl BoardView {
@@ -52,14 +53,15 @@ impl BoardView {
             .left_join(
                 board_mods::table.on(boards::id
                     .eq(board_mods::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::person_id.eq(person_id_join))
+                    .and(board_mods::invite_accepted.eq(true))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
                 board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
-                board_mods::all_columns.nullable(),
+                board_mods::permissions.nullable(),
             ))
             .into_boxed();
 
@@ -70,7 +72,7 @@ impl BoardView {
                 .filter(boards::is_deleted.eq(false));
         }
 
-        let (board, counts, subscriber, blocked, moderator) =
+        let (board, counts, subscriber, blocked, mod_permissions) =
             query.first::<BoardViewTuple>(conn).await?;
 
         Ok(BoardView {
@@ -78,7 +80,7 @@ impl BoardView {
             subscribed: BoardSubscriber::to_subscribed_type(&subscriber),
             blocked: blocked.is_some(),
             counts,
-            moderator,
+            mod_permissions,
         })
     }
 
@@ -161,14 +163,15 @@ impl<'a> BoardQuery<'a> {
             .left_join(
                 board_mods::table.on(boards::id
                     .eq(board_mods::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::person_id.eq(person_id_join))
+                    .and(board_mods::invite_accepted.eq(true))),
             )
             .select((
                 BoardSafe::safe_columns_tuple(),
                 board_aggregates::all_columns,
                 board_subscriber::all_columns.nullable(),
                 person_board_blocks::all_columns.nullable(),
-                board_mods::all_columns.nullable(),
+                board_mods::permissions.nullable(),
             ))
             .into_boxed();
 
@@ -265,7 +268,7 @@ impl ViewToVec for BoardView {
                 counts: a.1,
                 subscribed: BoardSubscriber::to_subscribed_type(&a.2),
                 blocked: a.3.is_some(),
-                moderator: a.4,
+                mod_permissions: a.4,
             })
             .collect::<Vec<Self>>()
     }

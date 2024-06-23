@@ -6,10 +6,10 @@ use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
-        board::board_mods::BoardModerator, board::board_person_bans::BoardPersonBan,
-        board::board_subscriber::BoardSubscriber, board::boards::BoardSafe, person::local_user::*,
-        person::person::*, person::person_blocks::PersonBlock, post::post_read::PostRead,
-        post::post_saved::PostSaved, post::posts::Post,
+        board::board_person_bans::BoardPersonBan, board::board_subscriber::BoardSubscriber,
+        board::boards::BoardSafe, person::local_user::*, person::person::*,
+        person::person_blocks::PersonBlock, post::post_read::PostRead, post::post_saved::PostSaved,
+        post::posts::Post,
     },
     schema::{
         board_mods, board_person_bans, board_subscriber, boards, person, person_blocks,
@@ -33,7 +33,8 @@ type PostViewTuple = (
     Option<PostRead>,
     Option<PersonBlock>,
     Option<i16>,
-    Option<BoardModerator>,
+    //Option<BoardModerator>,
+    Option<i32>,
 );
 use diesel_async::RunQueryDsl;
 
@@ -91,7 +92,8 @@ impl PostView {
             .left_join(
                 board_mods::table.on(posts::board_id
                     .eq(board_mods::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::person_id.eq(person_id_join))
+                    .and(board_mods::invite_accepted.eq(true))),
             )
             .select((
                 posts::all_columns,
@@ -104,7 +106,7 @@ impl PostView {
                 post_read::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
-                board_mods::all_columns.nullable(),
+                board_mods::permissions.nullable(),
             ))
             .into_boxed();
 
@@ -127,7 +129,7 @@ impl PostView {
             read,
             creator_blocked,
             post_vote,
-            moderator,
+            mod_permissions,
         ) = query.first::<PostViewTuple>(conn).await?;
 
         let my_vote = if my_person_id.is_some() && post_vote.is_none() {
@@ -165,7 +167,7 @@ impl PostView {
             creator_blocked: creator_blocked.is_some(),
             my_vote,
             report_count,
-            moderator,
+            mod_permissions,
         })
     }
 }
@@ -253,7 +255,8 @@ impl<'a> PostQuery<'a> {
             .left_join(
                 board_mods::table.on(posts::board_id
                     .eq(board_mods::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::person_id.eq(person_id_join))
+                    .and(board_mods::invite_accepted.eq(true))),
             )
             .select((
                 posts::all_columns,
@@ -266,7 +269,7 @@ impl<'a> PostQuery<'a> {
                 post_read::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
-                board_mods::all_columns.nullable(),
+                board_mods::permissions.nullable(),
             ))
             .into_boxed();
 
@@ -506,7 +509,7 @@ impl ViewToVec for PostView {
                 creator_blocked: a.8.is_some(),
                 my_vote: a.9,
                 report_count: None,
-                moderator: a.10,
+                mod_permissions: a.10,
             })
             .collect::<Vec<Self>>()
     }

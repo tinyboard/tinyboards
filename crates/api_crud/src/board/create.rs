@@ -15,7 +15,7 @@ use tinyboards_db::models::site::local_site::LocalSite;
 use tinyboards_db::{
     models::{
         board::{
-            board_mods::{BoardModerator, BoardModeratorForm},
+            board_mods::{BoardModerator, BoardModeratorForm, ModPerms},
             board_subscriber::{BoardSubscriber, BoardSubscriberForm},
             boards::{Board, BoardForm},
         },
@@ -145,8 +145,11 @@ impl<'des> PerformCrud<'des> for CreateBoard {
 
         // the board creator becomes a board mod
         let board_mod_form = BoardModeratorForm {
-            board_id: board.id,
-            person_id: view.person.id,
+            board_id: Some(board.id),
+            person_id: Some(view.person.id),
+            rank: Some(1),
+            permissions: Some(ModPerms::Full.as_i32()),
+            invite_accepted: Some(true),
         };
         BoardModerator::join(context.pool(), &board_mod_form).await?;
 

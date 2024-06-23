@@ -81,6 +81,9 @@ diesel::table! {
         board_id -> Int4,
         person_id -> Int4,
         creation_date -> Timestamp,
+        permissions -> Int4,
+        rank -> Int4,
+        invite_accepted -> Bool,
     }
 }
 

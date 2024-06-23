@@ -18,8 +18,7 @@ use diesel_async::RunQueryDsl;
 use tinyboards_db::{
     aggregates::structs::PostAggregates,
     models::{
-        board::board_mods::BoardModerator, board::board_person_bans::BoardPersonBan,
-        person::person::PersonSafe, post::posts::Post,
+        board::board_person_bans::BoardPersonBan, person::person::PersonSafe, post::posts::Post,
     },
     schema::{
         board_mods, board_person_bans, board_subscriber, boards, person, person_blocks,
@@ -42,7 +41,8 @@ type PostViewTuple = (
     Option<PostRead>,
     Option<PersonBlock>,
     Option<i16>,
-    Option<BoardModerator>,
+    //Option<BoardModerator>,
+    Option<i32>,
 );
 
 #[derive(TypedBuilder)]
@@ -134,7 +134,8 @@ impl<'a> PostModQuery<'a> {
             .left_join(
                 board_mods::table.on(posts::board_id
                     .eq(board_mods::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::person_id.eq(person_id_join))
+                    .and(board_mods::invite_accepted.eq(true))),
             )
             .select((
                 posts::all_columns,
@@ -147,7 +148,7 @@ impl<'a> PostModQuery<'a> {
                 post_read::all_columns.nullable(),
                 person_blocks::all_columns.nullable(),
                 post_votes::score.nullable(),
-                board_mods::all_columns.nullable(),
+                board_mods::permissions.nullable(),
             ));
 
         let mut query = query_.clone().into_boxed();
@@ -258,7 +259,7 @@ impl<'a> PostModQuery<'a> {
                     creator_blocked: a.8.is_some(),
                     my_vote: a.9,
                     report_count: map.remove(&pid),
-                    moderator: a.10,
+                    mod_permissions: a.10,
                 }
             })
             .collect())

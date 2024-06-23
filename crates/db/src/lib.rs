@@ -11,9 +11,14 @@ pub mod schema;
 pub mod utils;
 
 pub use database::Database;
+//use diesel::numeric_expr;
 
+//use schema::board_mods;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
+
+// allow doing operations on this column
+// numeric_expr!(board_mods::rank);
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum SiteMode {

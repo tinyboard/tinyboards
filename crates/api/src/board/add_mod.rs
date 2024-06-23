@@ -7,7 +7,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     models::{
-        board::board_mods::{BoardModerator, BoardModeratorForm},
+        board::board_mods::{BoardModerator, BoardModeratorForm, ModPerms},
         moderator::mod_actions::{ModAddBoardMod, ModAddBoardModForm},
         person::local_user::AdminPerms,
     },
@@ -42,8 +42,11 @@ impl<'des> Perform<'des> for AddBoardMod {
 
         // board moderator form (for adding or removing mod status)
         let form = BoardModeratorForm {
-            board_id,
-            person_id,
+            board_id: Some(board_id),
+            person_id: Some(person_id),
+            rank: Some(1),
+            invite_accepted: Some(true),
+            permissions: Some(ModPerms::Full.as_i32()),
         };
 
         if added {
@@ -51,7 +54,7 @@ impl<'des> Perform<'des> for AddBoardMod {
             BoardModerator::create(context.pool(), &form).await?;
         } else {
             // remove board moderator status for the targeted user on the targeted board
-            BoardModerator::remove_board_mod(context.pool(), &form).await?;
+            BoardModerator::remove_board_mod(context.pool(), person_id, board_id).await?;
         }
 
         // log this mod action
