@@ -30,11 +30,7 @@ impl PerformApub for GetPosts {
         let local_user_view = load_user_opt(context.pool(), context.master_key(), auth).await?;
         let local_site = LocalSite::read(context.pool()).await?;
 
-        check_private_instance(
-            &local_user_view,
-            context.pool(),
-        )
-        .await?;
+        check_private_instance(&local_user_view, context.pool()).await?;
 
         let sort = data.sort.clone().map(|x| x.to_lowercase());
         let sort = Some(map_to_sort_type(match sort {

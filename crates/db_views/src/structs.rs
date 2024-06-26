@@ -40,6 +40,8 @@ pub struct LoggedInUserView {
     pub counts: PersonAggregates,
     pub unread_notifications: i64,
     pub admin_level: i32,
+    pub subscribed_boards: Vec<BoardView>,
+    pub moderated_boards: Vec<BoardView>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

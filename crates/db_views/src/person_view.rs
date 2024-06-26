@@ -1,7 +1,10 @@
+use crate::board_view::BoardQuery;
 use crate::structs::{
     CommentReplyView, LocalUserSettingsView, LoggedInUserView, PersonMentionView, PersonView,
 };
 use diesel::{result::Error, *};
+use tinyboards_db::ListingType;
+use tinyboards_db::SortType;
 use tinyboards_db::{
     aggregates::structs::PersonAggregates,
     //map_to_user_sort_type,
@@ -188,9 +191,49 @@ impl LoggedInUserView {
             .await
             .map_err(|e| TinyBoardsError::from(e))?;
 
+        let local_user = LocalUser::get_by_person_id(pool, person_id)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "No matching local user found for person.",
+                )
+            })?;
+
         let mentions = PersonMentionView::get_unread_mentions(pool, person_id).await?;
 
         let replies = CommentReplyView::get_unread_replies(pool, person_id).await?;
+
+        let resp = BoardQuery::builder()
+            .pool(pool)
+            .user(Some(&local_user))
+            .sort(Some(SortType::TopAll))
+            .listing_type(Some(ListingType::Subscribed))
+            .limit(Some(10))
+            .build()
+            .list()
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Fetching joined boards failed.")
+            })?;
+
+        let subscribed_boards = resp.boards;
+
+        let resp = BoardQuery::builder()
+            .pool(pool)
+            .user(Some(&local_user))
+            .sort(Some(SortType::TopAll))
+            .listing_type(Some(ListingType::Moderated))
+            .limit(Some(5))
+            .build()
+            .list()
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Fetching moderated boards failed.")
+            })?;
+
+        let moderated_boards = resp.boards;
 
         Ok(LoggedInUserView {
             person: person_view.person,
@@ -198,6 +241,8 @@ impl LoggedInUserView {
             counts: person_view.counts,
             unread_notifications: mentions + replies,
             admin_level: local_user_admin_level,
+            subscribed_boards,
+            moderated_boards,
         })
     }
 }
