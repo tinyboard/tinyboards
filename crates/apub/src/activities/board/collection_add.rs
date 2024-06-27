@@ -162,11 +162,13 @@ impl ActivityHandler for CollectionAdd {
 #[async_trait::async_trait]
 impl SendActivity for AddBoardMod {
     type Response = BoardModResponse;
+    type Route = ();
 
     async fn send_activity(
         request: &Self,
         _response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -185,11 +187,13 @@ impl SendActivity for AddBoardMod {
 #[async_trait::async_trait]
 impl SendActivity for FeaturePost {
     type Response = PostResponse;
+    type Route = ();
 
     async fn send_activity(
         request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)

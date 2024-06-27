@@ -41,11 +41,13 @@ pub mod undo_delete;
 #[async_trait::async_trait]
 impl SendActivity for DeletePost {
     type Response = PostResponse;
+    type Route = ();
 
     async fn send_activity(
         request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -68,11 +70,13 @@ impl SendActivity for DeletePost {
 #[async_trait::async_trait]
 impl SendActivity for TogglePostRemove {
     type Response = PostResponse;
+    type Route = ();
 
     async fn send_activity(
         request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -95,11 +99,13 @@ impl SendActivity for TogglePostRemove {
 #[async_trait::async_trait]
 impl SendActivity for DeleteComment {
     type Response = CommentResponse;
+    type Route = ();
 
     async fn send_activity(
         request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         _auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let board_id = response.comment_view.board.id;
@@ -117,11 +123,13 @@ impl SendActivity for DeleteComment {
 #[async_trait::async_trait]
 impl SendActivity for ToggleCommentRemove {
     type Response = CommentResponse;
+    type Route = ();
 
     async fn send_activity(
         request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -145,11 +153,13 @@ impl SendActivity for ToggleCommentRemove {
 #[async_trait::async_trait]
 impl SendActivity for DeleteBoard {
     type Response = BoardResponse;
+    type Route = ();
 
     async fn send_activity(
         _request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)

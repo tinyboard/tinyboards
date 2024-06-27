@@ -6,15 +6,13 @@ use crate::{
     },
     SendActivity,
 };
-use tinyboards_federation::{
-    config::Data,
-    fetch::object_id::ObjectId,
-    traits::{Actor, Object},
-};
 use chrono::NaiveDateTime;
+use serde::Deserialize;
 use tinyboards_api_common::{
+    data::TinyBoardsContext,
     moderator::{BanFromBoard, BanFromBoardResponse},
-    utils::require_user, data::TinyBoardsContext, person::{BanPerson, BanPersonResponse},
+    person::{BanPerson, BanPersonResponse},
+    utils::require_user,
 };
 use tinyboards_db::{
     models::{board::boards::Board, person::person::Person, site::site::Site},
@@ -22,8 +20,12 @@ use tinyboards_db::{
     utils::DbPool,
 };
 use tinyboards_db_views::structs::SiteView;
+use tinyboards_federation::{
+    config::Data,
+    fetch::object_id::ObjectId,
+    traits::{Actor, Object},
+};
 use tinyboards_utils::{error::TinyBoardsError, time::naive_from_unix};
-use serde::Deserialize;
 use url::Url;
 
 pub mod block_user;
@@ -60,7 +62,7 @@ impl Object for SiteOrBoard {
     async fn read_from_id(
         object_id: Url,
         data: &Data<Self::DataType>,
-    ) -> Result<Option<Self>, TinyBoardsError> 
+    ) -> Result<Option<Self>, TinyBoardsError>
     where
         Self: Sized,
     {
@@ -69,7 +71,7 @@ impl Object for SiteOrBoard {
             Some(s) => Some(SiteOrBoard::Site(s)),
             None => ApubBoard::read_from_id(object_id, data)
                 .await?
-                .map(SiteOrBoard::Board)
+                .map(SiteOrBoard::Board),
         })
     }
 
@@ -87,7 +89,7 @@ impl Object for SiteOrBoard {
     async fn verify(
         apub: &Self::Kind,
         expected_domain: &Url,
-        data: &Data<Self::DataType>
+        data: &Data<Self::DataType>,
     ) -> Result<(), TinyBoardsError> {
         match apub {
             InstanceOrGroup::Instance(s) => ApubSite::verify(s, expected_domain, data).await,
@@ -96,13 +98,16 @@ impl Object for SiteOrBoard {
     }
 
     #[tracing::instrument(skip_all)]
-    async fn from_json(apub: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, TinyBoardsError> 
+    async fn from_json(
+        apub: Self::Kind,
+        data: &Data<Self::DataType>,
+    ) -> Result<Self, TinyBoardsError>
     where
         Self: Sized,
     {
         Ok(match apub {
             InstanceOrGroup::Instance(s) => SiteOrBoard::Site(ApubSite::from_json(s, data).await?),
-            InstanceOrGroup::Group(b) => SiteOrBoard::Board(ApubBoard::from_json(b, data).await?)
+            InstanceOrGroup::Group(b) => SiteOrBoard::Board(ApubBoard::from_json(b, data).await?),
         })
     }
 }
@@ -130,13 +135,17 @@ async fn generate_cc(target: &SiteOrBoard, pool: &DbPool) -> Result<Vec<Url>, Ti
 #[async_trait::async_trait]
 impl SendActivity for BanPerson {
     type Response = BanPersonResponse;
+    type Route = ();
     async fn send_activity(
         request: &Self,
         _response: &Self::Response,
         context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
-        let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
+        let local_user_view = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
         let person = Person::read(context.pool(), request.person_id).await?;
         let site = SiteOrBoard::Site(SiteView::read_local(context.pool()).await?.site.into());
         let expires = request.expires.map(naive_from_unix);
@@ -170,47 +179,48 @@ impl SendActivity for BanPerson {
     }
 }
 
-
 #[async_trait::async_trait]
 impl SendActivity for BanFromBoard {
-  type Response = BanFromBoardResponse;
+    type Response = BanFromBoardResponse;
+    type Route = ();
 
-  async fn send_activity(
-    request: &Self,
-    _response: &Self::Response,
-    context: &Data<TinyBoardsContext>,
-    auth: Option<&str>,
-  ) -> Result<(), TinyBoardsError> {
-    let local_user_view = require_user(context.pool(), context.master_key(), auth).await.unwrap()?;
-    let board: ApubBoard = Board::read(context.pool(), request.board_id)
-      .await?
-      .into();
-    let banned_person: ApubPerson = Person::read(context.pool(), request.person_id)
-      .await?
-      .into();
-    let expires = request.expires.map(naive_from_unix);
+    async fn send_activity(
+        request: &Self,
+        _response: &Self::Response,
+        context: &Data<TinyBoardsContext>,
+        _: &Self::Route,
+        auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        let local_user_view = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
+        let board: ApubBoard = Board::read(context.pool(), request.board_id).await?.into();
+        let banned_person: ApubPerson = Person::read(context.pool(), request.person_id)
+            .await?
+            .into();
+        let expires = request.expires.map(naive_from_unix);
 
-    if request.ban {
-      BlockUser::send(
-        &SiteOrBoard::Board(board),
-        &banned_person,
-        &local_user_view.person.clone().into(),
-        request.remove_data.unwrap_or(false),
-        request.reason.clone(),
-        expires,
-        context,
-      )
-      .await?;
-    } else {
-      UndoBlockUser::send(
-        &SiteOrBoard::Board(board),
-        &banned_person,
-        &local_user_view.person.clone().into(),
-        request.reason.clone(),
-        context,
-      )
-      .await?;
+        if request.ban {
+            BlockUser::send(
+                &SiteOrBoard::Board(board),
+                &banned_person,
+                &local_user_view.person.clone().into(),
+                request.remove_data.unwrap_or(false),
+                request.reason.clone(),
+                expires,
+                context,
+            )
+            .await?;
+        } else {
+            UndoBlockUser::send(
+                &SiteOrBoard::Board(board),
+                &banned_person,
+                &local_user_view.person.clone().into(),
+                request.reason.clone(),
+                context,
+            )
+            .await?;
+        }
+        Ok(())
     }
-    Ok(())
-  }
 }
