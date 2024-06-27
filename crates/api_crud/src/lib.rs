@@ -17,7 +17,7 @@ pub mod user;
 #[async_trait::async_trait(?Send)]
 pub trait PerformCrud<'des> {
     type Response: serde::ser::Serialize + Send;
-    type Route: Deserialize<'des>;
+    type Route: Deserialize<'des> + Clone;
 
     async fn perform(
         self,
