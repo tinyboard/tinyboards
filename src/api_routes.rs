@@ -106,6 +106,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route(
                         "/{board_id}",
                         web::delete().to(route_post_crud::<DeleteBoard>),
+                    )
+                    .route(
+                        "/{board_id}/mods",
+                        web::get().to(route_get::<ListBoardMods>),
                     ),
             )
             // Post

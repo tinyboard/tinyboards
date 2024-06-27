@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use tinyboards_db::models::board::board_mods::BoardModerator;
 use tinyboards_db::{
     aggregates::structs::{
         BoardAggregates, CommentAggregates, PersonAggregates, PostAggregates, SiteAggregates,
@@ -99,6 +100,7 @@ pub struct BoardSubscriberView {
 pub struct BoardModeratorView {
     pub board: BoardSafe,
     pub moderator: PersonSafe,
+    pub mod_meta: BoardModerator,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

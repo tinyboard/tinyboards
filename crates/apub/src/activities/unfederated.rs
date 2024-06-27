@@ -174,6 +174,19 @@ impl SendActivity for GetSite {
 }
 
 #[async_trait::async_trait]
+impl SendActivity for ListBoardMods {
+    type Response = ListBoardModsResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
 impl SendActivity for ListComments {
     type Response = ListCommentsResponse;
     async fn send_activity(

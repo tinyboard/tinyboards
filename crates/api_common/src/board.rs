@@ -54,6 +54,16 @@ pub struct EditBoard {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ListBoardMods {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ListBoardModsResponse {
+    pub mods: Vec<BoardModeratorView>,
+    pub pending_mods: Vec<BoardModeratorView>,
+    pub has_pending_invite: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DeleteBoard {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
