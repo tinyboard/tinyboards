@@ -1,21 +1,19 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-  build_response::build_post_response,
-  data::TinyBoardsContext,
-  post::{LockPost, PostResponse},
-  utils::{
-    check_board_ban,
-    check_board_deleted_or_removed,
-    require_user,
-  },
+    build_response::build_post_response,
+    data::TinyBoardsContext,
+    post::{LockPost, PostResponse},
+    utils::{check_board_ban, check_board_deleted_or_removed, require_user},
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
-  models::{
-    moderator::mod_actions::{ModLockPost, ModLockPostForm},
-    post::posts::{Post}, board::boards::Board,
-  },
-  traits::Crud,
+    models::{
+        board::boards::Board,
+        moderator::mod_actions::{ModLockPost, ModLockPostForm},
+        post::posts::Post,
+    },
+    traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -38,7 +36,7 @@ impl<'des> Perform<'des> for LockPost {
         // require board mod (minimum)
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(board.id, context.pool())
+            .require_board_mod(context.pool(), board.id, ModPerms::Content)
             .await
             .unwrap()?;
 

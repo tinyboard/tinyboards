@@ -5,7 +5,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::require_user,
 };
-use tinyboards_db::models::person::local_user::AdminPerms;
+use tinyboards_db::models::{board::board_mods::ModPerms, person::local_user::AdminPerms};
 use tinyboards_db_views::comment_report_view::CommentReportQuery;
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -29,7 +29,9 @@ impl<'des> Perform<'des> for ListCommentReports {
         let mut user_res = require_user(context.pool(), context.master_key(), auth).await;
 
         if let Some(board_id) = data.board_id {
-            user_res = user_res.require_board_mod(board_id, context.pool()).await;
+            user_res = user_res
+                .require_board_mod(context.pool(), board_id, ModPerms::Content)
+                .await;
         } else {
             user_res = user_res.require_admin(AdminPerms::Content);
         }

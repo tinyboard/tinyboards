@@ -150,6 +150,7 @@ impl<'des> PerformCrud<'des> for CreateBoard {
             rank: Some(1),
             permissions: Some(ModPerms::Full.as_i32()),
             invite_accepted: Some(true),
+            invite_accepted_date: None,
         };
         BoardModerator::join(context.pool(), &board_mod_form).await?;
 

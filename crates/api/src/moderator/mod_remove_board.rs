@@ -8,6 +8,7 @@ use tinyboards_api_common::{
 use tinyboards_db::{
     models::board::boards::Board,
     models::moderator::mod_actions::{ModRemoveBoard, ModRemoveBoardForm},
+    models::person::local_user::AdminPerms,
     traits::Crud,
 };
 use tinyboards_utils::error::TinyBoardsError;
@@ -38,10 +39,10 @@ impl<'des> Perform<'des> for BanBoard {
         }
 
         // require a mod/admin for this action
+        // TODO: move this to admin actions
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(board_id.clone(), context.pool())
-            .await
+            .require_admin(AdminPerms::Boards)
             .unwrap()?;
 
         // update the board in the database

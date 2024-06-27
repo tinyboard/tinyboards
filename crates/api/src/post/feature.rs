@@ -5,6 +5,7 @@ use tinyboards_api_common::{
     post::{FeaturePost, PostResponse},
     utils::{is_mod_or_admin, require_user},
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
     models::{
         moderator::mod_actions::{ModFeaturePost, ModFeaturePostForm},
@@ -41,7 +42,7 @@ impl<'des> Perform<'des> for FeaturePost {
         // you need to at least be a board moderator for this action, if the feature type is local then you need admin
         let mut view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(orig_post.board_id, context.pool())
+            .require_board_mod(context.pool(), orig_post.board_id, ModPerms::Content)
             .await
             .unwrap()?;
 

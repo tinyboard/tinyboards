@@ -148,6 +148,19 @@ impl SendActivity for AddAdmin {
 }
 
 #[async_trait::async_trait]
+impl SendActivity for InviteBoardMod {
+    type Response = BoardModResponse;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
 impl SendActivity for LeaveAdmin {
     type Response = GetSiteResponse;
     async fn send_activity(

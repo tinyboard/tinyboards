@@ -22,6 +22,7 @@ pub struct BoardModerator {
     pub permissions: i32,
     pub rank: i32,
     pub invite_accepted: bool,
+    pub invite_accepted_date: Option<NaiveDateTime>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -32,4 +33,5 @@ pub struct BoardModeratorForm {
     pub permissions: Option<i32>,
     pub rank: Option<i32>,
     pub invite_accepted: Option<bool>,
+    pub invite_accepted_date: Option<Option<NaiveDateTime>>,
 }

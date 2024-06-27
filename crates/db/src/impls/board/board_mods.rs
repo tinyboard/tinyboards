@@ -32,6 +32,19 @@ impl Add for ModPerms {
 }
 
 impl BoardModerator {
+    pub fn has_permission(&self, permission: ModPerms) -> bool {
+        self.permissions & permission.as_i32() > 0 || self.permissions & ModPerms::Full.as_i32() > 0
+    }
+
+    pub async fn accept_invite(&self, pool: &DbPool) -> Result<usize, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::board_mods::dsl::*;
+        diesel::update(board_mods.find(self.id))
+            .set(invite_accepted.eq(true))
+            .execute(conn)
+            .await
+    }
+
     pub async fn remove_board_mod(
         pool: &DbPool,
         person_id_: i32,

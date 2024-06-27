@@ -110,6 +110,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route(
                         "/{board_id}/mods",
                         web::get().to(route_get::<ListBoardMods>),
+                    )
+                    .route(
+                        "/{board_id}/mods",
+                        web::post().to(route_post::<InviteBoardMod>),
                     ),
             )
             // Post
@@ -194,7 +198,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     .route("/ban_board", web::post().to(route_post::<BanBoard>))
                     .route("/feature_post", web::post().to(route_post::<FeaturePost>))
-                    .route("/add_moderator", web::post().to(route_post::<AddBoardMod>))
+                    .route("", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
                     .route(
                         "/queue/comments",

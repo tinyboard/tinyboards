@@ -4,6 +4,7 @@ use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_api_common::moderator::ApproveObject;
 use tinyboards_api_common::utils::require_user;
 use tinyboards_api_common::{moderator::RemoveObject, site::Message};
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_utils::TinyBoardsError;
 
 use super::get_moderateable_object;
@@ -24,11 +25,17 @@ impl<'des> Perform<'des> for RemoveObject {
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
-            .require_board_mod(target_object.get_board_id(), context.pool())
+            .require_board_mod(
+                context.pool(),
+                target_object.get_board_id(),
+                ModPerms::Content,
+            )
             .await
             .unwrap()?;
 
-        target_object.remove(Some(view.person.id), self.reason, context.pool()).await?;
+        target_object
+            .remove(Some(view.person.id), self.reason, context.pool())
+            .await?;
 
         Ok(Message::new("Removed!"))
     }
@@ -50,11 +57,17 @@ impl<'des> Perform<'des> for ApproveObject {
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .not_banned()
-            .require_board_mod(target_object.get_board_id(), context.pool())
+            .require_board_mod(
+                context.pool(),
+                target_object.get_board_id(),
+                ModPerms::Content,
+            )
             .await
             .unwrap()?;
 
-        target_object.approve(Some(view.person.id), context.pool()).await?;
+        target_object
+            .approve(Some(view.person.id), context.pool())
+            .await?;
 
         Ok(Message::new("Approved!"))
     }

@@ -1,10 +1,11 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-  data::TinyBoardsContext,
-  post::{PostReportResponse, ResolvePostReport},
-  utils::{require_user},
+    data::TinyBoardsContext,
+    post::{PostReportResponse, ResolvePostReport},
+    utils::require_user,
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{models::post::post_report::PostReport, traits::Reportable};
 use tinyboards_db_views::structs::PostReportView;
 use tinyboards_utils::error::TinyBoardsError;
@@ -30,7 +31,7 @@ impl<'des> Perform<'des> for ResolvePostReport {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(board_id, context.pool())
+            .require_board_mod(context.pool(), board_id, ModPerms::Content)
             .await
             .unwrap()?;
 
@@ -43,8 +44,9 @@ impl<'des> Perform<'des> for ResolvePostReport {
             PostReport::unresolve(context.pool(), report_id, person_id).await?;
         }
 
-        let post_report_view = PostReportView::read(context.pool(), report_id, Some(person_id)).await?;
+        let post_report_view =
+            PostReportView::read(context.pool(), report_id, Some(person_id)).await?;
 
-        Ok( PostReportResponse { post_report_view })
+        Ok(PostReportResponse { post_report_view })
     }
 }

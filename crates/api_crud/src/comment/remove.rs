@@ -6,6 +6,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::require_user,
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
     models::{
         board::boards::Board,
@@ -36,7 +37,7 @@ impl<'des> PerformCrud<'des> for ToggleCommentRemove {
         // only board mod allowed
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(orig_board.id, context.pool())
+            .require_board_mod(context.pool(), orig_board.id, ModPerms::Content)
             .await
             .unwrap()?;
 
@@ -68,9 +69,6 @@ impl<'des> PerformCrud<'des> for ToggleCommentRemove {
         )
         .await?;
 
-        Ok(
-            build_comment_response(context, updated_comment.id, Some(view), recipient_ids)
-                .await?,
-        )
+        Ok(build_comment_response(context, updated_comment.id, Some(view), recipient_ids).await?)
     }
 }

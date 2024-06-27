@@ -6,6 +6,7 @@ use tinyboards_api_common::{
     post::{PostResponse, TogglePostRemove},
     utils::require_user,
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
     models::{
         moderator::mod_actions::{ModRemovePost, ModRemovePostForm},
@@ -33,7 +34,7 @@ impl<'des> PerformCrud<'des> for TogglePostRemove {
         // require board mod
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(orig_post.board_id, context.pool())
+            .require_board_mod(context.pool(), orig_post.board_id, ModPerms::Content)
             .await
             .unwrap()?;
 

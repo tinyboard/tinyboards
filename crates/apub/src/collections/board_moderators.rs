@@ -85,6 +85,7 @@ impl Collection for ApubBoardModerators {
                     rank: Some(1),
                     invite_accepted: Some(true),
                     permissions: Some(ModPerms::Full.as_i32()),
+                    ..BoardModeratorForm::default()
                 };
                 BoardModerator::join(data.pool(), &board_moderator_form).await?;
             }

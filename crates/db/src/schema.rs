@@ -84,6 +84,7 @@ diesel::table! {
         permissions -> Int4,
         rank -> Int4,
         invite_accepted -> Bool,
+        invite_accepted_date -> Nullable<Timestamp>,
     }
 }
 

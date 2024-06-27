@@ -13,7 +13,7 @@ use crate::{
     SendActivity,
 };
 use tinyboards_api_common::{
-    board::{AddBoardMod, AddBoardModResponse},
+    board::{AddBoardMod, BoardModResponse},
     data::TinyBoardsContext,
     post::{FeaturePost, PostResponse},
     utils::{generate_featured_url, generate_moderators_url, require_user},
@@ -133,6 +133,7 @@ impl ActivityHandler for CollectionAdd {
                         rank: Some(1),
                         invite_accepted: Some(true),
                         permissions: Some(ModPerms::Full.as_i32()),
+                        invite_accepted_date: None,
                     };
                     BoardModerator::join(context.pool(), &form).await?;
                 }
@@ -160,7 +161,7 @@ impl ActivityHandler for CollectionAdd {
 
 #[async_trait::async_trait]
 impl SendActivity for AddBoardMod {
-    type Response = AddBoardModResponse;
+    type Response = BoardModResponse;
 
     async fn send_activity(
         request: &Self,
@@ -172,15 +173,12 @@ impl SendActivity for AddBoardMod {
             .await
             .unwrap()?;
         let board: ApubBoard = Board::read(context.pool(), request.board_id).await?.into();
-        let updated_mod: ApubPerson = Person::read(context.pool(), request.person_id)
-            .await?
-            .into();
-        if request.added {
-            CollectionAdd::send_add_mod(&board, &updated_mod, &view.person.into(), context).await
-        } else {
-            CollectionRemove::send_remove_mod(&board, &updated_mod, &view.person.into(), context)
-                .await
-        }
+        let updated_mod: ApubPerson =
+            Person::read(context.pool(), request.person_id.unwrap_or(view.person.id))
+                .await?
+                .into();
+
+        CollectionAdd::send_add_mod(&board, &updated_mod, &view.person.into(), context).await
     }
 }
 

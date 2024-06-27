@@ -5,10 +5,11 @@ use tinyboards_api_common::{
     moderator::{BanFromBoard, BanFromBoardResponse},
     utils::require_user,
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
     models::board::{
-        board_subscriber::{BoardSubscriber, BoardSubscriberForm},
         board_person_bans::{BoardPersonBan, BoardPersonBanForm},
+        board_subscriber::{BoardSubscriber, BoardSubscriberForm},
     },
     models::moderator::mod_actions::{ModBanFromBoard, ModBanFromBoardForm},
     traits::{Bannable, Crud, Subscribeable},
@@ -39,7 +40,7 @@ impl<'des> Perform<'des> for BanFromBoard {
         // require board moderator (at least) to perform this action
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(board_id.clone(), context.pool())
+            .require_board_mod(context.pool(), board_id.clone(), ModPerms::Users)
             .await
             .unwrap()?;
 
@@ -60,7 +61,6 @@ impl<'des> Perform<'des> for BanFromBoard {
                 pending: None,
             };
             BoardSubscriber::unsubscribe(context.pool(), &sub_form).await?;
-       
         } else {
             // unban user from board
             BoardPersonBan::unban(context.pool(), &board_user_ban_form).await?;
@@ -74,15 +74,18 @@ impl<'des> Perform<'des> for BanFromBoard {
             reason: Some(reason),
             banned: Some(Some(banned)),
             expires: Some(expires),
-        };  
+        };
 
         // mod log entry
         ModBanFromBoard::create(context.pool(), &ban_from_board_form).await?;
-        
+
         // get person_view for response
         let person_id = data.person_id;
         let person_view = PersonView::read(context.pool(), person_id, false).await?;
 
-        Ok(BanFromBoardResponse { person_view, banned: data.ban })
+        Ok(BanFromBoardResponse {
+            person_view,
+            banned: data.ban,
+        })
     }
 }

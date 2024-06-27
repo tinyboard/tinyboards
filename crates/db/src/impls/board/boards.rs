@@ -1,3 +1,4 @@
+use crate::models::board::board_mods::BoardModerator;
 use crate::newtypes::DbUrl;
 use crate::schema::{board_mods, board_person_bans, boards, instance};
 use crate::utils::functions::lower;
@@ -47,12 +48,52 @@ impl Board {
             .select(board_mods::id)
             .filter(board_mods::board_id.eq(board_id))
             .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::invite_accepted.eq(true))
             .first::<i32>(conn)
             .await
             .optional();
 
         mod_id.map(|opt| opt.is_some())
     }
+
+    /// Takes a board id and an user id, and returns a mod relationship if one exists
+    pub async fn board_get_mod(
+        pool: &DbPool,
+        board_id: i32,
+        person_id: i32,
+    ) -> Result<Option<BoardModerator>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        board_mods::table
+            .select(board_mods::all_columns)
+            .filter(board_mods::board_id.eq(board_id))
+            .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::invite_accepted.eq(true))
+            .first::<BoardModerator>(conn)
+            .await
+            .optional()
+
+        //mod_id.map(|opt| opt.is_some())
+    }
+
+    /// Takes a board id and an user id, and returns a mod invite if one exists
+    pub async fn get_mod_invite(
+        pool: &DbPool,
+        board_id: i32,
+        person_id: i32,
+    ) -> Result<Option<BoardModerator>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        board_mods::table
+            .select(board_mods::all_columns)
+            .filter(board_mods::board_id.eq(board_id))
+            .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::invite_accepted.eq(false))
+            .first::<BoardModerator>(conn)
+            .await
+            .optional()
+
+        //mod_id.map(|opt| opt.is_some())
+    }
+
     pub async fn get_by_collection_url(
         pool: &DbPool,
         url: &DbUrl,

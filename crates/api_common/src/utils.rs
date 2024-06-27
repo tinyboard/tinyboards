@@ -8,7 +8,7 @@ use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
-        board::{boards::{Board, BoardForm}, board_mods::BoardModerator},
+        board::{boards::{Board, BoardForm}, board_mods::{BoardModerator, ModPerms}},
         comment::comments::Comment,
         post::posts::Post,
         secret::Secret,
@@ -245,25 +245,27 @@ impl UserResult {
         }
     }
 
-    pub async fn require_board_mod(self, board_id: i32, pool: &DbPool) -> Self {
+    pub async fn require_board_mod(self, pool: &DbPool, board_id: i32, with_permission: ModPerms) -> Self {
         match self.0 {
             Ok(u) => {
-                // admins can do everything (in this case, only ones with the Content permission)
-                if u.local_user.has_permission(AdminPerms::Content) {
+                // admins can do everything (in this case, only ones with the Content or Boards permission)
+                if u.local_user.has_permissions_any(AdminPerms::Content + AdminPerms::Boards) {
                     return Self(Ok(u));
                 }
 
-                let is_mod = Board::board_has_mod(pool, board_id, u.person.id).await;
+                let mod_data = Board::board_get_mod(pool, board_id, u.person.id).await;
 
-                let inner = match is_mod {
-                    Ok(is_mod) => {
-                        if is_mod {
-                            Ok(u)
-                        } else {
-                            Err(TinyBoardsError::from_message(
-                                403,
-                                "You must be a mod to do that!",
-                            ))
+                let inner = match mod_data {
+                    Ok(mod_data) => {
+                        match mod_data {
+                            Some(mod_data) => {
+                                if mod_data.has_permission(with_permission) {
+                                    Ok(u)
+                                } else {
+                                    Err(TinyBoardsError::from_message(403, "Missing moderator permissions."))
+                                }
+                            }
+                            None => Err(TinyBoardsError::from_message(403, "You must be a mod to do that!"))
                         }
                     }
                     Err(e) => Err(TinyBoardsError::from(e)),

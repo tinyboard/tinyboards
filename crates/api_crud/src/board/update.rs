@@ -7,6 +7,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::require_user,
 };
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
     models::board::boards::{Board, BoardForm},
     traits::Crud,
@@ -43,7 +44,7 @@ impl<'des> PerformCrud<'des> for EditBoard {
         // board update restricted to board mod or admin (may provide other options in the future)
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(path.board_id.clone(), context.pool())
+            .require_board_mod(context.pool(), path.board_id.clone(), ModPerms::Config)
             .await
             .unwrap()?;
 

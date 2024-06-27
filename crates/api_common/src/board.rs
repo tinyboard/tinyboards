@@ -105,13 +105,24 @@ pub struct BlockBoardResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddBoardMod {
-    pub added: bool,
-    pub person_id: i32,
     pub board_id: i32,
+    pub person_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AddBoardModResponse {
+pub struct RemoveBoardMod {
+    pub board_id: i32,
+    pub person_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct InviteBoardMod {
+    pub person_id: i32,
+    pub permissions: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BoardModResponse {
     pub moderators: Vec<BoardModeratorView>,
 }
 

@@ -1,11 +1,14 @@
 use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-  data::TinyBoardsContext,
-  comment::{CommentReportResponse, ResolveCommentReport},
-  utils::{require_user},
+    comment::{CommentReportResponse, ResolveCommentReport},
+    data::TinyBoardsContext,
+    utils::require_user,
 };
-use tinyboards_db::{models::comment::comment_report::CommentReport, traits::Reportable};
+use tinyboards_db::{
+    models::{board::board_mods::ModPerms, comment::comment_report::CommentReport},
+    traits::Reportable,
+};
 use tinyboards_db_views::structs::CommentReportView;
 use tinyboards_utils::error::TinyBoardsError;
 
@@ -30,7 +33,7 @@ impl<'des> Perform<'des> for ResolveCommentReport {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(board_id, context.pool())
+            .require_board_mod(context.pool(), board_id, ModPerms::Content)
             .await
             .unwrap()?;
 
@@ -43,8 +46,11 @@ impl<'des> Perform<'des> for ResolveCommentReport {
             CommentReport::unresolve(context.pool(), report_id, person_id).await?;
         }
 
-        let comment_report_view = CommentReportView::read(context.pool(), report_id, Some(person_id)).await?;
+        let comment_report_view =
+            CommentReportView::read(context.pool(), report_id, Some(person_id)).await?;
 
-        Ok( CommentReportResponse { comment_report_view })
+        Ok(CommentReportResponse {
+            comment_report_view,
+        })
     }
 }
