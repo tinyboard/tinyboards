@@ -10,7 +10,7 @@ use crate::{
     SendActivity,
 };
 use tinyboards_api_common::{
-    board::{BoardResponse, EditBoard, HideBoard},
+    board::{BoardIdPath, BoardResponse, EditBoard, HideBoard},
     data::TinyBoardsContext,
     utils::require_user,
 };
@@ -26,7 +26,7 @@ use url::Url;
 #[async_trait::async_trait]
 impl SendActivity for EditBoard {
     type Response = BoardResponse;
-    type Route = ();
+    type Route = BoardIdPath;
 
     async fn send_activity(
         _request: &Self,
