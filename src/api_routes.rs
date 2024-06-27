@@ -318,10 +318,11 @@ async fn route_get_apub<'a, Data>(
     req: HttpRequest,
     data: web::Query<Data>,
     context: tinyboards_federation::config::Data<TinyBoardsContext>,
+    path: web::Path<()>,
 ) -> Result<HttpResponse, Error>
 where
     Data: PerformApub
-        + SendActivity<Response = <Data as PerformApub>::Response>
+        + SendActivity<Response = <Data as PerformApub>::Response, Route = ()>
         + Clone
         + Deserialize<'a>
         + Send
@@ -329,7 +330,7 @@ where
 {
     let auth_header = get_auth(&req);
     let res = data.perform(&context, auth_header).await?;
-    SendActivity::send_activity(&data.0, &res, &context, auth_header).await?;
+    SendActivity::send_activity(&data.0, &res, &context, &path, auth_header).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 
