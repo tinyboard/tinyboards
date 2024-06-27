@@ -110,7 +110,7 @@ impl SendActivity for PurgePerson {
 #[async_trait::async_trait]
 impl SendActivity for HandleRegistrationApplication {
     type Response = HandleRegistrationApplicationResponse;
-    type Route = ();
+    type Route = ApplicationIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -170,7 +170,7 @@ impl SendActivity for AddAdmin {
 #[async_trait::async_trait]
 impl SendActivity for InviteBoardMod {
     type Response = BoardModResponse;
-    type Route = ();
+    type Route = BoardIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -215,7 +215,7 @@ impl SendActivity for GetSite {
 #[async_trait::async_trait]
 impl SendActivity for ListBoardMods {
     type Response = ListBoardModsResponse;
-    type Route = ();
+    type Route = BoardIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -245,7 +245,7 @@ impl SendActivity for ListComments {
 #[async_trait::async_trait]
 impl SendActivity for Profile {
     type Response = ProfileResponse;
-    type Route = ();
+    type Route = GetUserNamePath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -335,7 +335,7 @@ impl SendActivity for PasswordResetRequest {
 #[async_trait::async_trait]
 impl SendActivity for ExecutePasswordReset {
     type Response = ExecutePasswordResetResponse;
-    type Route = ();
+    type Route = PasswordResetTokenPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -365,7 +365,7 @@ impl SendActivity for CreateSiteInvite {
 #[async_trait::async_trait]
 impl SendActivity for ValidateSiteInvite {
     type Response = ();
-    type Route = ();
+    type Route = InviteToken;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -380,7 +380,7 @@ impl SendActivity for ValidateSiteInvite {
 #[async_trait::async_trait]
 impl SendActivity for GetPost {
     type Response = GetPostResponse;
-    type Route = ();
+    type Route = PostIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -455,7 +455,7 @@ impl SendActivity for GetPostReports {
 #[async_trait::async_trait]
 impl SendActivity for GetComment {
     type Response = ListCommentsResponse;
-    type Route = ();
+    type Route = CommentIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -575,7 +575,7 @@ impl SendActivity for SearchNames {
 #[async_trait::async_trait]
 impl SendActivity for SavePost {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -590,7 +590,7 @@ impl SendActivity for SavePost {
 #[async_trait::async_trait]
 impl SendActivity for SaveComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -650,7 +650,7 @@ impl SendActivity for BanBoard {
 #[async_trait::async_trait]
 impl SendActivity for DeleteFile {
     type Response = ();
-    type Route = ();
+    type Route = FileNamePath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -935,7 +935,7 @@ impl SendActivity for ListSiteInvites {
 #[async_trait::async_trait]
 impl SendActivity for DeleteSiteInvite {
     type Response = ();
-    type Route = ();
+    type Route = InviteId;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
@@ -980,7 +980,7 @@ impl SendActivity for EditEmoji {
 #[async_trait::async_trait]
 impl SendActivity for DeleteEmoji {
     type Response = DeleteEmojiResponse;
-    type Route = ();
+    type Route = EmojiIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,
