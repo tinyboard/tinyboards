@@ -287,7 +287,7 @@ where
         .clone()
         .perform(&context, path.into_inner(), auth_header)
         .await?;
-    SendActivity::send_activity(&data, &res, &apub_data, auth_header).await?;
+    SendActivity::send_activity(&data, &res, &apub_data, &path, auth_header).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -366,7 +366,7 @@ where
         .clone()
         .perform(&context, path.into_inner(), auth_header)
         .await?;
-    SendActivity::send_activity(&data, &res, &apub_data, auth_header).await?;
+    SendActivity::send_activity(&data, &res, &apub_data, &path, auth_header).await?;
     Ok(HttpResponse::Ok().json(res))
 }
 
