@@ -9,6 +9,8 @@ use crate::{
     },
     SendActivity,
 };
+use tinyboards_api_common::comment::CommentIdPath;
+use tinyboards_api_common::post::PostIdPath;
 use tinyboards_api_common::{
     comment::{CommentResponse, CreateCommentVote},
     data::TinyBoardsContext,
@@ -34,7 +36,7 @@ pub mod vote;
 #[async_trait::async_trait]
 impl SendActivity for CreatePostVote {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         request: &Self,
@@ -55,7 +57,7 @@ impl SendActivity for CreatePostVote {
 #[async_trait::async_trait]
 impl SendActivity for CreateCommentVote {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     async fn send_activity(
         request: &Self,

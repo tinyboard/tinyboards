@@ -890,7 +890,7 @@ impl SendActivity for CreateBoard {
 #[async_trait::async_trait]
 impl SendActivity for GetPostComments {
     type Response = Vec<CommentView>;
-    type Route = ();
+    type Route = PostIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,

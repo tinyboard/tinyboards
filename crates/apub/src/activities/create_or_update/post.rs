@@ -12,6 +12,7 @@ use crate::{
     },
     SendActivity,
 };
+use tinyboards_api_common::post::PostIdPath;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     post::{EditPost, PostResponse, SubmitPost},
@@ -59,7 +60,7 @@ impl SendActivity for SubmitPost {
 #[async_trait::async_trait]
 impl SendActivity for EditPost {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         _request: &Self,

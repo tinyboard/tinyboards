@@ -11,6 +11,9 @@ use crate::{
     SendActivity,
 };
 use std::ops::Deref;
+use tinyboards_api_common::board::BoardIdPath;
+use tinyboards_api_common::comment::CommentIdPath;
+use tinyboards_api_common::post::PostIdPath;
 use tinyboards_api_common::{
     board::{BoardResponse, DeleteBoard},
     comment::{CommentResponse, DeleteComment, ToggleCommentRemove},
@@ -41,7 +44,7 @@ pub mod undo_delete;
 #[async_trait::async_trait]
 impl SendActivity for DeletePost {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         request: &Self,
@@ -99,7 +102,7 @@ impl SendActivity for TogglePostRemove {
 #[async_trait::async_trait]
 impl SendActivity for DeleteComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     async fn send_activity(
         request: &Self,
@@ -153,7 +156,7 @@ impl SendActivity for ToggleCommentRemove {
 #[async_trait::async_trait]
 impl SendActivity for DeleteBoard {
     type Response = BoardResponse;
-    type Route = ();
+    type Route = BoardIdPath;
 
     async fn send_activity(
         _request: &Self,

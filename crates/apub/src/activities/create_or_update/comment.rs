@@ -13,6 +13,7 @@ use crate::{
     },
     SendActivity,
 };
+use tinyboards_api_common::comment::CommentIdPath;
 use tinyboards_api_common::{
     build_response::send_local_notifs,
     comment::{CommentResponse, CreateComment, EditComment},
@@ -66,7 +67,7 @@ impl SendActivity for CreateComment {
 #[async_trait::async_trait]
 impl SendActivity for EditComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     async fn send_activity(
         _request: &Self,
