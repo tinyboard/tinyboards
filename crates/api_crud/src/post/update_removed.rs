@@ -3,7 +3,7 @@ use actix_web::web::Data;
 use tinyboards_api_common::{
     build_response::build_post_response,
     data::TinyBoardsContext,
-    post::{PostResponse, TogglePostRemove},
+    post::{PostIdPath, PostResponse, TogglePostRemove},
     utils::require_user,
 };
 use tinyboards_db::models::board::board_mods::ModPerms;
@@ -19,17 +19,17 @@ use tinyboards_utils::error::TinyBoardsError;
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for TogglePostRemove {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        _path: Self::Route,
+        PostIdPath { post_id }: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &TogglePostRemove = &self;
-        let orig_post = Post::read(context.pool(), data.target_id).await?;
+        let orig_post = Post::read(context.pool(), post_id).await?;
 
         // require board mod
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -39,7 +39,7 @@ impl<'des> PerformCrud<'des> for TogglePostRemove {
             .unwrap()?;
 
         let post_id = orig_post.id;
-        let removed = data.removed;
+        let removed = data.value;
         let updated_post = Post::update_removed(context.pool(), post_id, removed).await?;
 
         Post::resolve_reports(context.pool(), post_id, view.person.id).await?;

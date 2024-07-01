@@ -4,6 +4,7 @@ use tinyboards_api_common::{
     build_response::build_comment_response,
     comment::{CommentResponse, CreateComment},
     data::TinyBoardsContext,
+    post::PostIdPath,
     utils::{
         check_board_deleted_or_removed, check_post_deleted_removed_or_locked,
         generate_local_apub_endpoint, require_user, EndpointType,
@@ -35,18 +36,18 @@ use tinyboards_utils::{
 #[async_trait::async_trait(?Send)]
 impl<'des> PerformCrud<'des> for CreateComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &web::Data<TinyBoardsContext>,
-        _: Self::Route,
+        PostIdPath { post_id }: Self::Route,
         auth: Option<&str>,
     ) -> Result<CommentResponse, TinyBoardsError> {
         let data = self;
 
-        let post = Post::read(context.pool(), data.post_id).await?;
+        let post = Post::read(context.pool(), post_id).await?;
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
@@ -63,12 +64,12 @@ impl<'des> PerformCrud<'des> for CreateComment {
 
         // check if parent comment exists
         // TODO: check if post's op is blocking the user (?)
-        if Post::check_if_exists(context.pool(), data.post_id)
+        /*if Post::check_if_exists(context.pool(), post_id)
             .await?
             .is_none()
         {
             return Err(TinyBoardsError::from_message(400, "invalid post id"));
-        }
+        }*/
 
         let mut level = 1;
         // check if parent comment exists, if provided
@@ -85,7 +86,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             // we can unwrap safely, because the above check made sure to abort if the comment is None
             // abort if the comment the user is replying to doesn't belong to the specified post - may be useful later
             let parent_comment = parent_comment.unwrap();
-            if parent_comment.post_id != data.post_id {
+            if parent_comment.post_id != post_id {
                 return Err(TinyBoardsError::from_message(400, "bad request"));
             }
 
@@ -114,7 +115,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
         };
 
         if let Some(parent) = parent_opt.as_ref() {
-            if parent.post_id != data.post_id {
+            if parent.post_id != post_id {
                 return Err(TinyBoardsError::from_message(
                     400,
                     "could not create comment",
@@ -138,7 +139,7 @@ impl<'des> PerformCrud<'des> for CreateComment {
             creator_id: Some(view.person.id),
             body: Some(data.body),
             body_html,
-            post_id: Some(data.post_id),
+            post_id: Some(post_id),
             parent_id: data.parent_id,
             board_id: Some(post.board_id),
             level: Some(level),

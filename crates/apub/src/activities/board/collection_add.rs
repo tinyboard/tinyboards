@@ -15,7 +15,7 @@ use crate::{
 use tinyboards_api_common::{
     board::{AddBoardMod, BoardModResponse},
     data::TinyBoardsContext,
-    post::{FeaturePost, PostResponse},
+    post::{PostIdPath, PostResponse, TogglePostFeatured},
     utils::{generate_featured_url, generate_moderators_url, require_user},
 };
 use tinyboards_db::{
@@ -185,9 +185,9 @@ impl SendActivity for AddBoardMod {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for FeaturePost {
+impl SendActivity for TogglePostFeatured {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         request: &Self,
@@ -204,7 +204,7 @@ impl SendActivity for FeaturePost {
             .into();
         let post = response.post_view.post.clone().into();
         let person: ApubPerson = view.person.into();
-        if request.featured {
+        if request.value {
             CollectionAdd::send_add_featured_post(&board, &post, &person, context).await?;
         } else {
             CollectionRemove::send_remove_featured_post(&board, &post, &person, context).await?;

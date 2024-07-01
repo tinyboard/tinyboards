@@ -1,11 +1,9 @@
 pub mod admin;
 pub mod board;
 pub mod comment;
-pub mod comment_report;
 pub mod local_user;
 pub mod moderator;
 pub mod post;
-pub mod post_report;
 pub mod site;
 use actix_web::web::Data;
 use tinyboards_utils::TinyBoardsError;
@@ -43,20 +41,4 @@ pub trait PerformUpload<'des> {
         path: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError>;
-}
-
-pub(crate) fn check_report_reason(reason: &str) -> Result<(), TinyBoardsError> {
-    if reason.is_empty() {
-        return Err(TinyBoardsError::from_message(
-            400,
-            "report reason required.",
-        ));
-    }
-    if reason.chars().count() > 1000 {
-        return Err(TinyBoardsError::from_message(
-            400,
-            "report reason is too long.",
-        ));
-    }
-    Ok(())
 }

@@ -5,7 +5,7 @@ use tinyboards_db_views::structs::{CommentReportView, CommentView};
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateComment {
     pub body: String,
-    pub post_id: i32,
+    //pub post_id: i32,
     pub parent_id: Option<i32>, // parent comment id
     pub language_id: Option<i32>,
 }
@@ -74,15 +74,15 @@ pub struct GetComment {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Remove a comment (only doable by mods)
 pub struct ToggleCommentRemove {
-    pub target_id: i32,
-    pub removed: bool,
+    //pub target_id: i32,
+    pub value: bool,
     pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Report a comment.
 pub struct CreateCommentReport {
-    pub comment_id: i32,
+    //pub comment_id: i32,
     pub reason: String,
 }
 

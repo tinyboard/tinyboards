@@ -84,26 +84,24 @@ pub struct SiteMetadata {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// Feature a post (stickies/pin to top)
-pub struct FeaturePost {
-    pub post_id: i32,
-    pub featured: bool,
+pub struct TogglePostFeatured {
+    //pub post_id: i32,
+    pub value: bool,
     pub feature_type: PostFeatureType,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Remove/approve a post (only doable by mods).
 pub struct TogglePostRemove {
-    pub target_id: i32,
-    pub removed: bool,
+    // pub target_id: i32,
+    pub value: bool,
     pub reason: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 /// Lock or unlock a post (only doable by mods).
-pub struct LockPost {
-    pub post_id: i32,
-    pub locked: bool,
-    pub reason: Option<String>,
+pub struct TogglePostLock {
+    pub value: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]

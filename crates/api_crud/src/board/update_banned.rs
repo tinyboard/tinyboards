@@ -1,7 +1,8 @@
 use crate::PerformCrud;
 use actix_web::web::Data;
+use tinyboards_api_common::board::BoardIdPath;
 use tinyboards_api_common::{
-    board::{BoardResponse, RemoveBoard},
+    board::{BoardResponse, ToggleBoardBan},
     build_response::build_board_response,
     data::TinyBoardsContext,
     utils::require_user,
@@ -17,19 +18,20 @@ use tinyboards_db::{
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> PerformCrud<'des> for RemoveBoard {
+impl<'des> PerformCrud<'des> for ToggleBoardBan {
     type Response = BoardResponse;
-    type Route = ();
+    type Route = BoardIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        _path: Self::Route,
+        BoardIdPath { board_id }: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
-        let data: &RemoveBoard = &self;
-        let orig_board = Board::read(context.pool(), data.board_id).await?;
+        let data: &ToggleBoardBan = &self;
+        let board = Board::read(context.pool(), board_id).await?;
+        let reason = &data.reason;
 
         // require admin (only admin may remove a board)
         let view = require_user(context.pool(), context.master_key(), auth)
@@ -37,19 +39,28 @@ impl<'des> PerformCrud<'des> for RemoveBoard {
             .require_admin(AdminPerms::Boards)
             .unwrap()?;
 
-        let board_id = orig_board.id;
-        let removed = data.removed;
-        let updated_board = Board::update_removed(context.pool(), board_id, removed).await?;
+        //let board_id = orig_board.id;
+        let ban = data.value;
+        //let updated_board = Board::update_removed(context.pool(), board_id, removed).await?;
+
+        let _ = if ban {
+            board.ban(context.pool(), reason.as_ref()).await
+        } else {
+            board.unban(context.pool()).await
+        }
+        .map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Updating board banned status failed.")
+        })?;
 
         // mod log
         let form = ModRemoveBoardForm {
             mod_person_id: view.person.id,
-            board_id: updated_board.id,
-            removed: Some(Some(removed)),
+            board_id: board.id,
+            removed: Some(Some(ban)),
             reason: Some(data.reason.clone()),
         };
         ModRemoveBoard::create(context.pool(), &form).await?;
 
-        Ok(build_board_response(context, view, updated_board.id).await?)
+        Ok(build_board_response(context, view, board.id).await?)
     }
 }

@@ -92,15 +92,31 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         web::post().to(route_post::<MarkAllMessagesRead>),
                     ),
             )
+            // Subscriptions
+            .service(
+                web::scope("/subscriptions")
+                    .wrap(rate_limit.message())
+                    .route(
+                        "/boards",
+                        web::post().to(route_post_crud::<SubscribeToBoard>),
+                    )
+                    .route(
+                        "/boards/{board_id}",
+                        web::delete().to(route_post_crud::<UnsubFromBoard>),
+                    ),
+            )
             // Board
             .service(
-                web::scope("/board")
+                web::scope("/boards")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateBoard>))
-                    .route("", web::get().to(route_get_apub::<GetBoard>))
+                    .route("/get", web::get().to(route_get_apub::<GetBoard>))
                     .route("/exists", web::get().to(route_get_crud::<CheckBoardExists>))
-                    .route("/remove", web::post().to(route_post_crud::<RemoveBoard>))
-                    .route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
+                    .route(
+                        "/{board_id}/banned",
+                        web::patch().to(route_post_crud::<ToggleBoardBan>),
+                    )
+                    //.route("/subscribe", web::post().to(route_post::<SubscribeToBoard>))
                     .route("/block", web::post().to(route_post::<BlockBoard>))
                     .route("/{board_id}", web::put().to(route_post_crud::<EditBoard>))
                     .route(
@@ -118,25 +134,38 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             )
             // Post
             .service(
-                web::scope("/post")
+                web::scope("/posts")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
-                    .route("/list", web::get().to(route_get_apub::<GetPosts>))
+                    .route("", web::get().to(route_get_apub::<GetPosts>))
                     .route(
-                        "/toggle_remove",
-                        web::post().to(route_post_crud::<TogglePostRemove>),
+                        "/{post_id}/removed",
+                        web::patch().to(route_post_crud::<TogglePostRemove>),
                     )
-                    .route("/lock", web::post().to(route_post::<LockPost>))
-                    .route("/report", web::post().to(route_post::<CreatePostReport>))
-                    .route("/reports", web::get().to(route_get::<GetPostReports>))
                     .route(
+                        "/{post_id}/locked",
+                        web::patch().to(route_post_crud::<TogglePostLock>),
+                    )
+                    .route(
+                        "/{post_id}/reports",
+                        web::post().to(route_post_crud::<CreatePostReport>),
+                    )
+                    .route(
+                        "/{post_id}/reports",
+                        web::get().to(route_get_crud::<GetPostReports>),
+                    )
+                    .route(
+                        "/{post_id}/featured",
+                        web::patch().to(route_post_crud::<TogglePostFeatured>),
+                    )
+                    /*.route(
                         "/report/list",
                         web::post().to(route_post::<ListPostReports>),
                     )
                     .route(
                         "/report/resolve",
                         web::post().to(route_post::<ResolvePostReport>),
-                    )
+                    )*/
                     .route("/{post_id}", web::get().to(route_get_crud::<GetPost>))
                     .route(
                         "/{post_id}",
@@ -147,32 +176,41 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/{post_id}/vote",
                         web::post().to(route_post::<CreatePostVote>),
                     )
-                    .route("/{post_id}/save", web::post().to(route_post::<SavePost>))
+                    .route("/{post_id}/saved", web::patch().to(route_post::<SavePost>))
                     .route(
                         "/{post_id}/comments",
                         web::get().to(route_get_crud::<GetPostComments>),
+                    )
+                    .route(
+                        "/{post_id}/comments",
+                        web::post().to(route_post_crud::<CreateComment>),
                     ),
             )
             // Comment
             .service(
-                web::scope("/comment")
+                web::scope("/comments")
                     .wrap(rate_limit.message())
-                    .route("", web::post().to(route_post_crud::<CreateComment>))
                     .route(
-                        "/toggle_remove",
-                        web::post().to(route_post_crud::<ToggleCommentRemove>),
+                        "/{comment_id}/removed",
+                        web::patch().to(route_post_crud::<ToggleCommentRemove>),
                     )
-                    .route("/list", web::get().to(route_get_apub::<GetComments>))
-                    .route("/report", web::post().to(route_post::<CreateCommentReport>))
-                    .route("/reports", web::get().to(route_get::<GetCommentReports>))
+                    .route("", web::get().to(route_get_apub::<GetComments>))
                     .route(
+                        "/{comment_id}/reports",
+                        web::post().to(route_post_crud::<CreateCommentReport>),
+                    )
+                    .route(
+                        "/{comment_id}/reports",
+                        web::get().to(route_get_crud::<GetCommentReports>),
+                    )
+                    /*.route(
                         "/report/list",
                         web::post().to(route_post::<ListCommentReports>),
                     )
                     .route(
                         "/report/resolve",
                         web::post().to(route_post::<ResolveCommentReport>),
-                    )
+                    )*/
                     .route("/{comment_id}", web::get().to(route_get_crud::<GetComment>))
                     .route(
                         "/{comment_id}",
@@ -187,17 +225,16 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         web::post().to(route_post::<CreateCommentVote>),
                     )
                     .route(
-                        "/{comment_id}/save",
-                        web::post().to(route_post::<SaveComment>),
+                        "/{comment_id}/saved",
+                        web::patch().to(route_post::<SaveComment>),
                     ),
             )
             // Mod Actions
             .service(
                 web::scope("/mod")
-                    .route("/ban", web::post().to(route_post::<ToggleBan>))
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
-                    .route("/ban_board", web::post().to(route_post::<BanBoard>))
-                    .route("/feature_post", web::post().to(route_post::<FeaturePost>))
+                    //.route("/ban_board", web::post().to(route_post::<BanBoard>))
+                    //.route("/feature_post", web::post().to(route_post::<TogglePostFeatured>))
                     .route("", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
                     .route(
@@ -208,6 +245,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             // Admin Actions
             .service(
                 web::scope("/admin")
+                    .route("/ban", web::post().to(route_post::<ToggleBan>))
                     .route("/add_admin", web::post().to(route_post::<AddAdmin>))
                     .route("/leave_admin", web::post().to(route_post::<LeaveAdmin>))
                     .route("/purge_user", web::post().to(route_post::<PurgePerson>))
@@ -215,15 +253,12 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/purge_comment", web::post().to(route_post::<PurgeComment>))
                     .route("/purge_board", web::post().to(route_post::<PurgeBoard>))
                     .route("/hide_board", web::post().to(route_post::<HideBoard>))
-                    .route("/list_bans", web::get().to(route_get::<ListBannedPersons>))
                     .route(
-                        "/site_settings",
-                        web::get().to(route_get::<GetSiteSettings>),
+                        "/banned_users",
+                        web::get().to(route_get::<ListBannedPersons>),
                     )
-                    .route(
-                        "/site_settings",
-                        web::put().to(route_post::<SaveSiteSettings>),
-                    )
+                    .route("/site", web::get().to(route_get::<GetSiteSettings>))
+                    .route("/site", web::put().to(route_post::<SaveSiteSettings>))
                     .route(
                         "/invite",
                         web::post().to(route_post_crud::<CreateSiteInvite>),

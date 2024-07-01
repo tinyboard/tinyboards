@@ -6,45 +6,42 @@ use crate::utils::naive_now;
 use crate::{
     models::comment::comments::{Comment, CommentForm},
     models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
+    schema::comment_report,
     traits::Crud,
     utils::{get_conn, DbPool},
-    schema::comment_report
 };
 use diesel::{prelude::*, result::Error, QueryDsl};
-use tinyboards_utils::TinyBoardsError;
 use diesel_async::RunQueryDsl;
+use tinyboards_utils::TinyBoardsError;
 use url::Url;
 
 impl Comment {
-
     pub async fn permadelete_for_creator(
         pool: &DbPool,
         for_creator_id: i32,
-      ) -> Result<Vec<Self>, Error> {
+    ) -> Result<Vec<Self>, Error> {
         use crate::schema::comments::dsl::*;
         let conn = &mut get_conn(pool).await?;
         diesel::update(comments.filter(creator_id.eq(for_creator_id)))
-          .set((
-            body.eq("*Permananently Deleted*"),
-            is_deleted.eq(true),
-            updated.eq(naive_now()),
-          ))
-          .get_results::<Self>(conn)
-          .await
+            .set((
+                body.eq("*Permananently Deleted*"),
+                is_deleted.eq(true),
+                updated.eq(naive_now()),
+            ))
+            .get_results::<Self>(conn)
+            .await
     }
 
     pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comments::dsl::*;
         let object_id: DbUrl = object_id.into();
-        Ok(
-            comments
-                .filter(ap_id.eq(object_id))
-                .first::<Comment>(conn)
-                .await
-                .ok()
-                .map(Into::into),
-        )
+        Ok(comments
+            .filter(ap_id.eq(object_id))
+            .first::<Comment>(conn)
+            .await
+            .ok()
+            .map(Into::into))
     }
 
     pub fn parent_comment_id(&self) -> Option<i32> {
@@ -54,14 +51,11 @@ impl Comment {
 
     pub async fn submit(pool: &DbPool, form: CommentForm) -> Result<Self, TinyBoardsError> {
         Self::create(pool, &form)
-            .await    
+            .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit comment"))
     }
     /// Checks if a comment with a given id exists. Don't use if you need a whole Comment object.
-    pub async fn check_if_exists(
-        pool: &DbPool,
-        cid: i32,
-    ) -> Result<Option<i32>, TinyBoardsError> {
+    pub async fn check_if_exists(pool: &DbPool, cid: i32) -> Result<Option<i32>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comments::dsl::*;
         comments
@@ -77,6 +71,16 @@ impl Comment {
                     "error while checking existence of comment",
                 )
             })
+    }
+
+    pub async fn set_removed(&self, pool: &DbPool, new_removed: bool) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::comments::dsl::*;
+        diesel::update(comments.find(self.id))
+            .set((is_removed.eq(new_removed), updated.eq(naive_now())))
+            .execute(conn)
+            .await
+            .map(|_| ())
     }
 
     pub fn is_comment_creator(person_id: i32, comment_creator_id: i32) -> bool {
@@ -147,10 +151,7 @@ impl Comment {
     }
 
     /// Loads list of comments replying to the specified post.
-    pub async fn replies_to_post(
-        pool: &DbPool,
-        pid: i32,
-    ) -> Result<Vec<Self>, TinyBoardsError> {
+    pub async fn replies_to_post(pool: &DbPool, pid: i32) -> Result<Vec<Self>, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comments::dsl::*;
         comments
@@ -162,12 +163,18 @@ impl Comment {
             })
     }
 
-    pub async fn resolve_reports(pool: &DbPool, comment_id: i32, resolver_id: i32) -> Result<(), TinyBoardsError> {
+    pub async fn resolve_reports(
+        pool: &DbPool,
+        comment_id: i32,
+        resolver_id: i32,
+    ) -> Result<(), TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
 
         diesel::update(comment_report::table.filter(comment_report::comment_id.eq(comment_id)))
-            .set((comment_report::resolved.eq(true),
-                comment_report::resolver_id.eq(resolver_id)))
+            .set((
+                comment_report::resolved.eq(true),
+                comment_report::resolver_id.eq(resolver_id),
+            ))
             .get_results::<CommentReport>(conn)
             .await
             .map(|_| ())
@@ -182,13 +189,13 @@ impl Crud for Comment {
 
     async fn read(pool: &DbPool, comment_id: i32) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        comments.find(comment_id).first::<Self>(conn)
-        .await
+        comments.find(comment_id).first::<Self>(conn).await
     }
     async fn delete(pool: &DbPool, comment_id: i32) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(comments.find(comment_id)).execute(conn)
-        .await
+        diesel::delete(comments.find(comment_id))
+            .execute(conn)
+            .await
     }
     async fn create(pool: &DbPool, form: &CommentForm) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -239,11 +246,7 @@ impl Moderateable for Comment {
         Ok(())
     }
 
-    async fn approve(
-        &self,
-        admin_id: Option<i32>,
-        pool: &DbPool,
-    ) -> Result<(), TinyBoardsError> {
+    async fn approve(&self, admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError> {
         Self::update_removed(pool, self.id, false)
             .await
             .map(|_| ())
@@ -259,9 +262,11 @@ impl Moderateable for Comment {
             removed: Some(Some(false)),
         };
 
-        ModRemoveComment::create(pool, &remove_comment_form).await.map_err(|e| {
-            TinyBoardsError::from_error_message(e, 500, "Failed to approve comment")
-        })?;
+        ModRemoveComment::create(pool, &remove_comment_form)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to approve comment")
+            })?;
 
         Ok(())
     }
@@ -277,11 +282,7 @@ impl Moderateable for Comment {
         Ok(())
     }
 
-    async fn unlock(
-        &self,
-        _admin_id: Option<i32>,
-        pool: &DbPool,
-    ) -> Result<(), TinyBoardsError> {
+    async fn unlock(&self, _admin_id: Option<i32>, pool: &DbPool) -> Result<(), TinyBoardsError> {
         Self::update_locked(pool, self.id, false)
             .await
             .map(|_| ())

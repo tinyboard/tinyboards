@@ -632,7 +632,7 @@ impl SendActivity for CheckBoardExists {
     }
 }
 
-#[async_trait::async_trait]
+/*#[async_trait::async_trait]
 impl SendActivity for BanBoard {
     type Response = ModActionResponse<ModRemoveBoard>;
     type Route = ();
@@ -645,7 +645,7 @@ impl SendActivity for BanBoard {
     ) -> Result<(), TinyBoardsError> {
         Ok(())
     }
-}
+}*/
 
 #[async_trait::async_trait]
 impl SendActivity for DeleteFile {
@@ -903,9 +903,9 @@ impl SendActivity for GetPostComments {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for RemoveBoard {
+impl SendActivity for ToggleBoardBan {
     type Response = BoardResponse;
-    type Route = ();
+    type Route = BoardIdPath;
     async fn send_activity(
         _request: &Self,
         _response: &Self::Response,

@@ -4,7 +4,7 @@ use crate::{
     SendActivity,
 };
 use tinyboards_api_common::{
-    board::{BoardResponse, SubscribeToBoard},
+    board::{BoardIdPath, BoardResponse, SubscribeToBoard, UnsubFromBoard},
     data::TinyBoardsContext,
     utils::require_user,
 };
@@ -32,13 +32,40 @@ impl SendActivity for SubscribeToBoard {
             .await
             .unwrap()?;
         let person = view.person.clone().into();
-        let board: ApubBoard = Board::read(context.pool(), request.board_id).await?.into();
+        let board: ApubBoard = Board::get_by_name(context.pool(), &request.board_name)
+            .await?
+            .into();
         if board.local {
             Ok(())
-        } else if request.subscribe {
-            Subscribe::send(&person, &board, context).await
         } else {
+            Subscribe::send(&person, &board, context).await
+        } /*else {
+              UndoSubscribe::send(&person, &board, context).await
+          }*/
+    }
+}
+
+#[async_trait::async_trait]
+impl SendActivity for UnsubFromBoard {
+    type Response = BoardResponse;
+    type Route = BoardIdPath;
+
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        context: &Data<TinyBoardsContext>,
+        &BoardIdPath { board_id }: &Self::Route,
+        auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        let view = require_user(context.pool(), context.master_key(), auth)
+            .await
+            .unwrap()?;
+        let person = view.person.clone().into();
+        let board: ApubBoard = Board::read(context.pool(), board_id).await?.into();
+        if !board.local {
             UndoSubscribe::send(&person, &board, context).await
+        } else {
+            Ok(())
         }
     }
 }

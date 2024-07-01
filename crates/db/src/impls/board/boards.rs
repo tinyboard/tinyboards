@@ -157,6 +157,28 @@ impl Board {
         ban_id.map(|opt| opt.is_some())
     }
 
+    pub async fn ban(&self, pool: &DbPool, reason: Option<&String>) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+
+        diesel::update(boards.find(self.id))
+            .set((is_removed.eq(true), ban_reason.eq(reason)))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
+
+    pub async fn unban(&self, pool: &DbPool) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+
+        diesel::update(boards.find(self.id))
+            .set(is_removed.eq(false))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
+
     pub async fn update_deleted(
         pool: &DbPool,
         board_id: i32,

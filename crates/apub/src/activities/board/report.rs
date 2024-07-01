@@ -7,7 +7,7 @@ use crate::{
     SendActivity,
 };
 use tinyboards_api_common::{
-    comment::{CommentReportResponse, CreateCommentReport},
+    comment::{CommentIdPath, CommentReportResponse, CreateCommentReport},
     data::TinyBoardsContext,
     post::{CreatePostReport, PostReportResponse},
     utils::require_user,
@@ -57,7 +57,7 @@ impl SendActivity for CreatePostReport {
 #[async_trait::async_trait]
 impl SendActivity for CreateCommentReport {
     type Response = CommentReportResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     async fn send_activity(
         request: &Self,

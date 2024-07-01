@@ -40,6 +40,11 @@ pub struct BoardIdPath {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BoardNamePath {
+    pub board_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EditBoard {
     pub name: Option<String>,
     pub title: Option<String>,
@@ -67,12 +72,10 @@ pub struct ListBoardModsResponse {
 pub struct DeleteBoard {}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-/// Remove a board (only doable by moderators).
-pub struct RemoveBoard {
-    pub board_id: i32,
-    pub removed: bool,
+/// Toggle board banned state
+pub struct ToggleBoardBan {
+    pub value: bool,
     pub reason: Option<String>,
-    pub expires: Option<i64>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -86,9 +89,13 @@ pub struct HideBoard {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// Subscribe to a board
 pub struct SubscribeToBoard {
-    pub board_id: i32,
-    pub subscribe: bool,
+    pub board_name: String,
+    //pub subscribe: bool,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// Unsub from a board
+pub struct UnsubFromBoard {}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 /// Block a board

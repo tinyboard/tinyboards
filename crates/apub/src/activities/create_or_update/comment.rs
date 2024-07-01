@@ -18,6 +18,7 @@ use tinyboards_api_common::{
     build_response::send_local_notifs,
     comment::{CommentResponse, CreateComment, EditComment},
     data::TinyBoardsContext,
+    post::PostIdPath,
     utils::check_post_deleted_or_removed,
 };
 use tinyboards_db::{
@@ -45,7 +46,7 @@ use url::Url;
 #[async_trait::async_trait]
 impl SendActivity for CreateComment {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         _request: &Self,

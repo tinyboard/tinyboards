@@ -101,6 +101,78 @@ impl Post {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not submit posts"))
     }
 
+    pub async fn set_removed(&self, pool: &DbPool, value: bool) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        use crate::schema::posts::dsl::*;
+        diesel::update(posts.find(self.id))
+            .set(is_removed.eq(value))
+            .execute(conn)
+            .await
+            .map(|_| ())
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to set post removed value.")
+            })
+    }
+
+    pub async fn set_locked(&self, pool: &DbPool, value: bool) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        use crate::schema::posts::dsl::*;
+        diesel::update(posts.find(self.id))
+            .set(is_locked.eq(value))
+            .execute(conn)
+            .await
+            .map(|_| ())
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to set post locked value.")
+            })
+    }
+
+    pub async fn set_featured_board(
+        &self,
+        pool: &DbPool,
+        value: bool,
+    ) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        use crate::schema::posts::dsl::*;
+        diesel::update(posts.find(self.id))
+            .set(featured_board.eq(value))
+            .execute(conn)
+            .await
+            .map(|_| ())
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "Failed to set post featured board value.",
+                )
+            })
+    }
+
+    pub async fn set_featured_local(
+        &self,
+        pool: &DbPool,
+        value: bool,
+    ) -> Result<(), TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+
+        use crate::schema::posts::dsl::*;
+        diesel::update(posts.find(self.id))
+            .set(featured_local.eq(value))
+            .execute(conn)
+            .await
+            .map(|_| ())
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "Failed to set post featured local value.",
+                )
+            })
+    }
+
     pub fn is_post_creator(person_id: i32, post_creator_id: i32) -> bool {
         person_id == post_creator_id
     }

@@ -13,7 +13,7 @@ use crate::{
 };
 use tinyboards_api_common::{
     data::TinyBoardsContext,
-    post::{LockPost, PostResponse},
+    post::{PostIdPath, PostResponse, TogglePostLock},
     utils::require_user,
 };
 use tinyboards_db::{
@@ -102,9 +102,9 @@ impl ActivityHandler for UndoLockPage {
 }
 
 #[async_trait::async_trait]
-impl SendActivity for LockPost {
+impl SendActivity for TogglePostLock {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         request: &Self,
@@ -131,7 +131,7 @@ impl SendActivity for LockPost {
             id,
             audience: Some(board_id.into()),
         };
-        let activity = if request.locked {
+        let activity = if request.value {
             AnnouncableActivities::LockPost(lock)
         } else {
             let id = generate_activity_id(

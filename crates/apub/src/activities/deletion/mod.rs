@@ -73,7 +73,7 @@ impl SendActivity for DeletePost {
 #[async_trait::async_trait]
 impl SendActivity for TogglePostRemove {
     type Response = PostResponse;
-    type Route = ();
+    type Route = PostIdPath;
 
     async fn send_activity(
         request: &Self,
@@ -92,7 +92,7 @@ impl SendActivity for TogglePostRemove {
             board,
             deletable,
             request.reason.clone().or_else(|| Some(String::new())),
-            request.removed,
+            request.value,
             context,
         )
         .await
@@ -126,19 +126,19 @@ impl SendActivity for DeleteComment {
 #[async_trait::async_trait]
 impl SendActivity for ToggleCommentRemove {
     type Response = CommentResponse;
-    type Route = ();
+    type Route = CommentIdPath;
 
     async fn send_activity(
         request: &Self,
         response: &Self::Response,
         context: &Data<TinyBoardsContext>,
-        _: &Self::Route,
+        &CommentIdPath { comment_id }: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
-        let comment = Comment::read(context.pool(), request.target_id).await?;
+        let comment = Comment::read(context.pool(), comment_id).await?;
         let board = Board::read(context.pool(), response.comment_view.board.id).await?;
         let deletable = DeletableObjects::Comment(comment.into());
         send_apub_delete_in_board(
@@ -146,7 +146,7 @@ impl SendActivity for ToggleCommentRemove {
             board,
             deletable,
             request.reason.clone().or_else(|| Some(String::new())),
-            request.removed,
+            request.value,
             context,
         )
         .await
