@@ -95,10 +95,10 @@ impl<'des> Perform<'des> for SaveUserSettings {
             }
 
             // Size check
-            if db_avatar.size > 1024 * 1024 {
+            if db_avatar.size > 2 * 1024 * 1024 {
                 return Err(TinyBoardsError::from_message(
                     403,
-                    "Max size for avatars is 1MB. Please.",
+                    "Max size for avatars is 2MB. Please.",
                 ));
             }
         };
