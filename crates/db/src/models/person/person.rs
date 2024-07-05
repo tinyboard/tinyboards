@@ -34,6 +34,11 @@ pub struct Person {
     pub is_admin: bool,
     pub instance: Option<String>,
     pub admin_level: i32,
+    pub profile_background: Option<DbUrl>,
+    pub avatar_frame: Option<DbUrl>,
+    pub bio_html: Option<String>,
+    pub profile_music: Option<DbUrl>,
+    pub profile_music_youtube: Option<DbUrl>,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -61,6 +66,11 @@ pub struct PersonSafe {
     pub is_admin: bool,
     pub instance: Option<String>,
     pub admin_level: i32,
+    pub profile_background: Option<DbUrl>,
+    pub avatar_frame: Option<DbUrl>,
+    pub bio_html: Option<String>,
+    pub profile_music: Option<DbUrl>,
+    pub profile_music_youtube: Option<String>,
 }
 
 #[derive(
@@ -104,4 +114,9 @@ pub struct PersonForm {
     pub creation_date: Option<NaiveDateTime>,
     pub instance: Option<String>,
     pub admin_level: Option<i32>,
+    pub profile_background: Option<Option<DbUrl>>,
+    pub avatar_frame: Option<Option<DbUrl>>,
+    pub bio_html: Option<String>,
+    pub profile_music: Option<Option<DbUrl>>,
+    pub profile_music_youtube: Option<Option<String>>,
 }

@@ -126,6 +126,7 @@ displaydoc = "0.2.3"
 serde_with = "3.0.0"
 rosetta-i18n = "0.1.2"
 webmention = "0.5.0"
+rustube = "0.6.0"
 
 [dependencies]
 tinyboards_apub = { workspace = true }

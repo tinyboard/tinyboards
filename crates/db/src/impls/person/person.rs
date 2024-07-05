@@ -173,6 +173,11 @@ pub mod safe_type {
         is_admin,
         instance,
         admin_level,
+        profile_background,
+        avatar_frame,
+        bio_html,
+        profile_music,
+        profile_music_youtube,
     );
 
     impl ToSafe for PersonSafe {
@@ -201,6 +206,11 @@ pub mod safe_type {
                 is_admin,
                 instance,
                 admin_level,
+                profile_background,
+                avatar_frame,
+                bio_html,
+                profile_music,
+                profile_music_youtube,
             )
         }
     }

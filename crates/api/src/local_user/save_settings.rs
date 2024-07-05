@@ -2,10 +2,12 @@ use crate::Perform;
 use actix_web::web::Data;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
+    download_yt_audio::save_audio_from_yt_link,
     person::{LoginResponse, SaveUserSettings},
     sensitive::Sensitive,
     utils::{purge_local_image_by_url, require_user, send_verification_email},
 };
+use tinyboards_db::newtypes::DbUrl;
 use tinyboards_db::{
     models::person::person::PersonForm,
     models::{
@@ -42,6 +44,8 @@ impl<'des> Perform<'des> for SaveUserSettings {
         let current_avatar = view.person.avatar.clone();
         let current_banner = view.person.banner.clone();
         let current_signature = view.person.signature.clone();
+        let current_profile_music = view.person.profile_music.clone();
+        let current_profile_music_youtube = view.person.profile_music_youtube.clone();
 
         let avatar = data.avatar.clone();
         let banner = data.banner.clone();
@@ -49,6 +53,9 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let bio = data.bio.clone();
         let display_name = data.display_name.clone();
+
+        let profile_music_youtube = data.profile_music.clone();
+
         let email_deref = data.email.as_deref().map(str::to_lowercase);
         let email = match email_deref {
             Some(email) => {
@@ -57,6 +64,35 @@ impl<'des> Perform<'des> for SaveUserSettings {
                 } else {
                     Some(email)
                 }
+            }
+            None => None,
+        };
+
+        let profile_music: Option<Option<DbUrl>> = match profile_music_youtube.clone() {
+            Some(yt_link) => {
+                let path = match current_profile_music_youtube {
+                    // user has set a profile music before
+                    Some(current_profile_music_youtube) => {
+                        // if it hasn't changed, leave it alone
+                        if yt_link == current_profile_music_youtube.to_string() {
+                            current_profile_music
+                        } else {
+                            // it has changed
+                            let path =
+                                save_audio_from_yt_link(yt_link, view.person.id, context).await?;
+
+                            Some(path)
+                        }
+                    }
+                    // not yet
+                    None => {
+                        let path =
+                            save_audio_from_yt_link(yt_link, view.person.id, context).await?;
+
+                        Some(path)
+                    }
+                };
+                Some(path)
             }
             None => None,
         };
@@ -210,6 +246,8 @@ impl<'des> Perform<'des> for SaveUserSettings {
             avatar: avatar.clone(),
             signature: signature.clone(),
             banner: banner.clone(),
+            profile_music,
+            profile_music_youtube: Some(profile_music_youtube),
             updated: updated,
             ..PersonForm::default()
         };

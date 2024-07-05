@@ -100,6 +100,7 @@ pub struct SaveUserSettings {
     pub email: Option<String>,
     pub bio: Option<String>,
     pub display_name: Option<String>,
+    pub profile_music: Option<String>,
 }
 
 /// Struct for changing passwords

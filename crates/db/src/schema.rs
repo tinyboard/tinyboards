@@ -538,6 +538,11 @@ diesel::table! {
         is_admin -> Bool,
         instance -> Nullable<Varchar>,
         admin_level -> Int4,
+        profile_background -> Nullable<Varchar>,
+        avatar_frame -> Nullable<Varchar>,
+        bio_html -> Nullable<Varchar>,
+        profile_music -> Nullable<Varchar>,
+        profile_music_youtube -> Nullable<Varchar>,
     }
 }
 

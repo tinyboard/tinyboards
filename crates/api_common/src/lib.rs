@@ -4,6 +4,7 @@ pub mod board;
 pub mod build_response;
 pub mod comment;
 pub mod data;
+pub mod download_yt_audio;
 pub mod emoji;
 pub mod message;
 pub mod moderator;
@@ -91,7 +92,7 @@ impl GetFile {
                 })?;
 
                 return Ok(HttpResponse::Ok().body(buffer.into_inner()));
-            } 
+            }
         }
 
         NamedFile::open(&fs_path)
