@@ -43,12 +43,14 @@ impl<'des> Perform<'des> for SaveUserSettings {
         // delete old images if new images applied
         let current_avatar = view.person.avatar.clone();
         let current_banner = view.person.banner.clone();
+        let current_background = view.person.profile_background.clone();
         let current_signature = view.person.signature.clone();
         let current_profile_music = view.person.profile_music.clone();
         let current_profile_music_youtube = view.person.profile_music_youtube.clone();
 
         let avatar = data.avatar.clone();
         let banner = data.banner.clone();
+        let profile_background = data.profile_background.clone();
         let signature = data.signature.clone();
 
         let bio = data.bio.clone();
@@ -173,10 +175,52 @@ impl<'des> Perform<'des> for SaveUserSettings {
             }
 
             // Size check
-            if db_banner.size > 3 * 1024 * 1024 {
+            if db_banner.size > 5 * 1024 * 1024 {
                 return Err(TinyBoardsError::from_message(
                     403,
-                    "Stop trying to get past the 3MB size limit, nerd.",
+                    "Stop trying to get past the 5MB size limit, nerd.",
+                ));
+            }
+        };
+
+        if let Some(profile_background) = profile_background.clone() {
+            if let Some(current_background) = current_background {
+                if profile_background != current_background
+                    && !profile_background.to_string().is_empty()
+                    && !current_background.to_string().is_empty()
+                {
+                    let r = purge_local_image_by_url(context.pool(), &current_background).await;
+
+                    if let Err(_) = r {
+                        eprintln!("Failed to purge file: {} - ignoring, please delete manually if it's really an error", current_background.path());
+                    }
+                }
+            }
+
+            // Check if banner is valid
+            let db_background = Upload::find_by_url(context.pool(), &profile_background)
+                .await
+                .map_err(|e| {
+                    TinyBoardsError::from_error_message(
+                        e,
+                        500,
+                        "Something went wrong while checking background",
+                    )
+                })?;
+
+            // Ownership check
+            if db_background.person_id != view.person.id {
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "That image is NOT yours.",
+                ));
+            }
+
+            // Size check
+            if db_background.size > 5 * 1024 * 1024 {
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "Size limit for profile background is 5 (FIVE!!!) megabytes bruv",
                 ));
             }
         };
@@ -246,6 +290,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
             avatar: avatar.clone(),
             signature: signature.clone(),
             banner: banner.clone(),
+            profile_background: Some(profile_background.clone()),
             profile_music,
             profile_music_youtube: Some(profile_music_youtube),
             updated: updated,

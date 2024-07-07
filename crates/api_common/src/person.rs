@@ -101,6 +101,7 @@ pub struct SaveUserSettings {
     pub bio: Option<String>,
     pub display_name: Option<String>,
     pub profile_music: Option<String>,
+    pub profile_background: Option<DbUrl>,
 }
 
 /// Struct for changing passwords
