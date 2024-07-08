@@ -102,6 +102,61 @@ impl Person {
             .await
     }
 
+    pub async fn ban(
+        &self,
+        pool: &DbPool,
+        unban_date_: Option<NaiveDateTime>,
+    ) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person::dsl::*;
+
+        let is_permanent_ban = unban_date_.is_none();
+
+        if is_permanent_ban {
+            // clear profile
+            diesel::update(person.find(self.id))
+                .set((
+                    is_banned.eq(true),
+                    unban_date.eq(None::<NaiveDateTime>),
+                    avatar.eq(None::<DbUrl>),
+                    banner.eq(None::<DbUrl>),
+                    profile_background.eq(None::<DbUrl>),
+                    display_name.eq(None::<String>),
+                    bio.eq(None::<String>),
+                    bio_html.eq(None::<String>),
+                    profile_music.eq(None::<DbUrl>),
+                    profile_music_youtube.eq(None::<String>),
+                    updated.eq(naive_now()),
+                ))
+                .execute(conn)
+        } else {
+            diesel::update(person.find(self.id))
+                .set((
+                    is_banned.eq(true),
+                    unban_date.eq(unban_date_),
+                    updated.eq(naive_now()),
+                ))
+                .execute(conn)
+        }
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn unban(&self, pool: &DbPool) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person::dsl::*;
+
+        diesel::update(person.find(self.id))
+            .set((
+                is_banned.eq(false),
+                unban_date.eq(None::<NaiveDateTime>),
+                updated.eq(naive_now()),
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
+
     /// Update or insert the person.
     ///
     /// necessary for federation because Apub does not distinguish between these actions

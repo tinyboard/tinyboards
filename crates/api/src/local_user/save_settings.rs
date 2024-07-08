@@ -17,7 +17,9 @@ use tinyboards_db::{
     utils::naive_now,
 };
 use tinyboards_db_views::structs::LoggedInUserView;
-use tinyboards_utils::{claims::Claims, error::TinyBoardsError};
+use tinyboards_utils::{
+    claims::Claims, error::TinyBoardsError, parser::parse_markdown_opt, utils::custom_body_parsing,
+};
 
 #[async_trait::async_trait(?Send)]
 impl<'des> Perform<'des> for SaveUserSettings {
@@ -125,7 +127,14 @@ impl<'des> Perform<'des> for SaveUserSettings {
                 })?;
 
             // Ownership check
-            if db_avatar.person_id != view.person.id {
+            if let Some(default_avatar) = site.default_avatar {
+                if default_avatar != avatar.to_string() && db_avatar.person_id != view.person.id {
+                    return Err(TinyBoardsError::from_message(
+                        400,
+                        "That image is NOT yours.",
+                    ));
+                }
+            } else if db_avatar.person_id != view.person.id {
                 return Err(TinyBoardsError::from_message(
                     400,
                     "That image is NOT yours.",
@@ -265,10 +274,20 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         if let Some(bio) = &bio {
             // seems sort of arbitrary? do we want a setting for this length somewhere?
-            if bio.chars().count() > 300 {
+            if bio.chars().count() > 255 {
                 return Err(TinyBoardsError::from_message(400, "bio too long"));
             }
         }
+
+        let bio_html = if let Some(ref bio) = bio {
+            let bio_html = parse_markdown_opt(bio);
+            Some(custom_body_parsing(
+                &bio_html.unwrap_or_default(),
+                context.settings(),
+            ))
+        } else {
+            view.person.bio_html
+        };
 
         if let Some(display_name) = &display_name {
             if display_name.chars().count() < 2 || display_name.chars().count() > 30 {
@@ -286,6 +305,7 @@ impl<'des> Perform<'des> for SaveUserSettings {
 
         let person_form = PersonForm {
             bio,
+            bio_html,
             display_name,
             avatar: avatar.clone(),
             signature: signature.clone(),

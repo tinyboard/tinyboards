@@ -6,7 +6,7 @@ use std::time::SystemTime;
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     moderator::{ModActionResponse, ToggleBan},
-    utils::{require_user, send_system_message},
+    utils::{purge_local_image_by_url, require_user, send_system_message},
 };
 use tinyboards_db::{
     models::{
@@ -61,13 +61,46 @@ impl<'des> Perform<'des> for ToggleBan {
         let target_person_id = target_user_view.person.id;
 
         // update the person in the database to be banned/unbanned
-        Person::update_ban(
+        /*Person::update_ban(
             context.pool(),
             target_person_id.clone(),
             banned.clone(),
             expires.clone(),
         )
-        .await?;
+        .await?;*/
+
+        let target_person = &(target_user_view.person);
+        if banned {
+            match expires {
+                Some(expires) => {
+                    // temporary ban / suspension
+                    target_person.ban(context.pool(), Some(expires)).await?;
+                }
+                None => {
+                    // permanent ban / termination: purge profile
+                    if let Some(ref avatar) = target_person.avatar {
+                        purge_local_image_by_url(context.pool(), avatar).await?;
+                    }
+
+                    if let Some(ref banner) = target_person.banner {
+                        purge_local_image_by_url(context.pool(), banner).await?;
+                    }
+
+                    if let Some(ref profile_background) = target_person.profile_background {
+                        purge_local_image_by_url(context.pool(), profile_background).await?;
+                    }
+
+                    if let Some(ref profile_music) = target_person.profile_music {
+                        // lol
+                        purge_local_image_by_url(context.pool(), profile_music).await?;
+                    }
+
+                    target_person.ban(context.pool(), None).await?;
+                }
+            }
+        } else {
+            target_person.unban(context.pool()).await?;
+        }
 
         // send ban/unban notif
         let message = if banned {
@@ -78,7 +111,7 @@ impl<'des> Perform<'des> for ToggleBan {
                     write!(&mut text, "suspended for {} day(s) for ", days)
                         .expect("...there is no way this went wrong.");
                 }
-                None => text.push_str("permanently banned for "),
+                None => text.push_str("terminated for "),
             }
 
             text.push_str(match reason {
