@@ -183,6 +183,36 @@ impl SendActivity for InviteBoardMod {
 }
 
 #[async_trait::async_trait]
+impl SendActivity for EditBoardMod {
+    type Response = BoardModResponse;
+    type Route = BoardIdPersonIdPath;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _path: &Self::Route,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
+impl SendActivity for RemoveBoardMod {
+    type Response = BoardModResponse;
+    type Route = BoardIdPersonIdPath;
+    async fn send_activity(
+        _request: &Self,
+        _response: &Self::Response,
+        _context: &Data<TinyBoardsContext>,
+        _path: &Self::Route,
+        _auth: Option<&str>,
+    ) -> Result<(), TinyBoardsError> {
+        Ok(())
+    }
+}
+
+#[async_trait::async_trait]
 impl SendActivity for LeaveAdmin {
     type Response = GetSiteResponse;
     type Route = ();

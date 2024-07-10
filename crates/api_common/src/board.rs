@@ -40,6 +40,12 @@ pub struct BoardIdPath {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct BoardIdPersonIdPath {
+    pub board_id: i32,
+    pub person_id: i32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct BoardNamePath {
     pub board_name: String,
 }
@@ -112,19 +118,21 @@ pub struct BlockBoardResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AddBoardMod {
-    pub board_id: i32,
+    //pub board_id: i32,
     pub person_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct RemoveBoardMod {
-    pub board_id: i32,
-    pub person_id: i32,
+pub struct RemoveBoardMod {}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EditBoardMod {
+    pub permissions: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct InviteBoardMod {
-    pub person_id: i32,
+    pub username: String,
     pub permissions: i32,
 }
 

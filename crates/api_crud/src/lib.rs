@@ -5,6 +5,7 @@ use tinyboards_utils::error::TinyBoardsError;
 
 pub mod applications;
 pub mod board;
+pub mod board_mods;
 pub mod board_subscriptions;
 pub mod comment;
 pub mod comment_report;

@@ -32,6 +32,27 @@ impl Add for ModPerms {
 }
 
 impl BoardModerator {
+    /// Returns the mod relationship between a person and a board.
+    /// Arguments:
+    ///     - &DbPool pool: connection pool
+    ///     - i32 person_id_: ID of the person
+    ///     - i32 board_id_: ID of the board
+    ///
+    /// Will return an error if the person isn't a mod of the board.
+    pub async fn get_by_person_id_for_board(
+        pool: &DbPool,
+        person_id_: i32,
+        board_id_: i32,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::board_mods::dsl::*;
+
+        board_mods
+            .filter(person_id.eq(person_id_).and(board_id.eq(board_id_)))
+            .first::<Self>(conn)
+            .await
+    }
+
     pub fn has_permission(&self, permission: ModPerms) -> bool {
         self.permissions & permission.as_i32() > 0 || self.permissions & ModPerms::Full.as_i32() > 0
     }
@@ -43,6 +64,28 @@ impl BoardModerator {
             .set(invite_accepted.eq(true))
             .execute(conn)
             .await
+    }
+
+    pub async fn set_permissions(&self, pool: &DbPool, new_permissions: i32) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::board_mods::dsl::*;
+
+        diesel::update(board_mods.find(self.id))
+            .set(permissions.eq(new_permissions))
+            .execute(conn)
+            .await
+            .map(|_| ())
+    }
+
+    /// Deletes the mod relationship from the db. Consumes self.
+    pub async fn remove(self, pool: &DbPool) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::board_mods::dsl::*;
+
+        diesel::delete(board_mods.find(self.id))
+            .execute(conn)
+            .await
+            .map(|_| ())
     }
 
     pub async fn remove_board_mod(

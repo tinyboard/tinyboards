@@ -29,6 +29,7 @@ impl<'des> Perform<'des> for RemoveObject {
                 context.pool(),
                 target_object.get_board_id(),
                 ModPerms::Content,
+                None,
             )
             .await
             .unwrap()?;
@@ -61,6 +62,7 @@ impl<'des> Perform<'des> for ApproveObject {
                 context.pool(),
                 target_object.get_board_id(),
                 ModPerms::Content,
+                None,
             )
             .await
             .unwrap()?;

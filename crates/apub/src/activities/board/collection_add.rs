@@ -13,7 +13,7 @@ use crate::{
     SendActivity,
 };
 use tinyboards_api_common::{
-    board::{AddBoardMod, BoardModResponse},
+    board::{AddBoardMod, BoardIdPath, BoardModResponse},
     data::TinyBoardsContext,
     post::{PostIdPath, PostResponse, TogglePostFeatured},
     utils::{generate_featured_url, generate_moderators_url, require_user},
@@ -162,19 +162,19 @@ impl ActivityHandler for CollectionAdd {
 #[async_trait::async_trait]
 impl SendActivity for AddBoardMod {
     type Response = BoardModResponse;
-    type Route = ();
+    type Route = BoardIdPath;
 
     async fn send_activity(
         request: &Self,
         _response: &Self::Response,
         context: &Data<TinyBoardsContext>,
-        _: &Self::Route,
+        BoardIdPath { board_id }: &Self::Route,
         auth: Option<&str>,
     ) -> Result<(), TinyBoardsError> {
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
             .unwrap()?;
-        let board: ApubBoard = Board::read(context.pool(), request.board_id).await?.into();
+        let board: ApubBoard = Board::read(context.pool(), *board_id).await?.into();
         let updated_mod: ApubPerson =
             Person::read(context.pool(), request.person_id.unwrap_or(view.person.id))
                 .await?

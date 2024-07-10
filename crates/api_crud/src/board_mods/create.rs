@@ -1,7 +1,7 @@
-use crate::Perform;
+use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::{
-    board::{AddBoardMod, BoardModResponse},
+    board::{AddBoardMod, BoardIdPath, BoardModResponse},
     data::TinyBoardsContext,
     utils::require_user,
 };
@@ -19,19 +19,23 @@ use tinyboards_db_views::structs::BoardModeratorView;
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for AddBoardMod {
+impl<'des> PerformCrud<'des> for AddBoardMod {
     type Response = BoardModResponse;
-    type Route = ();
+    type Route = BoardIdPath;
 
     #[tracing::instrument(skip(context, auth))]
     async fn perform(
         self,
         context: &Data<TinyBoardsContext>,
-        _: Self::Route,
+        BoardIdPath { board_id }: Self::Route,
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let data: &AddBoardMod = &self;
-        let board_id = data.board_id;
+        //let board_id = data.board_id;
+
+        if board_id == 1 {
+            return Err(TinyBoardsError::from_message(400, "You cannot directly add a mod to the default board. Users become mods of the default board automatically when they're made admins with at least the Manage Content permission."));
+        }
 
         // check permissions later
         let view = require_user(context.pool(), context.master_key(), auth)

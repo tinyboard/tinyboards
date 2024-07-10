@@ -40,7 +40,7 @@ impl<'des> Perform<'des> for BanFromBoard {
         // require board moderator (at least) to perform this action
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), board_id.clone(), ModPerms::Users)
+            .require_board_mod(context.pool(), board_id.clone(), ModPerms::Users, None)
             .await
             .unwrap()?;
 

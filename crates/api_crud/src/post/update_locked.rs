@@ -36,7 +36,7 @@ impl<'des> PerformCrud<'des> for TogglePostLock {
         // require board mod (minimum)
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), board.id, ModPerms::Content)
+            .require_board_mod(context.pool(), board.id, ModPerms::Content, None)
             .await
             .unwrap()?;
 

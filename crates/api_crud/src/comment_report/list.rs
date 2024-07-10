@@ -30,7 +30,7 @@ impl<'des> PerformCrud<'des> for ListCommentReports {
 
         if let Some(board_id) = data.board_id {
             user_res = user_res
-                .require_board_mod(context.pool(), board_id, ModPerms::Content)
+                .require_board_mod(context.pool(), board_id, ModPerms::Content, None)
                 .await;
         } else {
             user_res = user_res.require_admin(AdminPerms::Content);

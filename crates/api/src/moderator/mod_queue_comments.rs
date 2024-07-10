@@ -27,6 +27,7 @@ impl<'des> Perform<'des> for CommentModQueue {
                 context.pool(),
                 self.board_id.unwrap_or(1),
                 ModPerms::Content,
+                None,
             )
             .await
             .unwrap()?;

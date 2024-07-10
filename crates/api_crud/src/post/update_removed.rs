@@ -34,7 +34,7 @@ impl<'des> PerformCrud<'des> for TogglePostRemove {
         // require board mod
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), orig_post.board_id, ModPerms::Content)
+            .require_board_mod(context.pool(), orig_post.board_id, ModPerms::Content, None)
             .await
             .unwrap()?;
 

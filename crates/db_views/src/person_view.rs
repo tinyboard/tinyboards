@@ -94,7 +94,13 @@ impl PersonView {
     pub async fn read_from_name(pool: &DbPool, name: &str) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         let (person, settings, counts) = person::table
-            .filter(person::name.eq(name))
+            .filter(
+                person::name.ilike(
+                    name.replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
             .inner_join(person_aggregates::table)
             .left_join(local_user::table.on(person::id.eq(local_user::person_id)))
             .select((

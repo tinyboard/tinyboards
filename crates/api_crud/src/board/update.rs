@@ -44,7 +44,12 @@ impl<'des> PerformCrud<'des> for EditBoard {
         // board update restricted to board mod or admin (may provide other options in the future)
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), path.board_id.clone(), ModPerms::Config)
+            .require_board_mod(
+                context.pool(),
+                path.board_id.clone(),
+                ModPerms::Config,
+                None,
+            )
             .await
             .unwrap()?;
 

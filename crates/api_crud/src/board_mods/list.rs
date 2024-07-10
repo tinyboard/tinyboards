@@ -1,4 +1,4 @@
-use crate::Perform;
+use crate::PerformCrud;
 use actix_web::web::Data;
 use tinyboards_api_common::utils::load_user_opt;
 use tinyboards_api_common::{
@@ -17,7 +17,7 @@ use tinyboards_db_views::structs::{BoardModeratorView, LocalUserView};
 use tinyboards_utils::error::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]
-impl<'des> Perform<'des> for ListBoardMods {
+impl<'des> PerformCrud<'des> for ListBoardMods {
     type Route = BoardIdPath;
     type Response = ListBoardModsResponse;
 

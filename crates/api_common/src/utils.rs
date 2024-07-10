@@ -245,7 +245,7 @@ impl UserResult {
         }
     }
 
-    pub async fn require_board_mod(self, pool: &DbPool, board_id: i32, with_permission: ModPerms) -> Self {
+    pub async fn require_board_mod(self, pool: &DbPool, board_id: i32, with_permission: ModPerms, rank_required: Option<i32>) -> Self {
         match self.0 {
             Ok(u) => {
                 // admins can do everything (in this case, only ones with the Content or Boards permission)
@@ -260,7 +260,16 @@ impl UserResult {
                         match mod_data {
                             Some(mod_data) => {
                                 if mod_data.has_permission(with_permission) {
-                                    Ok(u)
+                                    match rank_required {
+                                        Some(rank_required) => {
+                                            if mod_data.rank > rank_required {
+                                                Err(TinyBoardsError::from_message(403, "You are not high enough on the mod hierarchy to do that."))
+                                            } else {
+                                                Ok(u)
+                                            }
+                                        }
+                                        None => Ok(u)
+                                    }
                                 } else {
                                     Err(TinyBoardsError::from_message(403, "Missing moderator permissions."))
                                 }

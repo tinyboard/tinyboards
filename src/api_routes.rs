@@ -125,11 +125,23 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     )
                     .route(
                         "/{board_id}/mods",
-                        web::get().to(route_get::<ListBoardMods>),
+                        web::get().to(route_get_crud::<ListBoardMods>),
                     )
                     .route(
                         "/{board_id}/mods",
-                        web::post().to(route_post::<InviteBoardMod>),
+                        web::put().to(route_post_crud::<InviteBoardMod>),
+                    )
+                    .route(
+                        "/{board_id}/mods",
+                        web::post().to(route_post_crud::<AddBoardMod>),
+                    )
+                    .route(
+                        "/{board_id}/mods/{person_id}",
+                        web::patch().to(route_post_crud::<EditBoardMod>),
+                    )
+                    .route(
+                        "/{board_id}/mods/{person_id}",
+                        web::delete().to(route_post_crud::<RemoveBoardMod>),
                     ),
             )
             // Post
@@ -235,7 +247,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     //.route("/ban_board", web::post().to(route_post::<BanBoard>))
                     //.route("/feature_post", web::post().to(route_post::<TogglePostFeatured>))
-                    .route("", web::post().to(route_post::<AddBoardMod>))
+                    //.route("", web::post().to(route_post::<AddBoardMod>))
                     .route("/queue/posts", web::get().to(route_get::<PostModQueue>))
                     .route(
                         "/queue/comments",

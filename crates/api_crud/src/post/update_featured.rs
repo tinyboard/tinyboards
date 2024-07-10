@@ -42,7 +42,7 @@ impl<'des> PerformCrud<'des> for TogglePostFeatured {
         // you need to at least be a board moderator for this action, if the feature type is local then you need admin
         let mut view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), post.board_id, ModPerms::Content)
+            .require_board_mod(context.pool(), post.board_id, ModPerms::Content, None)
             .await
             .unwrap()?;
 

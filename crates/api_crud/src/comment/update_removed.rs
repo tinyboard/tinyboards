@@ -36,7 +36,7 @@ impl<'des> PerformCrud<'des> for ToggleCommentRemove {
         // only board mod allowed
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), orig_board.id, ModPerms::Content)
+            .require_board_mod(context.pool(), orig_board.id, ModPerms::Content, None)
             .await
             .unwrap()?;
 

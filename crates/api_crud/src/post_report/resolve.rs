@@ -31,7 +31,7 @@ impl<'des> PerformCrud<'des> for ResolvePostReport {
 
         let view = require_user(context.pool(), context.master_key(), auth)
             .await
-            .require_board_mod(context.pool(), board_id, ModPerms::Content)
+            .require_board_mod(context.pool(), board_id, ModPerms::Content, None)
             .await
             .unwrap()?;
 
