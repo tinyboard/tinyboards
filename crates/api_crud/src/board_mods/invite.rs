@@ -48,7 +48,7 @@ impl<'des> PerformCrud<'des> for InviteBoardMod {
 
         if target_person_view.person.is_banned {
             return Err(TinyBoardsError::from_message(
-                404,
+                403,
                 format!("@{} is banned.", username).as_str(),
             ));
         }

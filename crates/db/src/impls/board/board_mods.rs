@@ -37,20 +37,33 @@ impl BoardModerator {
     ///     - &DbPool pool: connection pool
     ///     - i32 person_id_: ID of the person
     ///     - i32 board_id_: ID of the board
+    ///     - bool require_invite_accepted: if `true`, will not return mod invites
     ///
     /// Will return an error if the person isn't a mod of the board.
     pub async fn get_by_person_id_for_board(
         pool: &DbPool,
         person_id_: i32,
         board_id_: i32,
+        require_invite_accepted: bool,
     ) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::board_mods::dsl::*;
 
-        board_mods
-            .filter(person_id.eq(person_id_).and(board_id.eq(board_id_)))
-            .first::<Self>(conn)
-            .await
+        if require_invite_accepted {
+            board_mods
+                .filter(
+                    person_id
+                        .eq(person_id_)
+                        .and(board_id.eq(board_id_))
+                        .and(invite_accepted.eq(true)),
+                )
+                .first::<Self>(conn)
+        } else {
+            board_mods
+                .filter(person_id.eq(person_id_).and(board_id.eq(board_id_)))
+                .first::<Self>(conn)
+        }
+        .await
     }
 
     pub fn has_permission(&self, permission: ModPerms) -> bool {

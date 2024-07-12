@@ -44,7 +44,7 @@ impl<'des> PerformCrud<'des> for ListBoardMods {
                 TinyBoardsError::from_error_message(e, 500, "Failed to load board pending mods.")
             })?;
 
-        let has_pending_invite = if let Some(LocalUserView { person, .. }) = v {
+        let has_pending_invite = if let Some(LocalUserView { ref person, .. }) = v {
             pending_mods
                 .iter()
                 .map(|mod_view| mod_view.moderator.id)
@@ -54,10 +54,21 @@ impl<'des> PerformCrud<'des> for ListBoardMods {
             false
         };
 
+        let my_mod_rank: Option<i32> = if let Some(LocalUserView { ref person, .. }) = v {
+            mods.iter()
+                .map(|mod_view| (mod_view.moderator.id, mod_view.mod_meta.rank))
+                .filter(|(uid, _)| uid == &person.id)
+                .next()
+                .map(|(_, rank)| rank)
+        } else {
+            None
+        };
+
         Ok(ListBoardModsResponse {
             mods,
             pending_mods,
             has_pending_invite,
+            my_mod_rank,
         })
     }
 }

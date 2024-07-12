@@ -5,13 +5,7 @@ use tinyboards_api_common::{
     data::TinyBoardsContext,
     utils::require_user,
 };
-use tinyboards_db::{
-    models::board::{
-        board_mods::{BoardModerator, ModPerms},
-        boards::Board,
-    },
-    traits::Crud,
-};
+use tinyboards_db::models::board::board_mods::{BoardModerator, ModPerms};
 use tinyboards_db_views::structs::BoardModeratorView;
 use tinyboards_utils::TinyBoardsError;
 
@@ -31,13 +25,17 @@ impl<'des> PerformCrud<'des> for EditBoardMod {
         auth: Option<&str>,
     ) -> Result<Self::Response, TinyBoardsError> {
         let mod_to_update =
-            BoardModerator::get_by_person_id_for_board(context.pool(), person_id, board_id)
+            BoardModerator::get_by_person_id_for_board(context.pool(), person_id, board_id, false)
                 .await
                 .map_err(|e| {
-                    TinyBoardsError::from_error_message(e, 400, "That user is not a board mod.")
+                    TinyBoardsError::from_error_message(
+                        e,
+                        400,
+                        "That user is neither a board mod, nor has been invited to become one.",
+                    )
                 })?;
 
-        let v = require_user(context.pool(), context.master_key(), auth)
+        require_user(context.pool(), context.master_key(), auth)
             .await
             .require_board_mod(
                 context.pool(),
@@ -51,7 +49,7 @@ impl<'des> PerformCrud<'des> for EditBoardMod {
         mod_to_update
             .set_permissions(context.pool(), self.permissions)
             .await
-            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Removing mod failed."))?;
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Updating mod failed."))?;
 
         let moderators = BoardModeratorView::for_board(context.pool(), board_id).await?;
 

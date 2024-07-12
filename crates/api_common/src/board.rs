@@ -72,6 +72,7 @@ pub struct ListBoardModsResponse {
     pub mods: Vec<BoardModeratorView>,
     pub pending_mods: Vec<BoardModeratorView>,
     pub has_pending_invite: bool,
+    pub my_mod_rank: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
