@@ -23,5 +23,5 @@ pub use comment_view::CommentQuery;
 
 use structs::LocalUserView;
 pub trait DeleteableOrRemoveable {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>);
+    fn hide_if_removed_or_deleted(&mut self, user_id: Option<i32>, is_admin: bool, is_mod: bool);
 }

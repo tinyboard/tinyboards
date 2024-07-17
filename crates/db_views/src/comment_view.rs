@@ -210,6 +210,8 @@ impl CommentView {
         person: Option<&LocalUserView>,
         context: Option<i32>,
         parent_post_id: Option<i32>,
+        is_admin: bool,
+        is_mod: bool,
     ) -> Result<CommentQueryResponse, TinyBoardsError> {
         // max allowed value for context is 4
         let context = std::cmp::min(context.unwrap_or(0), 4);
@@ -282,7 +284,7 @@ impl CommentView {
             .iter_mut()
             .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
-            cv.hide_if_removed_or_deleted(person);
+            cv.hide_if_removed_or_deleted(person.map(|view| view.person.id), is_admin, is_mod);
         }
 
         Ok(CommentQueryResponse {
@@ -565,25 +567,29 @@ impl<'a> CommentQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for CommentView {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>) {
-        // if the user is admin, nothing is being removed
-        if let Some(user_view) = user_view {
-            if user_view.local_user.has_permission(AdminPerms::Content) {
-                return;
-            }
+    fn hide_if_removed_or_deleted(&mut self, user_id: Option<i32>, is_admin: bool, is_mod: bool) {
+        // if the user is admin or mod, nothing is being removed
+        /*if let Some(user_view) = user_view {
+        if user_view.local_user.has_permission(AdminPerms::Content) {
+            return;
+        }
+        }*/
+
+        if is_admin {
+            return;
         }
 
         let blank_out_comment = {
-            if self.comment.is_removed || self.comment.is_deleted {
-                match user_view {
-                    Some(user_view) => {
-                        // the user can read the comment if they are its creator (deleted is blank for everyone)
-                        !(self.comment.is_removed && user_view.person.id == self.comment.creator_id)
+            if self.comment.is_removed {
+                match user_id {
+                    Some(user_id) => {
+                        // the user can read the comment if they are its creator or is a board mod (deleted is blank for everyone)
+                        !(is_mod || user_id == self.comment.creator_id)
                     }
                     None => true,
                 }
             } else {
-                false
+                self.comment.is_deleted
             }
         };
 
@@ -604,15 +610,13 @@ impl DeleteableOrRemoveable for CommentView {
         }
 
         let blank_out_post = {
-            if self.post.is_deleted || self.post.is_removed {
-                match user_view {
-                    Some(user_view) => {
-                        !(self.post.is_removed && user_view.person.id == self.post.creator_id)
-                    }
+            if self.post.is_removed {
+                match user_id {
+                    Some(user_id) => !(user_id == self.post.creator_id || is_mod),
                     None => true,
                 }
             } else {
-                false
+                self.post.is_deleted
             }
         };
 
@@ -627,7 +631,7 @@ impl DeleteableOrRemoveable for CommentView {
             }
             .into();
 
-            self.post.title = obscure_text.clone();
+            //self.post.title = obscure_text.clone();
             self.post.body = obscure_text.clone();
             self.post.body_html = obscure_text;
             self.post.url = None;

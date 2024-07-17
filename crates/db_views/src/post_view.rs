@@ -456,19 +456,24 @@ impl<'a> PostQuery<'a> {
 }
 
 impl DeleteableOrRemoveable for PostView {
-    fn hide_if_removed_or_deleted(&mut self, user_view: Option<&LocalUserView>) {
+    fn hide_if_removed_or_deleted(&mut self, user_id: Option<i32>, is_admin: bool, is_mod: bool) {
         /*if !(self.post.is_deleted || self.post.is_removed) {
             return self;
         }*/
 
-        if let Some(user_view) = user_view {
+        if let Some(user_id) = user_id {
             // admins see everything
-            if user_view.local_user.has_permission(AdminPerms::Content) {
+            if is_admin {
+                return;
+            }
+
+            // board mods can see removed content
+            if self.post.is_removed && is_mod {
                 return;
             }
 
             // person can see their own removed content
-            if self.post.is_removed && user_view.person.id == self.post.creator_id {
+            if self.post.is_removed && user_id == self.post.creator_id {
                 return;
             }
         }
@@ -482,7 +487,7 @@ impl DeleteableOrRemoveable for PostView {
         }
         .into();
 
-        self.post.title = obscure_text.clone();
+        //self.post.title = obscure_text.clone();
         self.post.body = obscure_text.clone();
         self.post.body_html = obscure_text;
         self.post.url = None;

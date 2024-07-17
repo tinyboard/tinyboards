@@ -10,9 +10,19 @@ use tinyboards_api_common::{
 };
 use tinyboards_db::{
     map_to_comment_sort_type,
-    models::{board::boards::Board, person::local_user::AdminPerms, site::local_site::LocalSite},
+    models::{
+        board::{
+            board_mods::{BoardModerator, ModPerms},
+            boards::Board,
+        },
+        comment::comments::Comment,
+        person::local_user::AdminPerms,
+        post::posts::Post,
+        site::local_site::LocalSite,
+    },
+    traits::Crud,
 };
-use tinyboards_db_views::comment_view::CommentQuery;
+use tinyboards_db_views::{comment_view::CommentQuery, local_user_view, structs::LocalUserView};
 use tinyboards_db_views::{structs::CommentView, DeleteableOrRemoveable};
 use tinyboards_federation::config::Data;
 use tinyboards_utils::error::TinyBoardsError;
@@ -43,6 +53,20 @@ impl PerformApub for GetComments {
                 .await
                 .ok()
                 .map(|b| b.id)
+        } else if let Some(post_id) = data.post_id {
+            let post = Post::read(context.pool(), post_id).await;
+
+            match post {
+                Ok(post) => Some(post.board_id),
+                Err(_) => None,
+            }
+        } else if let Some(parent_id) = data.parent_id {
+            let parent = Comment::read(context.pool(), parent_id).await;
+
+            match parent {
+                Ok(parent) => Some(parent.board_id),
+                Err(_) => None,
+            }
         } else {
             data.board_id
         };
@@ -66,6 +90,27 @@ impl PerformApub for GetComments {
 
         let is_admin = match &local_user_view {
             Some(v) => v.local_user.has_permission(AdminPerms::Content),
+            None => false,
+        };
+
+        let is_mod = match board_id {
+            Some(board_id) => match local_user_view {
+                Some(LocalUserView { ref person, .. }) => {
+                    let mod_rel = BoardModerator::get_by_person_id_for_board(
+                        context.pool(),
+                        person.id,
+                        board_id,
+                        true,
+                    )
+                    .await;
+
+                    match mod_rel {
+                        Ok(m) => m.has_permission(ModPerms::Content),
+                        Err(_) => false,
+                    }
+                }
+                None => false,
+            },
             None => false,
         };
 
@@ -108,7 +153,11 @@ impl PerformApub for GetComments {
             .iter_mut()
             .filter(|cv| cv.comment.is_deleted || cv.comment.is_removed)
         {
-            cv.hide_if_removed_or_deleted(local_user_view.as_ref());
+            cv.hide_if_removed_or_deleted(
+                local_user_view.as_ref().map(|view| view.person.id),
+                is_admin,
+                is_mod,
+            );
         }
 
         if let Format::Tree = format {
