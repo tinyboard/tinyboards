@@ -12,6 +12,7 @@ use tracing_error::ErrorLayer;
 use tracing_log::LogTracer;
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, Layer, Registry};
 use url::Url;
+use async_graphql::*;
 
 pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), TinyBoardsError> {
     LogTracer::init()
@@ -44,3 +45,18 @@ pub fn init_logging(opentelemetry_url: &Option<Url>) -> Result<(), TinyBoardsErr
 
     Ok(())
 }
+
+struct Query;
+
+
+/* This would be the master query object, we would need to define all query operations here I believe */
+// #[Object]
+// impl Query {
+
+
+// EXAMPLE
+//  async fn users(&self, username: String) -> Result<Option<User>> {
+//      some query logic in here I suppose    
+//}
+
+// }

@@ -1,6 +1,6 @@
 use actix_multipart::Multipart;
 use actix_web::*;
-use async_graphql::{Schema, EmptySubscription, EmptyMutation, Query};
+use async_graphql::{Schema, EmptySubscription, EmptyMutation};
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use diesel_async::RunQueryDsl;
 use serde::Deserialize;
@@ -12,6 +12,8 @@ use tinyboards_api_common::{
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
+// main query object defined in the lib.rs
+use crate::Query;
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     cfg.service(
