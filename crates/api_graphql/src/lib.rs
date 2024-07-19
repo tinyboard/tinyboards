@@ -1,25 +1,35 @@
 pub mod queries;
-use actix_web::web::{self, Data as ActixData};
-use async_graphql::{Data as GraphQLData, EmptyMutation, EmptySubscription, Schema};
-use async_graphql_actix_web::{GraphQL, GraphQLRequest, GraphQLResponse};
+use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use queries::Query;
+use tinyboards_db_views::structs::LocalUserView;
 //use tinyboards_api_common::data::TinyBoardsContext;
+
+// wrapper around logged in user
+pub struct LoggedInUser(Option<LocalUserView>);
 
 pub fn gen_schema() -> Schema<Query, EmptyMutation, EmptySubscription> {
     Schema::new(Query, EmptyMutation, EmptySubscription)
 }
 
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+impl From<Option<LocalUserView>> for LoggedInUser {
+    fn from(value: Option<LocalUserView>) -> Self {
+        Self(value)
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl LoggedInUser {
+    pub(crate) fn into_inner(self) -> Option<LocalUserView> {
+        self.0
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub(crate) fn inner(&self) -> Option<&LocalUserView> {
+        self.0.as_ref()
+    }
+
+    pub(crate) fn require_user(self) -> LocalUserView {
+        match self.into_inner() {
+            Some(v) => v,
+            None => todo!("this should be an error"),
+        }
     }
 }

@@ -12,4 +12,7 @@ doctest = false
 async-graphql = { workspace = true }
 actix-web = { workspace = true }
 async-graphql-actix-web = { workspace = true }
+tinyboards_db = { workspace = true }
+tinyboards_db_views = { workspace = true }
+tinyboards_utils = { workspace = true }
 #tinyboards_api_common = { workspace = true }

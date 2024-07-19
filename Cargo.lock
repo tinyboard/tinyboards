@@ -4589,6 +4589,9 @@ dependencies = [
  "actix-web",
  "async-graphql",
  "async-graphql-actix-web",
+ "tinyboards_db",
+ "tinyboards_db_views",
+ "tinyboards_utils",
 ]
 
 [[package]]

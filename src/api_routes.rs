@@ -5,9 +5,10 @@ use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
     admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, emoji::*,
-    message::GetMessages, moderator::*, person::*, post::*, site::*,
+    message::GetMessages, moderator::*, person::*, post::*, site::*, utils::load_user_opt,
 };
 use tinyboards_api_crud::PerformCrud;
+use tinyboards_api_graphql::LoggedInUser;
 use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
@@ -321,10 +322,23 @@ fn get_auth(req: &HttpRequest) -> Option<&str> {
 
 async fn perform_graphql(
     context: web::Data<TinyBoardsContext>,
-    request: GraphQLRequest,
-    _: HttpRequest,
-) -> GraphQLResponse {
-    context.schema().execute(request.into_inner()).await.into()
+    graphql_request: GraphQLRequest,
+    http_request: HttpRequest,
+) -> Result<GraphQLResponse> {
+    let auth_header = get_auth(&http_request);
+
+    let logged_in_user_view =
+        load_user_opt(context.pool(), context.master_key(), auth_header).await?;
+
+    Ok(context
+        .schema()
+        .execute(
+            graphql_request
+                .into_inner()
+                .data(LoggedInUser::from(logged_in_user_view)),
+        )
+        .await
+        .into())
 }
 
 async fn perform<'a, Data>(
