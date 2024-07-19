@@ -1,5 +1,6 @@
 use actix_multipart::Multipart;
 use actix_web::*;
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
@@ -299,6 +300,10 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     );
 }
 
+pub fn graphql_config(cfg: &mut web::ServiceConfig) {
+    cfg.route("/api/v2/graphql", web::post().to(perform_graphql));
+}
+
 fn get_auth(req: &HttpRequest) -> Option<&str> {
     let auth_header = req
         .headers()
@@ -312,6 +317,14 @@ fn get_auth(req: &HttpRequest) -> Option<&str> {
         },
         None => None,
     }
+}
+
+async fn perform_graphql(
+    context: web::Data<TinyBoardsContext>,
+    request: GraphQLRequest,
+    _: HttpRequest,
+) -> GraphQLResponse {
+    context.schema().execute(request.into_inner()).await.into()
 }
 
 async fn perform<'a, Data>(

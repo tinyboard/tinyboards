@@ -1,0 +1,15 @@
+[package]
+name = "tinyboards_api_graphql"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "tinyboards_api_graphql"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+async-graphql = { workspace = true }
+actix-web = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+#tinyboards_api_common = { workspace = true }

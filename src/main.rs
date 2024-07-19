@@ -9,17 +9,24 @@ use reqwest::Client;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
-use tinyboards_apub::{FEDERATION_HTTP_FETCH_LIMIT, VerifyUrlData};
-use tinyboards_db_views::structs::SiteView;
-use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
-use tinyboards_routes::{nodeinfo, webfinger, media};
 use std::{thread, time::Duration};
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     request::build_user_agent,
-    utils::{check_private_instance_and_federation_enabled, local_site_rate_limit_to_rate_limit_config},
+    utils::{
+        check_private_instance_and_federation_enabled, local_site_rate_limit_to_rate_limit_config,
+    },
 };
-use tinyboards_db::{models::secret::Secret, utils::{build_db_pool, run_migrations, get_db_url}};
+use tinyboards_api_graphql::gen_schema;
+//use tinyboards_api_graphql::config as graphql_config;
+use tinyboards_apub::{VerifyUrlData, FEDERATION_HTTP_FETCH_LIMIT};
+use tinyboards_db::{
+    models::secret::Secret,
+    utils::{build_db_pool, get_db_url, run_migrations},
+};
+use tinyboards_db_views::structs::SiteView;
+use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
+use tinyboards_routes::{media, nodeinfo, webfinger};
 use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
@@ -37,7 +44,7 @@ async fn main() -> Result<(), TinyBoardsError> {
     dotenv().ok(); // TODO - remove this (should be un-needed)
 
     let settings = SETTINGS.to_owned();
-    
+
     // Set up the bb8 connection pool
     let db_url = get_db_url(Some(&settings));
     run_migrations(&db_url);
@@ -45,7 +52,6 @@ async fn main() -> Result<(), TinyBoardsError> {
     init_logging(&settings.opentelemetry_url)
         .map_err(|_| TinyBoardsError::from_message(500, "failed to initialize logger"))?;
 
-    
     let pool = build_db_pool(&settings).await?;
 
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
@@ -77,10 +83,9 @@ async fn main() -> Result<(), TinyBoardsError> {
     // make sure private instance and federation enabled are not turned on at the same time
     check_private_instance_and_federation_enabled(&local_site)?;
 
-    let rate_limit_config 
-        = local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
-    let rate_limit_cell = 
-        RateLimitCell::new(rate_limit_config).await;
+    let rate_limit_config =
+        local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
+    let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;
 
     println!(
         "Starting http server at {}:{}",
@@ -101,6 +106,8 @@ async fn main() -> Result<(), TinyBoardsError> {
         backoff_exponent: 2,
     };
 
+    let graphql_schema = gen_schema();
+
     let client: ClientWithMiddleware = ClientBuilder::new(reqwest_client.clone())
         .with(TracingMiddleware::default())
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
@@ -114,6 +121,7 @@ async fn main() -> Result<(), TinyBoardsError> {
             settings.clone(),
             secret.clone(),
             rate_limit_cell.clone(),
+            graphql_schema.clone(),
         );
 
         let federation_config = FederationConfig::builder()
@@ -139,6 +147,9 @@ async fn main() -> Result<(), TinyBoardsError> {
             .wrap(FederationMiddleware::new(federation_config))
             // the routes
             .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
+            // GraphQL
+            .configure(api_routes::graphql_config)
+            // federation
             .configure(|cfg| {
                 if federation_enabled {
                     tinyboards_apub::http::routes::config(cfg);
