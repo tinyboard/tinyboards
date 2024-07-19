@@ -335,7 +335,8 @@ async fn perform_graphql(
         .execute(
             graphql_request
                 .into_inner()
-                .data(LoggedInUser::from(logged_in_user_view)),
+                .data(LoggedInUser::from(logged_in_user_view))
+                .data(context.pool().clone()),
         )
         .await
         .into())

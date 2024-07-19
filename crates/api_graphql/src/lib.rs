@@ -1,4 +1,5 @@
 pub mod queries;
+pub(crate) mod structs;
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
