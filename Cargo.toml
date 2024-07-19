@@ -127,6 +127,9 @@ serde_with = "3.0.0"
 rosetta-i18n = "0.1.2"
 webmention = "0.5.0"
 rustube = "0.6.0"
+tempfile = "3.10.1"
+async-graphql = "7.0.7"
+async-graphql-actix-web = "7.0.7"
 
 [dependencies]
 tinyboards_apub = { workspace = true }
@@ -170,4 +173,7 @@ opentelemetry-otlp = { version = "0.11.0", optional = true }
 actix-multipart = { workspace = true }
 actix-files = { workspace = true }
 tokio = { workspace = true }
+tempfile = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 #tokio.workspace=true

@@ -1,5 +1,8 @@
 use actix_multipart::Multipart;
 use actix_web::*;
+use async_graphql::{Schema, EmptySubscription, EmptyMutation, Query};
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+use diesel_async::RunQueryDsl;
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
@@ -19,6 +22,8 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
             .route("/messages", web::get().to(route_get_crud::<GetMessages>))
+            // route GraphQL requests
+            .route("/query", web::post().to(route_graphql))
             // resolve federated objects (object => post, person, board or comment)
             .route(
                 "/resolve_object",
@@ -447,6 +452,21 @@ where
     )
     .await?;
     Ok(HttpResponse::Ok().json(result))
+}
+
+async fn route_graphql<'a, Data>(
+    data: Data,
+    context: web::Data<TinyBoardsContext>,
+    schema: web::Data<Schema<Query, EmptyMutation, EmptySubscription>>,
+    req: GraphQLRequest,
+) -> web::Json<GraphQLResponse>
+where
+    Data:
+        Deserialize<'a>
+        + Send
+        + 'static
+{
+    web::Json(schema.execute(&mut req.into_inner()).await.into())
 }
 
 async fn route_post_crud<'a, Data>(
