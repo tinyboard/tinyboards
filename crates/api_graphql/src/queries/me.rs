@@ -17,7 +17,7 @@ impl MeQuery {
         let pool = ctx.data::<DbPool>()?;
 
         let my_person = if ctx.look_ahead().field("person").exists() {
-            Some(Person::from(&v.person))
+            Some(Person::from((&v.person, &v.counts)))
         } else {
             None
         };
