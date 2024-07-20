@@ -1,15 +1,31 @@
 pub mod queries;
 pub(crate) mod structs;
-use async_graphql::{EmptyMutation, EmptySubscription, Schema};
-use queries::Query;
+use async_graphql::*;
+use queries::me::MeQuery;
+//use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
+use tinyboards_utils::TinyBoardsError;
 //use tinyboards_api_common::data::TinyBoardsContext;
 
 // wrapper around logged in user
 pub struct LoggedInUser(Option<LocalUserView>);
 
+#[derive(Default)]
+pub struct TestQuery;
+
+#[Object]
+impl TestQuery {
+    /// Returns the sum of a and b
+    async fn add(&self, a: i32, b: i32) -> i32 {
+        a + b
+    }
+}
+
+#[derive(MergedObject, Default)]
+pub struct Query(TestQuery, MeQuery);
+
 pub fn gen_schema() -> Schema<Query, EmptyMutation, EmptySubscription> {
-    Schema::new(Query, EmptyMutation, EmptySubscription)
+    Schema::new(Query::default(), EmptyMutation, EmptySubscription)
 }
 
 impl From<Option<LocalUserView>> for LoggedInUser {
@@ -19,18 +35,14 @@ impl From<Option<LocalUserView>> for LoggedInUser {
 }
 
 impl LoggedInUser {
-    pub(crate) fn into_inner(self) -> Option<LocalUserView> {
-        self.0
-    }
-
     pub(crate) fn inner(&self) -> Option<&LocalUserView> {
         self.0.as_ref()
     }
 
-    pub(crate) fn require_user(self) -> LocalUserView {
-        match self.into_inner() {
-            Some(v) => v,
-            None => todo!("this should be an error"),
+    pub(crate) fn require_user(&self) -> Result<&LocalUserView> {
+        match self.inner() {
+            Some(v) => Ok(v),
+            None => Err(TinyBoardsError::from_message(401, "Login required").into()),
         }
     }
 }

@@ -38,7 +38,7 @@ pub struct Person {
     pub avatar_frame: Option<DbUrl>,
     pub bio_html: Option<String>,
     pub profile_music: Option<DbUrl>,
-    pub profile_music_youtube: Option<DbUrl>,
+    pub profile_music_youtube: Option<String>,
 }
 
 /// A safe representation of user, without the sensitive info

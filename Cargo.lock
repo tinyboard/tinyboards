@@ -4589,6 +4589,7 @@ dependencies = [
  "actix-web",
  "async-graphql",
  "async-graphql-actix-web",
+ "chrono",
  "tinyboards_db",
  "tinyboards_db_views",
  "tinyboards_utils",

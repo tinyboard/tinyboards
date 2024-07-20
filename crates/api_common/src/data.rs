@@ -1,6 +1,6 @@
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use reqwest_middleware::ClientWithMiddleware;
-use tinyboards_api_graphql::queries::Query;
+use tinyboards_api_graphql::Query;
 use tinyboards_db::{models::secret::Secret, utils::DbPool};
 use tinyboards_utils::{
     rate_limit::RateLimitCell,
