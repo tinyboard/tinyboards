@@ -1,10 +1,13 @@
 use std::collections::HashMap;
 
 use diesel::dsl::count;
-use tinyboards_db::models::board::board_subscriber::BoardSubscriber;
 use tinyboards_db::models::person::person_blocks::PersonBlock;
 use tinyboards_db::models::post::post_read::PostRead;
 use tinyboards_db::models::post::post_saved::PostSaved;
+use tinyboards_db::schema::person_aggregates;
+use tinyboards_db::{
+    aggregates::structs::PersonAggregates, models::board::board_subscriber::BoardSubscriber,
+};
 
 use crate::structs::PostView;
 use diesel::dsl::now;
@@ -33,6 +36,7 @@ use typed_builder::TypedBuilder;
 type PostViewTuple = (
     Post,
     PersonSafe,
+    PersonAggregates,
     BoardSafe,
     Option<BoardPersonBan>,
     PostAggregates,
@@ -84,6 +88,7 @@ impl<'a> PostModQuery<'a> {
 
         let query_ = posts::table
             .inner_join(person::table)
+            .inner_join(person_aggregates::table.on(person_aggregates::person_id.eq(person::id)))
             .inner_join(boards::table)
             .inner_join(
                 post_report::table.on(posts::id
@@ -140,6 +145,7 @@ impl<'a> PostModQuery<'a> {
             .select((
                 posts::all_columns,
                 PersonSafe::safe_columns_tuple(),
+                person_aggregates::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
@@ -250,16 +256,17 @@ impl<'a> PostModQuery<'a> {
                 PostView {
                     post: a.0,
                     creator: Some(a.1),
-                    board: a.2,
-                    creator_banned_from_board: a.3.is_some(),
-                    counts: a.4,
-                    subscribed: BoardSubscriber::to_subscribed_type(&a.5),
-                    saved: a.6.is_some(),
-                    read: a.7.is_some(),
-                    creator_blocked: a.8.is_some(),
-                    my_vote: a.9,
+                    creator_counts: Some(a.2),
+                    board: a.3,
+                    creator_banned_from_board: a.4.is_some(),
+                    counts: a.5,
+                    subscribed: BoardSubscriber::to_subscribed_type(&a.6),
+                    saved: a.7.is_some(),
+                    read: a.8.is_some(),
+                    creator_blocked: a.9.is_some(),
+                    my_vote: a.10,
                     report_count: map.remove(&pid),
-                    mod_permissions: a.10,
+                    mod_permissions: a.11,
                 }
             })
             .collect())

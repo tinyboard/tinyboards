@@ -1,7 +1,7 @@
 pub mod queries;
 pub(crate) mod structs;
 use async_graphql::*;
-use queries::me::MeQuery;
+use queries::{me::MeQuery, posts::QueryPosts};
 //use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::TinyBoardsError;
@@ -22,7 +22,7 @@ impl TestQuery {
 }
 
 #[derive(MergedObject, Default)]
-pub struct Query(TestQuery, MeQuery);
+pub struct Query(TestQuery, MeQuery, QueryPosts);
 
 pub fn gen_schema() -> Schema<Query, EmptyMutation, EmptySubscription> {
     Schema::new(Query::default(), EmptyMutation, EmptySubscription)

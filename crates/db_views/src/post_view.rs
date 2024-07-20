@@ -4,17 +4,18 @@ use crate::{
 };
 use diesel::{dsl::*, result::Error, *};
 use tinyboards_db::{
-    aggregates::structs::PostAggregates,
+    aggregates::structs::{PersonAggregates, PostAggregates},
     models::{
-        board::board_person_bans::BoardPersonBan, board::board_subscriber::BoardSubscriber,
-        board::boards::BoardSafe, person::local_user::*, person::person::*,
-        person::person_blocks::PersonBlock, post::post_read::PostRead, post::post_saved::PostSaved,
-        post::posts::Post,
+        board::{
+            board_person_bans::BoardPersonBan, board_subscriber::BoardSubscriber, boards::BoardSafe,
+        },
+        person::{local_user::*, person::*, person_blocks::PersonBlock},
+        post::{post_read::PostRead, post_saved::PostSaved, posts::Post},
     },
     schema::{
-        board_mods, board_person_bans, board_subscriber, boards, person, person_blocks,
-        person_board_blocks, post_aggregates, post_read, post_report, post_saved, post_votes,
-        posts,
+        board_mods, board_person_bans, board_subscriber, boards, person, person_aggregates,
+        person_blocks, person_board_blocks, post_aggregates, post_read, post_report, post_saved,
+        post_votes, posts,
     },
     traits::{ToSafe, ViewToVec},
     utils::{functions::hot_rank, fuzzy_search, get_conn, limit_and_offset, DbPool},
@@ -25,6 +26,7 @@ use typed_builder::TypedBuilder;
 type PostViewTuple = (
     Post,
     PersonSafe,
+    PersonAggregates,
     BoardSafe,
     Option<BoardPersonBan>,
     PostAggregates,
@@ -52,6 +54,7 @@ impl PostView {
         let query = posts::table
             .find(post_id)
             .inner_join(person::table)
+            .inner_join(person_aggregates::table.on(person_aggregates::person_id.eq(person::id)))
             .inner_join(boards::table)
             .left_join(
                 board_person_bans::table.on(posts::board_id
@@ -98,6 +101,7 @@ impl PostView {
             .select((
                 posts::all_columns,
                 PersonSafe::safe_columns_tuple(),
+                person_aggregates::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
@@ -121,6 +125,7 @@ impl PostView {
         let (
             post,
             creator,
+            creator_counts,
             board,
             creator_banned_from_board,
             counts,
@@ -158,6 +163,7 @@ impl PostView {
         Ok(PostView {
             post,
             creator: Some(creator),
+            creator_counts: Some(creator_counts),
             board,
             creator_banned_from_board: creator_banned_from_board.is_some(),
             counts,
@@ -210,6 +216,7 @@ impl<'a> PostQuery<'a> {
 
         let mut query = posts::table
             .inner_join(person::table)
+            .inner_join(person_aggregates::table.on(person_aggregates::person_id.eq(person::id)))
             .inner_join(boards::table)
             .left_join(
                 board_person_bans::table.on(posts::board_id
@@ -261,6 +268,7 @@ impl<'a> PostQuery<'a> {
             .select((
                 posts::all_columns,
                 PersonSafe::safe_columns_tuple(),
+                person_aggregates::all_columns,
                 BoardSafe::safe_columns_tuple(),
                 board_person_bans::all_columns.nullable(),
                 post_aggregates::all_columns,
@@ -494,6 +502,7 @@ impl DeleteableOrRemoveable for PostView {
         self.post.image = None;
         self.post.creator_id = -1;
         self.creator = None;
+        self.creator_counts = None;
     }
 }
 
@@ -505,16 +514,17 @@ impl ViewToVec for PostView {
             .map(|a| Self {
                 post: a.0,
                 creator: Some(a.1),
-                board: a.2,
-                creator_banned_from_board: a.3.is_some(),
-                counts: a.4,
-                subscribed: BoardSubscriber::to_subscribed_type(&a.5),
-                saved: a.6.is_some(),
-                read: a.7.is_some(),
-                creator_blocked: a.8.is_some(),
-                my_vote: a.9,
+                creator_counts: Some(a.2),
+                board: a.3,
+                creator_banned_from_board: a.4.is_some(),
+                counts: a.5,
+                subscribed: BoardSubscriber::to_subscribed_type(&a.6),
+                saved: a.7.is_some(),
+                read: a.8.is_some(),
+                creator_blocked: a.9.is_some(),
+                my_vote: a.10,
                 report_count: None,
-                mod_permissions: a.10,
+                mod_permissions: a.11,
             })
             .collect::<Vec<Self>>()
     }

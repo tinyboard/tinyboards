@@ -55,6 +55,7 @@ pub struct LocalUserSettingsView {
 pub struct PostView {
     pub post: Post,
     pub creator: Option<PersonSafe>,
+    pub creator_counts: Option<PersonAggregates>,
     pub board: BoardSafe,
     pub creator_banned_from_board: bool, // Left Join BoardUserBan
     pub counts: PostAggregates,

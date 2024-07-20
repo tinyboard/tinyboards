@@ -1,7 +1,7 @@
 use async_graphql::*;
 use tinyboards_db::{
     aggregates::structs::PersonAggregates as DbPersonAggregates,
-    models::person::person::Person as DbPerson,
+    models::person::person::{Person as DbPerson, PersonSafe as DbPersonSafe},
 };
 
 /// GraphQL representation of Person.
@@ -65,6 +65,32 @@ impl Person {
 
 impl From<(DbPerson, DbPersonAggregates)> for Person {
     fn from((person, counts): (DbPerson, DbPersonAggregates)) -> Self {
+        Self {
+            id: person.id,
+            name: person.name,
+            is_banned: person.is_banned,
+            is_deleted: person.is_deleted,
+            unban_date: person.unban_date.map(|t| t.to_string()),
+            display_name: person.display_name,
+            bio: person.bio,
+            bio_html: person.bio_html,
+            creation_date: person.creation_date.to_string(),
+            updated: person.updated.map(|t| t.to_string()),
+            avatar: person.avatar.map(|a| a.as_str().into()),
+            banner: person.banner.map(|a| a.as_str().into()),
+            profile_background: person.profile_background.map(|a| a.as_str().into()),
+            admin_level: person.admin_level,
+            is_local: person.local,
+            instance: person.instance,
+            profile_music: person.profile_music.map(|m| m.as_str().into()),
+            profile_music_youtube: person.profile_music_youtube,
+            counts,
+        }
+    }
+}
+
+impl From<(DbPersonSafe, DbPersonAggregates)> for Person {
+    fn from((person, counts): (DbPersonSafe, DbPersonAggregates)) -> Self {
         Self {
             id: person.id,
             name: person.name,
