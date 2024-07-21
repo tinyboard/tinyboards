@@ -5,10 +5,10 @@ use tinyboards_db::{
 };
 
 /// GraphQL representation of Person.
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct Person {
-    id: i32,
+    pub id: i32,
     name: String,
     is_banned: bool,
     is_deleted: bool,

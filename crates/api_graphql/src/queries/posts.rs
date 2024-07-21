@@ -1,5 +1,5 @@
 use async_graphql::*;
-use tinyboards_db::utils::DbPool;
+use tinyboards_db::{models::post::posts::Post as DbPost, utils::DbPool};
 use tinyboards_db_views::post_view::PostQuery;
 use tinyboards_utils::TinyBoardsError;
 
@@ -23,7 +23,7 @@ impl QueryPosts {
             ListingType,
         >,
         #[graphql(desc = "If specified, only posts from the given user will be loaded.")]
-        creator_id: Option<i32>,
+        person_id: Option<i32>,
         #[graphql(desc = "If specified, only posts in the given board will be loaded.")]
         board_id: Option<i32>,
         #[graphql(desc = "Whether to only show saved posts.")] saved_only: Option<bool>,
@@ -35,32 +35,25 @@ impl QueryPosts {
         let sort = sort.unwrap_or(SortType::NewComments);
         let listing_type = listing_type.unwrap_or(ListingType::Local);
         let limit = std::cmp::min(limit.unwrap_or(25), 25);
+        let person_id_join = match v_opt {
+            Some(v) => v.person.id,
+            None => -1,
+        };
 
-        let resp = PostQuery::builder()
-            .pool(pool)
-            .user(v_opt.map(|v| &v.local_user))
-            .listing_type(Some(listing_type.into()))
-            .creator_id(creator_id)
-            .sort(Some(sort.into()))
-            .board_id(board_id)
-            .saved_only(saved_only)
-            .page(page)
-            .limit(Some(limit))
-            .build()
-            .list()
-            .await
-            .map_err(|e| {
-                TinyBoardsError::from_error_message(
-                    e,
-                    500,
-                    "Internal server error: failed to load posts.",
-                )
-            })?;
+        let resp = DbPost::load_with_counts(
+            pool,
+            person_id_join,
+            Some(limit),
+            page,
+            false,
+            false,
+            board_id,
+            person_id,
+            sort.into(),
+            listing_type.into(),
+        )
+        .await?;
 
-        Ok(resp
-            .posts
-            .into_iter()
-            .map(Post::from)
-            .collect::<Vec<Post>>())
+        Ok(resp.into_iter().map(Post::from).collect::<Vec<Post>>())
     }
 }

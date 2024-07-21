@@ -1,10 +1,12 @@
 use crate::{
+    aggregates::structs::PersonAggregates,
     models::person::person::{Person, PersonForm},
-    newtypes::DbUrl,
-    schema::{instance, person},
+    newtypes::{DbUrl, UserId},
+    schema::{instance, person, person_aggregates},
     traits::{ApubActor, Crud},
     utils::{functions::lower, fuzzy_search, get_conn, naive_now, DbPool},
 };
+use diesel::pg::expression::dsl::any;
 
 use chrono::NaiveDateTime;
 use diesel::{prelude::*, result::Error};
@@ -18,6 +20,22 @@ impl Person {
         person
             .filter(name.ilike(fuzzy_search(query)))
             .load(conn)
+            .await
+    }
+
+    pub async fn get_with_counts_for_ids(
+        pool: &DbPool,
+        ids: &[UserId],
+    ) -> Result<Vec<(Self, PersonAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person::dsl::*;
+
+        let ids = ids.into_iter().map(|x| x.0).collect::<Vec<i32>>();
+
+        person
+            .inner_join(person_aggregates::table)
+            .filter(id.eq_any(ids))
+            .load::<(Self, PersonAggregates)>(conn)
             .await
     }
 

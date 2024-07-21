@@ -1,6 +1,13 @@
 use async_graphql::*;
-use tinyboards_db::aggregates::structs::PostAggregates as DbPostAggregates;
+use dataloader::DataLoader;
+use tinyboards_db::{
+    aggregates::structs::PostAggregates as DbPostAggregates, models::post::posts::Post as DbPost,
+    newtypes::UserId,
+};
 use tinyboards_db_views::structs::PostView;
+use tinyboards_utils::TinyBoardsError;
+
+use crate::PostgresLoader;
 
 use super::person::Person;
 
@@ -68,11 +75,11 @@ pub struct Post {
     title_chunk: String,
     #[graphql(skip)]
     counts: DbPostAggregates,
-    creator: Option<Person>,
+    /*creator: Option<Person>,
     is_creator_banned_from_board: bool,
     is_saved: bool,
     my_vote: Option<i16>,
-    mod_permissions: Option<i32>,
+    mod_permissions: Option<i32>,*/
 }
 
 #[ComplexObject]
@@ -92,9 +99,50 @@ impl Post {
     pub async fn newest_comment_time(&self) -> String {
         self.counts.newest_comment_time.to_string()
     }
+
+    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(UserId(self.creator_id))
+            .await
+            .map_err(|e| e.into())
+    }
 }
 
-impl From<PostView> for Post {
+impl From<(DbPost, DbPostAggregates)> for Post {
+    #[allow(unused)]
+    fn from((post, counts): (DbPost, DbPostAggregates)) -> Self {
+        Self {
+            id: post.id,
+            title: post.title,
+            type_: post.type_,
+            url: post.url.map(|url| url.as_str().into()),
+            body: post.body,
+            body_html: post.body_html,
+            creator_id: post.creator_id,
+            board_id: post.board_id,
+            is_removed: post.is_removed,
+            is_locked: post.is_locked,
+            creation_date: post.creation_date.to_string(),
+            is_deleted: post.is_deleted,
+            is_nsfw: post.is_nsfw,
+            updated: post.updated.map(|t| t.to_string()),
+            image: post.image.map(|i| i.as_str().into()),
+            local: post.local,
+            featured_board: post.featured_board,
+            featured_local: post.featured_local,
+            title_chunk: post.title_chunk,
+            counts,
+            /*creator: creator.map(|c| Person::from((c, creator_counts.unwrap()))),
+            is_creator_banned_from_board: creator_banned_from_board,
+            is_saved: saved,
+            my_vote,
+            mod_permissions,*/
+        }
+    }
+}
+
+/*impl From<PostView> for Post {
     #[allow(unused)]
     fn from(
         PostView {
@@ -141,4 +189,4 @@ impl From<PostView> for Post {
             mod_permissions,
         }
     }
-}
+}*/

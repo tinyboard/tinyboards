@@ -1,5 +1,6 @@
 use actix_multipart::Multipart;
 use actix_web::*;
+use async_graphql::dataloader::DataLoader;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
@@ -8,7 +9,7 @@ use tinyboards_api_common::{
     message::GetMessages, moderator::*, person::*, post::*, site::*, utils::load_user_opt,
 };
 use tinyboards_api_crud::PerformCrud;
-use tinyboards_api_graphql::LoggedInUser;
+use tinyboards_api_graphql::{LoggedInUser, PostgresLoader};
 use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
@@ -336,7 +337,11 @@ async fn perform_graphql(
             graphql_request
                 .into_inner()
                 .data(LoggedInUser::from(logged_in_user_view))
-                .data(context.pool().clone()),
+                .data(context.pool().clone())
+                .data(DataLoader::new(
+                    PostgresLoader::new(context.pool()),
+                    tokio::spawn,
+                )),
         )
         .await
         .into())

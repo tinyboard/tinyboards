@@ -4,7 +4,7 @@ use std::fmt::{Debug, Display};
 use tracing_error::SpanTrace;
 
 #[derive(serde::Serialize)]
-struct ApiError {
+pub struct ApiError {
     error: String,
     error_code: u16,
 }
@@ -64,6 +64,17 @@ impl TinyBoardsError {
         };
 
         Ok(serde_json::to_string(&api_error)?)
+    }
+}
+
+impl Clone for TinyBoardsError {
+    fn clone(&self) -> Self {
+        Self {
+            message: self.message.clone(),
+            inner: anyhow::anyhow!("{}", self.inner.to_string()),
+            context: SpanTrace::capture(),
+            error_code: self.error_code,
+        }
     }
 }
 

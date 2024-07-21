@@ -1,14 +1,28 @@
+pub(crate) mod loaders;
+pub(crate) mod newtypes;
 pub mod queries;
 pub(crate) mod structs;
+
+use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use queries::{me::MeQuery, posts::QueryPosts};
+use tinyboards_db::utils::DbPool;
 //use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::TinyBoardsError;
 //use tinyboards_api_common::data::TinyBoardsContext;
 
-// wrapper around logged in user
+/// wrapper around logged in user
 pub struct LoggedInUser(Option<LocalUserView>);
+
+/// Dataloader for batch loading
+pub struct PostgresLoader(DbPool);
+
+impl PostgresLoader {
+    pub fn new(pool: &DbPool) -> Self {
+        Self(pool.clone())
+    }
+}
 
 #[derive(Default)]
 pub struct TestQuery;

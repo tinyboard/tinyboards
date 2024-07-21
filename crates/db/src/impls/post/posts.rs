@@ -1,4 +1,7 @@
+use crate::aggregates::structs::PostAggregates;
 use crate::models::post::post_report::PostReport;
+use crate::utils::functions::hot_rank;
+use crate::utils::limit_and_offset;
 use crate::{
     models::moderator::mod_actions::{
         ModLockPost, ModLockPostForm, ModRemovePost, ModRemovePostForm,
@@ -9,6 +12,8 @@ use crate::{
     traits::{Crud, Moderateable},
     utils::{get_conn, naive_now, DbPool, FETCH_LIMIT_MAX},
 };
+use crate::{ListingType, SortType};
+use diesel::dsl::{now, IntervalDsl};
 use diesel::{prelude::*, result::Error};
 use diesel_async::RunQueryDsl;
 use regex::Regex;
@@ -379,6 +384,129 @@ impl Post {
             .set((is_removed.eq(new_removed), updated.eq(naive_now())))
             .get_results::<Self>(conn)
             .await
+    }
+
+    /// Load posts which match the specified criteria, with their associated aggregate tables.
+    /// To be used for graphql queries. When you need all data, use `PostView`.
+    pub async fn load_with_counts(
+        pool: &DbPool,
+        person_id_join: i32,
+        limit: Option<i64>,
+        page: Option<i64>,
+        show_deleted_and_removed: bool,
+        include_banned_boards: bool,
+        board_id: Option<i32>,
+        person_id: Option<i32>,
+        sort: SortType,
+        listing_type: ListingType,
+    ) -> Result<Vec<(Self, PostAggregates)>, Error> {
+        use crate::schema::{board_mods, board_subscriber, boards, post_aggregates, posts};
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = posts::table
+            .inner_join(boards::table)
+            .inner_join(post_aggregates::table)
+            .left_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(posts::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
+            .left_join(
+                board_subscriber::table.on(board_subscriber::board_id
+                    .eq(posts::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
+            )
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .into_boxed();
+
+        if !show_deleted_and_removed {
+            query = query.filter(posts::is_removed.eq(false).and(posts::is_deleted.eq(false)));
+        }
+
+        if !include_banned_boards {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
+
+        if let Some(person_id) = person_id {
+            query = query.filter(posts::creator_id.eq(person_id));
+        }
+
+        if let Some(board_id) = board_id {
+            query = query.filter(posts::board_id.eq(board_id));
+        }
+
+        match listing_type {
+            // All posts feed: hide posts from hidden boards, except those which the user is a member of
+            ListingType::All => {
+                query = query.filter(
+                    boards::is_hidden
+                        .eq(false)
+                        .or(board_subscriber::id.is_not_null()),
+                )
+            }
+            // Subscribed boards: home page, hide nothing
+            ListingType::Subscribed => query = query.filter(board_subscriber::id.is_not_null()),
+            // Local: local posts only \ hidden boards
+            ListingType::Local => {
+                query = query.filter(posts::local.eq(true)).filter(
+                    boards::is_hidden
+                        .eq(false)
+                        .or(board_subscriber::id.is_not_null()),
+                )
+            }
+            // Mod feed: only posts that the user moderates
+            ListingType::Moderated => query = query.filter(board_mods::id.is_not_null()),
+        };
+
+        query = match sort {
+            SortType::Active => query
+                .then_order_by(
+                    hot_rank(post_aggregates::score, post_aggregates::newest_comment_time).desc(),
+                )
+                .then_order_by(post_aggregates::newest_comment_time.desc()),
+            SortType::Hot => query
+                .then_order_by(
+                    hot_rank(post_aggregates::score, post_aggregates::creation_date).desc(),
+                )
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::New => query.then_order_by(post_aggregates::creation_date.desc()),
+            SortType::Old => query.then_order_by(post_aggregates::creation_date.asc()),
+            SortType::NewComments => {
+                query.then_order_by(post_aggregates::newest_comment_time.desc())
+            }
+            SortType::MostComments => query
+                .then_order_by(post_aggregates::comments.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopAll => query
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopYear => query
+                .filter(post_aggregates::creation_date.gt(now - 1.years()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopMonth => query
+                .filter(post_aggregates::creation_date.gt(now - 1.months()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopWeek => query
+                .filter(post_aggregates::creation_date.gt(now - 1.weeks()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopDay => query
+                .filter(post_aggregates::creation_date.gt(now - 1.days()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+        };
+
+        let (limit, offset) = limit_and_offset(page, limit)?;
+
+        query = query.limit(limit).offset(offset);
+
+        query.load::<(Self, PostAggregates)>(conn).await
     }
 }
 
