@@ -11,46 +11,6 @@ use crate::PostgresLoader;
 
 use super::person::Person;
 
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
-#[graphql(remote = "tinyboards_db::SortType")]
-pub enum SortType {
-    #[graphql(name = "active")]
-    Active,
-    #[graphql(name = "hot")]
-    Hot,
-    #[graphql(name = "new")]
-    New,
-    #[graphql(name = "old")]
-    Old,
-    #[graphql(name = "topDay")]
-    TopDay,
-    #[graphql(name = "topWeek")]
-    TopWeek,
-    #[graphql(name = "topMonth")]
-    TopMonth,
-    #[graphql(name = "topYear")]
-    TopYear,
-    #[graphql(name = "topAll")]
-    TopAll,
-    #[graphql(name = "mostComments")]
-    MostComments,
-    #[graphql(name = "newComments")]
-    NewComments,
-}
-
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
-#[graphql(remote = "tinyboards_db::ListingType")]
-pub enum ListingType {
-    #[graphql(name = "all")]
-    All,
-    #[graphql(name = "subscribed")]
-    Subscribed,
-    #[graphql(name = "local")]
-    Local,
-    #[graphql(name = "moderated")]
-    Moderated,
-}
-
 #[derive(SimpleObject)]
 #[graphql(complex)]
 pub struct Post {

@@ -39,7 +39,7 @@ pub struct Me {
     pub unread_mentions_count: Option<i64>,
 }
 
-// resolvers for Person
+// resolvers for PersonAggregates fields
 #[ComplexObject]
 impl Person {
     pub async fn post_count(&self) -> i64 {

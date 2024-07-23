@@ -5,7 +5,7 @@ pub(crate) mod structs;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use queries::{me::MeQuery, posts::QueryPosts};
+use queries::{me::MeQuery, posts::QueryPosts, boards::QueryBoards};
 use tinyboards_db::utils::DbPool;
 //use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
@@ -36,7 +36,7 @@ impl TestQuery {
 }
 
 #[derive(MergedObject, Default)]
-pub struct Query(TestQuery, MeQuery, QueryPosts);
+pub struct Query(TestQuery, MeQuery, QueryPosts, QueryBoards);
 
 pub fn gen_schema() -> Schema<Query, EmptyMutation, EmptySubscription> {
     Schema::new(Query::default(), EmptyMutation, EmptySubscription)
@@ -59,4 +59,45 @@ impl LoggedInUser {
             None => Err(TinyBoardsError::from_message(401, "Login required").into()),
         }
     }
+}
+
+// custom enums from the db crate
+#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[graphql(remote = "tinyboards_db::SortType")]
+pub enum SortType {
+    #[graphql(name = "active")]
+    Active,
+    #[graphql(name = "hot")]
+    Hot,
+    #[graphql(name = "new")]
+    New,
+    #[graphql(name = "old")]
+    Old,
+    #[graphql(name = "topDay")]
+    TopDay,
+    #[graphql(name = "topWeek")]
+    TopWeek,
+    #[graphql(name = "topMonth")]
+    TopMonth,
+    #[graphql(name = "topYear")]
+    TopYear,
+    #[graphql(name = "topAll")]
+    TopAll,
+    #[graphql(name = "mostComments")]
+    MostComments,
+    #[graphql(name = "newComments")]
+    NewComments,
+}
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[graphql(remote = "tinyboards_db::ListingType")]
+pub enum ListingType {
+    #[graphql(name = "all")]
+    All,
+    #[graphql(name = "subscribed")]
+    Subscribed,
+    #[graphql(name = "local")]
+    Local,
+    #[graphql(name = "moderated")]
+    Moderated,
 }

@@ -4,8 +4,10 @@ use tinyboards_db_views::post_view::PostQuery;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    structs::post::{ListingType, Post, SortType},
+    structs::post::Post,
     LoggedInUser,
+    ListingType,
+    SortType
 };
 
 #[derive(Default)]
