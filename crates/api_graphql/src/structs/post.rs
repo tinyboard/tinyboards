@@ -7,9 +7,9 @@ use tinyboards_db::{
 use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
-use crate::PostgresLoader;
+use crate::{newtypes::BoardIdForPost, PostgresLoader};
 
-use super::person::Person;
+use super::{boards::Board, person::Person};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -64,6 +64,14 @@ impl Post {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
             .load_one(UserId(self.creator_id))
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn board(&self, ctx: &Context<'_>) -> Result<Option<Board>> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(BoardIdForPost(self.board_id))
             .await
             .map_err(|e| e.into())
     }

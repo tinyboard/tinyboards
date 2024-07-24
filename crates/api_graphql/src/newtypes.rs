@@ -16,3 +16,18 @@ impl Into<i32> for PersonId {
         self.0
     }
 }
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+pub(crate) struct BoardIdForPost(pub i32);
+
+impl From<i32> for BoardIdForPost {
+    fn from(value: i32) -> Self {
+        Self(value)
+    }
+}
+
+impl Into<i32> for BoardIdForPost {
+    fn into(self) -> i32 {
+        self.0
+    }
+}

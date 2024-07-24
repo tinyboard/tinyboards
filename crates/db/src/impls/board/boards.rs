@@ -40,6 +40,20 @@ impl Board {
         c.map(|b| b.is_some())
     }
 
+    pub async fn get_with_counts_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+    ) -> Result<Vec<(Self, BoardAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, boards};
+
+        boards::table
+            .inner_join(board_aggregates::table)
+            .filter(boards::id.eq_any(ids))
+            .load::<(Self, BoardAggregates)>(conn)
+            .await
+    }
+
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin
     pub async fn board_has_mod(
         pool: &DbPool,
