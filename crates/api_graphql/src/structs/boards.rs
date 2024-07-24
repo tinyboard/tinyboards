@@ -1,8 +1,13 @@
 use async_graphql::*;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates as DbBoardAggregates,
-    models::board::boards::{Board as DbBoard, BoardSafe as DbBoardSafe},
+    models::{
+        board::boards::{Board as DbBoard, BoardSafe as DbBoardSafe},
+        person::local_user::AdminPerms,
+    },
 };
+
+use crate::LoggedInUser;
 
 /// GraphQL representation of Board.
 #[derive(SimpleObject, Clone)]
@@ -16,7 +21,6 @@ pub struct Board {
     updated: Option<String>,
     is_deleted: bool,
     is_nsfw: bool,
-    is_hidden: bool,
     actor_id: String,
     subscribers_url: String,
     inbox_url: String,
@@ -35,21 +39,33 @@ pub struct Board {
     // `counts` is not queryable, fields will be made available through resolvers
     #[graphql(skip)]
     counts: DbBoardAggregates,
+    // this value is only accessible to admins thru a resolver
+    #[graphql(skip)]
+    hidden_: bool,
 }
-
 
 // resolvers for BoardAggregates fields
 #[ComplexObject]
 impl Board {
+    // we do a little trolling
+    pub async fn is_hidden(&self, ctx: &Context<'_>) -> bool {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        match v_opt {
+            Some(v) => v.local_user.has_permission(AdminPerms::Boards) && self.hidden_,
+            None => false,
+        }
+    }
+
     pub async fn subscribers(&self) -> i64 {
         self.counts.subscribers
     }
 
-    pub async fn posts(&self) -> i64 {
+    pub async fn post_count(&self) -> i64 {
         self.counts.posts
     }
 
-    pub async fn comments(&self) -> i64 {
+    pub async fn comment_count(&self) -> i64 {
         self.counts.comments
     }
 
@@ -71,7 +87,7 @@ impl Board {
 }
 
 impl From<(DbBoard, DbBoardAggregates)> for Board {
-    fn from((board, counts): (DbBoardSafe, DbBoardAggregates)) -> Self {
+    fn from((board, counts): (DbBoard, DbBoardAggregates)) -> Self {
         Self {
             id: board.id,
             name: board.name,
@@ -84,7 +100,6 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             is_deleted: board.is_deleted,
             is_removed: board.is_removed,
             is_nsfw: board.is_nsfw,
-            is_hidden: board.is_hidden,
             actor_id: board.actor_id.to_string(),
             subscribers_url: board.subscribers_url.to_string(),
             inbox_url: board.inbox_url.to_string(),
@@ -97,6 +112,7 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             hover_color: board.hover_color,
             sidebar: board.sidebar,
             sidebar_html: board.sidebar_html,
+            hidden_: board.is_hidden,
             counts,
         }
     }

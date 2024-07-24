@@ -1,13 +1,16 @@
+use crate::aggregates::structs::BoardAggregates;
 use crate::models::board::board_mods::BoardModerator;
 use crate::newtypes::DbUrl;
 use crate::schema::{board_mods, board_person_bans, boards, instance};
-use crate::utils::functions::lower;
+use crate::utils::functions::{hot_rank, lower};
+use crate::utils::{fuzzy_search, limit_and_offset};
 use crate::{
     models::board::board_person_bans::{BoardPersonBan, BoardPersonBanForm},
     models::board::boards::{Board, BoardForm},
     traits::{ApubActor, Bannable, Crud},
     utils::{get_conn, naive_now, DbPool},
 };
+use crate::{ListingType, SortType};
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 
@@ -229,6 +232,99 @@ impl Board {
             .set((is_removed.eq(new_banned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
+    }
+
+    pub async fn list_with_counts(
+        pool: &DbPool,
+        person_id_join: i32,
+        limit: Option<i64>,
+        page: Option<i64>,
+        sort: SortType,
+        listing_type: ListingType,
+        search: Option<String>,
+        search_title_and_desc: bool,
+        banned_boards: bool,
+    ) -> Result<Vec<(Self, BoardAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, board_mods, board_subscriber, boards};
+
+        let mut query = boards::table
+            .inner_join(board_aggregates::table)
+            .left_join(
+                board_subscriber::table.on(board_subscriber::board_id
+                    .eq(boards::id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
+            )
+            .left_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(boards::id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
+            .filter(boards::is_removed.eq(banned_boards))
+            .select((boards::all_columns, board_aggregates::all_columns))
+            .into_boxed();
+
+        if let Some(search_query) = search {
+            query = if search_title_and_desc {
+                query.filter(
+                    boards::name
+                        .ilike(fuzzy_search(search_query.as_str()))
+                        .or(boards::title.ilike(fuzzy_search(search_query.as_str())))
+                        .or(boards::description.ilike(fuzzy_search(search_query.as_str()))),
+                )
+            } else {
+                query.filter(boards::name.ilike(fuzzy_search(search_query.as_str())))
+            }
+        };
+
+        query = match listing_type {
+            // All except hidden boards
+            ListingType::All => query.filter(
+                boards::is_hidden
+                    .eq(false)
+                    .or(board_subscriber::id.is_not_null()),
+            ),
+            // Subscribed boards
+            ListingType::Subscribed => query.filter(board_subscriber::id.is_not_null()),
+            // Local: local boards only \ hidden boards
+            ListingType::Local => query.filter(boards::local.eq(true)).filter(
+                boards::is_hidden
+                    .eq(false)
+                    .or(board_subscriber::id.is_not_null()),
+            ),
+            // Mod feed: only boards that the user moderates
+            ListingType::Moderated => query.filter(board_mods::id.is_not_null()),
+        };
+
+        query = match sort {
+            SortType::New => query.order_by(boards::creation_date.desc()),
+            SortType::TopAll => query.order_by(board_aggregates::subscribers.desc()),
+            SortType::Hot => query
+                .order_by(
+                    hot_rank(
+                        board_aggregates::subscribers,
+                        board_aggregates::creation_date,
+                    )
+                    .desc(),
+                )
+                .then_order_by(board_aggregates::creation_date.desc()),
+            SortType::Old => query.order_by(boards::creation_date.asc()),
+            _ => query
+                .order_by(
+                    hot_rank(
+                        board_aggregates::subscribers,
+                        board_aggregates::creation_date,
+                    )
+                    .desc(),
+                )
+                .then_order_by(board_aggregates::creation_date.desc()),
+        };
+
+        let (limit, offset) = limit_and_offset(page, limit)?;
+
+        query = query.limit(limit).offset(offset);
+
+        query.load::<(Self, BoardAggregates)>(conn).await
     }
 }
 
