@@ -3,12 +3,15 @@ use dataloader::DataLoader;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates as DbBoardAggregates,
     models::{
-        board::boards::{Board as DbBoard, BoardSafe as DbBoardSafe},
-        person::local_user::AdminPerms,
+        board::boards::Board as DbBoard, person::local_user::AdminPerms,
+        post::posts::Post as DbPost,
     },
+    utils::DbPool,
 };
 
-use crate::{newtypes::ModPermsForBoardId, LoggedInUser, PostgresLoader};
+use crate::{newtypes::ModPermsForBoardId, ListingType, LoggedInUser, PostgresLoader, SortType};
+
+use super::post::Post;
 
 /// GraphQL representation of Board.
 #[derive(SimpleObject, Clone)]
@@ -94,6 +97,53 @@ impl Board {
             .await
             .map(|v| v.unwrap_or(0))
             .map_err(|e| e.into())
+    }
+
+    pub async fn posts<'ctx>(
+        &self,
+        ctx: &Context<'ctx>,
+        #[graphql(desc = "Limit of how many posts to load. Max value and default is 25.")]
+        limit: Option<i64>,
+        #[graphql(desc = "Sorting type.")] sort: Option<SortType>,
+        #[graphql(desc = "If specified, only posts from the given user will be loaded.")]
+        person_id: Option<i32>,
+        #[graphql(desc = "Page.")] page: Option<i64>,
+    ) -> Result<Vec<Post>> {
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
+
+        let sort = sort.unwrap_or(SortType::NewComments);
+        let listing_type = ListingType::All;
+        let limit = std::cmp::min(limit.unwrap_or(25), 25);
+        let person_id_join = match v_opt {
+            Some(v) => v.person.id,
+            None => -1,
+        };
+        // If the board is banned (or deleted), only admins can view its posts
+        let can_view_posts = if self.is_removed || self.is_deleted {
+            match v_opt {
+                Some(v) => v.local_user.has_permission(AdminPerms::Boards),
+                None => false,
+            }
+        } else {
+            true
+        };
+
+        let resp = DbPost::load_with_counts(
+            pool,
+            person_id_join,
+            Some(limit),
+            page,
+            false,
+            can_view_posts,
+            Some(self.id),
+            person_id,
+            sort.into(),
+            listing_type.into(),
+        )
+        .await?;
+
+        Ok(resp.into_iter().map(Post::from).collect::<Vec<Post>>())
     }
 }
 

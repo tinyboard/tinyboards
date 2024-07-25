@@ -13,6 +13,21 @@ pub struct QueryBoards;
 
 #[Object]
 impl QueryBoards {
+    pub async fn board(&self, ctx: &Context<'_>, name: String) -> Result<Board> {
+        let pool = ctx.data::<DbPool>()?;
+
+        if name.contains("@") {
+            todo!("Add apub support here");
+        }
+
+        DbBoard::get_with_counts_for_name(pool, name)
+            .await
+            .map(Board::from)
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to load board.").into()
+            })
+    }
+
     pub async fn list_boards<'ctx>(
         &self,
         ctx: &Context<'ctx>,

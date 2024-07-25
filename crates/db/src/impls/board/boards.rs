@@ -40,6 +40,27 @@ impl Board {
         c.map(|b| b.is_some())
     }
 
+    pub async fn get_with_counts_for_name(
+        pool: &DbPool,
+        board_name: String,
+    ) -> Result<(Self, BoardAggregates), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, boards};
+
+        boards::table
+            .inner_join(board_aggregates::table)
+            .filter(
+                boards::name.ilike(
+                    board_name
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<(Self, BoardAggregates)>(conn)
+            .await
+    }
+
     pub async fn get_with_counts_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
