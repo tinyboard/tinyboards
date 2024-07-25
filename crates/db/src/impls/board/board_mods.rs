@@ -66,6 +66,33 @@ impl BoardModerator {
         .await
     }
 
+    /// Return the mod permission code for the given person for each board with the given ID.
+    pub async fn get_perms_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+        for_person_id: i32,
+    ) -> Result<Vec<(i32, i32)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_mods, boards};
+
+        boards::table
+            .left_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(boards::id)
+                    .and(board_mods::person_id.eq(for_person_id))
+                    .and(board_mods::invite_accepted.eq(true))),
+            )
+            .filter(boards::id.eq_any(ids))
+            .select((boards::id, board_mods::permissions.nullable()))
+            .load::<(i32, Option<i32>)>(conn)
+            .await
+            .map(|res| {
+                res.into_iter()
+                    .map(|(board_id, perms_opt)| (board_id, perms_opt.unwrap_or(0)))
+                    .collect::<Vec<(i32, i32)>>()
+            })
+    }
+
     pub fn has_permission(&self, permission: ModPerms) -> bool {
         self.permissions & permission.as_i32() > 0 || self.permissions & ModPerms::Full.as_i32() > 0
     }

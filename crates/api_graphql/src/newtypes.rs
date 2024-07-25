@@ -49,3 +49,12 @@ impl Into<i32> for SavedForPostId {
         self.0
     }
 }
+
+#[derive(Clone, Hash, Eq, PartialEq)]
+pub(crate) struct ModPermsForBoardId(pub i32);
+
+impl Into<i32> for ModPermsForBoardId {
+    fn into(self) -> i32 {
+        self.0
+    }
+}

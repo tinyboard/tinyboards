@@ -1,4 +1,5 @@
 use async_graphql::*;
+use dataloader::DataLoader;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates as DbBoardAggregates,
     models::{
@@ -7,7 +8,7 @@ use tinyboards_db::{
     },
 };
 
-use crate::LoggedInUser;
+use crate::{newtypes::ModPermsForBoardId, LoggedInUser, PostgresLoader};
 
 /// GraphQL representation of Board.
 #[derive(SimpleObject, Clone)]
@@ -83,6 +84,16 @@ impl Board {
 
     pub async fn users_active_half_year(&self) -> i64 {
         self.counts.users_active_half_year
+    }
+
+    pub async fn my_mod_permissions(&self, ctx: &Context<'_>) -> Result<i32> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(ModPermsForBoardId(self.id))
+            .await
+            .map(|v| v.unwrap_or(0))
+            .map_err(|e| e.into())
     }
 }
 
