@@ -40,3 +40,12 @@ impl Into<i32> for VoteForPostId {
         self.0
     }
 }
+
+#[derive(Clone, Hash, Eq, PartialEq)]
+pub(crate) struct SavedForPostId(pub i32);
+
+impl Into<i32> for SavedForPostId {
+    fn into(self) -> i32 {
+        self.0
+    }
+}

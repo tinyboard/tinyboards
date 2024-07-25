@@ -8,7 +8,7 @@ use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    newtypes::{BoardIdForPost, VoteForPostId},
+    newtypes::{BoardIdForPost, SavedForPostId, VoteForPostId},
     LoggedInUser, PostgresLoader,
 };
 
@@ -86,6 +86,16 @@ impl Post {
             .load_one(VoteForPostId(self.id))
             .await
             .map(|v| v.unwrap_or(0))
+            .map_err(|e| e.into())
+    }
+
+    pub async fn is_saved(&self, ctx: &Context<'_>) -> Result<bool> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(SavedForPostId(self.id))
+            .await
+            .map(|v| v.unwrap_or(false))
             .map_err(|e| e.into())
     }
 }

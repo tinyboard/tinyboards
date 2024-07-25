@@ -1,10 +1,39 @@
 use crate::{
     models::post::post_saved::{PostSaved, PostSavedForm},
-    traits::Saveable, utils::{get_conn, DbPool},
+    traits::Saveable,
+    utils::{get_conn, DbPool},
 };
-use diesel::{insert_into, prelude::*};
-use tinyboards_utils::TinyBoardsError;
+use diesel::{insert_into, prelude::*, result::Error};
 use diesel_async::RunQueryDsl;
+use tinyboards_utils::TinyBoardsError;
+
+impl PostSaved {
+    /// Takes a list of post ids, and for each post, return whether it's saved or not
+    pub async fn get_saved_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+        for_person_id: i32,
+    ) -> Result<Vec<(i32, bool)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{post_saved, posts};
+
+        posts::table
+            .left_join(
+                post_saved::table.on(post_saved::post_id
+                    .eq(posts::id)
+                    .and(post_saved::person_id.eq(for_person_id))),
+            )
+            .filter(posts::id.eq_any(ids))
+            .select((posts::id, post_saved::id.nullable()))
+            .load::<(i32, Option<i32>)>(conn)
+            .await
+            .map(|res| {
+                res.into_iter()
+                    .map(|(post_id, save_id)| (post_id, save_id.is_some()))
+                    .collect::<Vec<(i32, bool)>>()
+            })
+    }
+}
 
 #[async_trait::async_trait]
 impl Saveable for PostSaved {
