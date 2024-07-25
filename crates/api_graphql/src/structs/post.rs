@@ -1,8 +1,10 @@
 use async_graphql::*;
 use dataloader::DataLoader;
 use tinyboards_db::{
-    aggregates::structs::PostAggregates as DbPostAggregates, models::post::posts::Post as DbPost,
+    aggregates::structs::PostAggregates as DbPostAggregates,
+    models::{comment::comments::Comment as DbComment, post::posts::Post as DbPost},
     newtypes::UserId,
+    utils::DbPool,
 };
 use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
@@ -97,6 +99,18 @@ impl Post {
             .await
             .map(|v| v.unwrap_or(false))
             .map_err(|e| e.into())
+    }
+
+    pub async fn participants(&self, ctx: &Context<'_>) -> Result<Vec<Person>> {
+        let pool = ctx.data_unchecked::<DbPool>();
+
+        let resp = DbComment::load_participants_for_post(pool, self.id)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to load participants for post.")
+            })?;
+
+        Ok(resp.into_iter().map(Person::from).collect::<Vec<Person>>())
     }
 }
 

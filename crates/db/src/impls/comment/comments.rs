@@ -1,4 +1,6 @@
+use crate::aggregates::structs::PersonAggregates;
 use crate::models::comment::comment_report::CommentReport;
+use crate::models::person::person::Person;
 use crate::newtypes::DbUrl;
 use crate::schema::comments::dsl::*;
 use crate::traits::Moderateable;
@@ -16,6 +18,26 @@ use tinyboards_utils::TinyBoardsError;
 use url::Url;
 
 impl Comment {
+    /// Returns a list of users who commented on a given post.
+    pub async fn load_participants_for_post(
+        pool: &DbPool,
+        for_post_id: i32,
+    ) -> Result<Vec<(Person, PersonAggregates)>, Error> {
+        use crate::schema::{comments, person, person_aggregates};
+        let conn = &mut get_conn(pool).await?;
+
+        comments::table
+            .inner_join(person::table)
+            .inner_join(
+                person_aggregates::table.on(person_aggregates::person_id.eq(comments::creator_id)),
+            )
+            .filter(comments::post_id.eq(for_post_id))
+            .select((person::all_columns, person_aggregates::all_columns))
+            .distinct_on(comments::creator_id)
+            .load::<(Person, PersonAggregates)>(conn)
+            .await
+    }
+
     pub async fn permadelete_for_creator(
         pool: &DbPool,
         for_creator_id: i32,
