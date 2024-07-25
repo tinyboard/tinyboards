@@ -331,6 +331,11 @@ async fn perform_graphql(
     let logged_in_user_view =
         load_user_opt(context.pool(), context.master_key(), auth_header).await?;
 
+    let my_person_id = match logged_in_user_view {
+        Some(ref v) => v.person.id,
+        None => -1,
+    };
+
     Ok(context
         .schema()
         .execute(
@@ -339,7 +344,7 @@ async fn perform_graphql(
                 .data(LoggedInUser::from(logged_in_user_view))
                 .data(context.pool().clone())
                 .data(DataLoader::new(
-                    PostgresLoader::new(context.pool()),
+                    PostgresLoader::new(context.pool(), my_person_id),
                     tokio::spawn,
                 )),
         )

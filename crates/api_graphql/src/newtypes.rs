@@ -31,3 +31,12 @@ impl Into<i32> for BoardIdForPost {
         self.0
     }
 }
+
+#[derive(Clone, Hash, Eq, PartialEq)]
+pub(crate) struct VoteForPostId(pub i32);
+
+impl Into<i32> for VoteForPostId {
+    fn into(self) -> i32 {
+        self.0
+    }
+}

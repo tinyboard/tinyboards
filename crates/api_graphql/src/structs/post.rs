@@ -7,7 +7,10 @@ use tinyboards_db::{
 use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{newtypes::BoardIdForPost, PostgresLoader};
+use crate::{
+    newtypes::{BoardIdForPost, VoteForPostId},
+    LoggedInUser, PostgresLoader,
+};
 
 use super::{boards::Board, person::Person};
 
@@ -73,6 +76,16 @@ impl Post {
         loader
             .load_one(BoardIdForPost(self.board_id))
             .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i16> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(VoteForPostId(self.id))
+            .await
+            .map(|v| v.unwrap_or(0))
             .map_err(|e| e.into())
     }
 }
