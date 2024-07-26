@@ -3,15 +3,17 @@ use dataloader::DataLoader;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates as DbBoardAggregates,
     models::{
-        board::boards::Board as DbBoard, person::local_user::AdminPerms,
+        board::{board_mods::BoardModerator as DbBoardMod, boards::Board as DbBoard},
+        person::local_user::AdminPerms,
         post::posts::Post as DbPost,
     },
     utils::DbPool,
 };
+use tinyboards_utils::TinyBoardsError;
 
 use crate::{newtypes::ModPermsForBoardId, ListingType, LoggedInUser, PostgresLoader, SortType};
 
-use super::post::Post;
+use super::{board_mods::BoardMod, post::Post};
 
 /// GraphQL representation of Board.
 #[derive(SimpleObject, Clone)]
@@ -97,6 +99,21 @@ impl Board {
             .await
             .map(|v| v.unwrap_or(0))
             .map_err(|e| e.into())
+    }
+
+    pub async fn moderators(&self, ctx: &Context<'_>) -> Result<Vec<BoardMod>> {
+        let pool = ctx.data_unchecked::<DbPool>();
+
+        DbBoardMod::for_board(pool, self.id)
+            .await
+            .map(|res| {
+                res.into_iter()
+                    .map(BoardMod::from)
+                    .collect::<Vec<BoardMod>>()
+            })
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to load board mods.").into()
+            })
     }
 
     pub async fn posts<'ctx>(

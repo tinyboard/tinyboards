@@ -93,6 +93,18 @@ impl BoardModerator {
             })
     }
 
+    /// Load the list of board mods for the given board.
+    pub async fn for_board(pool: &DbPool, for_board_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::board_mods::dsl::*;
+
+        board_mods
+            .filter(board_id.eq(for_board_id).and(invite_accepted.eq(true)))
+            .order_by(rank.asc())
+            .load::<Self>(conn)
+            .await
+    }
+
     pub fn has_permission(&self, permission: ModPerms) -> bool {
         self.permissions & permission.as_i32() > 0 || self.permissions & ModPerms::Full.as_i32() > 0
     }
