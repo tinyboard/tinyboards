@@ -272,6 +272,7 @@ impl Post {
             ["ő", "o"],
             ["ű", "u"],
             ["ß", "ss"],
+            [" ", "-"],
         ];
 
         for [from, to] in replaces.iter() {
@@ -279,7 +280,13 @@ impl Post {
         }
 
         let chunk_regex = Regex::new(r"[^a-zA-Z0-9\-]").unwrap();
-        chunk_regex.replace_all(&title, "_").to_string()
+        let chunk = chunk_regex.replace_all(&title, "").to_string();
+
+        if chunk.is_empty() {
+            "-".to_string()
+        } else {
+            chunk
+        }
     }
 
     /// Checks if a posts with a given id exists. Don't use if you need a whole posts object.
@@ -384,6 +391,33 @@ impl Post {
             .set((is_removed.eq(new_removed), updated.eq(naive_now())))
             .get_results::<Self>(conn)
             .await
+    }
+
+    /// Load a single post with its associated aggregates table.
+    pub async fn get_with_counts(
+        pool: &DbPool,
+        id: i32,
+        require_board_not_banned: bool,
+    ) -> Result<(Self, PostAggregates), Error> {
+        use crate::schema::{boards, post_aggregates, posts};
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = posts::table
+            .inner_join(post_aggregates::table)
+            .inner_join(boards::table)
+            .filter(posts::id.eq(id))
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .into_boxed();
+
+        if require_board_not_banned {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
+
+        query.first::<(Self, PostAggregates)>(conn).await
     }
 
     /// Load posts which match the specified criteria, with their associated aggregate tables.

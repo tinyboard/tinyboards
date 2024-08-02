@@ -11,10 +11,10 @@ use tinyboards_utils::TinyBoardsError;
 
 use crate::{
     newtypes::{BoardIdForPost, SavedForPostId, VoteForPostId},
-    LoggedInUser, PostgresLoader,
+    CommentSortType, ListingType, LoggedInUser, PostgresLoader,
 };
 
-use super::{boards::Board, person::Person};
+use super::{boards::Board, comment::Comment, person::Person};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -111,6 +111,60 @@ impl Post {
             })?;
 
         Ok(resp.into_iter().map(Person::from).collect::<Vec<Person>>())
+    }
+
+    pub async fn comments(
+        &self,
+        ctx: &Context<'_>,
+        sort: Option<CommentSortType>,
+        listing_type: Option<ListingType>,
+        page: Option<i64>,
+        limit: Option<i64>,
+        no_tree: Option<bool>,
+        search: Option<String>,
+        top_comment_id: Option<i32>,
+    ) -> Result<Vec<Comment>> {
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
+
+        let person_id_join = match v_opt {
+            Some(v) => v.person.id,
+            None => -1,
+        };
+        let no_tree = search.is_some() || no_tree.unwrap_or(false);
+        let sort = sort.unwrap_or(CommentSortType::Hot);
+        let listing_type = if no_tree {
+            listing_type.unwrap_or(ListingType::All)
+        } else {
+            ListingType::All
+        };
+
+        let mut comments = DbComment::load_with_counts(
+            pool,
+            person_id_join,
+            sort.into(),
+            listing_type.into(),
+            page,
+            limit,
+            None,
+            Some(self.id),
+            None,
+            false,
+            search,
+            true,
+            true,
+            true,
+        )
+        .await?
+        .into_iter()
+        .map(Comment::from)
+        .collect::<Vec<Comment>>();
+
+        if !no_tree {
+            comments = Comment::tree(comments, top_comment_id);
+        }
+
+        Ok(comments)
     }
 }
 

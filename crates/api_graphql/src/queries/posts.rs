@@ -1,20 +1,34 @@
 use async_graphql::*;
-use tinyboards_db::{models::post::posts::Post as DbPost, utils::DbPool};
+use tinyboards_db::{
+    models::{person::local_user::AdminPerms, post::posts::Post as DbPost},
+    utils::DbPool,
+};
 use tinyboards_db_views::post_view::PostQuery;
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{
-    structs::post::Post,
-    LoggedInUser,
-    ListingType,
-    SortType
-};
+use crate::{structs::post::Post, ListingType, LoggedInUser, SortType};
 
 #[derive(Default)]
 pub struct QueryPosts;
 
 #[Object]
 impl QueryPosts {
+    pub async fn post(&self, ctx: &Context<'_>, id: i32) -> Result<Post> {
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
+
+        let require_board_not_banned = match v_opt {
+            Some(v) => !v.local_user.has_permission(AdminPerms::Boards),
+            None => true,
+        };
+
+        let res = DbPost::get_with_counts(pool, id, require_board_not_banned)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 404, "Post not found"))?;
+
+        Ok(Post::from(res))
+    }
+
     pub async fn list_posts<'ctx>(
         &self,
         ctx: &Context<'ctx>,

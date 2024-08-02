@@ -1,10 +1,11 @@
-use crate::aggregates::structs::PersonAggregates;
+use crate::aggregates::structs::{CommentAggregates, PersonAggregates};
 use crate::models::comment::comment_report::CommentReport;
 use crate::models::person::person::Person;
 use crate::newtypes::DbUrl;
 use crate::schema::comments::dsl::*;
 use crate::traits::Moderateable;
-use crate::utils::naive_now;
+use crate::utils::functions::hot_rank;
+use crate::utils::{fuzzy_search, limit_and_offset_unlimited, naive_now};
 use crate::{
     models::comment::comments::{Comment, CommentForm},
     models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
@@ -12,6 +13,7 @@ use crate::{
     traits::Crud,
     utils::{get_conn, DbPool},
 };
+use crate::{CommentSortType, ListingType};
 use diesel::{prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
@@ -38,6 +40,102 @@ impl Comment {
             .await
     }
 
+    /// List comments with counts
+    pub async fn load_with_counts(
+        pool: &DbPool,
+        person_id_join: i32,
+        sort: CommentSortType,
+        listing_type: ListingType,
+        page: Option<i64>,
+        limit: Option<i64>,
+        for_user: Option<i32>,
+        for_post: Option<i32>,
+        for_board: Option<i32>,
+        saved_only: bool,
+        search_term: Option<String>,
+        include_deleted: bool,
+        include_removed: bool,
+        include_banned_boards: bool,
+    ) -> Result<Vec<(Self, CommentAggregates)>, Error> {
+        use crate::schema::{
+            board_mods, board_subscriber, boards, comment_aggregates, comment_saved, comments,
+        };
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = comments::table
+            .inner_join(comment_aggregates::table)
+            .inner_join(boards::table.on(boards::id.eq(comments::board_id)))
+            .left_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(comments::board_id)
+                    .and(board_mods::person_id.eq(person_id_join))),
+            )
+            .left_join(
+                board_subscriber::table.on(board_subscriber::board_id
+                    .eq(comments::board_id)
+                    .and(board_subscriber::person_id.eq(person_id_join))),
+            )
+            .left_join(
+                comment_saved::table.on(comment_saved::comment_id
+                    .eq(comments::id)
+                    .and(comment_saved::person_id.eq(person_id_join))),
+            )
+            .select((comments::all_columns, comment_aggregates::all_columns))
+            .into_boxed();
+
+        if !include_deleted {
+            query = query.filter(comments::is_deleted.eq(false));
+        }
+
+        if !include_removed {
+            query = query.filter(comments::is_removed.eq(false));
+        }
+
+        if saved_only {
+            query = query.filter(comment_saved::id.is_not_null());
+        }
+
+        if let Some(person_id) = for_user {
+            query = query.filter(comments::creator_id.eq(person_id));
+        }
+
+        if let Some(board_id_) = for_board {
+            query = query.filter(comments::board_id.eq(board_id_));
+        }
+
+        if let Some(post_id_) = for_post {
+            query = query.filter(comments::post_id.eq(post_id_));
+        }
+
+        if let Some(search) = search_term {
+            query = query.filter(comments::body.ilike(fuzzy_search(search.as_str())));
+        }
+
+        query = match listing_type {
+            ListingType::All => query,
+            ListingType::Subscribed => query.filter(board_subscriber::id.is_not_null()),
+            ListingType::Local => query.filter(comments::local.eq(true)),
+            ListingType::Moderated => query.filter(board_mods::id.is_not_null()),
+        };
+
+        query = match sort {
+            CommentSortType::Hot => query
+                .then_order_by(
+                    hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
+                )
+                .then_order_by(comment_aggregates::creation_date.desc()),
+            CommentSortType::New => query.then_order_by(comments::creation_date.desc()),
+            CommentSortType::Old => query.then_order_by(comments::creation_date.asc()),
+            CommentSortType::Top => query.order_by(comment_aggregates::score.desc()),
+        };
+
+        let (limit, offset) = limit_and_offset_unlimited(page, limit);
+
+        query = query.limit(limit).offset(offset);
+
+        query.load::<(Self, CommentAggregates)>(conn).await
+    }
+
     pub async fn permadelete_for_creator(
         pool: &DbPool,
         for_creator_id: i32,
@@ -46,7 +144,8 @@ impl Comment {
         let conn = &mut get_conn(pool).await?;
         diesel::update(comments.filter(creator_id.eq(for_creator_id)))
             .set((
-                body.eq("*Permananently Deleted*"),
+                body.eq("[ contents deleted permanently ]"),
+                body_html.eq("<p>[ contents deleted permanently ]</p>"),
                 is_deleted.eq(true),
                 updated.eq(naive_now()),
             ))

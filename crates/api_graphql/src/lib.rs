@@ -108,3 +108,16 @@ pub enum ListingType {
     #[graphql(name = "moderated")]
     Moderated,
 }
+
+#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[graphql(remote = "tinyboards_db::CommentSortType")]
+pub enum CommentSortType {
+    #[graphql(name = "hot")]
+    Hot,
+    #[graphql(name = "top")]
+    Top,
+    #[graphql(name = "new")]
+    New,
+    #[graphql(name = "old")]
+    Old,
+}
