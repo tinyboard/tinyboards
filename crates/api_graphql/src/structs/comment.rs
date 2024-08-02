@@ -6,6 +6,8 @@ use tinyboards_db::{
     models::comment::comments::Comment as DbComment,
 };
 
+use crate::Censorable;
+
 #[derive(SimpleObject)]
 pub struct Comment {
     id: i32,
@@ -98,5 +100,35 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             counts,
             replies: None,
         }
+    }
+}
+
+impl Censorable for Comment {
+    /// Censor comment body for deleted/removed comments. Used when comments are nested.
+    fn censor(&mut self, my_person_id: i32, is_admin: bool, is_mod: bool) {
+        // nothing to do here lol
+        if !(self.is_removed || self.is_deleted) {
+            return;
+        }
+
+        // admins see everything
+        if is_admin {
+            return;
+        }
+
+        // mods can see removed content, and you can see your own removed content
+        if self.is_removed && (is_mod || self.creator_id == my_person_id) {
+            return;
+        }
+
+        let censor_text = if self.is_deleted {
+            "[ deleted by creator ]"
+        } else {
+            "[ removed by mod or admin ]"
+        }
+        .to_string();
+
+        self.body = censor_text.clone();
+        self.body_html = censor_text;
     }
 }

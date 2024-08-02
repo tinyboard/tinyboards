@@ -68,6 +68,11 @@ impl LoggedInUser {
     }
 }
 
+// censor contents of deleted/removed posts/comments
+pub(crate) trait Censorable {
+    fn censor(&mut self, my_person_id: i32, is_admin: bool, is_mod: bool);
+}
+
 // custom enums from the db crate
 #[derive(Enum, Copy, Clone, Eq, PartialEq)]
 #[graphql(remote = "tinyboards_db::SortType")]

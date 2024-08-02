@@ -2,7 +2,12 @@ use async_graphql::*;
 use dataloader::DataLoader;
 use tinyboards_db::{
     aggregates::structs::PostAggregates as DbPostAggregates,
-    models::{comment::comments::Comment as DbComment, post::posts::Post as DbPost},
+    models::{
+        board::board_mods::{BoardModerator as DbBoardMod, ModPerms},
+        comment::comments::Comment as DbComment,
+        person::local_user::AdminPerms,
+        post::posts::Post as DbPost,
+    },
     newtypes::UserId,
     utils::DbPool,
 };
@@ -11,7 +16,7 @@ use tinyboards_utils::TinyBoardsError;
 
 use crate::{
     newtypes::{BoardIdForPost, SavedForPostId, VoteForPostId},
-    CommentSortType, ListingType, LoggedInUser, PostgresLoader,
+    Censorable, CommentSortType, ListingType, LoggedInUser, PostgresLoader,
 };
 
 use super::{boards::Board, comment::Comment, person::Person};
@@ -131,13 +136,37 @@ impl Post {
             Some(v) => v.person.id,
             None => -1,
         };
+        let is_admin = match v_opt {
+            Some(v) => v.local_user.has_permission(AdminPerms::Content),
+            None => false,
+        };
+        let is_mod = match v_opt {
+            Some(v) => {
+                let mod_rel =
+                    DbBoardMod::get_by_person_id_for_board(pool, v.person.id, self.board_id, true)
+                        .await;
+                match mod_rel {
+                    Ok(m) => m.has_permission(ModPerms::Content),
+                    Err(_) => false,
+                }
+            }
+            None => false,
+        };
+
+        // We do not nest comments if there is a search, or the user explicitly doesn't want it
         let no_tree = search.is_some() || no_tree.unwrap_or(false);
+        // Default sort type
         let sort = sort.unwrap_or(CommentSortType::Hot);
+        // Setting listing type is only allowed if we don't nest comments: for nesting, we always need all comments
         let listing_type = if no_tree {
             listing_type.unwrap_or(ListingType::All)
         } else {
             ListingType::All
         };
+        // we only load removed comments if we are nesting comments, or the user can view removed comments (is mod or admin)
+        let include_removed = !no_tree || is_admin || is_mod;
+        // same here, except only admins can see deleted comments
+        let include_deleted = !no_tree || is_admin;
 
         let mut comments = DbComment::load_with_counts(
             pool,
@@ -151,8 +180,9 @@ impl Post {
             None,
             false,
             search,
-            true,
-            true,
+            // inclulde deleted and removed:
+            include_deleted,
+            include_removed,
             true,
         )
         .await?
@@ -160,6 +190,14 @@ impl Post {
         .map(Comment::from)
         .collect::<Vec<Comment>>();
 
+        // if we are nesting comments and the user isn't an admin, censor removed and deleted comments
+        if !(no_tree || is_admin) {
+            for comment in comments.iter_mut() {
+                comment.censor(person_id_join, is_admin, is_mod);
+            }
+        }
+
+        // nest/tree comments
         if !no_tree {
             comments = Comment::tree(comments, top_comment_id);
         }
