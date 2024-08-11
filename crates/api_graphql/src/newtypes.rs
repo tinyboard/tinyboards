@@ -2,59 +2,36 @@
  * These are newtypes created only to be distinct types for various DataLoader implementations.
 */
 
-#[derive(Clone, Hash, Eq, PartialEq)]
-pub(crate) struct PersonId(i32);
+// This macro is comfy and eliminates repetition
+macro_rules! generate_newtypes {
+    ( $($i:ident),+ ) => {
+            $(
+                #[derive(Clone, Hash, Eq, PartialEq)]
+                pub(crate) struct $i(pub i32);
 
-impl From<i32> for PersonId {
-    fn from(value: i32) -> Self {
-        Self(value)
-    }
+                impl From<i32> for $i {
+                    fn from(value: i32) -> Self {
+                        Self(value)
+                    }
+                }
+
+                impl Into<i32> for $i {
+                    fn into(self) -> i32 {
+                        self.0
+                    }
+                }
+            )+
+        }
 }
 
-impl Into<i32> for PersonId {
-    fn into(self) -> i32 {
-        self.0
-    }
-}
-
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
-pub(crate) struct BoardIdForPost(pub i32);
-
-impl From<i32> for BoardIdForPost {
-    fn from(value: i32) -> Self {
-        Self(value)
-    }
-}
-
-impl Into<i32> for BoardIdForPost {
-    fn into(self) -> i32 {
-        self.0
-    }
-}
-
-#[derive(Clone, Hash, Eq, PartialEq)]
-pub(crate) struct VoteForPostId(pub i32);
-
-impl Into<i32> for VoteForPostId {
-    fn into(self) -> i32 {
-        self.0
-    }
-}
-
-#[derive(Clone, Hash, Eq, PartialEq)]
-pub(crate) struct SavedForPostId(pub i32);
-
-impl Into<i32> for SavedForPostId {
-    fn into(self) -> i32 {
-        self.0
-    }
-}
-
-#[derive(Clone, Hash, Eq, PartialEq)]
-pub(crate) struct ModPermsForBoardId(pub i32);
-
-impl Into<i32> for ModPermsForBoardId {
-    fn into(self) -> i32 {
-        self.0
-    }
-}
+generate_newtypes![
+    PersonId,
+    BoardIdForComment,
+    PostIdForComment,
+    VoteForCommentId,
+    SavedForCommentId,
+    BoardIdForPost,
+    VoteForPostId,
+    SavedForPostId,
+    ModPermsForBoardId
+];

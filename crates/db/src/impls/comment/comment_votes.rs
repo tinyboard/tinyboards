@@ -1,11 +1,40 @@
 use crate::{
     models::comment::comment_votes::{CommentVote, CommentVoteForm},
-    traits::Voteable, 
+    traits::Voteable,
     utils::{get_conn, DbPool},
 };
-use diesel::{prelude::*};
-use tinyboards_utils::TinyBoardsError;
+use diesel::prelude::*;
+use diesel::result::Error;
 use diesel_async::RunQueryDsl;
+use tinyboards_utils::TinyBoardsError;
+
+impl CommentVote {
+    /// Returns my vote type for each comment ids.
+    pub async fn get_my_vote_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+        for_person_id: i32,
+    ) -> Result<Vec<(i32, i16)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{comment_votes, comments};
+
+        comments::table
+            .left_join(
+                comment_votes::table.on(comment_votes::comment_id
+                    .eq(comments::id)
+                    .and(comment_votes::person_id.eq(for_person_id))),
+            )
+            .filter(comments::id.eq_any(ids))
+            .select((comments::id, comment_votes::score.nullable()))
+            .load::<(i32, Option<i16>)>(conn)
+            .await
+            .map(|list| {
+                list.into_iter()
+                    .map(|(comment_id, vote_type)| (comment_id, vote_type.unwrap_or(0)))
+                    .collect::<Vec<(i32, i16)>>()
+            })
+    }
+}
 
 #[async_trait::async_trait]
 impl Voteable for CommentVote {

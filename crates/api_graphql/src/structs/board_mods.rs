@@ -1,9 +1,9 @@
 use async_graphql::*;
 use dataloader::DataLoader;
-use tinyboards_db::{models::board::board_mods::BoardModerator as DbBoardMod, newtypes::UserId};
+use tinyboards_db::models::board::board_mods::BoardModerator as DbBoardMod;
 use tinyboards_utils::TinyBoardsError;
 
-use crate::PostgresLoader;
+use crate::{newtypes::PersonId, PostgresLoader};
 
 use super::person::Person;
 
@@ -25,7 +25,7 @@ impl BoardMod {
     pub async fn person(&self, ctx: &Context<'_>) -> Result<Person> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
 
-        loader.load_one(UserId(self.person_id)).await.map(|opt| {
+        loader.load_one(PersonId(self.person_id)).await.map(|opt| {
             opt.ok_or_else(|| {
                 TinyBoardsError::from_message(
                     500,

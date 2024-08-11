@@ -1,14 +1,24 @@
 use std::collections::HashMap;
 
 use async_graphql::*;
+use dataloader::DataLoader;
 use tinyboards_db::{
     aggregates::structs::CommentAggregates as DbCommentAggregates,
     models::comment::comments::Comment as DbComment,
 };
 
-use crate::Censorable;
+use crate::{
+    newtypes::{
+        BoardIdForComment, PersonId, PostIdForComment, SavedForCommentId, VoteForCommentId,
+    },
+    structs::{boards::Board, person::Person},
+    Censorable, PostgresLoader,
+};
+
+use super::post::Post;
 
 #[derive(SimpleObject)]
+#[graphql(complex)]
 pub struct Comment {
     id: i32,
     creator_id: i32,
@@ -16,9 +26,9 @@ pub struct Comment {
     parent_id: Option<i32>,
     body: String,
     body_html: String,
-    is_removed: bool,
+    pub(crate) is_removed: bool,
     is_locked: bool,
-    is_deleted: bool,
+    pub(crate) is_deleted: bool,
     creation_date: String,
     level: i32,
     updated: Option<String>,
@@ -77,6 +87,65 @@ impl Comment {
         }
 
         tree
+    }
+}
+
+#[ComplexObject]
+impl Comment {
+    pub async fn score(&self) -> i64 {
+        self.counts.score
+    }
+
+    pub async fn upvotes(&self) -> i64 {
+        self.counts.upvotes
+    }
+
+    pub async fn downvotes(&self) -> i64 {
+        self.counts.downvotes
+    }
+
+    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(PersonId(self.creator_id))
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn board(&self, ctx: &Context<'_>) -> Result<Option<Board>> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(BoardIdForComment(self.board_id))
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn post(&self, ctx: &Context<'_>) -> Result<Option<Post>> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(PostIdForComment(self.post_id))
+            .await
+            .map_err(|e| e.into())
+    }
+
+    pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i16> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(VoteForCommentId(self.id))
+            .await
+            .map(|v| v.unwrap_or(0))
+            .map_err(|e| e.into())
+    }
+
+    pub async fn is_saved(&self, ctx: &Context<'_>) -> Result<bool> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(SavedForCommentId(self.id))
+            .await
+            .map(|v| v.unwrap_or(false))
+            .map_err(|e| e.into())
     }
 }
 

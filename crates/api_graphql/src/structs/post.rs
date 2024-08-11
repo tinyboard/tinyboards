@@ -8,20 +8,19 @@ use tinyboards_db::{
         person::local_user::AdminPerms,
         post::posts::Post as DbPost,
     },
-    newtypes::UserId,
     utils::DbPool,
 };
 use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    newtypes::{BoardIdForPost, SavedForPostId, VoteForPostId},
+    newtypes::{BoardIdForPost, PersonId, SavedForPostId, VoteForPostId},
     Censorable, CommentSortType, ListingType, LoggedInUser, PostgresLoader,
 };
 
 use super::{boards::Board, comment::Comment, person::Person};
 
-#[derive(SimpleObject)]
+#[derive(SimpleObject, Clone)]
 #[graphql(complex)]
 pub struct Post {
     id: i32,
@@ -73,7 +72,7 @@ impl Post {
     pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
-            .load_one(UserId(self.creator_id))
+            .load_one(PersonId(self.creator_id))
             .await
             .map_err(|e| e.into())
     }
@@ -128,6 +127,7 @@ impl Post {
         no_tree: Option<bool>,
         search: Option<String>,
         top_comment_id: Option<i32>,
+        context: Option<u16>,
     ) -> Result<Vec<Comment>> {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
@@ -168,38 +168,66 @@ impl Post {
         // same here, except only admins can see deleted comments
         let include_deleted = !no_tree || is_admin;
 
-        let mut comments = DbComment::load_with_counts(
-            pool,
-            person_id_join,
-            sort.into(),
-            listing_type.into(),
-            page,
-            limit,
-            None,
-            Some(self.id),
-            None,
-            false,
-            search,
-            // inclulde deleted and removed:
-            include_deleted,
-            include_removed,
-            true,
-        )
-        .await?
-        .into_iter()
-        .map(Comment::from)
-        .collect::<Vec<Comment>>();
+        // `tree_top_comment_id` is the id of the top comment.
+        // This may differ from the provided `top_comment_id` if context > 0, because then we're requesting the parent comments of the top comment
+        let (tree_top_comment_id, mut comments) = if let Some(top_comment_id) = top_comment_id {
+            let (tree_top_comment_id, db_comments_with_counts) =
+                DbComment::get_with_replies_and_counts(
+                    pool,
+                    top_comment_id,
+                    context,
+                    sort.into(),
+                    person_id_join,
+                    Some(self.id),
+                )
+                .await?;
+
+            let comments = db_comments_with_counts
+                .into_iter()
+                .map(Comment::from)
+                .collect::<Vec<Comment>>();
+
+            (Some(tree_top_comment_id), comments)
+        } else {
+            let comments = DbComment::load_with_counts(
+                pool,
+                person_id_join,
+                sort.into(),
+                listing_type.into(),
+                page,
+                limit,
+                None,
+                Some(self.id),
+                None,
+                false,
+                search,
+                // inclulde deleted and removed:
+                include_deleted,
+                include_removed,
+                true,
+                None,
+            )
+            .await?
+            .into_iter()
+            .map(Comment::from)
+            .collect::<Vec<Comment>>();
+
+            (None, comments)
+        };
 
         // if we are nesting comments and the user isn't an admin, censor removed and deleted comments
         if !(no_tree || is_admin) {
-            for comment in comments.iter_mut() {
+            for comment in comments
+                .iter_mut()
+                .filter(|comment| comment.is_removed || comment.is_deleted)
+            {
                 comment.censor(person_id_join, is_admin, is_mod);
             }
         }
 
         // nest/tree comments
         if !no_tree {
-            comments = Comment::tree(comments, top_comment_id);
+            comments = Comment::tree(comments, tree_top_comment_id);
         }
 
         Ok(comments)

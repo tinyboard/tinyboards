@@ -25,12 +25,10 @@ impl Person {
 
     pub async fn get_with_counts_for_ids(
         pool: &DbPool,
-        ids: &[UserId],
+        ids: Vec<i32>,
     ) -> Result<Vec<(Self, PersonAggregates)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::person::dsl::*;
-
-        let ids = ids.into_iter().map(|x| x.0).collect::<Vec<i32>>();
 
         person
             .inner_join(person_aggregates::table)

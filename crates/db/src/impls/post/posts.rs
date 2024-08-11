@@ -1,5 +1,6 @@
 use crate::aggregates::structs::PostAggregates;
 use crate::models::post::post_report::PostReport;
+//use crate::pagination::Paginate;
 use crate::utils::functions::hot_rank;
 use crate::utils::limit_and_offset;
 use crate::{
@@ -418,6 +419,33 @@ impl Post {
         }
 
         query.first::<(Self, PostAggregates)>(conn).await
+    }
+
+    /// Load posts for the given ids.
+    pub async fn load_with_counts_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+        require_board_not_banned: bool,
+    ) -> Result<Vec<(Self, PostAggregates)>, Error> {
+        use crate::schema::{boards, post_aggregates, posts};
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = posts::table
+            .inner_join(post_aggregates::table)
+            .inner_join(boards::table)
+            .filter(posts::id.eq_any(ids))
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .into_boxed();
+
+        if require_board_not_banned {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
+
+        query.load::<(Self, PostAggregates)>(conn).await
     }
 
     /// Load posts which match the specified criteria, with their associated aggregate tables.

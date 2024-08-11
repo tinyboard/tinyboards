@@ -14,6 +14,7 @@ use crate::{
     utils::{get_conn, DbPool},
 };
 use crate::{CommentSortType, ListingType};
+use diesel::associations::HasTable;
 use diesel::{prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
@@ -40,6 +41,22 @@ impl Comment {
             .await
     }
 
+    /// Get a single comment with its counts
+    pub async fn get_with_counts(
+        pool: &DbPool,
+        id_: i32,
+    ) -> Result<(Self, CommentAggregates), Error> {
+        use crate::schema::{comment_aggregates, comments};
+        let conn = &mut get_conn(pool).await?;
+
+        comments::table
+            .inner_join(comment_aggregates::table)
+            .filter(comments::id.eq(id_))
+            .select((comments::all_columns, comment_aggregates::all_columns))
+            .first::<(Self, CommentAggregates)>(conn)
+            .await
+    }
+
     /// List comments with counts
     pub async fn load_with_counts(
         pool: &DbPool,
@@ -56,6 +73,7 @@ impl Comment {
         include_deleted: bool,
         include_removed: bool,
         include_banned_boards: bool,
+        parent_ids: Option<&Vec<i32>>,
     ) -> Result<Vec<(Self, CommentAggregates)>, Error> {
         use crate::schema::{
             board_mods, board_subscriber, boards, comment_aggregates, comment_saved, comments,
@@ -82,6 +100,14 @@ impl Comment {
             )
             .select((comments::all_columns, comment_aggregates::all_columns))
             .into_boxed();
+
+        if !include_banned_boards {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
 
         if !include_deleted {
             query = query.filter(comments::is_deleted.eq(false));
@@ -111,6 +137,10 @@ impl Comment {
             query = query.filter(comments::body.ilike(fuzzy_search(search.as_str())));
         }
 
+        if let Some(parent_ids) = parent_ids {
+            query = query.filter(comments::parent_id.eq_any(parent_ids));
+        }
+
         query = match listing_type {
             ListingType::All => query,
             ListingType::Subscribed => query.filter(board_subscriber::id.is_not_null()),
@@ -134,6 +164,74 @@ impl Comment {
         query = query.limit(limit).offset(offset);
 
         query.load::<(Self, CommentAggregates)>(conn).await
+    }
+
+    /// List a comment with its replies and optionally parents (max value for context is 3) (returns a tuple with the top comment id and the comments)
+    pub async fn get_with_replies_and_counts(
+        pool: &DbPool,
+        id_: i32,
+        context: Option<u16>,
+        sort: CommentSortType,
+        person_id_join: i32,
+        check_for_post_id: Option<i32>,
+    ) -> Result<(i32, Vec<(Self, CommentAggregates)>), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{comment_aggregates, comments};
+
+        let context = std::cmp::min(context.unwrap_or(0), 3);
+        let comment_with_counts = Self::get_with_counts(pool, id_).await?;
+
+        // Check if the comment belongs to a given post
+        if let Some(post_id_) = check_for_post_id {
+            if post_id_ != comment_with_counts.0.post_id {
+                return Err(Error::NotFound);
+            }
+        }
+
+        let mut parent_id_opt = comment_with_counts.0.parent_id;
+        let mut ids = vec![comment_with_counts.0.id];
+        let mut comment_list = vec![comment_with_counts];
+        let mut top_comment_id = id_;
+
+        // load parent comment, and then the parent of the parent comment, ...
+        for _ in 0..context {
+            if let Some(parent_id_) = parent_id_opt {
+                let parent_comment_with_counts = Self::get_with_counts(pool, parent_id_).await?;
+                top_comment_id = parent_comment_with_counts.0.id;
+                parent_id_opt = parent_comment_with_counts.0.parent_id;
+                comment_list.push(parent_comment_with_counts);
+            }
+        }
+
+        // load comment replies, and then the replies of those comments, ...
+        for _ in 0..5 - context {
+            let mut replies_with_counts = Self::load_with_counts(
+                pool,
+                person_id_join,
+                sort,
+                ListingType::All,
+                None,
+                None,
+                None,
+                None,
+                None,
+                false,
+                None,
+                true,
+                true,
+                true,
+                Some(&ids),
+            )
+            .await?;
+            ids = replies_with_counts
+                .iter()
+                .map(|(comment, _)| comment.id)
+                .collect::<Vec<i32>>();
+
+            comment_list.append(&mut replies_with_counts);
+        }
+
+        Ok((top_comment_id, comment_list))
     }
 
     pub async fn permadelete_for_creator(

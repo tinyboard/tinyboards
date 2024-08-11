@@ -3,26 +3,29 @@ use dataloader::Loader;
 use std::collections::HashMap;
 use tinyboards_db::models::post::post_saved::PostSaved as DbPostSaved;
 use tinyboards_db::models::post::post_votes::PostVote as DbPostVote;
-use tinyboards_db::models::{board::boards::Board as DbBoard, person::person::Person as DbPerson};
+use tinyboards_db::models::{
+    board::boards::Board as DbBoard, person::person::Person as DbPerson,
+    post::posts::Post as DbPost,
+};
 use tinyboards_utils::TinyBoardsError;
 
-use crate::newtypes::{PersonId, SavedForPostId, VoteForPostId};
+use crate::newtypes::{PersonId, PostIdForComment, SavedForCommentId, VoteForCommentId};
 use crate::{
-    newtypes::BoardIdForPost,
-    structs::{boards::Board, person::Person},
+    newtypes::BoardIdForComment,
+    structs::{boards::Board, person::Person, post::Post},
     PostgresLoader,
 };
 
-impl Loader<BoardIdForPost> for PostgresLoader {
+impl Loader<BoardIdForComment> for PostgresLoader {
     type Value = Board;
     type Error = TinyBoardsError;
 
     async fn load(
         &self,
-        keys: &[BoardIdForPost],
+        keys: &[BoardIdForComment],
     ) -> Result<
-        HashMap<BoardIdForPost, <Self as Loader<BoardIdForPost>>::Value>,
-        <Self as Loader<BoardIdForPost>>::Error,
+        HashMap<BoardIdForComment, <Self as Loader<BoardIdForComment>>::Value>,
+        <Self as Loader<BoardIdForComment>>::Error,
     > {
         let keys = keys.iter().map(|k| k.0).collect::<Vec<i32>>();
 
@@ -36,16 +39,39 @@ impl Loader<BoardIdForPost> for PostgresLoader {
     }
 }
 
-impl Loader<VoteForPostId> for PostgresLoader {
+impl Loader<PostIdForComment> for PostgresLoader {
+    type Value = Post;
+    type Error = TinyBoardsError;
+
+    async fn load(
+        &self,
+        keys: &[PostIdForComment],
+    ) -> Result<
+        HashMap<PostIdForComment, <Self as Loader<PostIdForComment>>::Value>,
+        <Self as Loader<PostIdForComment>>::Error,
+    > {
+        let keys = keys.iter().map(|k| k.0).collect::<Vec<i32>>();
+
+        let list = DbPost::load_with_counts_for_ids(&self.pool, keys, false)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load posts."))?;
+
+        Ok(HashMap::from_iter(list.into_iter().map(
+            |(post, counts)| (post.id.into(), Post::from((post, counts))),
+        )))
+    }
+}
+
+impl Loader<VoteForCommentId> for PostgresLoader {
     type Value = i16;
     type Error = TinyBoardsError;
 
     async fn load(
         &self,
-        keys: &[VoteForPostId],
+        keys: &[VoteForCommentId],
     ) -> Result<
-        HashMap<VoteForPostId, <Self as Loader<VoteForPostId>>::Value>,
-        <Self as Loader<VoteForPostId>>::Error,
+        HashMap<VoteForCommentId, <Self as Loader<VoteForCommentId>>::Value>,
+        <Self as Loader<VoteForCommentId>>::Error,
     > {
         let my_person_id = self.my_person_id;
 
@@ -58,21 +84,21 @@ impl Loader<VoteForPostId> for PostgresLoader {
             })?;
 
         Ok(HashMap::from_iter(list.into_iter().map(
-            |(post_id, vote_type)| (VoteForPostId(post_id), vote_type),
+            |(post_id, vote_type)| (VoteForCommentId(post_id), vote_type),
         )))
     }
 }
 
-impl Loader<SavedForPostId> for PostgresLoader {
+impl Loader<SavedForCommentId> for PostgresLoader {
     type Value = bool;
     type Error = TinyBoardsError;
 
     async fn load(
         &self,
-        keys: &[SavedForPostId],
+        keys: &[SavedForCommentId],
     ) -> Result<
-        HashMap<SavedForPostId, <Self as Loader<SavedForPostId>>::Value>,
-        <Self as Loader<SavedForPostId>>::Error,
+        HashMap<SavedForCommentId, <Self as Loader<SavedForCommentId>>::Value>,
+        <Self as Loader<SavedForCommentId>>::Error,
     > {
         let keys = keys.into_iter().map(|id| id.0).collect::<Vec<i32>>();
 
@@ -83,7 +109,7 @@ impl Loader<SavedForPostId> for PostgresLoader {
             })?;
 
         Ok(HashMap::from_iter(list.into_iter().map(
-            |(post_id, is_saved)| (SavedForPostId(post_id), is_saved),
+            |(post_id, is_saved)| (SavedForCommentId(post_id), is_saved),
         )))
     }
 }

@@ -146,7 +146,7 @@ impl Board {
             true
         };
 
-        let resp = DbPost::load_with_counts(
+        let posts = DbPost::load_with_counts(
             pool,
             person_id_join,
             Some(limit),
@@ -160,7 +160,7 @@ impl Board {
         )
         .await?;
 
-        Ok(resp.into_iter().map(Post::from).collect::<Vec<Post>>())
+        Ok(posts.into_iter().map(Post::from).collect::<Vec<Post>>())
     }
 }
 
