@@ -4,7 +4,8 @@ use crate::{
     newtypes::{DbUrl, UserId},
     schema::{instance, person, person_aggregates},
     traits::{ApubActor, Crud},
-    utils::{functions::lower, fuzzy_search, get_conn, naive_now, DbPool},
+    utils::{functions::lower, fuzzy_search, get_conn, limit_and_offset, naive_now, DbPool},
+    UserListingType, UserSortType,
 };
 use diesel::pg::expression::dsl::any;
 
@@ -14,6 +15,27 @@ use diesel::{prelude::*, result::Error};
 use diesel_async::RunQueryDsl;
 
 impl Person {
+    pub async fn get_with_counts_for_name(
+        pool: &DbPool,
+        username: String,
+    ) -> Result<(Self, PersonAggregates), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{person, person_aggregates};
+
+        person::table
+            .inner_join(person_aggregates::table)
+            .filter(
+                person::name.ilike(
+                    username
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<(Self, PersonAggregates)>(conn)
+            .await
+    }
+
     pub async fn search_by_name(pool: &DbPool, query: &str) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::person::dsl::*;
@@ -185,6 +207,56 @@ impl Person {
             .set(form)
             .get_result::<Self>(conn)
             .await
+    }
+
+    /// Load a bunch of people with their counts.
+    pub async fn list_with_counts(
+        pool: &DbPool,
+        sort: UserSortType,
+        limit: Option<i64>,
+        page: Option<i64>,
+        listing_type: UserListingType,
+        search_term: Option<String>,
+    ) -> Result<Vec<(Person, PersonAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{person, person_aggregates /*, local_user */};
+
+        let mut query = person::table
+            .inner_join(person_aggregates::table)
+            //.left_join(local_user::table.on(local_user::person_id.eq(person::id)))
+            .select((person::all_columns, person_aggregates::all_columns))
+            .into_boxed();
+
+        query = match sort {
+            UserSortType::New => query.then_order_by(person::creation_date.desc()),
+            UserSortType::Old => query.then_order_by(person::creation_date.asc()),
+            UserSortType::MostRep => query.then_order_by(person_aggregates::rep.desc()),
+            UserSortType::MostPosts => query.then_order_by(person_aggregates::post_count.desc()),
+            UserSortType::MostComments => {
+                query.then_order_by(person_aggregates::comment_count.desc())
+            }
+        };
+
+        if let Some(ref search) = search_term {
+            query = query.filter(
+                person::name
+                    .ilike(fuzzy_search(search))
+                    .or(person::display_name.ilike(fuzzy_search(search))),
+            );
+        }
+
+        query = match listing_type {
+            UserListingType::All => query,
+            UserListingType::NotBanned => query.filter(person::is_banned.eq(false)),
+            UserListingType::Banned => query.filter(person::is_banned.eq(true)),
+            UserListingType::Admins => query.filter(person::is_admin.eq(true)),
+        };
+
+        let (limit, offset) = limit_and_offset(page, limit)?;
+
+        query = query.limit(limit).offset(offset);
+
+        query.load::<(Person, PersonAggregates)>(conn).await
     }
 }
 

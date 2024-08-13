@@ -108,6 +108,13 @@ pub enum ListingType {
     Moderated,
 }
 
+pub enum UserListingType {
+    All,
+    NotBanned,
+    Banned,
+    Admins,
+}
+
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SearchType {
     #[strum(ascii_case_insensitive)]

@@ -1,3 +1,4 @@
-pub mod me;
-pub mod posts;
 pub mod boards;
+pub mod me;
+pub mod person;
+pub mod posts;
