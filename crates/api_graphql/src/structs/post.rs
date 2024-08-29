@@ -14,7 +14,7 @@ use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    newtypes::{BoardIdForPost, PersonId, SavedForPostId, VoteForPostId},
+    newtypes::{BoardId, PersonId, SavedForPostId, VoteForPostId},
     Censorable, CommentSortType, ListingType, LoggedInUser, PostgresLoader,
 };
 
@@ -80,7 +80,7 @@ impl Post {
     pub async fn board(&self, ctx: &Context<'_>) -> Result<Option<Board>> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
-            .load_one(BoardIdForPost(self.board_id))
+            .load_one(BoardId(self.board_id))
             .await
             .map_err(|e| e.into())
     }
@@ -231,6 +231,44 @@ impl Post {
         }
 
         Ok(comments)
+    }
+}
+
+impl Censorable for Post {
+    fn censor(&mut self, my_person_id: i32, is_admin: bool, is_mod: bool) {
+        // do nothing
+        if !(self.is_removed || self.is_deleted) {
+            return;
+        }
+
+        // do nothing if admin either
+        if is_admin {
+            return;
+        }
+
+        // you can see your own removed content
+        if self.is_removed && (is_mod || self.creator_id == my_person_id) {
+            return;
+        }
+
+        let obscure_text = if self.is_deleted {
+            "[ deleted by creator ]"
+        } else {
+            "[ removed by mod ]"
+        }
+        .to_string();
+
+        // more strict censoring for deleted posts
+        if self.is_deleted {
+            self.title = obscure_text.clone();
+            self.creator_id = -1;
+        }
+
+        self.body = obscure_text.clone();
+        self.body_html = obscure_text;
+
+        self.url = None;
+        self.type_ = "text".to_string();
     }
 }
 

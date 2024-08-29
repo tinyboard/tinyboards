@@ -26,11 +26,10 @@ macro_rules! generate_newtypes {
 
 generate_newtypes![
     PersonId,
-    BoardIdForComment,
     PostIdForComment,
     VoteForCommentId,
     SavedForCommentId,
-    BoardIdForPost,
+    BoardId,
     VoteForPostId,
     SavedForPostId,
     ModPermsForBoardId

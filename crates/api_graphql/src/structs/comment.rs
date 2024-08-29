@@ -8,9 +8,7 @@ use tinyboards_db::{
 };
 
 use crate::{
-    newtypes::{
-        BoardIdForComment, PersonId, PostIdForComment, SavedForCommentId, VoteForCommentId,
-    },
+    newtypes::{BoardId, PersonId, PostIdForComment, SavedForCommentId, VoteForCommentId},
     structs::{boards::Board, person::Person},
     Censorable, PostgresLoader,
 };
@@ -115,7 +113,7 @@ impl Comment {
     pub async fn board(&self, ctx: &Context<'_>) -> Result<Option<Board>> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
-            .load_one(BoardIdForComment(self.board_id))
+            .load_one(BoardId(self.board_id))
             .await
             .map_err(|e| e.into())
     }

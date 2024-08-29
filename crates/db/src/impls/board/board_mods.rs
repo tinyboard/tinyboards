@@ -105,6 +105,26 @@ impl BoardModerator {
             .await
     }
 
+    /// Load the list of boards that the person moderates.
+    pub async fn for_person(pool: &DbPool, for_person_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, board_mods};
+
+        board_mods::table
+            .inner_join(
+                board_aggregates::table.on(board_mods::board_id.eq(board_aggregates::board_id)),
+            )
+            .filter(
+                board_mods::person_id
+                    .eq(for_person_id)
+                    .and(board_mods::invite_accepted.eq(true)),
+            )
+            .order_by(board_aggregates::subscribers.desc())
+            .select(board_mods::all_columns)
+            .load::<Self>(conn)
+            .await
+    }
+
     pub fn has_permission(&self, permission: ModPerms) -> bool {
         self.permissions & permission.as_i32() > 0 || self.permissions & ModPerms::Full.as_i32() > 0
     }

@@ -63,6 +63,8 @@ impl QueryPosts {
             page,
             false,
             false,
+            false,
+            saved_only.unwrap_or(false),
             board_id,
             person_id,
             sort.into(),

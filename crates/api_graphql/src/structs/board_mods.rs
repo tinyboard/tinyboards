@@ -3,9 +3,12 @@ use dataloader::DataLoader;
 use tinyboards_db::models::board::board_mods::BoardModerator as DbBoardMod;
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{newtypes::PersonId, PostgresLoader};
+use crate::{
+    newtypes::{BoardId, PersonId},
+    PostgresLoader,
+};
 
-use super::person::Person;
+use super::{boards::Board, person::Person};
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -30,6 +33,20 @@ impl BoardMod {
                 TinyBoardsError::from_message(
                     500,
                     "Failed to load person for board mod relationship.",
+                )
+                .into()
+            })
+        })?
+    }
+
+    pub async fn board(&self, ctx: &Context<'_>) -> Result<Board> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader.load_one(BoardId(self.board_id)).await.map(|opt| {
+            opt.ok_or_else(|| {
+                TinyBoardsError::from_message(
+                    500,
+                    "Failed to load board for board mod relationship.",
                 )
                 .into()
             })

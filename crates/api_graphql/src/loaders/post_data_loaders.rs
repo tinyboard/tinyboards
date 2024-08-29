@@ -8,33 +8,10 @@ use tinyboards_utils::TinyBoardsError;
 
 use crate::newtypes::{PersonId, SavedForPostId, VoteForPostId};
 use crate::{
-    newtypes::BoardIdForPost,
+    newtypes::BoardId,
     structs::{boards::Board, person::Person},
     PostgresLoader,
 };
-
-impl Loader<BoardIdForPost> for PostgresLoader {
-    type Value = Board;
-    type Error = TinyBoardsError;
-
-    async fn load(
-        &self,
-        keys: &[BoardIdForPost],
-    ) -> Result<
-        HashMap<BoardIdForPost, <Self as Loader<BoardIdForPost>>::Value>,
-        <Self as Loader<BoardIdForPost>>::Error,
-    > {
-        let keys = keys.iter().map(|k| k.0).collect::<Vec<i32>>();
-
-        let list = DbBoard::get_with_counts_for_ids(&self.pool, keys)
-            .await
-            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load boards."))?;
-
-        Ok(HashMap::from_iter(list.into_iter().map(
-            |(board, counts)| (board.id.into(), Board::from((board, counts))),
-        )))
-    }
-}
 
 impl Loader<VoteForPostId> for PostgresLoader {
     type Value = i16;

@@ -5,7 +5,9 @@ pub(crate) mod structs;
 
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
-use queries::{boards::QueryBoards, me::MeQuery, person::QueryPerson, posts::QueryPosts};
+use queries::{
+    boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,
+};
 use tinyboards_db::utils::DbPool;
 //use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
@@ -43,7 +45,14 @@ impl TestQuery {
 }
 
 #[derive(MergedObject, Default)]
-pub struct Query(TestQuery, MeQuery, QueryPosts, QueryBoards, QueryPerson);
+pub struct Query(
+    TestQuery,
+    MeQuery,
+    QueryPosts,
+    QueryBoards,
+    QueryPerson,
+    QuerySite,
+);
 
 pub fn gen_schema() -> Schema<Query, EmptyMutation, EmptySubscription> {
     Schema::new(Query::default(), EmptyMutation, EmptySubscription)

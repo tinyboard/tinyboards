@@ -455,19 +455,28 @@ impl Post {
         person_id_join: i32,
         limit: Option<i64>,
         page: Option<i64>,
-        show_deleted_and_removed: bool,
+        show_deleted: bool,
+        show_removed: bool,
         include_banned_boards: bool,
+        saved_only: bool,
         board_id: Option<i32>,
         person_id: Option<i32>,
         sort: SortType,
         listing_type: ListingType,
     ) -> Result<Vec<(Self, PostAggregates)>, Error> {
-        use crate::schema::{board_mods, board_subscriber, boards, post_aggregates, posts};
+        use crate::schema::{
+            board_mods, board_subscriber, boards, post_aggregates, post_saved, posts,
+        };
         let conn = &mut get_conn(pool).await?;
 
         let mut query = posts::table
             .inner_join(boards::table)
             .inner_join(post_aggregates::table)
+            .left_join(
+                post_saved::table.on(post_saved::post_id
+                    .eq(posts::id)
+                    .and(post_saved::person_id.eq(person_id_join))),
+            )
             .left_join(
                 board_mods::table.on(board_mods::board_id
                     .eq(posts::board_id)
@@ -481,8 +490,16 @@ impl Post {
             .select((posts::all_columns, post_aggregates::all_columns))
             .into_boxed();
 
-        if !show_deleted_and_removed {
-            query = query.filter(posts::is_removed.eq(false).and(posts::is_deleted.eq(false)));
+        if saved_only {
+            query = query.filter(post_saved::id.is_not_null());
+        }
+
+        if !show_removed {
+            query = query.filter(posts::is_removed.eq(false));
+        }
+
+        if !show_deleted {
+            query = query.filter(posts::is_deleted.eq(false));
         }
 
         if !include_banned_boards {
