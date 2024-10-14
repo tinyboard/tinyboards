@@ -35,6 +35,7 @@ pub struct Post {
     is_locked: bool,
     creation_date: String,
     is_deleted: bool,
+    #[graphql(name = "isNSFW")]
     is_nsfw: bool,
     updated: Option<String>,
     image: Option<String>,

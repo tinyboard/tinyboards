@@ -14,6 +14,7 @@ pub struct LocalSite {
     pub invite_only: bool,
     pub enable_downvotes: bool,
     pub open_registration: bool,
+    #[graphql(name = "enableNSFW")]
     pub enable_nsfw: bool,
     pub board_creation_admin_only: bool,
     pub require_email_verification: bool,

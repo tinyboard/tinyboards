@@ -26,6 +26,7 @@ pub struct Board {
     creation_date: String,
     updated: Option<String>,
     is_deleted: bool,
+    #[graphql(name = "isNSFW")]
     is_nsfw: bool,
     actor_id: String,
     subscribers_url: String,
@@ -35,12 +36,14 @@ pub struct Board {
     featured_url: Option<String>,
     icon: Option<String>,
     banner: Option<String>,
+    #[graphql(name = "isBanned")]
     is_removed: bool,
     ban_reason: Option<String>,
     primary_color: String,
     secondary_color: String,
     hover_color: String,
     sidebar: Option<String>,
+    #[graphql(name = "sidebarHTML")]
     sidebar_html: Option<String>,
     // `counts` is not queryable, fields will be made available through resolvers
     #[graphql(skip)]

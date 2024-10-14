@@ -2,7 +2,7 @@ use async_graphql::*;
 use tinyboards_db::{
     aggregates::structs::PersonAggregates as DbPersonAggregates,
     models::{
-        board::board_mods::BoardModerator as DbBoardMod,
+        board::{board_mods::BoardModerator as DbBoardMod, boards::Board as DbBoard},
         comment::comments::Comment as DbComment,
         person::{
             local_user::AdminPerms,
@@ -16,7 +16,7 @@ use tinyboards_utils::TinyBoardsError;
 
 use crate::{CommentSortType, ListingType, LoggedInUser, SortType};
 
-use super::{board_mods::BoardMod, comment::Comment, post::Post};
+use super::{board_mods::BoardMod, boards::Board, comment::Comment, post::Post};
 
 /// GraphQL representation of Person.
 #[derive(SimpleObject, Clone)]
@@ -29,6 +29,7 @@ pub struct Person {
     unban_date: Option<String>,
     display_name: Option<String>,
     bio: Option<String>,
+    #[graphql(name = "bioHTML")]
     bio_html: Option<String>,
     creation_date: String,
     updated: Option<String>,
@@ -74,6 +75,42 @@ impl Person {
 
     pub async fn rep(&self) -> i64 {
         self.counts.rep
+    }
+
+    pub async fn joined_boards(
+        &self,
+        ctx: &Context<'_>,
+        limit: Option<i64>,
+        page: Option<i64>,
+    ) -> Result<Vec<Board>> {
+        let pool = ctx.data_unchecked::<DbPool>();
+        let v = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let my_person_id = v.person.id;
+
+        if self.id != my_person_id {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "You cannot see what boards someone else has joined, moron.",
+            )
+            .into());
+        }
+
+        DbBoard::list_with_counts(
+            pool,
+            my_person_id,
+            limit,
+            page,
+            SortType::Active.into(),
+            ListingType::Subscribed.into(),
+            None,
+            false,
+            false,
+        )
+        .await
+        .map(|res| res.into_iter().map(Board::from).collect::<Vec<Board>>())
+        .map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Failed to load joined boards").into()
+        })
     }
 
     pub async fn moderates(&self, ctx: &Context<'_>) -> Result<Vec<BoardMod>> {

@@ -3,7 +3,7 @@ use crate::{
     LoggedInUser,
 };
 use async_graphql::*;
-use tinyboards_db::utils::DbPool;
+use tinyboards_db::{models::board::boards::Board as DbBoard, utils::DbPool};
 use tinyboards_db_views::structs::{CommentReplyView, PersonMentionView};
 use tinyboards_utils::TinyBoardsError;
 
