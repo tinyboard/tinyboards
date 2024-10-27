@@ -23,6 +23,7 @@ pub struct Comment {
     post_id: i32,
     parent_id: Option<i32>,
     body: String,
+    #[graphql(name = "bodyHTML")]
     body_html: String,
     pub(crate) is_removed: bool,
     is_locked: bool,

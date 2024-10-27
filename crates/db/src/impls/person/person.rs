@@ -15,6 +15,23 @@ use diesel::{prelude::*, result::Error};
 use diesel_async::RunQueryDsl;
 
 impl Person {
+    pub async fn get_by_name(pool: &DbPool, username: String) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::person;
+
+        person::table
+            .filter(
+                person::name.ilike(
+                    username
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<Self>(conn)
+            .await
+    }
+
     pub async fn get_with_counts_for_name(
         pool: &DbPool,
         username: String,

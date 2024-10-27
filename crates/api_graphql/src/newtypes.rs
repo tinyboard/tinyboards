@@ -32,5 +32,7 @@ generate_newtypes![
     BoardId,
     VoteForPostId,
     SavedForPostId,
-    ModPermsForBoardId
+    ModPermsForPostId,
+    ModPermsForBoardId,
+    SubscribedTypeForBoardId
 ];

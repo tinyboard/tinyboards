@@ -11,7 +11,10 @@ use tinyboards_db::{
 };
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{newtypes::ModPermsForBoardId, ListingType, LoggedInUser, PostgresLoader, SortType};
+use crate::{
+    newtypes::{ModPermsForBoardId, SubscribedTypeForBoardId},
+    ListingType, LoggedInUser, PostgresLoader, SortType, SubscribedType,
+};
 
 use super::{board_mods::BoardMod, post::Post};
 
@@ -101,6 +104,16 @@ impl Board {
             .load_one(ModPermsForBoardId(self.id))
             .await
             .map(|v| v.unwrap_or(0))
+            .map_err(|e| e.into())
+    }
+
+    pub async fn subscribed_type(&self, ctx: &Context<'_>) -> Result<SubscribedType> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(SubscribedTypeForBoardId(self.id))
+            .await
+            .map(|s| s.unwrap_or(SubscribedType::NotSubscribed))
             .map_err(|e| e.into())
     }
 

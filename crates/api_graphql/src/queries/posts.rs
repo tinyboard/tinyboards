@@ -1,6 +1,10 @@
 use async_graphql::*;
 use tinyboards_db::{
-    models::{person::local_user::AdminPerms, post::posts::Post as DbPost},
+    models::{
+        board::boards::Board as DbBoard,
+        person::{local_user::AdminPerms, person::Person as DbPerson},
+        post::posts::Post as DbPost,
+    },
     utils::DbPool,
 };
 use tinyboards_db_views::post_view::PostQuery;
@@ -42,6 +46,8 @@ impl QueryPosts {
         person_id: Option<i32>,
         #[graphql(desc = "If specified, only posts in the given board will be loaded.")]
         board_id: Option<i32>,
+        person_name: Option<String>,
+        board_name: Option<String>,
         #[graphql(desc = "Whether to only show saved posts.")] saved_only: Option<bool>,
         #[graphql(desc = "Page.")] page: Option<i64>,
     ) -> Result<Vec<Post>> {
@@ -54,6 +60,22 @@ impl QueryPosts {
         let person_id_join = match v_opt {
             Some(v) => v.person.id,
             None => -1,
+        };
+
+        let person_id = match person_name {
+            Some(name) => DbPerson::get_by_name(pool, name)
+                .await
+                .map(|u| Some(u.id))
+                .unwrap_or(Some(0)),
+            None => person_id,
+        };
+
+        let board_id = match board_name {
+            Some(name) => DbBoard::get_by_name(pool, name.as_str())
+                .await
+                .map(|b| Some(b.id))
+                .unwrap_or(Some(0)),
+            None => board_id,
         };
 
         let posts = DbPost::load_with_counts(

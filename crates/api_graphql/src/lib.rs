@@ -163,3 +163,14 @@ pub enum UserListingType {
     #[graphql(name = "admins")]
     Admins,
 }
+
+#[derive(Enum, Clone, Copy, Eq, PartialEq)]
+#[graphql(remote = "tinyboards_db::SubscribedType")]
+pub enum SubscribedType {
+    #[graphql(name = "subscribed")]
+    Subscribed,
+    #[graphql(name = "notSubscribed")]
+    NotSubscribed,
+    #[graphql(name = "pending")]
+    Pending,
+}

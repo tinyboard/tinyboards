@@ -14,7 +14,7 @@ use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    newtypes::{BoardId, PersonId, SavedForPostId, VoteForPostId},
+    newtypes::{BoardId, ModPermsForBoardId, PersonId, SavedForPostId, VoteForPostId},
     Censorable, CommentSortType, ListingType, LoggedInUser, PostgresLoader,
 };
 
@@ -28,6 +28,7 @@ pub struct Post {
     type_: String,
     url: Option<String>,
     body: String,
+    #[graphql(name = "bodyHTML")]
     body_html: String,
     creator_id: i32,
     board_id: i32,
@@ -91,6 +92,16 @@ impl Post {
 
         loader
             .load_one(VoteForPostId(self.id))
+            .await
+            .map(|v| v.unwrap_or(0))
+            .map_err(|e| e.into())
+    }
+
+    pub async fn my_mod_permissions(&self, ctx: &Context<'_>) -> Result<i32> {
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+
+        loader
+            .load_one(ModPermsForBoardId(self.board_id))
             .await
             .map(|v| v.unwrap_or(0))
             .map_err(|e| e.into())

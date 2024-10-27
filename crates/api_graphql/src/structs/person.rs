@@ -77,6 +77,10 @@ impl Person {
         self.counts.rep
     }
 
+    pub async fn is_admin(&self) -> bool {
+        self.admin_level > 0
+    }
+
     pub async fn joined_boards(
         &self,
         ctx: &Context<'_>,
