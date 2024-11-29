@@ -151,6 +151,7 @@ diesel::table! {
         upvotes -> Int8,
         downvotes -> Int8,
         creation_date -> Timestamp,
+        reply_count -> Nullable<Int4>,
     }
 }
 
@@ -217,6 +218,7 @@ diesel::table! {
         local -> Bool,
         ap_id -> Nullable<Text>,
         language_id -> Int4,
+        is_pinned -> Nullable<Bool>,
     }
 }
 

@@ -136,10 +136,12 @@ impl Post {
         listing_type: Option<ListingType>,
         page: Option<i64>,
         limit: Option<i64>,
-        no_tree: Option<bool>,
+        //no_tree: Option<bool>,
         search: Option<String>,
         top_comment_id: Option<i32>,
         context: Option<u16>,
+        include_deleted: Option<bool>,
+        include_removed: Option<bool>,
     ) -> Result<Vec<Comment>> {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
@@ -166,23 +168,22 @@ impl Post {
         };
 
         // We do not nest comments if there is a search, or the user explicitly doesn't want it
-        let no_tree = search.is_some() || no_tree.unwrap_or(false);
+        //  let no_tree = search.is_some() || no_tree.unwrap_or(false);
         // Default sort type
         let sort = sort.unwrap_or(CommentSortType::Hot);
         // Setting listing type is only allowed if we don't nest comments: for nesting, we always need all comments
-        let listing_type = if no_tree {
-            listing_type.unwrap_or(ListingType::All)
-        } else {
-            ListingType::All
-        };
+        let listing_type = listing_type.unwrap_or(ListingType::All);
         // we only load removed comments if we are nesting comments, or the user can view removed comments (is mod or admin)
-        let include_removed = !no_tree || is_admin || is_mod;
+        // let include_removed = !no_tree || is_admin || is_mod;
         // same here, except only admins can see deleted comments
-        let include_deleted = !no_tree || is_admin;
+        // let include_deleted = !no_tree || is_admin;
+
+        let include_removed = include_removed.unwrap_or(true);
+        let include_deleted = include_deleted.unwrap_or(true);
 
         // `tree_top_comment_id` is the id of the top comment.
         // This may differ from the provided `top_comment_id` if context > 0, because then we're requesting the parent comments of the top comment
-        let (tree_top_comment_id, mut comments) = if let Some(top_comment_id) = top_comment_id {
+        let (_, mut comments) = if let Some(top_comment_id) = top_comment_id {
             let (tree_top_comment_id, db_comments_with_counts) =
                 DbComment::get_with_replies_and_counts(
                     pool,
@@ -228,7 +229,7 @@ impl Post {
         };
 
         // if we are nesting comments and the user isn't an admin, censor removed and deleted comments
-        if !(no_tree || is_admin) {
+        if !is_admin {
             for comment in comments
                 .iter_mut()
                 .filter(|comment| comment.is_removed || comment.is_deleted)
@@ -238,9 +239,9 @@ impl Post {
         }
 
         // nest/tree comments
-        if !no_tree {
+        /*if !no_tree {
             comments = Comment::tree(comments, tree_top_comment_id);
-        }
+        }*/
 
         Ok(comments)
     }
