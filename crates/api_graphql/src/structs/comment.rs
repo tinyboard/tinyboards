@@ -28,6 +28,7 @@ pub struct Comment {
     pub(crate) is_removed: bool,
     is_locked: bool,
     pub(crate) is_deleted: bool,
+    is_pinned: bool,
     creation_date: String,
     level: i32,
     updated: Option<String>,
@@ -103,6 +104,10 @@ impl Comment {
         self.counts.downvotes
     }
 
+    pub async fn reply_count(&self) -> Option<i32> {
+        self.counts.reply_count
+    }
+
     pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
@@ -160,6 +165,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             is_removed: comment.is_removed,
             is_deleted: comment.is_deleted,
             is_locked: comment.is_locked,
+            is_pinned: comment.is_pinned.unwrap_or(false),
             creation_date: comment.creation_date.to_string(),
             level: comment.level,
             updated: comment.updated.map(|u| u.to_string()),

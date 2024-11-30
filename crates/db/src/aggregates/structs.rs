@@ -1,4 +1,6 @@
-use crate::schema::{board_aggregates, comment_aggregates, post_aggregates, person_aggregates, site_aggregates};
+use crate::schema::{
+    board_aggregates, comment_aggregates, person_aggregates, post_aggregates, site_aggregates,
+};
 use chrono::NaiveDateTime;
 use diesel::{Associations, Identifiable, Queryable};
 use serde::{Deserialize, Serialize};
@@ -15,6 +17,7 @@ pub struct CommentAggregates {
     pub upvotes: i64,
     pub downvotes: i64,
     pub creation_date: NaiveDateTime,
+    pub reply_count: Option<i32>,
 }
 
 #[derive(

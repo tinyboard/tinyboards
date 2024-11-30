@@ -10,7 +10,6 @@ use tinyboards_db::{
     },
     utils::DbPool,
 };
-use tinyboards_db_views::structs::PostView;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
@@ -65,6 +64,10 @@ impl Post {
 
     pub async fn upvotes(&self) -> i64 {
         self.counts.upvotes
+    }
+
+    pub async fn downvotes(&self) -> i64 {
+        self.counts.downvotes
     }
 
     pub async fn newest_comment_time(&self) -> String {
@@ -142,6 +145,7 @@ impl Post {
         context: Option<u16>,
         include_deleted: Option<bool>,
         include_removed: Option<bool>,
+        max_depth: Option<i32>,
     ) -> Result<Vec<Comment>> {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
@@ -181,6 +185,8 @@ impl Post {
         let include_removed = include_removed.unwrap_or(true);
         let include_deleted = include_deleted.unwrap_or(true);
 
+        let max_depth = max_depth.unwrap_or(6);
+
         // `tree_top_comment_id` is the id of the top comment.
         // This may differ from the provided `top_comment_id` if context > 0, because then we're requesting the parent comments of the top comment
         let (_, mut comments) = if let Some(top_comment_id) = top_comment_id {
@@ -192,6 +198,7 @@ impl Post {
                     sort.into(),
                     person_id_join,
                     Some(self.id),
+                    Some(max_depth),
                 )
                 .await?;
 
@@ -219,6 +226,7 @@ impl Post {
                 include_removed,
                 true,
                 None,
+                Some(max_depth),
             )
             .await?
             .into_iter()

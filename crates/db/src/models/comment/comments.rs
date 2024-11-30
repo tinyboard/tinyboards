@@ -23,6 +23,7 @@ pub struct Comment {
     pub local: bool,
     pub ap_id: Option<DbUrl>,
     pub language_id: i32,
+    pub is_pinned: Option<bool>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -43,4 +44,5 @@ pub struct CommentForm {
     pub ap_id: Option<DbUrl>,
     pub language_id: Option<i32>,
     pub creation_date: Option<NaiveDateTime>,
+    pub is_pinned: Option<Option<bool>>,
 }

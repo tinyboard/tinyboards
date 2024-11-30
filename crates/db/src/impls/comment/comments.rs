@@ -14,7 +14,6 @@ use crate::{
     utils::{get_conn, DbPool},
 };
 use crate::{CommentSortType, ListingType};
-use diesel::associations::HasTable;
 use diesel::{prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
@@ -74,6 +73,7 @@ impl Comment {
         include_removed: bool,
         include_banned_boards: bool,
         parent_ids: Option<&Vec<i32>>,
+        max_depth: Option<i32>,
     ) -> Result<Vec<(Self, CommentAggregates)>, Error> {
         use crate::schema::{
             board_mods, board_subscriber, boards, comment_aggregates, comment_saved, comments,
@@ -100,6 +100,11 @@ impl Comment {
             )
             .select((comments::all_columns, comment_aggregates::all_columns))
             .into_boxed();
+
+        if let Some(max_depth) = max_depth {
+            // Depth limit
+            query = query.filter(comments::level.le(max_depth));
+        }
 
         if !include_banned_boards {
             query = query.filter(
@@ -174,12 +179,14 @@ impl Comment {
         sort: CommentSortType,
         person_id_join: i32,
         check_for_post_id: Option<i32>,
+        max_depth: Option<i32>,
     ) -> Result<(i32, Vec<(Self, CommentAggregates)>), Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{comment_aggregates, comments};
 
-        let context = std::cmp::min(context.unwrap_or(0), 3);
+        let context = std::cmp::min(context.unwrap_or(0), 3) as i32;
         let comment_with_counts = Self::get_with_counts(pool, id_).await?;
+        let max_depth = max_depth.unwrap_or(6);
 
         // Check if the comment belongs to a given post
         if let Some(post_id_) = check_for_post_id {
@@ -204,7 +211,7 @@ impl Comment {
         }
 
         // load comment replies, and then the replies of those comments, ...
-        for _ in 0..5 - context {
+        for _ in 0..max_depth - context {
             let mut replies_with_counts = Self::load_with_counts(
                 pool,
                 person_id_join,
@@ -221,6 +228,7 @@ impl Comment {
                 true,
                 true,
                 Some(&ids),
+                None,
             )
             .await?;
             ids = replies_with_counts

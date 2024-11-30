@@ -262,6 +262,7 @@ impl Person {
             include_removed,
             include_banned_boards,
             None,
+            None,
         )
         .await
         .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load comments"))?;

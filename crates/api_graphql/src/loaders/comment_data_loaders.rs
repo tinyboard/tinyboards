@@ -1,19 +1,14 @@
 use async_graphql::*;
 use dataloader::Loader;
 use std::collections::HashMap;
-use tinyboards_db::models::post::post_saved::PostSaved as DbPostSaved;
-use tinyboards_db::models::post::post_votes::PostVote as DbPostVote;
-use tinyboards_db::models::{
-    board::boards::Board as DbBoard, person::person::Person as DbPerson,
-    post::posts::Post as DbPost,
+use tinyboards_db::models::comment::{
+    comment_saved::CommentSaved as DbCommentSaved, comment_votes::CommentVote as DbCommentVote,
 };
+use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_utils::TinyBoardsError;
 
-use crate::newtypes::{PersonId, PostIdForComment, SavedForCommentId, VoteForCommentId};
-use crate::{
-    structs::{boards::Board, person::Person, post::Post},
-    PostgresLoader,
-};
+use crate::newtypes::{PostIdForComment, SavedForCommentId, VoteForCommentId};
+use crate::{structs::post::Post, PostgresLoader};
 
 impl Loader<PostIdForComment> for PostgresLoader {
     type Value = Post;
@@ -53,14 +48,14 @@ impl Loader<VoteForCommentId> for PostgresLoader {
 
         let keys = keys.into_iter().map(|id| id.0).collect::<Vec<i32>>();
 
-        let list = DbPostVote::get_my_vote_for_ids(&self.pool, keys, my_person_id)
+        let list = DbCommentVote::get_my_vote_for_ids(&self.pool, keys, my_person_id)
             .await
             .map_err(|e| {
-                TinyBoardsError::from_error_message(e, 500, "Failed to load post votes.")
+                TinyBoardsError::from_error_message(e, 500, "Failed to load comment votes.")
             })?;
 
         Ok(HashMap::from_iter(list.into_iter().map(
-            |(post_id, vote_type)| (VoteForCommentId(post_id), vote_type),
+            |(comment_id, vote_type)| (VoteForCommentId(comment_id), vote_type),
         )))
     }
 }
@@ -78,14 +73,18 @@ impl Loader<SavedForCommentId> for PostgresLoader {
     > {
         let keys = keys.into_iter().map(|id| id.0).collect::<Vec<i32>>();
 
-        let list = DbPostSaved::get_saved_for_ids(&self.pool, keys, self.my_person_id)
+        let list = DbCommentSaved::get_saved_for_ids(&self.pool, keys, self.my_person_id)
             .await
             .map_err(|e| {
-                TinyBoardsError::from_error_message(e, 500, "Failed to load saved status for post.")
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "Failed to load saved status for comment.",
+                )
             })?;
 
         Ok(HashMap::from_iter(list.into_iter().map(
-            |(post_id, is_saved)| (SavedForCommentId(post_id), is_saved),
+            |(comment_id, is_saved)| (SavedForCommentId(comment_id), is_saved),
         )))
     }
 }
