@@ -1,9 +1,11 @@
+pub(crate) mod apub_helpers;
 pub(crate) mod loaders;
+pub mod mutations;
 pub(crate) mod newtypes;
 pub mod queries;
 pub(crate) mod structs;
 
-use async_graphql::dataloader::DataLoader;
+use crate::mutations::auth::Auth;
 use async_graphql::*;
 use queries::{
     boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,
@@ -11,11 +13,15 @@ use queries::{
 use tinyboards_db::utils::DbPool;
 //use queries::Query;
 use tinyboards_db_views::structs::LocalUserView;
-use tinyboards_utils::TinyBoardsError;
+use tinyboards_utils::{settings::structs::Settings as Settings_, TinyBoardsError};
 //use tinyboards_api_common::data::TinyBoardsContext;
 
 /// wrapper around logged in user
 pub struct LoggedInUser(Option<LocalUserView>);
+/// key for decoding JWTs
+pub struct MasterKey(String);
+/// Instance settings
+pub struct Settings(&'static Settings_);
 
 /// Dataloader for batch loading
 pub struct PostgresLoader {
@@ -54,12 +60,27 @@ pub struct Query(
     QuerySite,
 );
 
-pub fn gen_schema() -> Schema<Query, EmptyMutation, EmptySubscription> {
-    Schema::new(Query::default(), EmptyMutation, EmptySubscription)
+#[derive(MergedObject, Default)]
+pub struct Mutation(Auth);
+
+pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
+    Schema::new(Query::default(), Mutation::default(), EmptySubscription)
 }
 
 impl From<Option<LocalUserView>> for LoggedInUser {
     fn from(value: Option<LocalUserView>) -> Self {
+        Self(value)
+    }
+}
+
+impl From<String> for MasterKey {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+impl From<&'static Settings_> for Settings {
+    fn from(value: &'static Settings_) -> Self {
         Self(value)
     }
 }
@@ -74,6 +95,18 @@ impl LoggedInUser {
             Some(v) => Ok(v),
             None => Err(TinyBoardsError::from_message(401, "Login required").into()),
         }
+    }
+}
+
+impl MasterKey {
+    pub(crate) fn as_ref(&self) -> &str {
+        self.0.as_str()
+    }
+}
+
+impl Settings {
+    pub(crate) fn as_ref(&self) -> &'static Settings_ {
+        self.0
     }
 }
 

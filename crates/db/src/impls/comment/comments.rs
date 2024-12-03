@@ -155,6 +155,7 @@ impl Comment {
 
         query = match sort {
             CommentSortType::Hot => query
+                .then_order_by(comments::is_pinned.desc())
                 .then_order_by(
                     hot_rank(comment_aggregates::score, comment_aggregates::creation_date).desc(),
                 )

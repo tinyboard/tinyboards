@@ -102,13 +102,23 @@ impl Debug for TinyBoardsError {
     }
 }
 
-impl Display for TinyBoardsError {
+/*impl Display for TinyBoardsError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(message) = &self.message {
             write!(f, "{}: ", message)?;
         }
         writeln!(f, "{}", self.inner)?;
         fmt::Display::fmt(&self.context, f)
+    }
+}*/
+
+impl Display for TinyBoardsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(message) = &self.message {
+            write!(f, "{}", message)
+        } else {
+            write!(f, "{}", self.inner)
+        }
     }
 }
 

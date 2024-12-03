@@ -1,6 +1,6 @@
 use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use reqwest_middleware::ClientWithMiddleware;
-use tinyboards_api_graphql::Query;
+use tinyboards_api_graphql::{Mutation, Query};
 use tinyboards_db::{models::secret::Secret, utils::DbPool};
 use tinyboards_utils::{
     rate_limit::RateLimitCell,
@@ -14,7 +14,7 @@ pub struct TinyBoardsContext {
     settings: Settings,
     master_key: Secret,
     rate_limit_cell: RateLimitCell,
-    schema: Schema<Query, EmptyMutation, EmptySubscription>,
+    schema: Schema<Query, Mutation, EmptySubscription>,
 }
 
 impl TinyBoardsContext {
@@ -24,7 +24,7 @@ impl TinyBoardsContext {
         settings: Settings,
         master_key: Secret,
         rate_limit_cell: RateLimitCell,
-        schema: Schema<Query, EmptyMutation, EmptySubscription>,
+        schema: Schema<Query, Mutation, EmptySubscription>,
     ) -> TinyBoardsContext {
         TinyBoardsContext {
             pool,
@@ -56,7 +56,7 @@ impl TinyBoardsContext {
         &&self.rate_limit_cell
     }
 
-    pub fn schema(&self) -> &Schema<Query, EmptyMutation, EmptySubscription> {
+    pub fn schema(&self) -> &Schema<Query, Mutation, EmptySubscription> {
         &self.schema
     }
 }

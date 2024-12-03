@@ -4587,12 +4587,16 @@ name = "tinyboards_api_graphql"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "anyhow",
  "async-graphql",
  "async-graphql-actix-web",
+ "regex",
  "tinyboards_db",
  "tinyboards_db_views",
+ "tinyboards_federation",
  "tinyboards_utils",
  "tokio",
+ "url",
 ]
 
 [[package]]

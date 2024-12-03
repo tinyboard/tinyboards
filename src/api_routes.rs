@@ -9,7 +9,7 @@ use tinyboards_api_common::{
     message::GetMessages, moderator::*, person::*, post::*, site::*, utils::load_user_opt,
 };
 use tinyboards_api_crud::PerformCrud;
-use tinyboards_api_graphql::{LoggedInUser, PostgresLoader};
+use tinyboards_api_graphql::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
 use tinyboards_apub::{api::PerformApub, SendActivity};
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
@@ -342,6 +342,8 @@ async fn perform_graphql(
             graphql_request
                 .into_inner()
                 .data(LoggedInUser::from(logged_in_user_view))
+                .data(MasterKey::from(context.master_key().jwt.clone()))
+                .data(GQLSettings::from(context.settings()))
                 .data(context.pool().clone())
                 .data(DataLoader::new(
                     PostgresLoader::new(context.pool(), my_person_id),
