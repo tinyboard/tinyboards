@@ -1,4 +1,4 @@
-# Tinyboards - test
+# Tinyboards
 
 ### About the project
 
