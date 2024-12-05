@@ -1,11 +1,11 @@
-pub(crate) mod apub_helpers;
+pub(crate) mod helpers;
 pub(crate) mod loaders;
 pub mod mutations;
 pub(crate) mod newtypes;
 pub mod queries;
 pub(crate) mod structs;
 
-use crate::mutations::{auth::Auth, submit_post::SubmitPost};
+use crate::mutations::{auth::Auth, post::submit_post::SubmitPost};
 use async_graphql::*;
 use queries::{
     boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,

@@ -1,4 +1,4 @@
-use crate::apub_helpers::{
+use crate::helpers::apub::{
     generate_inbox_url, generate_local_apub_endpoint, generate_shared_inbox_url, EndpointType,
 };
 /**

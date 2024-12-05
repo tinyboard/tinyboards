@@ -1,5 +1,5 @@
-use crate::apub_helpers::generate_local_apub_endpoint;
-use crate::apub_helpers::EndpointType;
+use crate::helpers::apub::generate_local_apub_endpoint;
+use crate::helpers::apub::EndpointType;
 use crate::structs::post::Post;
 use crate::{DbPool, LoggedInUser, Settings};
 use async_graphql::*;
