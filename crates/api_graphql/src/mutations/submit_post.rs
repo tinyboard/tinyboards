@@ -1,0 +1,121 @@
+use crate::apub_helpers::generate_local_apub_endpoint;
+use crate::apub_helpers::EndpointType;
+use crate::structs::post::Post;
+use crate::{DbPool, LoggedInUser, Settings};
+use async_graphql::*;
+use tinyboards_db::models::{
+    board::boards::Board as DbBoard,
+    post::{
+        post_votes::{PostVote, PostVoteForm},
+        posts::{Post as DbPost, PostForm},
+    },
+};
+use tinyboards_db::traits::Crud;
+use tinyboards_db::traits::Voteable;
+use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, TinyBoardsError};
+use url::Url;
+
+#[derive(Default)]
+pub struct SubmitPost;
+
+#[Object]
+impl SubmitPost {
+    pub async fn create_post(
+        &self,
+        ctx: &Context<'_>,
+        title: String,
+        board: Option<String>,
+        body: Option<String>,
+        link: Option<String>,
+        #[graphql(name = "isNSFW")] is_nsfw: Option<bool>,
+    ) -> Result<Post> {
+        let v = ctx
+            .data_unchecked::<LoggedInUser>()
+            .require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+        let settings = ctx.data::<Settings>()?.as_ref();
+
+        let board_id = if let Some(ref board) = board {
+            let board = DbBoard::get_by_name(pool, board)
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 400, "Board doesn't exist."))?;
+
+            // check if board is banned
+            if board.is_removed || board.is_deleted {
+                return Err(TinyBoardsError::from_message(
+                    410,
+                    &format!("+{} is banned.", &board.name),
+                )
+                .into());
+            }
+
+            board.id
+        } else {
+            1
+        };
+
+        let body_html = match body {
+            Some(ref body) => {
+                let body_html = parse_markdown_opt(body);
+                let body_html = Some(custom_body_parsing(
+                    &body_html.unwrap_or_default(),
+                    settings,
+                ));
+
+                body_html
+            }
+            None => Some(String::new()),
+        };
+
+        let type_ = if link.is_some() { "link" } else { "text" }.to_owned();
+
+        //let data_url = data.url.as_ref().map(|url| url.inner());
+        let is_nsfw = is_nsfw.unwrap_or(false);
+        let url = match link {
+            Some(link) => Some(Url::parse(&link)?),
+            None => None,
+        };
+
+        let post_form = PostForm {
+            title: Some(title.clone()),
+            type_: Some(type_),
+            url: url.map(|url| url.into()),
+            // image: data.image,
+            body: body, // once told me, the world was gonna roll me
+            body_html: body_html,
+            creator_id: Some(v.person.id),
+            board_id: Some(board_id),
+            is_nsfw: Some(is_nsfw),
+            title_chunk: Some(DbPost::generate_chunk(title)),
+            ..PostForm::default()
+        };
+
+        let published_post = DbPost::submit(pool, post_form).await?;
+
+        // apub id add
+        let protocol_and_hostname = settings.get_protocol_and_hostname();
+        let apub_id = generate_local_apub_endpoint(
+            EndpointType::Post,
+            &published_post.id.clone().to_string(),
+            &protocol_and_hostname,
+        )?;
+        let update_form = PostForm {
+            ap_id: Some(apub_id),
+            ..PostForm::default()
+        };
+        let updated_post = DbPost::update(pool, published_post.id.clone(), &update_form).await?;
+
+        // auto upvote own post
+        let post_vote = PostVoteForm {
+            post_id: updated_post.id,
+            person_id: v.person.id,
+            score: 1,
+        };
+
+        PostVote::vote(pool, &post_vote).await?;
+
+        let post_with_counts = DbPost::get_with_counts(pool, published_post.id, false).await?;
+
+        Ok(Post::from(post_with_counts))
+    }
+}

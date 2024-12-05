@@ -5,7 +5,7 @@ pub(crate) mod newtypes;
 pub mod queries;
 pub(crate) mod structs;
 
-use crate::mutations::auth::Auth;
+use crate::mutations::{auth::Auth, submit_post::SubmitPost};
 use async_graphql::*;
 use queries::{
     boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,
@@ -61,7 +61,7 @@ pub struct Query(
 );
 
 #[derive(MergedObject, Default)]
-pub struct Mutation(Auth);
+pub struct Mutation(Auth, SubmitPost);
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
     Schema::new(Query::default(), Mutation::default(), EmptySubscription)
@@ -93,6 +93,19 @@ impl LoggedInUser {
     pub(crate) fn require_user(&self) -> Result<&LocalUserView> {
         match self.inner() {
             Some(v) => Ok(v),
+            None => Err(TinyBoardsError::from_message(401, "Login required").into()),
+        }
+    }
+
+    pub(crate) fn require_user_not_banned(&self) -> Result<&LocalUserView> {
+        match self.inner() {
+            Some(v) => {
+                if v.person.is_banned {
+                    Err(TinyBoardsError::from_message(403, "Your account is banned").into())
+                } else {
+                    Ok(v)
+                }
+            }
             None => Err(TinyBoardsError::from_message(401, "Login required").into()),
         }
     }
