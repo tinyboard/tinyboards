@@ -13,7 +13,7 @@ use url::Url;
 
 pub async fn upload_file(
     upload: Upload,
-    _to: &str,
+    file_name: Option<String>,
     for_person_id: i32,
     ctx: &Context<'_>,
 ) -> Result<Url> {
@@ -36,7 +36,14 @@ pub async fn upload_file(
     }
 
     let file_type = get_file_type(&content_type);
-    let file_name = format!("{}.{}", generate_rand_string(), file_type);
+    let file_name = format!(
+        "{}.{}",
+        match file_name {
+            Some(file_name) => file_name,
+            None => generate_rand_string(),
+        },
+        file_type
+    );
     let path = format!("{}/{}", media_path, &file_name);
 
     upload
@@ -61,7 +68,7 @@ pub async fn upload_file(
         size: file_bytes.len().try_into().unwrap(),
     };
 
-    let upload = DbUpload::create(pool, &upload_form).await?;
+    let _upload = DbUpload::create(pool, &upload_form).await?;
 
     //let upload_url = Url::parse(upload_url)?;
     Ok(upload_url)

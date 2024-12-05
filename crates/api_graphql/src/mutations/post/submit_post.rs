@@ -103,7 +103,7 @@ impl SubmitPost {
 
         // handle file upload
         let file_url = match file {
-            Some(file) => Some(upload_file(file, "", v.person.id, ctx).await?),
+            Some(file) => Some(upload_file(file, None, v.person.id, ctx).await?),
             None => None,
         };
 
