@@ -1,5 +1,5 @@
-use crate::helpers::apub::generate_local_apub_endpoint;
 use crate::helpers::apub::EndpointType;
+use crate::helpers::{apub::generate_local_apub_endpoint, files::upload::upload_file};
 use crate::structs::post::Post;
 use crate::{DbPool, LoggedInUser, Settings};
 use async_graphql::*;
@@ -28,6 +28,7 @@ impl SubmitPost {
         body: Option<String>,
         link: Option<String>,
         #[graphql(name = "isNSFW")] is_nsfw: Option<bool>,
+        file: Option<Upload>,
     ) -> Result<Post> {
         let v = ctx
             .data_unchecked::<LoggedInUser>()
@@ -99,10 +100,28 @@ impl SubmitPost {
             &published_post.id.clone().to_string(),
             &protocol_and_hostname,
         )?;
-        let update_form = PostForm {
-            ap_id: Some(apub_id),
-            ..PostForm::default()
+
+        // handle file upload
+        let file_url = match file {
+            Some(file) => Some(upload_file(file, "", v.person.id, ctx).await?),
+            None => None,
         };
+
+        // do not override url unless image is uplaoded
+        let update_form = if file_url.is_some() {
+            PostForm {
+                ap_id: Some(apub_id),
+                url: file_url.clone().map(|url| url.into()),
+                image: file_url.map(|url| url.into()),
+                ..PostForm::default()
+            }
+        } else {
+            PostForm {
+                ap_id: Some(apub_id),
+                ..PostForm::default()
+            }
+        };
+
         let updated_post = DbPost::update(pool, published_post.id.clone(), &update_form).await?;
 
         // auto upvote own post
