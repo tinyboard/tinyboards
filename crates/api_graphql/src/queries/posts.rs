@@ -62,6 +62,11 @@ impl QueryPosts {
             None => -1,
         };
 
+        println!(
+            "Received options - sort: {:?}, listing type: {:?}",
+            &sort, &listing_type
+        );
+
         let person_id = match person_name {
             Some(name) => DbPerson::get_by_name(pool, name)
                 .await

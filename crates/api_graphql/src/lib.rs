@@ -5,7 +5,9 @@ pub(crate) mod newtypes;
 pub mod queries;
 pub(crate) mod structs;
 
-use crate::mutations::{auth::Auth, post::submit_post::SubmitPost};
+use crate::mutations::{
+    auth::Auth, comment::submit_comment::SubmitComment, post::submit_post::SubmitPost,
+};
 use async_graphql::*;
 use queries::{
     boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,
@@ -61,7 +63,7 @@ pub struct Query(
 );
 
 #[derive(MergedObject, Default)]
-pub struct Mutation(Auth, SubmitPost);
+pub struct Mutation(Auth, SubmitPost, SubmitComment);
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
     Schema::new(Query::default(), Mutation::default(), EmptySubscription)
@@ -129,7 +131,7 @@ pub(crate) trait Censorable {
 }
 
 // custom enums from the db crate
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 #[graphql(remote = "tinyboards_db::SortType")]
 pub enum SortType {
     #[graphql(name = "active")]
@@ -156,7 +158,7 @@ pub enum SortType {
     NewComments,
 }
 
-#[derive(Enum, Copy, Clone, Eq, PartialEq)]
+#[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]
 #[graphql(remote = "tinyboards_db::ListingType")]
 pub enum ListingType {
     #[graphql(name = "all")]
