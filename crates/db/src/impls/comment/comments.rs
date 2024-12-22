@@ -182,7 +182,7 @@ impl Comment {
         check_for_post_id: Option<i32>,
         max_depth: Option<i32>,
     ) -> Result<(i32, Vec<(Self, CommentAggregates)>), Error> {
-        let conn = &mut get_conn(pool).await?;
+        //let conn = &mut get_conn(pool).await?;
         use crate::schema::{comment_aggregates, comments};
 
         let context = std::cmp::min(context.unwrap_or(0), 3) as i32;
@@ -337,6 +337,29 @@ impl Comment {
         use crate::schema::comments::dsl::*;
         diesel::update(comments.find(comment_id))
             .set((is_removed.eq(new_removed), updated.eq(naive_now())))
+            .get_result::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_pinned(
+        pool: &DbPool,
+        comment_id: i32,
+        on_post: i32,
+        new_pinned: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::comments::dsl::*;
+
+        // There can be only one pinned comment. When pinning a comment, unpin the comment that's already pinned under that post.
+        if new_pinned {
+            diesel::update(comments.filter(post_id.eq(on_post)))
+                .set(is_pinned.eq(false))
+                .get_result::<Self>(conn)
+                .await?;
+        }
+
+        diesel::update(comments.find(comment_id))
+            .set((is_pinned.eq(new_pinned), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }

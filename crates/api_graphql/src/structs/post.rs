@@ -30,7 +30,7 @@ pub struct Post {
     #[graphql(name = "bodyHTML")]
     body_html: String,
     creator_id: i32,
-    board_id: i32,
+    pub board_id: i32,
     is_removed: bool,
     is_locked: bool,
     creation_date: String,

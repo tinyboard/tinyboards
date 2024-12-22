@@ -3,6 +3,8 @@ use crate::helpers::{apub::generate_local_apub_endpoint, files::upload::upload_f
 use crate::structs::post::Post;
 use crate::{DbPool, LoggedInUser, Settings};
 use async_graphql::*;
+use tinyboards_db::models::board::board_mods::ModPerms;
+use tinyboards_db::models::person::local_user::AdminPerms;
 use tinyboards_db::models::{
     board::boards::Board as DbBoard,
     post::{
@@ -36,24 +38,47 @@ impl SubmitPost {
         let pool = ctx.data::<DbPool>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
-        let board_id = if let Some(ref board) = board {
-            let board = DbBoard::get_by_name(pool, board)
-                .await
-                .map_err(|e| TinyBoardsError::from_error_message(e, 400, "Board doesn't exist."))?;
-
-            // check if board is banned
-            if board.is_removed || board.is_deleted {
-                return Err(TinyBoardsError::from_message(
-                    410,
-                    &format!("+{} is banned.", &board.name),
-                )
-                .into());
-            }
-
-            board.id
-        } else {
-            1
+        let board = match board {
+            Some(ref board) => DbBoard::get_by_name(pool, board).await?,
+            None => DbBoard::read(pool, 1).await?,
         };
+
+        if board.is_removed || board.is_deleted {
+            return Err(TinyBoardsError::from_message(
+                410,
+                &format!("+{} is banned.", &board.name),
+            )
+            .into());
+        }
+
+        // mod or admin check
+        let is_mod_or_admin = if v.local_user.has_permission(AdminPerms::Content) {
+            // user is admin
+            true
+        } else {
+            // user is not admin: check mod permissions instead
+            let m = DbBoard::board_get_mod(pool, board.id, v.person.id).await;
+
+            match m {
+                Ok(m_opt) => match m_opt {
+                    Some(m) => m.has_permission(ModPerms::Content),
+                    None => false,
+                },
+                Err(e) => {
+                    eprintln!("Error while checking mod permissions: {:?}", e);
+                    false
+                }
+            }
+        };
+
+        // check if user is banned from board
+        if !is_mod_or_admin && DbBoard::board_has_ban(pool, board.id, v.person.id).await? {
+            return Err(TinyBoardsError::from_message(
+                410,
+                &format!("You are banned from +{}.", &board.name),
+            )
+            .into());
+        }
 
         let body_html = match body {
             Some(ref body) => {
@@ -85,7 +110,7 @@ impl SubmitPost {
             body: body, // once told me, the world was gonna roll me
             body_html: body_html,
             creator_id: Some(v.person.id),
-            board_id: Some(board_id),
+            board_id: Some(board.id),
             is_nsfw: Some(is_nsfw),
             title_chunk: Some(DbPost::generate_chunk(title)),
             ..PostForm::default()

@@ -1,13 +1,16 @@
+use crate::helpers::validation::check_private_instance;
+use crate::Censorable;
 use async_graphql::*;
+use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::{
     models::{
+        board::board_mods::BoardModerator as DbBoardMod,
         board::boards::Board as DbBoard,
         person::{local_user::AdminPerms, person::Person as DbPerson},
         post::posts::Post as DbPost,
     },
     utils::DbPool,
 };
-use tinyboards_db_views::post_view::PostQuery;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{structs::post::Post, ListingType, LoggedInUser, SortType};
@@ -21,6 +24,8 @@ impl QueryPosts {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
+        check_private_instance(v_opt, pool).await?;
+
         let require_board_not_banned = match v_opt {
             Some(v) => !v.local_user.has_permission(AdminPerms::Boards),
             None => true,
@@ -30,7 +35,30 @@ impl QueryPosts {
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 404, "Post not found"))?;
 
-        Ok(Post::from(res))
+        let mut post = Post::from(res);
+        let is_admin = match v_opt {
+            Some(v) => v.local_user.has_permission(AdminPerms::Content),
+            None => false,
+        };
+        let is_mod = match v_opt {
+            Some(v) => {
+                let mod_rel =
+                    DbBoardMod::get_by_person_id_for_board(pool, v.person.id, post.board_id, true)
+                        .await;
+                match mod_rel {
+                    Ok(m) => m.has_permission(ModPerms::Content),
+                    Err(_) => false,
+                }
+            }
+            None => false,
+        };
+
+        let my_person_id = v_opt.as_ref().map(|v| v.person.id).unwrap_or(-1);
+        if !is_admin {
+            post.censor(my_person_id, is_admin, is_mod);
+        }
+
+        Ok(post)
     }
 
     pub async fn list_posts<'ctx>(
@@ -54,6 +82,8 @@ impl QueryPosts {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
+        check_private_instance(v_opt, pool).await?;
+
         let sort = sort.unwrap_or(SortType::NewComments);
         let listing_type = listing_type.unwrap_or(ListingType::Local);
         let limit = std::cmp::min(limit.unwrap_or(25), 25);
@@ -61,11 +91,6 @@ impl QueryPosts {
             Some(v) => v.person.id,
             None => -1,
         };
-
-        println!(
-            "Received options - sort: {:?}, listing type: {:?}",
-            &sort, &listing_type
-        );
 
         let person_id = match person_name {
             Some(name) => DbPerson::get_by_name(pool, name)

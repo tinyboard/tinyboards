@@ -6,7 +6,11 @@ pub mod queries;
 pub(crate) mod structs;
 
 use crate::mutations::{
-    auth::Auth, comment::submit_comment::SubmitComment, post::submit_post::SubmitPost,
+    auth::Auth,
+    comment::{
+        actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
+    },
+    post::{actions::*, edit::EditPost, moderation::PostModeration, submit_post::SubmitPost},
 };
 use async_graphql::*;
 use queries::{
@@ -63,7 +67,17 @@ pub struct Query(
 );
 
 #[derive(MergedObject, Default)]
-pub struct Mutation(Auth, SubmitPost, SubmitComment);
+pub struct Mutation(
+    Auth,
+    SubmitPost,
+    SubmitComment,
+    EditPost,
+    PostActions,
+    PostModeration,
+    EditComment,
+    CommentActions,
+    CommentModeration,
+);
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
     Schema::new(Query::default(), Mutation::default(), EmptySubscription)

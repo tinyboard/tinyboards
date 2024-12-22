@@ -1,3 +1,4 @@
+use crate::helpers::validation::check_private_instance;
 use async_graphql::*;
 use tinyboards_db::{
     models::{board::boards::Board as DbBoard, person::local_user::AdminPerms},
@@ -15,6 +16,9 @@ pub struct QueryBoards;
 impl QueryBoards {
     pub async fn board(&self, ctx: &Context<'_>, name: String) -> Result<Board> {
         let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
 
         if name.contains("@") {
             todo!("Add apub support here");
@@ -47,6 +51,9 @@ impl QueryBoards {
     ) -> Result<Vec<Board>> {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
+
         let sort = sort.unwrap_or(SortType::Hot);
         let listing_type = listing_type.unwrap_or(ListingType::Local);
         let limit = Some(std::cmp::min(limit.unwrap_or(25), 25));

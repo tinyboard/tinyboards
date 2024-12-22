@@ -1,9 +1,10 @@
+use crate::helpers::validation::check_private_instance;
+use crate::LoggedInUser;
 use async_graphql::*;
-use dataloader::DataLoader;
 use tinyboards_db::{models::person::person::Person as DbPerson, utils::DbPool};
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{structs::person::Person, PostgresLoader, UserListingType, UserSortType};
+use crate::{structs::person::Person, UserListingType, UserSortType};
 
 #[derive(Default)]
 pub struct QueryPerson;
@@ -12,6 +13,9 @@ pub struct QueryPerson;
 impl QueryPerson {
     pub async fn user(&self, context: &Context<'_>, name: String) -> Result<Person> {
         let pool = context.data::<DbPool>()?;
+        let v_opt = context.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
 
         if name.contains("@") {
             todo!("Add apub support here");
@@ -39,6 +43,10 @@ impl QueryPerson {
         limit: Option<i64>,
     ) -> Result<Vec<Person>> {
         let pool = context.data::<DbPool>()?;
+        let v_opt = context.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
+
         let sort = sort.unwrap_or(UserSortType::MostRep);
         let listing_type = listing_type.unwrap_or(UserListingType::NotBanned);
 

@@ -123,7 +123,7 @@ impl Auth {
             );
         }
 
-        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{1,29}$").unwrap();
+        let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{0,29}$").unwrap();
         if !re.is_match(&username) {
             return Err(TinyBoardsError::from_message(400, "Invalid username.").into());
         }
@@ -200,15 +200,20 @@ impl Auth {
                 let err_type = if e.to_string()
                     == "duplicate key value violates unique constraint \"local_user_email_key\""
                 {
-                    "email_already_exists"
+                    "email address"
                 } else {
-                    "user_already_exists"
+                    "username"
                 };
 
                 // if local_user creation failed then delete the person
                 Person::delete(pool, person.id).await?;
 
-                return Err(TinyBoardsError::from_error_message(e, 500, err_type).into());
+                return Err(TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    &format!("A user with that {} already exists.", err_type),
+                )
+                .into());
             }
         };
 
