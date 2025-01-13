@@ -21,7 +21,7 @@ impl QueryPerson {
             todo!("Add apub support here");
         }
 
-        let db_person = DbPerson::get_with_counts_for_name(pool, name)
+        let db_person = DbPerson::get_user_for_name(pool, name)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 404, "User not found."))?;
 

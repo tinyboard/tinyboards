@@ -7,6 +7,7 @@ use tinyboards_db::{
         person::{
             local_user::AdminPerms,
             person::{Person as DbPerson, PersonSafe as DbPersonSafe},
+            user::User as DbUser,
         },
         post::posts::Post as DbPost,
     },
@@ -17,6 +18,18 @@ use tinyboards_utils::TinyBoardsError;
 use crate::{CommentSortType, ListingType, LoggedInUser, SortType};
 
 use super::{board_mods::BoardMod, boards::Board, comment::Comment, post::Post};
+
+/// User settings
+#[derive(SimpleObject, Clone)]
+struct Settings {
+    email: Option<String>,
+    email_notifications_enabled: bool,
+    default_sort_type: i16,
+    default_listing_type: i16,
+    #[graphql(name = "showNSFW")]
+    show_nsfw: bool,
+    show_bots: bool,
+}
 
 /// GraphQL representation of Person.
 #[derive(SimpleObject, Clone)]
@@ -41,6 +54,14 @@ pub struct Person {
     instance: Option<String>,
     profile_music: Option<String>,
     profile_music_youtube: Option<String>,
+    // Private fields for additional admin things
+    #[graphql(skip)]
+    _has_verified_email: Option<bool>,
+    #[graphql(skip)]
+    _is_application_accepted: bool,
+    // Settings: only available for your own account
+    #[graphql(skip)]
+    _settings: Option<Settings>,
     // `counts` is not queryable, instead, its fields are available for Person thru dynamic resolvers
     #[graphql(skip)]
     counts: DbPersonAggregates,
@@ -79,6 +100,51 @@ impl Person {
 
     pub async fn is_admin(&self) -> bool {
         self.admin_level > 0
+    }
+
+    pub async fn has_verified_email(&self, ctx: &Context<'_>) -> Option<bool> {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.person.id == self.id || v.local_user.has_permission(AdminPerms::Users) {
+            self._has_verified_email
+        } else {
+            None
+        }
+    }
+
+    pub async fn is_application_accepted(&self, ctx: &Context<'_>) -> Option<bool> {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.person.id == self.id || v.local_user.has_permission(AdminPerms::Users) {
+            Some(self._is_application_accepted)
+        } else {
+            None
+        }
+    }
+
+    pub async fn settings(&self, ctx: &Context<'_>) -> Option<&Settings> {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.person.id == self.id {
+            self._settings.as_ref()
+        } else {
+            None
+        }
     }
 
     pub async fn joined_boards(
@@ -274,6 +340,52 @@ impl Person {
     }
 }
 
+impl From<DbUser> for Person {
+    fn from(
+        DbUser {
+            person,
+            counts,
+            local_user,
+        }: DbUser,
+    ) -> Self {
+        Self {
+            id: person.id,
+            name: person.name,
+            is_banned: person.is_banned,
+            is_deleted: person.is_deleted,
+            unban_date: person.unban_date.map(|t| t.to_string()),
+            display_name: person.display_name,
+            bio: person.bio,
+            bio_html: person.bio_html,
+            creation_date: person.creation_date.to_string(),
+            updated: person.updated.map(|t| t.to_string()),
+            avatar: person.avatar.map(|a| a.as_str().into()),
+            banner: person.banner.map(|a| a.as_str().into()),
+            profile_background: person.profile_background.map(|a| a.as_str().into()),
+            admin_level: person.admin_level,
+            is_local: local_user.is_some(),
+            instance: person.instance,
+            profile_music: person.profile_music.map(|m| m.as_str().into()),
+            profile_music_youtube: person.profile_music_youtube,
+            _has_verified_email: local_user.as_ref().map(|u| u.email_verified),
+            _is_application_accepted: local_user
+                .as_ref()
+                .map(|u| u.is_application_accepted)
+                .unwrap_or(true),
+            _settings: local_user.map(|u| Settings {
+                email: u.email,
+                email_notifications_enabled: u.email_notifications_enabled,
+                default_sort_type: u.default_sort_type,
+                default_listing_type: u.default_listing_type,
+                show_nsfw: u.show_nsfw,
+                show_bots: u.show_bots,
+            }),
+            counts,
+        }
+    }
+}
+
+// Todo: remove this
 impl From<(DbPerson, DbPersonAggregates)> for Person {
     fn from((person, counts): (DbPerson, DbPersonAggregates)) -> Self {
         Self {
@@ -295,11 +407,15 @@ impl From<(DbPerson, DbPersonAggregates)> for Person {
             instance: person.instance,
             profile_music: person.profile_music.map(|m| m.as_str().into()),
             profile_music_youtube: person.profile_music_youtube,
+            _has_verified_email: None,
+            _is_application_accepted: true,
+            _settings: None,
             counts,
         }
     }
 }
 
+// TODO: remove this
 impl From<(DbPersonSafe, DbPersonAggregates)> for Person {
     fn from((person, counts): (DbPersonSafe, DbPersonAggregates)) -> Self {
         Self {
@@ -321,6 +437,9 @@ impl From<(DbPersonSafe, DbPersonAggregates)> for Person {
             instance: person.instance,
             profile_music: person.profile_music.map(|m| m.as_str().into()),
             profile_music_youtube: person.profile_music_youtube,
+            _has_verified_email: None,
+            _is_application_accepted: true,
+            _settings: None,
             counts,
         }
     }

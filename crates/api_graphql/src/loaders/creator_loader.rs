@@ -17,7 +17,7 @@ impl Loader<PersonId> for PostgresLoader {
         <Self as Loader<PersonId>>::Error,
     > {
         let keys = keys.into_iter().map(|k| k.0).collect::<Vec<i32>>();
-        let list = DbPerson::get_with_counts_for_ids(&self.pool, keys)
+        let list = DbPerson::get_users_for_ids(&self.pool, keys)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load users."))?;
 
@@ -30,8 +30,9 @@ impl Loader<PersonId> for PostgresLoader {
 
         Ok(h)*/
 
-        Ok(HashMap::from_iter(list.into_iter().map(
-            |(person, counts)| (PersonId(person.id), Person::from((person, counts))),
-        )))
+        Ok(HashMap::from_iter(
+            list.into_iter()
+                .map(|u| (PersonId(u.person.id), Person::from(u))),
+        ))
     }
 }

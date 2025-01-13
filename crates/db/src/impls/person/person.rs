@@ -1,6 +1,8 @@
 use crate::{
     aggregates::structs::PersonAggregates,
+    models::person::local_user::LocalUser,
     models::person::person::{Person, PersonForm},
+    models::person::user::User,
     newtypes::{DbUrl, UserId},
     schema::{instance, person, person_aggregates},
     traits::{ApubActor, Crud},
@@ -32,15 +34,13 @@ impl Person {
             .await
     }
 
-    pub async fn get_with_counts_for_name(
-        pool: &DbPool,
-        username: String,
-    ) -> Result<(Self, PersonAggregates), Error> {
+    pub async fn get_user_for_name(pool: &DbPool, username: String) -> Result<User, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::{person, person_aggregates};
+        use crate::schema::{local_user, person, person_aggregates};
 
         person::table
             .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(local_user::person_id.eq(person::id)))
             .filter(
                 person::name.ilike(
                     username
@@ -49,8 +49,9 @@ impl Person {
                         .replace('_', "\\_"),
                 ),
             )
-            .first::<(Self, PersonAggregates)>(conn)
+            .first::<(Self, PersonAggregates, Option<LocalUser>)>(conn)
             .await
+            .map(User::from)
     }
 
     pub async fn search_by_name(pool: &DbPool, query: &str) -> Result<Vec<Self>, Error> {
@@ -62,18 +63,17 @@ impl Person {
             .await
     }
 
-    pub async fn get_with_counts_for_ids(
-        pool: &DbPool,
-        ids: Vec<i32>,
-    ) -> Result<Vec<(Self, PersonAggregates)>, Error> {
+    pub async fn get_users_for_ids(pool: &DbPool, ids: Vec<i32>) -> Result<Vec<User>, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::person::dsl::*;
+        use crate::schema::{local_user, person, person_aggregates};
 
-        person
+        person::table
             .inner_join(person_aggregates::table)
-            .filter(id.eq_any(ids))
-            .load::<(Self, PersonAggregates)>(conn)
+            .left_join(local_user::table.on(local_user::person_id.eq(person::id)))
+            .filter(person::id.eq_any(ids))
+            .load::<(Self, PersonAggregates, Option<LocalUser>)>(conn)
             .await
+            .map(|res| res.into_iter().map(User::from).collect::<Vec<User>>())
     }
 
     pub async fn update_settings(
@@ -234,14 +234,18 @@ impl Person {
         page: Option<i64>,
         listing_type: UserListingType,
         search_term: Option<String>,
-    ) -> Result<Vec<(Person, PersonAggregates)>, Error> {
+    ) -> Result<Vec<User>, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::{person, person_aggregates /*, local_user */};
+        use crate::schema::{local_user, person, person_aggregates};
 
         let mut query = person::table
             .inner_join(person_aggregates::table)
-            //.left_join(local_user::table.on(local_user::person_id.eq(person::id)))
-            .select((person::all_columns, person_aggregates::all_columns))
+            .left_join(local_user::table.on(local_user::person_id.eq(person::id)))
+            .select((
+                person::all_columns,
+                person_aggregates::all_columns,
+                local_user::all_columns.nullable(),
+            ))
             .into_boxed();
 
         query = match sort {
@@ -273,7 +277,10 @@ impl Person {
 
         query = query.limit(limit).offset(offset);
 
-        query.load::<(Person, PersonAggregates)>(conn).await
+        query
+            .load::<(Person, PersonAggregates, Option<LocalUser>)>(conn)
+            .await
+            .map(|res| res.into_iter().map(User::from).collect::<Vec<User>>())
     }
 }
 
