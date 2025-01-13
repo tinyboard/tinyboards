@@ -63,9 +63,7 @@ impl QueryBoards {
             None => -1,
         };
         let banned_boards = match v_opt {
-            Some(v) => {
-                v.local_user.has_permission(AdminPerms::Boards) && banned_boards.unwrap_or(false)
-            }
+            Some(v) => v.has_permission(AdminPerms::Boards) && banned_boards.unwrap_or(false),
             None => false,
         };
 

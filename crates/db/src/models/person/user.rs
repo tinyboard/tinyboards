@@ -4,6 +4,7 @@ use crate::{
 };
 
 /// Struct for combining tables for a specific user.
+#[derive(Clone)]
 pub struct User {
     pub person: Person,
     pub counts: PersonAggregates,

@@ -2,13 +2,13 @@ use crate::DbPool;
 use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::models::board::boards::Board as DbBoard;
 use tinyboards_db::models::person::local_user::AdminPerms;
+use tinyboards_db::models::person::user::User as DbUser;
 use tinyboards_db::models::site::local_site::LocalSite as DbLocalSite;
-use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::TinyBoardsError;
 
 /// Check if the instance is private. Return an error if the instance is private and the user is not logged in.
 pub async fn check_private_instance(
-    user: Option<&LocalUserView>,
+    user: Option<&DbUser>,
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
@@ -36,14 +36,14 @@ pub async fn check_private_instance(
  * 	- or_admin_perms: optional, admin perms that bypass the mod check, fx. ModPerms::Content can be bypassed by AdminPerms::Content
  **/
 pub async fn require_mod_or_admin(
-    v: &LocalUserView,
+    v: &DbUser,
     pool: &DbPool,
     board_id: i32,
     with_permission: ModPerms,
     or_admin_perms: Option<AdminPerms>,
 ) -> Result<(), TinyBoardsError> {
     let or_admin_perms = or_admin_perms.unwrap_or(AdminPerms::Full);
-    if v.local_user.has_permission(or_admin_perms) {
+    if v.has_permission(or_admin_perms) {
         // user is admin
         Ok(())
     } else {

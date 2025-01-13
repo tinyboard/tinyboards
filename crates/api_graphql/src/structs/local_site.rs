@@ -57,7 +57,7 @@ impl LocalSite {
 
         match v_opt {
             Some(v) => {
-                if v.local_user.has_permission(AdminPerms::Config) {
+                if v.has_permission(AdminPerms::Config) {
                     self.welcome_message_.clone()
                 } else {
                     None

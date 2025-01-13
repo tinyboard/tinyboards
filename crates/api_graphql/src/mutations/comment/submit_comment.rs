@@ -73,7 +73,7 @@ impl SubmitComment {
         }
 
         // mod or admin check
-        let is_mod_or_admin = if v.local_user.has_permission(AdminPerms::Content) {
+        let is_mod_or_admin = if v.has_permission(AdminPerms::Content) {
             // user is admin
             true
         } else {

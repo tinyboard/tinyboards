@@ -64,7 +64,7 @@ impl Board {
         let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
 
         match v_opt {
-            Some(v) => v.local_user.has_permission(AdminPerms::Boards) && self.hidden_,
+            Some(v) => v.has_permission(AdminPerms::Boards) && self.hidden_,
             None => false,
         }
     }
@@ -155,7 +155,7 @@ impl Board {
         // If the board is banned (or deleted), only admins can view its posts
         let can_view_posts = if self.is_removed || self.is_deleted {
             match v_opt {
-                Some(v) => v.local_user.has_permission(AdminPerms::Boards),
+                Some(v) => v.has_permission(AdminPerms::Boards),
                 None => false,
             }
         } else {

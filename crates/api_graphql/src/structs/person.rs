@@ -110,7 +110,7 @@ impl Person {
         }
 
         let v = v_opt.unwrap();
-        if v.person.id == self.id || v.local_user.has_permission(AdminPerms::Users) {
+        if v.person.id == self.id || v.has_permission(AdminPerms::Users) {
             self._has_verified_email
         } else {
             None
@@ -125,7 +125,7 @@ impl Person {
         }
 
         let v = v_opt.unwrap();
-        if v.person.id == self.id || v.local_user.has_permission(AdminPerms::Users) {
+        if v.person.id == self.id || v.has_permission(AdminPerms::Users) {
             Some(self._is_application_accepted)
         } else {
             None
@@ -220,9 +220,7 @@ impl Person {
         };
 
         let is_admin = match v_opt {
-            Some(v) => v
-                .local_user
-                .has_permissions_any(AdminPerms::Boards + AdminPerms::Content),
+            Some(v) => v.has_permissions_any(AdminPerms::Boards + AdminPerms::Content),
             None => false,
         };
 
@@ -285,9 +283,7 @@ impl Person {
         };
 
         let is_admin = match v_opt {
-            Some(v) => v
-                .local_user
-                .has_permissions_any(AdminPerms::Boards + AdminPerms::Content),
+            Some(v) => v.has_permissions_any(AdminPerms::Boards + AdminPerms::Content),
             None => false,
         };
 
@@ -386,7 +382,7 @@ impl From<DbUser> for Person {
 }
 
 // Todo: remove this
-impl From<(DbPerson, DbPersonAggregates)> for Person {
+/*impl From<(DbPerson, DbPersonAggregates)> for Person {
     fn from((person, counts): (DbPerson, DbPersonAggregates)) -> Self {
         Self {
             id: person.id,
@@ -450,3 +446,4 @@ impl From<(&DbPerson, &DbPersonAggregates)> for Person {
         Self::from((ref_person.clone(), ref_counts.clone()))
     }
 }
+*/

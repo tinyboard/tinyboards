@@ -6,7 +6,8 @@ use serde::Deserialize;
 use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api_common::{
     admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, emoji::*,
-    message::GetMessages, moderator::*, person::*, post::*, site::*, utils::load_user_opt,
+    message::GetMessages, moderator::*, person::*, post::*, site::*,
+    utils::get_user_from_header_opt,
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_api_graphql::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
@@ -328,10 +329,10 @@ async fn perform_graphql(
 ) -> Result<GraphQLResponse> {
     let auth_header = get_auth(&http_request);
 
-    let logged_in_user_view =
-        load_user_opt(context.pool(), context.master_key(), auth_header).await?;
+    let logged_in_user =
+        get_user_from_header_opt(context.pool(), context.master_key(), auth_header).await?;
 
-    let my_person_id = match logged_in_user_view {
+    let my_person_id = match logged_in_user {
         Some(ref v) => v.person.id,
         None => -1,
     };
@@ -341,7 +342,7 @@ async fn perform_graphql(
         .execute(
             graphql_request
                 .into_inner()
-                .data(LoggedInUser::from(logged_in_user_view))
+                .data(LoggedInUser::from(logged_in_user))
                 .data(MasterKey::from(context.master_key().jwt.clone()))
                 .data(GQLSettings::from(context.settings()))
                 .data(context.pool().clone())

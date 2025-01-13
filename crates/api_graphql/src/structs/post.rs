@@ -155,7 +155,7 @@ impl Post {
             None => -1,
         };
         let is_admin = match v_opt {
-            Some(v) => v.local_user.has_permission(AdminPerms::Content),
+            Some(v) => v.has_permission(AdminPerms::Content),
             None => false,
         };
         let is_mod = match v_opt {

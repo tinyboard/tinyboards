@@ -12,7 +12,7 @@ impl MeQuery {
     pub async fn me<'ctx>(&self, ctx: &Context<'ctx>) -> Result<Person> {
         let v = ctx.data::<LoggedInUser>()?.require_user()?;
 
-        Ok(Person::from((&v.person, &v.counts)))
+        Ok(Person::from(v.clone()))
     }
 
     pub async fn unread_replies_count<'ctx>(&self, ctx: &Context<'ctx>) -> Result<i64> {

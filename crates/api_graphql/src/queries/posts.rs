@@ -27,7 +27,7 @@ impl QueryPosts {
         check_private_instance(v_opt, pool).await?;
 
         let require_board_not_banned = match v_opt {
-            Some(v) => !v.local_user.has_permission(AdminPerms::Boards),
+            Some(v) => !v.has_permission(AdminPerms::Boards),
             None => true,
         };
 
@@ -37,7 +37,7 @@ impl QueryPosts {
 
         let mut post = Post::from(res);
         let is_admin = match v_opt {
-            Some(v) => v.local_user.has_permission(AdminPerms::Content),
+            Some(v) => v.has_permission(AdminPerms::Content),
             None => false,
         };
         let is_mod = match v_opt {

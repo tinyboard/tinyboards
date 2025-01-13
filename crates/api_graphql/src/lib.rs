@@ -16,14 +16,13 @@ use async_graphql::*;
 use queries::{
     boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,
 };
-use tinyboards_db::utils::DbPool;
+use tinyboards_db::{models::person::user::User, utils::DbPool};
 //use queries::Query;
-use tinyboards_db_views::structs::LocalUserView;
 use tinyboards_utils::{settings::structs::Settings as Settings_, TinyBoardsError};
 //use tinyboards_api_common::data::TinyBoardsContext;
 
 /// wrapper around logged in user
-pub struct LoggedInUser(Option<LocalUserView>);
+pub struct LoggedInUser(Option<User>);
 /// key for decoding JWTs
 pub struct MasterKey(String);
 /// Instance settings
@@ -83,8 +82,8 @@ pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
     Schema::new(Query::default(), Mutation::default(), EmptySubscription)
 }
 
-impl From<Option<LocalUserView>> for LoggedInUser {
-    fn from(value: Option<LocalUserView>) -> Self {
+impl From<Option<User>> for LoggedInUser {
+    fn from(value: Option<User>) -> Self {
         Self(value)
     }
 }
@@ -102,18 +101,18 @@ impl From<&'static Settings_> for Settings {
 }
 
 impl LoggedInUser {
-    pub(crate) fn inner(&self) -> Option<&LocalUserView> {
+    pub(crate) fn inner(&self) -> Option<&User> {
         self.0.as_ref()
     }
 
-    pub(crate) fn require_user(&self) -> Result<&LocalUserView> {
+    pub(crate) fn require_user(&self) -> Result<&User> {
         match self.inner() {
             Some(v) => Ok(v),
             None => Err(TinyBoardsError::from_message(401, "Login required").into()),
         }
     }
 
-    pub(crate) fn require_user_not_banned(&self) -> Result<&LocalUserView> {
+    pub(crate) fn require_user_not_banned(&self) -> Result<&User> {
         match self.inner() {
             Some(v) => {
                 if v.person.is_banned {

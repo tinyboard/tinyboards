@@ -9,6 +9,7 @@ use crate::utils::{fuzzy_search, limit_and_offset_unlimited, naive_now};
 use crate::{
     models::comment::comments::{Comment, CommentForm},
     models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
+    models::person::{local_user::LocalUser, user::User},
     schema::comment_report,
     traits::Crud,
     utils::{get_conn, DbPool},
@@ -24,8 +25,8 @@ impl Comment {
     pub async fn load_participants_for_post(
         pool: &DbPool,
         for_post_id: i32,
-    ) -> Result<Vec<(Person, PersonAggregates)>, Error> {
-        use crate::schema::{comments, person, person_aggregates};
+    ) -> Result<Vec<User>, Error> {
+        use crate::schema::{comments, local_user, person, person_aggregates};
         let conn = &mut get_conn(pool).await?;
 
         comments::table
@@ -33,11 +34,17 @@ impl Comment {
             .inner_join(
                 person_aggregates::table.on(person_aggregates::person_id.eq(comments::creator_id)),
             )
+            .left_join(local_user::table.on(local_user::person_id.eq(person::id)))
             .filter(comments::post_id.eq(for_post_id))
-            .select((person::all_columns, person_aggregates::all_columns))
+            .select((
+                person::all_columns,
+                person_aggregates::all_columns,
+                local_user::all_columns.nullable(),
+            ))
             .distinct_on(comments::creator_id)
-            .load::<(Person, PersonAggregates)>(conn)
+            .load::<(Person, PersonAggregates, Option<LocalUser>)>(conn)
             .await
+            .map(|res| res.into_iter().map(User::from).collect::<Vec<User>>())
     }
 
     /// Get a single comment with its counts

@@ -11,6 +11,7 @@ use tinyboards_db::{
         board::{boards::{Board, BoardForm}, board_mods::{BoardModerator, ModPerms}},
         comment::comments::Comment,
         post::posts::Post,
+        person::user::User,
         secret::Secret,
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload, local_site_rate_limit::LocalSiteRateLimit},
         person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance, message::message::{MessageForm, Message, MessageNotifForm, MessageNotif},
@@ -92,7 +93,30 @@ pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
 type UResultOpt = Result<Option<LocalUserView>, TinyBoardsError>;
 type UResult = Result<LocalUserView, TinyBoardsError>;
 
-// Tries to take the access token from the auth header and get the user. Returns `Err` if it encounters an error (db error or invalid header format), otherwise `Ok(Some<User>)` or `Ok(None)` is returned depending on whether the token is valid. If being logged in is required, `require_user` should be used.
+pub async fn get_user_from_header_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<User>, TinyBoardsError> {
+    if auth.is_none() {
+        return Ok(None);
+    };
+
+    // here it is safe to unwrap, because the above check ensures that `auth` isn't None here
+    let auth = auth.unwrap();
+    if auth.is_empty() {
+        return Ok(None);
+    }
+
+    if !auth.starts_with("Bearer ") {
+        return Err(TinyBoardsError::from_message(400, "Invalid `Authorization` header! It should be `Authorization: Bearer <access token>`"));
+    }
+    // Reference to the string stored in `auth` skipping the `Bearer ` part
+    let token = String::from(&auth[7..]);
+    let master_key = master_key.jwt.clone();
+
+    let user = User::from_jwt(pool, token, master_key).await?;
+
+    Ok(Some(user))
+}
+
+// To be deprecated and removed
 pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
     if auth.is_none() {
         return Ok(None);
