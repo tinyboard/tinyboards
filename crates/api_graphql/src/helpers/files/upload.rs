@@ -3,6 +3,7 @@ use async_graphql::*;
 use std::io::Read;
 use tinyboards_db::models::site::uploads::{Upload as DbUpload, UploadForm};
 use tinyboards_db::traits::Crud;
+use tinyboards_db::newtypes::DbUrl;
 use tinyboards_utils::{
     error::TinyBoardsError,
     utils::{generate_rand_string, get_file_type, is_acceptable_file_type},
@@ -15,6 +16,7 @@ pub async fn upload_file(
     upload: Upload,
     file_name: Option<String>,
     for_person_id: i32,
+    max_size_mb: Option<u32>,
     ctx: &Context<'_>,
 ) -> Result<Url> {
     let settings = ctx.data::<Settings>()?.as_ref();
@@ -26,6 +28,8 @@ pub async fn upload_file(
     let upload_value = upload.value(ctx)?;
     let original_file_name = upload_value.filename;
     let content_type = upload_value.content_type.unwrap_or(String::new());
+    // TODO: read max allowed file size from either the config or the site settings instead
+    let max_size = (max_size_mb.unwrap_or(50) * 1024 * 1024) as i64;
 
     if !is_acceptable_file_type(&content_type) {
         return Err(TinyBoardsError::from_message(
@@ -46,12 +50,27 @@ pub async fn upload_file(
     );
     let path = format!("{}/{}", media_path, &file_name);
 
+    println!("got here, saving to {}", &path);
     upload
         .value(ctx)?
         .into_read()
         .read_to_end(&mut file_bytes)?;
     let mut file = File::create(&path).await?;
-    file.write(&file_bytes).await?;
+    file.write_all(&file_bytes).await?;
+    println!("file saved");
+
+    let size = file_bytes.len().try_into().unwrap();
+    if size > max_size {
+        // File too large! Delete it
+        // Files exceeding the absolute maximum will be rejected by proxy before even hitting the server
+        std::fs::remove_file(path);
+
+        return Err(TinyBoardsError::from_message(
+            400,
+            &format!("File exceeds maximum allowed size of {}MB.", max_size),
+        )
+        .into());
+    }
 
     let upload_url = Url::parse(&format!(
         "{}/media/{}",
@@ -65,11 +84,23 @@ pub async fn upload_file(
         file_name: file_name,
         file_path: path,
         upload_url: Some(upload_url.clone().into()),
-        size: file_bytes.len().try_into().unwrap(),
+        size,
     };
 
     let _upload = DbUpload::create(pool, &upload_form).await?;
 
     //let upload_url = Url::parse(upload_url)?;
     Ok(upload_url)
+}
+
+pub async fn delete_file(pool: &DbPool, img_url: &DbUrl) -> Result<(), TinyBoardsError> {
+    let file = DbUpload::find_by_url(pool, img_url).await?;
+
+    // delete the file from the file system
+    std::fs::remove_file(file.file_path.clone())?;
+
+    // delete DB entry
+    DbUpload::delete(pool, file.id.clone()).await?;
+
+    Ok(())
 }

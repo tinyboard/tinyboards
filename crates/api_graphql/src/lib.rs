@@ -7,6 +7,7 @@ pub(crate) mod structs;
 
 use crate::mutations::{
     auth::Auth,
+    person::settings::UpdateSettings,
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
     },
@@ -57,7 +58,7 @@ impl TestQuery {
 
 #[derive(MergedObject, Default)]
 pub struct Query(
-    TestQuery,
+    //TestQuery,
     MeQuery,
     QueryPosts,
     QueryBoards,
@@ -68,6 +69,7 @@ pub struct Query(
 #[derive(MergedObject, Default)]
 pub struct Mutation(
     Auth,
+    UpdateSettings,
     SubmitPost,
     SubmitComment,
     EditPost,

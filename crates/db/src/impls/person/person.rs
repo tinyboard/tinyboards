@@ -34,6 +34,20 @@ impl Person {
             .await
     }
 
+    pub async fn get_user_by_id(pool: &DbPool, id: i32) -> Result<User, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{local_user, person, person_aggregates};
+
+        person::table
+            .inner_join(person_aggregates::table)
+            .left_join(local_user::table.on(local_user::person_id.eq(person::id)))
+            .filter(person::id.eq(id))
+            .first::<(Self, PersonAggregates, Option<LocalUser>)>(conn)
+            .await
+            .map(User::from)
+    }
+
+    
     pub async fn get_user_for_name(pool: &DbPool, username: String) -> Result<User, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{local_user, person, person_aggregates};
