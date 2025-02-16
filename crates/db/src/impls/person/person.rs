@@ -139,7 +139,7 @@ impl Person {
 
         // Set the local user info to none
         diesel::update(local_user::table.filter(local_user::person_id.eq(person_id)))
-            .set((local_user::email.eq::<Option<String>>(None),))
+            .set((local_user::email.eq::<Option<String>>(None), local_user::is_deleted.eq(true)))
             .execute(conn)
             .await?;
 

@@ -6,17 +6,24 @@ use tinyboards_db::{
         person::{
             local_user::{LocalUser as DbLocalUser, LocalUserForm},
             person::{Person as DbPerson, PersonForm},
+	    user::User as DbUser
         },
         site::local_site::LocalSite as DbLocalSite,
     },
     utils::naive_now,
 };
-use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, TinyBoardsError};
+use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing,
+		       passhash::{hash_password, verify_password}, TinyBoardsError};
 
 //use tinyboards_db::models::site::uploads::Upload as DbUpload;
 
 #[derive(Default)]
 pub struct UpdateSettings;
+
+#[derive(SimpleObject)]
+pub struct ChangePwResponse {
+    pub success: bool,
+}
 
 #[derive(SimpleObject)]
 pub struct DeleteAccountResponse {
@@ -29,6 +36,7 @@ impl UpdateSettings {
     pub async fn update_settings(
         &self,
         ctx: &Context<'_>,
+	name: Option<String>,
         display_name: Option<String>,
         bio: Option<String>,
         show_nsfw: Option<bool>,
@@ -58,6 +66,18 @@ impl UpdateSettings {
                 .into());
             }
         }
+
+	// only the capitalization of the @username can be changed
+	if let Some(ref name) = name {
+	    if name.to_lowercase() != v.person.name.to_lowercase() {
+		return Err(TinyBoardsError::from_message(
+		    403,
+		    "You can only change the capitalization of your @username."
+		).into());
+	    }
+	}
+
+	let name = name.unwrap_or(v.person.name.clone());
 
         let display_name = match display_name {
             Some(display_name) => display_name,
@@ -167,6 +187,7 @@ impl UpdateSettings {
         let updated = Some(naive_now());
 
         let person_form = PersonForm {
+	    name: Some(name.clone()),
             bio,
             bio_html,
             display_name: Some(display_name),
@@ -238,6 +259,7 @@ impl UpdateSettings {
         }
 
         let local_user_form = LocalUserForm {
+	    name: Some(name),
             email: Some(email),
             show_nsfw: Some(show_nsfw),
             default_listing_type: Some(default_listing_type),
@@ -263,10 +285,32 @@ impl UpdateSettings {
         &self,
         ctx: &Context<'_>,
         old_password: String,
-        new_password: String,
-        new_password_verify: String,
-    ) -> Result<Self> {
-        todo!();
+        new_password: String
+    ) -> Result<ChangePwResponse> {
+	let v = ctx
+            .data_unchecked::<LoggedInUser>()
+            .require_user()?;
+        let pool = ctx.data::<DbPool>()?;
+	let local_user = v.local_user.as_ref().unwrap();
+
+	if !verify_password(local_user.passhash.as_str(), old_password.as_str()) {
+	    return Err(TinyBoardsError::from_message(403, "Current password incorrect.").into());
+	}
+
+	let new_passhash = hash_password(new_password);
+
+	if new_passhash.as_str() == local_user.passhash.as_str() {
+	    return Err(TinyBoardsError::from_message(400, "Old password and new password matches.").into());
+	}
+
+	let local_user_form = LocalUserForm {
+	    passhash: Some(new_passhash),
+	    ..LocalUserForm::default()
+	};
+
+	DbLocalUser::update_settings(pool, local_user.id, &local_user_form).await?;
+
+        Ok(ChangePwResponse { success: true })
     }
 
     pub async fn delete_account(
@@ -274,6 +318,33 @@ impl UpdateSettings {
         ctx: &Context<'_>,
         password: String,
     ) -> Result<DeleteAccountResponse> {
-        todo!();
+	let v = ctx
+            .data_unchecked::<LoggedInUser>()
+            .require_user()?;
+        let pool = ctx.data::<DbPool>()?;
+	let local_user = v.local_user.as_ref().unwrap();
+
+	if !verify_password(local_user.passhash.as_str(), password.as_str()) {
+	    return Err(TinyBoardsError::from_message(403, "Password incorrect.").into());
+	}
+
+	if let Some(ref avatar) = v.person.avatar {
+	    delete_file(pool, avatar).await?;
+	}
+
+	if let Some(ref banner) = v.person.banner {
+	    delete_file(pool, banner).await?;
+	}
+
+	if let Some(ref bg) = v.person.profile_background {
+	    delete_file(pool, bg).await?;
+	}
+
+	DbPerson::delete_account(pool, v.person.id).await?;
+	
+        Ok(DeleteAccountResponse {
+	    success: true,
+	    message: String::from("Account deleted successfully. RIP.")
+	})
     }
 }
