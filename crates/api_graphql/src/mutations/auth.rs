@@ -15,7 +15,7 @@ use tinyboards_db::models::site::registration_applications::RegistrationApplicat
 use tinyboards_db::models::site::site_invite::SiteInvite as DbSiteInvite;
 use tinyboards_db::models::site::{local_site::LocalSite as DbLocalSite, site::Site as DbSite};
 use tinyboards_db::traits::Crud;
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+//use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::passhash::{hash_password, verify_password};
 use tinyboards_utils::TinyBoardsError;
 use url::Url;
@@ -158,7 +158,7 @@ impl Auth {
             None
         };
 
-        let actor_keypair = generate_actor_keypair()?;
+        //let actor_keypair = generate_actor_keypair()?;
 
         let actor_id =
             generate_local_apub_endpoint(EndpointType::Person, &username, &protocol_and_hostname)?;
@@ -173,8 +173,8 @@ impl Auth {
             name: Some(username.clone()),
             display_name: Some(display_name.unwrap_or(username.clone())),
             actor_id: Some(actor_id.clone()),
-            private_key: Some(actor_keypair.private_key),
-            public_key: Some(actor_keypair.public_key),
+            //private_key: Some(actor_keypair.private_key),
+            //public_key: Some(actor_keypair.public_key),
             inbox_url: Some(generate_inbox_url(&actor_id)?),
             shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
             instance_id: Some(instance_id),

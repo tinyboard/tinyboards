@@ -22,24 +22,24 @@ console = [
 
 [workspace]
 members = [
-    "crates/api",
+    #"crates/api",
     "crates/api_common",
-    "crates/api_crud",
+    #"crates/api_crud",
     "crates/utils",
     "crates/db",
     "crates/db_views",
     "crates/db_views_mod",
-    "crates/federation",
-    "crates/routes",
+    #"crates/federation",
+    #"crates/routes",
     "crates/api_graphql",
 ]
 
 [workspace.dependencies]
-tinyboards_apub = { version = "=0.1.0", path = "./crates/apub" }
-tinyboards_federation = { version = "=0.1.0", path = "./crates/federation" }
-tinyboards_api = { version = "=0.1.0", path = "./crates/api" }
+#tinyboards_apub = { version = "=0.1.0", path = "./crates/apub" }
+#tinyboards_federation = { version = "=0.1.0", path = "./crates/federation" }
+#tinyboards_api = { version = "=0.1.0", path = "./crates/api" }
 tinyboards_api_common = { version = "=0.1.0", path = "./crates/api_common" }
-tinyboards_api_crud = { version = "=0.1.0", path = "./crates/api_crud" }
+#tinyboards_api_crud = { version = "=0.1.0", path = "./crates/api_crud" }
 tinyboards_utils = { version = "=0.1.0", path = "./crates/utils" }
 tinyboards_db = { version = "=0.1.0", path = "./crates/db" }
 tinyboards_db_views = { version = "=0.1.0", path = "./crates/db_views" }
@@ -152,10 +152,10 @@ async-graphql = { version = "7.0.7", features = ["dataloader"] }
 async-graphql-actix-web = "7.0.7"
 
 [dependencies]
-tinyboards_apub = { workspace = true }
-tinyboards_federation = { workspace = true }
-tinyboards_api = { workspace = true }
-tinyboards_api_crud = { workspace = true }
+#tinyboards_apub = { workspace = true }
+#tinyboards_federation = { workspace = true }
+#tinyboards_api = { workspace = true }
+#tinyboards_api_crud = { workspace = true }
 tinyboards_api_graphql = { workspace = true }
 tinyboards_api_common = { workspace = true }
 tinyboards_db = { workspace = true }

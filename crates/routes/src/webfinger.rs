@@ -1,4 +1,4 @@
-use tinyboards_federation::{
+/*use tinyboards_federation::{
     config::Data,
     fetch::webfinger::{extract_webfinger_name, Webfinger, WebfingerLink},
 };
@@ -25,7 +25,7 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     );
 }
 
-/// Responds to webfinger requests of the following format. 
+/// Responds to webfinger requests of the following format.
 /// https://mastodon.social/.well-known/webfinger?resource=acct:gargron@mastodon.social
 ///
 /// You can also view the webfinger response that Mastodon sends:
@@ -90,4 +90,4 @@ fn webfinger_link_for_actor(url: Option<Url>, kind: &str) -> Vec<WebfingerLink> 
     } else {
       vec![]
     }
-  }
+  }*/

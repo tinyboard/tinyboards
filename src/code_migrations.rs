@@ -17,7 +17,7 @@ use tinyboards_db::{
     traits::Crud,
     utils::{naive_now, DbPool},
 };
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+//use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::{
     error::TinyBoardsError, passhash::hash_password, settings::structs::Settings,
 };
@@ -56,7 +56,7 @@ async fn initialize_local_site_and_admin_user(
     let instance = Instance::read_or_create(pool, domain).await?;
 
     if let Some(setup) = &settings.setup {
-        let person_keypair = generate_actor_keypair()?;
+        //let person_keypair = generate_actor_keypair()?;
         let person_actor_id = generate_local_apub_endpoint(
             EndpointType::Person,
             &setup.admin_username,
@@ -67,8 +67,8 @@ async fn initialize_local_site_and_admin_user(
             .name(Some(setup.admin_username.clone()))
             .is_admin(Some(true))
             .actor_id(Some(person_actor_id.clone()))
-            .private_key(Some(person_keypair.private_key))
-            .public_key(Some(person_keypair.public_key))
+            //.private_key(Some(person_keypair.private_key))
+            .public_key(/* Some(person_keypair.public_key) */ None)
             .inbox_url(Some(generate_inbox_url(&person_actor_id)?))
             .shared_inbox_url(Some(generate_shared_inbox_url(&person_actor_id)?))
             .instance_id(Some(instance.id.clone()))
@@ -90,7 +90,7 @@ async fn initialize_local_site_and_admin_user(
         // create the local user admin object
         LocalUser::create(pool, &local_user_admin_form).await?;
 
-        let board_key_pair = generate_actor_keypair()?;
+        //let board_key_pair = generate_actor_keypair()?;
         let board_actor_id = generate_local_apub_endpoint(
             EndpointType::Board,
             &setup.default_board_name.clone(),
@@ -101,8 +101,8 @@ async fn initialize_local_site_and_admin_user(
             name: Some(setup.default_board_name.clone()),
             title: Some(setup.default_board_name.clone()),
             description: Some(setup.default_board_description.clone()),
-            public_key: Some(board_key_pair.public_key),
-            private_key: Some(board_key_pair.private_key),
+            //public_key: Some(board_key_pair.public_key),
+            //private_key: Some(board_key_pair.private_key),
             actor_id: Some(board_actor_id.clone()),
             subscribers_url: Some(generate_subscribers_url(&board_actor_id.clone())?),
             inbox_url: Some(generate_inbox_url(&board_actor_id.clone())?),
@@ -115,7 +115,7 @@ async fn initialize_local_site_and_admin_user(
         Board::create(pool, &board_form).await?;
 
         // add an entry to the site table
-        let site_key_pair = generate_actor_keypair()?;
+        //let site_key_pair = generate_actor_keypair()?;
         let site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
         let site_name = settings
             .setup
@@ -129,8 +129,8 @@ async fn initialize_local_site_and_admin_user(
             actor_id: Some(site_actor_id.clone().into()),
             last_refreshed_date: Some(naive_now()),
             inbox_url: Some(generate_site_inbox_url(&site_actor_id.into())?),
-            private_key: Some(Some(site_key_pair.private_key)),
-            public_key: Some(site_key_pair.public_key),
+            //private_key: Some(Some(site_key_pair.private_key)),
+            //public_key: Some(site_key_pair.public_key),
             ..SiteForm::default()
         };
 

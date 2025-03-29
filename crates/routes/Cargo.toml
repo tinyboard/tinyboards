@@ -8,7 +8,7 @@ tinyboards_utils = { workspace = true }
 tinyboards_db_views = { workspace = true }
 tinyboards_db = { workspace = true }
 tinyboards_api_common = { workspace = true }
-tinyboards_federation = { workspace = true }
+#tinyboards_federation = { workspace = true }
 actix-web = { workspace = true }
 anyhow = { workspace = true }
 chrono = { workspace = true }

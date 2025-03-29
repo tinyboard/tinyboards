@@ -19,14 +19,14 @@ use tinyboards_api_common::{
 };
 use tinyboards_api_graphql::gen_schema;
 //use tinyboards_api_graphql::config as graphql_config;
-use tinyboards_apub::{VerifyUrlData, FEDERATION_HTTP_FETCH_LIMIT};
+//use tinyboards_apub::{VerifyUrlData, FEDERATION_HTTP_FETCH_LIMIT};
 use tinyboards_db::{
     models::secret::Secret,
     utils::{build_db_pool, get_db_url, run_migrations},
 };
 use tinyboards_db_views::structs::SiteView;
-use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
-use tinyboards_routes::{media, nodeinfo, webfinger};
+//use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
+use tinyboards_routes::{media, nodeinfo};
 use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
@@ -76,9 +76,9 @@ async fn main() -> Result<(), TinyBoardsError> {
     let local_site = site_view.local_site;
     let federation_enabled = local_site.federation_enabled;
 
-    if federation_enabled {
+    /*if federation_enabled {
         println!("federation is enabled, host is {}", &settings.hostname);
-    }
+    }*/
 
     // make sure private instance and federation enabled are not turned on at the same time
     check_private_instance_and_federation_enabled(&local_site)?;
@@ -124,17 +124,17 @@ async fn main() -> Result<(), TinyBoardsError> {
             graphql_schema.clone(),
         );
 
-        let federation_config = FederationConfig::builder()
-            .domain(settings.hostname.clone())
-            .app_data(context.clone())
-            .client(client.clone())
-            .http_fetch_limit(FEDERATION_HTTP_FETCH_LIMIT)
-            .worker_count(local_site.federation_worker_count as u64)
-            .debug(cfg!(debug_assertions))
-            .http_signature_compat(true)
-            .url_verifier(Box::new(VerifyUrlData(context.pool().clone())))
-            .build()
-            .expect("configure federation");
+        /*let federation_config = FederationConfig::builder()
+        .domain(settings.hostname.clone())
+        .app_data(context.clone())
+        .client(client.clone())
+        .http_fetch_limit(FEDERATION_HTTP_FETCH_LIMIT)
+        .worker_count(local_site.federation_worker_count as u64)
+        .debug(cfg!(debug_assertions))
+        .http_signature_compat(true)
+        .url_verifier(Box::new(VerifyUrlData(context.pool().clone())))
+        .build()
+        .expect("configure federation");*/
 
         let cors_config = Cors::default().allow_any_origin();
 
@@ -144,18 +144,18 @@ async fn main() -> Result<(), TinyBoardsError> {
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
             .app_data(Data::new(rate_limit_cell.clone()))
-            .wrap(FederationMiddleware::new(federation_config))
+            //.wrap(FederationMiddleware::new(federation_config))
             // the routes
-            .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
+            //.configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
             // GraphQL
             .configure(api_routes::graphql_config)
             // federation
-            .configure(|cfg| {
+            /*.configure(|cfg| {
                 if federation_enabled {
                     tinyboards_apub::http::routes::config(cfg);
                     webfinger::config(cfg);
                 }
-            })
+            })*/
             .configure(nodeinfo::config)
             .configure(media::config)
     })

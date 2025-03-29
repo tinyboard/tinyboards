@@ -1,10 +1,14 @@
 use crate::{newtypes::DbUrl, CommentSortType, SortType};
 use diesel::{
+    backend::Backend,
+    deserialize::FromSql,
+    pg::Pg,
     result::{Error as DieselError, Error::QueryBuilderError},
-    PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::Backend, deserialize::FromSql,
+    serialize::{Output, ToSql},
+    sql_types::Text,
+    Connection, PgConnection,
 };
-use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
-use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};
+//use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
 use bb8::PooledConnection;
 use diesel_async::{
     pg::AsyncPgConnection,
@@ -12,9 +16,9 @@ use diesel_async::{
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::{env, env::VarError};
+use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};
 use tracing::info;
 use url::Url;
-
 
 pub type DbPool = Pool<AsyncPgConnection>;
 
@@ -136,7 +140,6 @@ pub fn post_to_comment_sort_type(sort: SortType) -> CommentSortType {
     }
 }
 
-
 pub fn get_db_url_from_env() -> Result<String, VarError> {
     env::var("TINYBOARDS_DATABASE_URL")
 }
@@ -152,8 +155,8 @@ pub fn get_db_url(settings: Option<&Settings>) -> String {
 }
 
 pub fn run_migrations(db_url: &str) {
-    let mut conn = 
-        PgConnection::establish(db_url).unwrap_or_else(|e| panic!("Error connecting to {db_url}: {e}"));
+    let mut conn = PgConnection::establish(db_url)
+        .unwrap_or_else(|e| panic!("Error connecting to {db_url}: {e}"));
     info!("Running db migrations! (this may take a while...)");
     let _ = &mut conn
         .run_pending_migrations(MIGRATIONS)
@@ -161,7 +164,9 @@ pub fn run_migrations(db_url: &str) {
     info!("Database migrations complete.")
 }
 
-async fn build_db_pool_settings_opt(settings: Option<&Settings>) -> Result<DbPool, TinyBoardsError> {
+async fn build_db_pool_settings_opt(
+    settings: Option<&Settings>,
+) -> Result<DbPool, TinyBoardsError> {
     let db_url = get_db_url(settings);
     let pool_size = settings.map(|s| s.database.pool_size).unwrap_or(5);
     let manager = AsyncDieselConnectionManager::<AsyncPgConnection>::new(&db_url);
@@ -197,26 +202,26 @@ pub async fn get_conn(
 
 impl ToSql<Text, Pg> for DbUrl {
     fn to_sql(&self, out: &mut Output<Pg>) -> diesel::serialize::Result {
-      <std::string::String as ToSql<Text, Pg>>::to_sql(&self.0.to_string(), &mut out.reborrow())
+        <std::string::String as ToSql<Text, Pg>>::to_sql(&self.0.to_string(), &mut out.reborrow())
     }
-  }
-  
-  impl<DB: Backend> FromSql<Text, DB> for DbUrl
-  where
+}
+
+impl<DB: Backend> FromSql<Text, DB> for DbUrl
+where
     String: FromSql<Text, DB>,
-  {
+{
     fn from_sql(value: DB::RawValue<'_>) -> diesel::deserialize::Result<Self> {
-      let str = String::from_sql(value)?;
-      Ok(DbUrl(Box::new(Url::parse(&str)?)))
+        let str = String::from_sql(value)?;
+        Ok(DbUrl(Box::new(Url::parse(&str)?)))
     }
+}
+
+/*impl<Kind> From<ObjectId<Kind>> for DbUrl
+where
+  Kind: Object + Send + 'static,
+  for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
+{
+  fn from(id: ObjectId<Kind>) -> Self {
+    DbUrl(Box::new(id.into()))
   }
-  
-  impl<Kind> From<ObjectId<Kind>> for DbUrl
-  where
-    Kind: Object + Send + 'static,
-    for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
-  {
-    fn from(id: ObjectId<Kind>) -> Self {
-      DbUrl(Box::new(id.into()))
-    }
-  }
+}*/
