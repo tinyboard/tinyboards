@@ -1,8 +1,7 @@
 use crate::{structs::person::Person, LoggedInUser};
 use async_graphql::*;
 use tinyboards_db::utils::DbPool;
-use tinyboards_db_views::structs::{CommentReplyView, PersonMentionView};
-use tinyboards_utils::TinyBoardsError;
+//use tinyboards_utils::TinyBoardsError;
 
 #[derive(Default)]
 pub struct MeQuery;
@@ -19,23 +18,23 @@ impl MeQuery {
         let v = ctx.data::<LoggedInUser>()?.require_user()?;
         let pool = ctx.data::<DbPool>()?;
 
-        CommentReplyView::get_unread_replies(pool, v.person.id)
+        v.local_user
+            .as_ref()
+            .unwrap()
+            .get_unread_replies_count(pool)
             .await
-            .map_err(|e| {
-                TinyBoardsError::from_error_message(e, 500, "Loading unread replies count failed.")
-                    .into()
-            })
+            .map_err(|e| e.into())
     }
 
     pub async fn unread_mentions_count<'ctx>(&self, ctx: &Context<'ctx>) -> Result<i64> {
         let v = ctx.data::<LoggedInUser>()?.require_user()?;
         let pool = ctx.data::<DbPool>()?;
 
-        PersonMentionView::get_unread_mentions(pool, v.person.id)
+        v.local_user
+            .as_ref()
+            .unwrap()
+            .get_unread_mentions_count(pool)
             .await
-            .map_err(|e| {
-                TinyBoardsError::from_error_message(e, 500, "Loading unread mention count failed.")
-                    .into()
-            })
+            .map_err(|e| e.into())
     }
 }

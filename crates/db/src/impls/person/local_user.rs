@@ -77,6 +77,56 @@ impl LocalUser {
         self.admin_level & AdminPerms::Owner.as_i32() > 0
     }
 
+    pub async fn get_unread_replies_count(&self, pool: &DbPool) -> Result<i64, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::notifications;
+
+        notifications::table
+            .select(notifications::id)
+            .filter(
+                notifications::recipient_id.eq(self.id).and(
+                    notifications::kind
+                        .eq("PostReply")
+                        .or(notifications::kind.eq("CommentReply")),
+                ),
+            )
+            .filter(notifications::is_read.eq(false))
+            .count()
+            .get_result(conn)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "Failed to retrieve unread notification count",
+                )
+            })
+    }
+
+    pub async fn get_unread_mentions_count(&self, pool: &DbPool) -> Result<i64, TinyBoardsError> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::notifications;
+
+        notifications::table
+            .select(notifications::id)
+            .filter(
+                notifications::recipient_id
+                    .eq(self.id)
+                    .and(notifications::kind.eq("UsernameMention")),
+            )
+            .filter(notifications::is_read.eq(false))
+            .count()
+            .get_result(conn)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(
+                    e,
+                    500,
+                    "Failed to retrieve unread notification count",
+                )
+            })
+    }
+
     pub async fn check_name_and_email(
         pool: &DbPool,
         username: &str,

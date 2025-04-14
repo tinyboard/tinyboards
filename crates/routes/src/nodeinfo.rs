@@ -1,4 +1,4 @@
-use actix_web::{error::ErrorBadRequest, web, Error, HttpResponse, Result};
+/*use actix_web::{error::ErrorBadRequest, web, Error, HttpResponse, Result};
 use anyhow::anyhow;
 use tinyboards_api_common::data::TinyBoardsContext;
 use tinyboards_db_views::structs::SiteView;
@@ -32,7 +32,7 @@ async fn node_info(context: web::Data<TinyBoardsContext>) -> Result<HttpResponse
     let site_view = SiteView::read_local(context.pool())
       .await
       .map_err(|_| ErrorBadRequest(TinyBoardsError::from(anyhow!("not found"))))?;
-  
+
     let protocols = if site_view.local_site.federation_enabled {
       Some(vec!["activitypub".to_string()])
     } else {
@@ -57,7 +57,7 @@ async fn node_info(context: web::Data<TinyBoardsContext>) -> Result<HttpResponse
       }),
       open_registrations,
     };
-  
+
     Ok(HttpResponse::Ok().json(json))
   }
 
@@ -103,4 +103,4 @@ pub struct NodeInfoUsers {
   pub total: Option<i64>,
   pub active_halfyear: Option<i64>,
   pub active_month: Option<i64>,
-}
+}*/

@@ -111,7 +111,9 @@ diesel::table! {
 diesel::table! {
     boards (id) {
         id -> Int4,
+        #[max_length = 50]
         name -> Varchar,
+        #[max_length = 150]
         title -> Varchar,
         description -> Nullable<Text>,
         creation_date -> Timestamp,
@@ -134,10 +136,15 @@ diesel::table! {
         banner -> Nullable<Text>,
         posting_restricted_to_mods -> Bool,
         is_removed -> Bool,
+        #[max_length = 512]
         ban_reason -> Nullable<Varchar>,
+        #[max_length = 25]
         primary_color -> Varchar,
+        #[max_length = 25]
         secondary_color -> Varchar,
+        #[max_length = 25]
         hover_color -> Varchar,
+        #[max_length = 10000]
         sidebar -> Nullable<Varchar>,
         sidebar_html -> Nullable<Text>,
     }
@@ -152,16 +159,6 @@ diesel::table! {
         downvotes -> Int8,
         creation_date -> Timestamp,
         reply_count -> Nullable<Int4>,
-    }
-}
-
-diesel::table! {
-    comment_reply (id) {
-        id -> Int4,
-        recipient_id -> Int4,
-        comment_id -> Int4,
-        read -> Bool,
-        creation_date -> Timestamp,
     }
 }
 
@@ -236,6 +233,7 @@ diesel::table! {
     emoji (id) {
         id -> Int4,
         local_site_id -> Int4,
+        #[max_length = 128]
         shortcode -> Varchar,
         image_url -> Text,
         alt_text -> Text,
@@ -249,6 +247,7 @@ diesel::table! {
     emoji_keyword (id) {
         id -> Int4,
         emoji_id -> Int4,
+        #[max_length = 128]
         keyword -> Varchar,
     }
 }
@@ -315,16 +314,24 @@ diesel::table! {
         federation_http_fetch_retry_limit -> Int4,
         federation_worker_count -> Int4,
         captcha_enabled -> Bool,
+        #[max_length = 255]
         captcha_difficulty -> Varchar,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
         reports_email_admins -> Bool,
+        #[max_length = 50]
         name -> Varchar,
+        #[max_length = 25]
         primary_color -> Nullable<Varchar>,
+        #[max_length = 25]
         secondary_color -> Nullable<Varchar>,
+        #[max_length = 25]
         hover_color -> Nullable<Varchar>,
+        #[max_length = 255]
         description -> Nullable<Varchar>,
+        #[max_length = 255]
         icon -> Nullable<Varchar>,
+        #[max_length = 255]
         welcome_message -> Nullable<Varchar>,
         boards_enabled -> Bool,
     }
@@ -506,6 +513,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    notifications (id) {
+        id -> Int4,
+        kind -> Text,
+        recipient_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        post_id -> Nullable<Int4>,
+        message_id -> Nullable<Int4>,
+        created -> Timestamp,
+        is_read -> Bool,
+    }
+}
+
+diesel::table! {
     password_resets (id) {
         id -> Int4,
         reset_token -> Text,
@@ -517,7 +537,9 @@ diesel::table! {
 diesel::table! {
     person (id) {
         id -> Int4,
+        #[max_length = 30]
         name -> Varchar,
+        #[max_length = 30]
         display_name -> Nullable<Varchar>,
         is_banned -> Bool,
         creation_date -> Timestamp,
@@ -538,12 +560,18 @@ diesel::table! {
         last_refreshed_date -> Timestamp,
         instance_id -> Int4,
         is_admin -> Bool,
+        #[max_length = 256]
         instance -> Nullable<Varchar>,
         admin_level -> Int4,
+        #[max_length = 512]
         profile_background -> Nullable<Varchar>,
+        #[max_length = 512]
         avatar_frame -> Nullable<Varchar>,
+        #[max_length = 512]
         bio_html -> Nullable<Varchar>,
+        #[max_length = 512]
         profile_music -> Nullable<Varchar>,
+        #[max_length = 255]
         profile_music_youtube -> Nullable<Varchar>,
     }
 }
@@ -582,16 +610,6 @@ diesel::table! {
         id -> Int4,
         person_id -> Int4,
         board_id -> Int4,
-        creation_date -> Timestamp,
-    }
-}
-
-diesel::table! {
-    person_mentions (id) {
-        id -> Int4,
-        recipient_id -> Int4,
-        comment_id -> Int4,
-        read -> Bool,
         creation_date -> Timestamp,
     }
 }
@@ -676,7 +694,9 @@ diesel::table! {
 diesel::table! {
     posts (id) {
         id -> Int4,
+        #[max_length = 200]
         title -> Varchar,
+        #[max_length = 10]
         type_ -> Varchar,
         url -> Nullable<Text>,
         thumbnail_url -> Nullable<Text>,
@@ -697,6 +717,7 @@ diesel::table! {
         local -> Bool,
         featured_board -> Bool,
         featured_local -> Bool,
+        #[max_length = 255]
         title_chunk -> Varchar,
     }
 }
@@ -711,6 +732,8 @@ diesel::table! {
         body_html -> Text,
         published -> Timestamp,
         updated -> Nullable<Timestamp>,
+        is_sender_hidden -> Bool,
+        title -> Text,
     }
 }
 
@@ -735,6 +758,7 @@ diesel::table! {
 diesel::table! {
     site (id) {
         id -> Int4,
+        #[max_length = 20]
         name -> Varchar,
         sidebar -> Nullable<Text>,
         creation_date -> Timestamp,
@@ -820,8 +844,6 @@ diesel::joinable!(board_subscriber -> boards (board_id));
 diesel::joinable!(board_subscriber -> person (person_id));
 diesel::joinable!(boards -> instance (instance_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
-diesel::joinable!(comment_reply -> comments (comment_id));
-diesel::joinable!(comment_reply -> person (recipient_id));
 diesel::joinable!(comment_report -> comments (comment_id));
 diesel::joinable!(comment_saved -> comments (comment_id));
 diesel::joinable!(comment_saved -> person (person_id));
@@ -856,14 +878,16 @@ diesel::joinable!(mod_remove_comment -> comments (comment_id));
 diesel::joinable!(mod_remove_comment -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> person (mod_person_id));
 diesel::joinable!(mod_remove_post -> posts (post_id));
+diesel::joinable!(notifications -> comments (comment_id));
+diesel::joinable!(notifications -> local_user (recipient_id));
+diesel::joinable!(notifications -> posts (post_id));
+diesel::joinable!(notifications -> private_message (message_id));
 diesel::joinable!(password_resets -> local_user (local_user_id));
 diesel::joinable!(person -> instance (instance_id));
 diesel::joinable!(person_aggregates -> person (person_id));
 diesel::joinable!(person_ban -> person (person_id));
 diesel::joinable!(person_board_blocks -> boards (board_id));
 diesel::joinable!(person_board_blocks -> person (person_id));
-diesel::joinable!(person_mentions -> comments (comment_id));
-diesel::joinable!(person_mentions -> person (recipient_id));
 diesel::joinable!(pm_notif -> person (recipient_id));
 diesel::joinable!(pm_notif -> private_message (pm_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
@@ -896,7 +920,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_subscriber,
     boards,
     comment_aggregates,
-    comment_reply,
     comment_report,
     comment_saved,
     comment_votes,
@@ -923,13 +946,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_remove_board,
     mod_remove_comment,
     mod_remove_post,
+    notifications,
     password_resets,
     person,
     person_aggregates,
     person_ban,
     person_blocks,
     person_board_blocks,
-    person_mentions,
     person_subscriber,
     pm_notif,
     post_aggregates,

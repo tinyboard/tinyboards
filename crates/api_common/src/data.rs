@@ -13,7 +13,7 @@ pub struct TinyBoardsContext {
     client: ClientWithMiddleware,
     settings: Settings,
     master_key: Secret,
-    rate_limit_cell: RateLimitCell,
+    //rate_limit_cell: RateLimitCell,
     schema: Schema<Query, Mutation, EmptySubscription>,
 }
 
@@ -23,7 +23,7 @@ impl TinyBoardsContext {
         client: ClientWithMiddleware,
         settings: Settings,
         master_key: Secret,
-        rate_limit_cell: RateLimitCell,
+        //rate_limit_cell: RateLimitCell,
         schema: Schema<Query, Mutation, EmptySubscription>,
     ) -> TinyBoardsContext {
         TinyBoardsContext {
@@ -31,7 +31,7 @@ impl TinyBoardsContext {
             client,
             settings,
             master_key,
-            rate_limit_cell,
+            //rate_limit_cell,
             schema,
         }
     }
@@ -52,9 +52,9 @@ impl TinyBoardsContext {
         &self.master_key
     }
 
-    pub fn rate_limit_cell(&self) -> &RateLimitCell {
+    /*pub fn rate_limit_cell(&self) -> &RateLimitCell {
         &&self.rate_limit_cell
-    }
+    }*/
 
     pub fn schema(&self) -> &Schema<Query, Mutation, EmptySubscription> {
         &self.schema
@@ -68,7 +68,7 @@ impl Clone for TinyBoardsContext {
             client: self.client.clone(),
             settings: self.settings.clone(),
             master_key: self.master_key.clone(),
-            rate_limit_cell: self.rate_limit_cell.clone(),
+            //rate_limit_cell: self.rate_limit_cell.clone(),
             schema: self.schema.clone(),
         }
     }

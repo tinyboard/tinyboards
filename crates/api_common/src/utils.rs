@@ -1,26 +1,27 @@
 
+use tinyboards_db::models::person::notifications::Notification;
+use tinyboards_db::models::person::notifications::NotificationType;
 use hmac::{Hmac, Mac};
 use anyhow::Context;
 use jwt::{AlgorithmType, Header, SignWithKey, Token};
 use sha2::Sha384;
-use futures::try_join;
 use url::{Url, ParseError};
 use std::{collections::BTreeMap, fs};
 use tinyboards_db::{
     models::{
-        board::{boards::{Board, BoardForm}, board_mods::{BoardModerator, ModPerms}},
+        board::{boards::Board, board_mods::ModPerms},
         comment::comments::Comment,
         post::posts::Post,
         person::user::User,
         secret::Secret,
-        site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload, local_site_rate_limit::LocalSiteRateLimit},
-        person::{local_user::*, person_blocks::*, person::{Person, PersonForm}}, site::local_site::LocalSite, apub::instance::Instance, message::message::{MessageForm, Message, MessageNotifForm, MessageNotif},
+        site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
+        person::{local_user::*, person_blocks::*}, site::local_site::LocalSite, message::message::{MessageForm, Message /*MessageNotifForm, MessageNotif*/},
     },
     traits::Crud, SiteMode, 
-    utils::{DbPool, naive_now},
+    utils::DbPool,
     newtypes::DbUrl,
 };
-use tinyboards_db_views::{structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView, BoardModeratorView, PersonView}, CommentQuery};
+//use tinyboards_db_views::{structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView, BoardModeratorView, PersonView}, CommentQuery};
 use tinyboards_utils::{
     error::TinyBoardsError, 
     rate_limit::RateLimitConfig, 
@@ -33,7 +34,7 @@ use base64::{
     engine::general_purpose,
 };
 
-use crate::site::FederatedInstances;
+//use crate::site::FederatedInstances;
 
 pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
@@ -89,10 +90,6 @@ pub fn password_length_check(pass: &str) -> Result<(), TinyBoardsError> {
     }
 }
 
-// less typing !!
-type UResultOpt = Result<Option<LocalUserView>, TinyBoardsError>;
-type UResult = Result<LocalUserView, TinyBoardsError>;
-
 pub async fn get_user_from_header_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<User>, TinyBoardsError> {
     if auth.is_none() {
         return Ok(None);
@@ -117,7 +114,7 @@ pub async fn get_user_from_header_opt(pool: &DbPool, master_key: &Secret, auth: 
 }
 
 // To be deprecated and removed
-pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
+/*pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UResultOpt {
     if auth.is_none() {
         return Ok(None);
     };
@@ -140,199 +137,12 @@ pub async fn load_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str
 
     Ok(Some(view))
 
-}
+}*/
 
 /**
  A newtype-ish wrapper around UResult with additional methods to make adding additional requirements (enforce lack of site ban, etc) easier.
  Call `unwrap` to get a regular Result.
 */
-pub struct UserResult(UResult);
-
-/// Enforces a logged in user. Returns `Ok<User>` if everything is OK, otherwise errors. If being logged in is optional, `load_user_opt` should be used.
-pub async fn require_user(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> UserResult {
-    if auth.is_none() {
-        let err: UResult = Err(TinyBoardsError::from_message(
-            401,
-            "you need to be logged in to do this",
-        ));
-        return err.into();
-    }
-
-    load_user_opt(pool, master_key, auth).await.into()
-}
-
-/*pub async fn require_user_opt(pool: &DbPool, master_key: &Secret, auth: Option<&str>) -> Result<Option<LocalUserView>, TinyBoardsError> {
-    require_user_opt(auth, pool, master_key).await
-}*/
-
-impl From<UResultOpt> for UserResult {
-    fn from(r: UResultOpt) -> Self {
-        let u_res = match r {
-            Ok(u) => match u {
-                Some(u) => {
-                    if u.local_user.is_deleted {
-                        Err(TinyBoardsError::from_message(
-                            401,
-                            "you need to be logged in to do this",
-                        ))
-                    } else {
-                        Ok(u)
-                    }
-                }
-                None => Err(TinyBoardsError::from_message(
-                    401,
-                    "you need to be logged in to do this",
-                )),
-            },
-            Err(e) => Err(e),
-        };
-
-        Self(u_res)
-    }
-}
-
-impl From<UResult> for UserResult {
-    fn from(r: UResult) -> Self {
-        Self(match r {
-            Ok(u) => {
-                if u.local_user.is_deleted {
-                    Err(TinyBoardsError::from_message(
-                        401,
-                        "you need to be logged in to do this",
-                    ))
-                } else {
-                    Ok(u)
-                }
-            }
-            Err(e) => Err(e),
-        })
-    }
-}
-
-impl UserResult {
-    pub fn unwrap(self) -> UResult {
-        self.0
-    }
-
-    pub fn not_banned(self) -> Self {
-        match self.0 {
-            Ok(u) => {
-                return Self(if u.person.is_banned {
-                    Err(TinyBoardsError::from_message(
-                        403,
-                        "you are banned from the site",
-                    ))
-                } else {
-                    Ok(u)
-                });
-            }
-            Err(e) => Self(Err(e)),
-        }
-    }
-
-    pub fn require_admin(self, permission: AdminPerms) -> Self {
-        Self(match self.0 {
-            Ok(u) => {
-                if u.local_user.has_permission(permission) {
-                    Ok(u)
-                } else {
-                    Err(TinyBoardsError::from_message(
-                        403,
-                        "insufficient permissions",
-                    ))
-                }
-            }
-            Err(e) => Err(e),
-        })
-    }
-
-    pub async fn not_banned_from_board(self, board_id: i32, pool: &DbPool) -> Self {
-        match self.0 {
-            Ok(u) => {
-                // skip this check for admins :)))) (if they have either the Content or the Boards permission, or both)
-                if u.local_user.has_permissions_any(AdminPerms::Content + AdminPerms::Boards) {
-                    return Self(Ok(u));
-                }
-                
-                let is_banned = BoardPersonBanView::get(pool, u.person.id, board_id)
-                    .await
-                    .is_ok();
-
-                let inner = match is_banned {
-                    true => Err(TinyBoardsError::from_message(403, "you are banned from this board.")),
-                    false => Ok(u),
-                };
-
-                Self(inner)
-            }
-            Err(e) => Self(Err(e)),
-        }
-    }
-
-    pub async fn require_board_mod(self, pool: &DbPool, board_id: i32, with_permission: ModPerms, rank_required: Option<i32>) -> Self {
-        match self.0 {
-            Ok(u) => {
-                // admins can do everything (in this case, only ones with the Content or Boards permission)
-                if u.local_user.has_permissions_any(AdminPerms::Content + AdminPerms::Boards) {
-                    return Self(Ok(u));
-                }
-
-                let mod_data = Board::board_get_mod(pool, board_id, u.person.id).await;
-
-                let inner = match mod_data {
-                    Ok(mod_data) => {
-                        match mod_data {
-                            Some(mod_data) => {
-                                if mod_data.has_permission(with_permission) {
-                                    match rank_required {
-                                        Some(rank_required) => {
-                                            if mod_data.rank > rank_required {
-                                                Err(TinyBoardsError::from_message(403, "You are not high enough on the mod hierarchy to do that."))
-                                            } else {
-                                                Ok(u)
-                                            }
-                                        }
-                                        None => Ok(u)
-                                    }
-                                } else {
-                                    Err(TinyBoardsError::from_message(403, "Missing moderator permissions."))
-                                }
-                            }
-                            None => Err(TinyBoardsError::from_message(403, "You must be a mod to do that!"))
-                        }
-                    }
-                    Err(e) => Err(TinyBoardsError::from(e)),
-                };
-
-                Self(inner)
-            }
-            Err(e) => Self(Err(e)),
-        }
-    }
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn check_registration_application(
-    site: &LocalSite,
-    local_user_view: &LocalUserView,
-    pool: &DbPool,
-) -> Result<(), TinyBoardsError> {
-    if site.require_application && local_user_view.local_user.admin_level == 0 && !local_user_view.local_user.is_application_accepted {
-        let person_id = local_user_view.local_user.person_id;
-        let registration = RegistrationApplication::find_by_person_id(pool, person_id).await?;
-
-        if let Some(deny_reason) = registration.deny_reason {
-            let registration_denied_message = &deny_reason;
-            return Err(TinyBoardsError::from_message(403, registration_denied_message));
-        } else {
-            return Err(TinyBoardsError::from_message(
-                400,
-                "registration application pending",
-            ));
-        }
-    }
-    Ok(())
-}
 
 #[tracing::instrument(skip_all)]
 pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
@@ -346,38 +156,7 @@ pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), Ti
     Ok(())
 }
 
-#[tracing::instrument(skip_all)]
-pub async fn check_private_instance(
-    user: &Option<LocalUserView>,
-    pool: &DbPool,
-) -> Result<(), TinyBoardsError> {
-    if user.is_none() {
-        let site = LocalSite::read(pool).await;
-
-        if let Ok(site) = site {
-            if site.private_instance {
-                return Err(TinyBoardsError::from_message(403, "instance is private"));
-            }
-        }
-    }
-    Ok(())
-}
-
-#[tracing::instrument(skip_all)]
-pub async fn check_board_deleted_or_removed(
-    board_id: i32,
-    pool: &DbPool,
-) -> Result<(), TinyBoardsError> {
-    let board = Board::read(pool, board_id).await.map_err(|_e| TinyBoardsError::from_message(404, "couldn't find board"))?;
-
-    if board.is_deleted || board.is_removed {
-        Err(TinyBoardsError::from_message(404, "board deleted or banned"))
-    } else {
-        Ok(())
-    }
-}
-
-#[tracing::instrument(skip_all)]
+/*#[tracing::instrument(skip_all)]
 pub async fn check_board_ban(
     person_id: i32,
     board_id: i32,
@@ -391,7 +170,7 @@ pub async fn check_board_ban(
     } else {
         Ok(())
     }
-}
+}*/
 
 #[tracing::instrument(skip_all)]
 pub async fn check_post_deleted_or_removed(
@@ -472,7 +251,7 @@ pub fn get_rate_limit_config(rate_limit_settings: &RateLimitSettings) -> RateLim
     }
 }
 
-#[tracing::instrument(skip_all)]
+/*#[tracing::instrument(skip_all)]
 pub async fn is_mod_or_admin(
     pool: &DbPool,
     person_id: i32,
@@ -484,9 +263,9 @@ pub async fn is_mod_or_admin(
         return Err(TinyBoardsError::from_message(403, "not a mod or admin"));
     }
     Ok(())
-}
+}*/
 
-#[tracing::instrument(skip_all)]
+/*#[tracing::instrument(skip_all)]
 pub async fn is_mod_or_admin_opt(
   pool: &DbPool,
   local_user_view: Option<&LocalUserView>,
@@ -501,9 +280,9 @@ pub async fn is_mod_or_admin_opt(
   } else {
     Err(TinyBoardsError::from_message(403, "not a mod or admin"))
   }
-}
+}*/
 
-pub async fn is_top_admin(pool: &DbPool, person_id: i32) -> Result<(), TinyBoardsError> {
+/*pub async fn is_top_admin(pool: &DbPool, person_id: i32) -> Result<(), TinyBoardsError> {
     let admins = PersonView::admins(pool).await?;
     let top_admin = admins
       .first()
@@ -513,14 +292,14 @@ pub async fn is_top_admin(pool: &DbPool, person_id: i32) -> Result<(), TinyBoard
       return Err(TinyBoardsError::from_message(400, "not top admin"));
     }
     Ok(())
-}
+}*/
   
-pub fn is_admin(local_user_view: &LocalUserView) -> Result<(), TinyBoardsError> {
+/*pub fn is_admin(local_user_view: &LocalUserView) -> Result<(), TinyBoardsError> {
     if !local_user_view.person.is_admin {
         return Err(TinyBoardsError::from_message(400, "not an admin"));
     }
     Ok(())
-}
+}*/
 
 pub async fn send_system_message(pool: &DbPool, recipient_user_id: Option<i32>, recipient_board_id: Option<i32>, body: String) -> Result<(), TinyBoardsError> {
     let body = body + "\n\n*This message was sent automatically. Contact the admins if you have any questions.*";
@@ -538,16 +317,8 @@ pub async fn send_system_message(pool: &DbPool, recipient_user_id: Option<i32>, 
     let message = Message::submit(pool, form).await?;
 
     if let Some(user_id) = recipient_user_id {
-        // create notification
-        let form = MessageNotifForm {
-            recipient_id: Some(user_id),
-            pm_id: Some(message.id),
-            ..MessageNotifForm::default()
-        };
-
-        MessageNotif::create(pool, &form)
-            .await
-            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to save message notification :("))?;
+        Notification::send(pool, NotificationType::Message(message.id), user_id).await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to send notification for message :("))?;
     }
 
     Ok(())
@@ -714,7 +485,7 @@ pub async fn send_application_approval_email(
 }   
 
 /// Sends email to admins after a user applies
-  pub async fn send_new_applicant_email_to_admins(
+  /*pub async fn send_new_applicant_email_to_admins(
     applicant_username: &str,
     pool: &DbPool,
     settings: &Settings,
@@ -735,10 +506,10 @@ pub async fn send_application_approval_email(
     }
 
     Ok(())
-}
+}*/
 
 /// Sends a report email to admins
-pub async fn send_new_report_email_to_admins(
+/*pub async fn send_new_report_email_to_admins(
     reporter_username: &str,
     reported_username: &str,
     pool: &DbPool,
@@ -755,7 +526,7 @@ pub async fn send_new_report_email_to_admins(
     }
     Ok(())
 }
-
+*/
 
 /// gets current site mode
   pub fn get_current_site_mode(site: &LocalSite, site_mode: &Option<SiteMode>) -> SiteMode {
@@ -872,7 +643,7 @@ pub async fn send_new_report_email_to_admins(
     Ok(Url::parse(&url)?.into())
   }
 
-#[tracing::instrument(skip_all)]
+/*#[tracing::instrument(skip_all)]
 pub async fn build_federated_instances(
   local_site: &LocalSite,
   pool: &DbPool,
@@ -893,9 +664,9 @@ pub async fn build_federated_instances(
   } else {
     Ok(None)
   }
-}
+}*/
 
-pub async fn remove_user_data(
+/*pub async fn remove_user_data(
         banned_person_id: i32,
         pool: &DbPool,
     ) -> Result<(), TinyBoardsError> {
@@ -990,7 +761,7 @@ pub async fn remove_user_data_in_board(
     }
 
     Ok(())
-}
+}*/
 
 // pub fn get_interface_language(user: &LocalUserView) -> Lang {
 //     lang_str_to_lang(&user.local_user.interface_language)
@@ -1004,66 +775,3 @@ pub async fn remove_user_data_in_board(
 //     })
 // }
 
-pub async fn delete_user_account(
-    person_id: i32,
-    pool: &DbPool,
-  ) -> Result<(), TinyBoardsError> {
-    // Delete their images
-    let person = Person::read(pool, person_id).await?;
-    if let Some(avatar) = person.avatar {
-      purge_local_image_by_url(pool, &avatar).await?;
-    }
-    if let Some(banner) = person.banner {
-      purge_local_image_by_url(pool, &banner).await?;
-    }
-    // No need to update avatar and banner, those are handled in Person::delete_account
-  
-    // Comments
-    Comment::permadelete_for_creator(pool, person_id)
-      .await
-      .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't update comment"))?;
-  
-    // Posts
-    Post::permadelete_for_creator(pool, person_id)
-      .await
-      .map_err(|e| TinyBoardsError::from_error_message(e, 500, "couldn't update post"))?;
-  
-    // Purge image posts
-    purge_local_image_posts_for_user(person_id, pool).await?;
-  
-    // Leave boards they mod
-    BoardModerator::leave_all_boards(pool, person_id).await?;
-  
-    Person::delete_account(pool, person_id).await?;
-  
-    Ok(())
-  }
-
-  pub fn check_private_instance_and_federation_enabled(
-    local_site: &LocalSite,
-  ) -> Result<(), TinyBoardsError> {
-    if local_site.private_instance && local_site.federation_enabled {
-        return Err(TinyBoardsError::from_message(400, "cannot have private instance and federation enabled at the same time."));
-    }
-    Ok(())
-  }
-
-  pub fn local_site_rate_limit_to_rate_limit_config(
-    local_site_rate_limit: &LocalSiteRateLimit,
-  ) -> RateLimitConfig {
-    let l = local_site_rate_limit;
-    RateLimitConfig {
-      message: l.message,
-      message_per_second: l.message_per_second,
-      post: l.post,
-      post_per_second: l.post_per_second,
-      register: l.register,
-      register_per_second: l.register_per_second,
-      image: l.image,
-      image_per_second: l.image_per_second,
-      comment: l.comment,
-      comment_per_second: l.comment_per_second,
-      search: l.search,
-      search_per_second: l.search_per_second,
-    }
-  }

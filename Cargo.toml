@@ -27,8 +27,8 @@ members = [
     #"crates/api_crud",
     "crates/utils",
     "crates/db",
-    "crates/db_views",
-    "crates/db_views_mod",
+    # "crates/db_views",
+    # "crates/db_views_mod",
     #"crates/federation",
     #"crates/routes",
     "crates/api_graphql",
@@ -42,8 +42,8 @@ tinyboards_api_common = { version = "=0.1.0", path = "./crates/api_common" }
 #tinyboards_api_crud = { version = "=0.1.0", path = "./crates/api_crud" }
 tinyboards_utils = { version = "=0.1.0", path = "./crates/utils" }
 tinyboards_db = { version = "=0.1.0", path = "./crates/db" }
-tinyboards_db_views = { version = "=0.1.0", path = "./crates/db_views" }
-tinyboards_db_views_mod = { version = "=0.1.0", path = "./crates/db_views_mod" }
+# tinyboards_db_views = { version = "=0.1.0", path = "./crates/db_views" }
+# tinyboards_db_views_mod = { version = "=0.1.0", path = "./crates/db_views_mod" }
 tinyboards_routes = { version = "=0.1.0", path = "./crates/routes" }
 tinyboards_api_graphql = { version = "=0.1.0", path = "./crates/api_graphql" }
 base64 = "0.21.0"
@@ -159,8 +159,8 @@ async-graphql-actix-web = "7.0.7"
 tinyboards_api_graphql = { workspace = true }
 tinyboards_api_common = { workspace = true }
 tinyboards_db = { workspace = true }
-tinyboards_db_views = { workspace = true }
-tinyboards_db_views_mod = { workspace = true }
+# tinyboards_db_views = { workspace = true }
+# tinyboards_db_views_mod = { workspace = true }
 tinyboards_utils = { workspace = true }
 tinyboards_routes = { workspace = true }
 diesel = { workspace = true }

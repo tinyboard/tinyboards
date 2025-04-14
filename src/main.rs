@@ -13,9 +13,9 @@ use std::{thread, time::Duration};
 use tinyboards_api_common::{
     data::TinyBoardsContext,
     request::build_user_agent,
-    utils::{
+    /*utils::{
         check_private_instance_and_federation_enabled, local_site_rate_limit_to_rate_limit_config,
-    },
+    },*/
 };
 use tinyboards_api_graphql::gen_schema;
 //use tinyboards_api_graphql::config as graphql_config;
@@ -24,7 +24,7 @@ use tinyboards_db::{
     models::secret::Secret,
     utils::{build_db_pool, get_db_url, run_migrations},
 };
-use tinyboards_db_views::structs::SiteView;
+//use tinyboards_db_views::structs::SiteView;
 //use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
 use tinyboards_routes::{media, nodeinfo};
 use tinyboards_server::{
@@ -69,23 +69,23 @@ async fn main() -> Result<(), TinyBoardsError> {
     let secret = Secret::init(db_url).expect("Couldn't initialize secrets.");
 
     // make sure local site is setup
-    let site_view = SiteView::read_local(&pool)
+    /*let site_view = SiteView::read_local(&pool)
         .await
         .expect("local site is not set up");
 
     let local_site = site_view.local_site;
-    let federation_enabled = local_site.federation_enabled;
+    let federation_enabled = local_site.federation_enabled;*/
 
     /*if federation_enabled {
         println!("federation is enabled, host is {}", &settings.hostname);
     }*/
 
     // make sure private instance and federation enabled are not turned on at the same time
-    check_private_instance_and_federation_enabled(&local_site)?;
+    //check_private_instance_and_federation_enabled(&local_site)?;
 
-    let rate_limit_config =
+    /*let rate_limit_config =
         local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
-    let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;
+    let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;*/
 
     println!(
         "Starting http server at {}:{}",
@@ -120,7 +120,7 @@ async fn main() -> Result<(), TinyBoardsError> {
             client.clone(),
             settings.clone(),
             secret.clone(),
-            rate_limit_cell.clone(),
+            //rate_limit_cell.clone(),
             graphql_schema.clone(),
         );
 
@@ -143,7 +143,7 @@ async fn main() -> Result<(), TinyBoardsError> {
             .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
-            .app_data(Data::new(rate_limit_cell.clone()))
+            //.app_data(Data::new(rate_limit_cell.clone()))
             //.wrap(FederationMiddleware::new(federation_config))
             // the routes
             //.configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
@@ -156,7 +156,7 @@ async fn main() -> Result<(), TinyBoardsError> {
                     webfinger::config(cfg);
                 }
             })*/
-            .configure(nodeinfo::config)
+            //.configure(nodeinfo::config)
             .configure(media::config)
     })
     .bind((settings_bind.bind, settings_bind.port))

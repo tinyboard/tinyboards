@@ -1,4 +1,4 @@
-use crate::{
+/*use crate::{
     data::TinyBoardsContext,
 };
 use tinyboards_db::{
@@ -23,15 +23,15 @@ pub async fn send_notifications(
     context: &TinyBoardsContext,
 ) -> Result<Vec<i32>, TinyBoardsError> {
     let mut recipient_ids = Vec::new();
-    
+
     // TODO - add in email logic eventually
-    
+
     //let inbox_link = format!("{}/inbox", context.settings().get_protocol_and_hostname());
 
     for mention in mentions
         .iter()
         .filter(|m| m.name.ne(&person.name))
-        .collect::<Vec<&MentionData>>() 
+        .collect::<Vec<&MentionData>>()
     {
         let mention_name = mention.name.clone();
 
@@ -42,7 +42,7 @@ pub async fn send_notifications(
             Ok(person_view) => {
 
                 recipient_ids.push(person_view.person.id.clone());
-                
+
                 let user_mention_form = PersonMentionForm {
                     recipient_id: Some(person_view.person.id.clone()),
                     comment_id: Some(comment.id),
@@ -58,7 +58,7 @@ pub async fn send_notifications(
             Err(_) => {
                 ()
             }
-        };        
+        };
     }
 
     // send comment reply to parent commenter/OP
@@ -84,8 +84,8 @@ pub async fn send_notifications(
 
             // this needs to fail softly as well
             CommentReply::create(context.pool(), &comment_reply_form).await.ok();
-            
-        } 
+
+        }
 
     } else {
         // if no parent id then send a notification to the OP
@@ -108,6 +108,6 @@ pub async fn send_notifications(
         }
 
     }
-    
+
     Ok(recipient_ids)
-}
+}*/

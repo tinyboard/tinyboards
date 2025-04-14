@@ -4,7 +4,6 @@ use tinyboards_db::{
     models::{board::boards::Board as DbBoard, person::local_user::AdminPerms},
     utils::DbPool,
 };
-use tinyboards_db_views::board_view::BoardQuery;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{structs::boards::Board, ListingType, LoggedInUser, SortType};

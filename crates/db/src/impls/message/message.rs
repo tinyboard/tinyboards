@@ -1,4 +1,4 @@
-use crate::models::message::message::{MessageNotif, MessageNotifForm};
+//use crate::models::message::message::{MessageNotif, MessageNotifForm};
 use crate::schema::{pm_notif::dsl::*, private_message::dsl::*};
 use crate::{
     models::message::message::{Message, MessageForm},
@@ -49,7 +49,7 @@ impl Crud for Message {
     }
 }
 
-#[async_trait::async_trait]
+/*#[async_trait::async_trait]
 impl Crud for MessageNotif {
     type Form = MessageNotifForm;
     type IdType = i32;
@@ -77,4 +77,4 @@ impl Crud for MessageNotif {
             .get_result::<Self>(conn)
             .await
     }
-}
+}*/

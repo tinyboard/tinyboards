@@ -12,8 +12,8 @@ use tinyboards_db::models::comment::comment_votes::CommentVoteForm;
 use tinyboards_db::models::comment::comments::Comment as DbComment;
 use tinyboards_db::models::comment::comments::CommentForm;
 use tinyboards_db::models::person::local_user::AdminPerms;
-use tinyboards_db::models::person::person_mentions::PersonMention as DbPersonMention;
-use tinyboards_db::models::person::person_mentions::PersonMentionForm;
+//use tinyboards_db::models::person::person_mentions::PersonMention as DbPersonMention;
+//use tinyboards_db::models::person::person_mentions::PersonMentionForm;
 use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
@@ -193,7 +193,7 @@ impl SubmitComment {
         //       .await?;
 
         // if parent comment has person_mentions then mark them as read
-        if let Some(ref parent_comment) = parent_comment {
+        /*if let Some(ref parent_comment) = parent_comment {
             let person_id = v.person.id;
             let person_mention =
                 DbPersonMention::read_by_comment_and_person(pool, parent_comment.id, person_id)
@@ -212,7 +212,7 @@ impl SubmitComment {
                     TinyBoardsError::from_error_message(e, 400, "could not update person mention")
                 })?;
             }
-        }
+        }*/
 
         let comment = DbComment::get_with_counts(pool, updated_comment.id).await?;
         Ok(Comment::from(comment))
