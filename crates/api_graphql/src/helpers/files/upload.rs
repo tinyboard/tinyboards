@@ -2,8 +2,8 @@ use crate::{DbPool, Settings};
 use async_graphql::*;
 use std::io::Read;
 use tinyboards_db::models::site::uploads::{Upload as DbUpload, UploadForm};
-use tinyboards_db::traits::Crud;
 use tinyboards_db::newtypes::DbUrl;
+use tinyboards_db::traits::Crud;
 use tinyboards_utils::{
     error::TinyBoardsError,
     utils::{generate_rand_string, get_file_type, is_acceptable_file_type},
@@ -48,22 +48,26 @@ pub async fn upload_file(
         },
         file_type
     );
-    let path = format!("{}/{}", media_path, &file_name);
+    let path = format!("{}/{}", media_path, file_name);
 
-    println!("got here, saving to {}", &path);
+    println!("got here, saving to {:?}", &path);
     upload
         .value(ctx)?
         .into_read()
         .read_to_end(&mut file_bytes)?;
+    //let _ = File::create("hi.txt").await?;
     let mut file = File::create(&path).await?;
     file.write_all(&file_bytes).await?;
-    println!("file saved");
+    file.flush().await?;
 
     let size = file_bytes.len().try_into().unwrap();
+    println!("File size is {}", size);
     if size > max_size {
         // File too large! Delete it
         // Files exceeding the absolute maximum will be rejected by proxy before even hitting the server
-        std::fs::remove_file(path);
+        if let Err(_) = std::fs::remove_file(path.clone()) {
+            eprintln!("File {} exceeds maximum allowed size of {}MB, but couldn't be deleted automatically. Please delete it.", path, max_size);
+        }
 
         return Err(TinyBoardsError::from_message(
             400,

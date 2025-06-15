@@ -1,4 +1,5 @@
 .env
+.vscode/*
 target/
 config.hjson
 docker/volumes/*
