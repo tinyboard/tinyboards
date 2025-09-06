@@ -2,4 +2,5 @@
 pub mod ban;
 pub mod block;
 pub mod hide;
+pub mod read;
 pub mod transfer;

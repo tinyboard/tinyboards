@@ -3,7 +3,7 @@ use diesel::{
     result::{Error as DieselError, Error::QueryBuilderError},
     PgConnection, Connection, sql_types::Text, serialize::{ToSql, Output}, pg::Pg, backend::Backend, deserialize::FromSql,
 };
-use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
+// Federation import removed for local-only operation
 use tinyboards_utils::{error::TinyBoardsError, settings::structs::Settings};
 use bb8::PooledConnection;
 use diesel_async::{
@@ -211,12 +211,4 @@ impl ToSql<Text, Pg> for DbUrl {
     }
   }
   
-  impl<Kind> From<ObjectId<Kind>> for DbUrl
-  where
-    Kind: Object + Send + 'static,
-    for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
-  {
-    fn from(id: ObjectId<Kind>) -> Self {
-      DbUrl(Box::new(id.into()))
-    }
-  }
+  // Federation conversion function removed for local-only operation

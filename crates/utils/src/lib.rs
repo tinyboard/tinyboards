@@ -1,4 +1,5 @@
 pub mod error;
+pub mod keypair;
 pub mod parser;
 pub mod passhash;
 pub mod rate_limit;
@@ -10,6 +11,7 @@ pub mod email;
 pub mod claims;
 
 pub use error::TinyBoardsError;
+pub use keypair::{generate_actor_keypair, ActorKeypair};
 pub use passhash::hash_password;
 pub use time::time;
 

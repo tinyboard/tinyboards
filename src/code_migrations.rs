@@ -17,7 +17,7 @@ use tinyboards_db::{
     traits::Crud,
     utils::{naive_now, DbPool},
 };
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+use tinyboards_utils::generate_actor_keypair;
 use tinyboards_utils::{
     error::TinyBoardsError, passhash::hash_password, settings::structs::Settings,
 };

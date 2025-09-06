@@ -19,7 +19,7 @@ use tinyboards_db::models::site::registration_applications::{
 use tinyboards_db::models::site::site_invite::SiteInvite;
 use tinyboards_db::traits::Crud;
 use tinyboards_db_views::structs::SiteView;
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+use tinyboards_utils::generate_actor_keypair;
 use tinyboards_utils::{hash_password, TinyBoardsError};
 use url::Url;
 

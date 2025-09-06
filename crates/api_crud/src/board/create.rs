@@ -24,7 +24,7 @@ use tinyboards_db::{
     traits::{ApubActor, Crud, Joinable, Subscribeable},
 };
 use tinyboards_db_views::structs::SiteView;
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+use tinyboards_utils::generate_actor_keypair;
 use tinyboards_utils::TinyBoardsError;
 
 #[async_trait::async_trait(?Send)]

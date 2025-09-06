@@ -1,9 +1,4 @@
-use tinyboards_federation::{
-  fetch::collection_id::CollectionId,
-  fetch::object_id::ObjectId,
-  traits::Collection,
-  traits::Object,
-};
+// Federation imports removed for local-only operation
 //use diesel_ltree::Ltree;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -111,38 +106,7 @@ impl Into<Url> for DbUrl {
   }
 }
 
-impl<T> From<DbUrl> for ObjectId<T>
-where
-  T: Object + Send + 'static,
-  for<'de2> <T as Object>::Kind: Deserialize<'de2>,
-{
-  fn from(value: DbUrl) -> Self {
-    let url: Url = value.into();
-    ObjectId::from(url)
-  }
-}
-
-impl<T> From<DbUrl> for CollectionId<T>
-where
-  T: Collection + Send + 'static,
-  for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
-{
-  fn from(value: DbUrl) -> Self {
-    let url: Url = value.into();
-    CollectionId::from(url)
-  }
-}
-
-impl<T> From<CollectionId<T>> for DbUrl
-where
-  T: Collection,
-  for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
-{
-  fn from(value: CollectionId<T>) -> Self {
-    let url: Url = value.into();
-    url.into()
-  }
-}
+// Federation conversion functions removed for local-only operation
 
 impl Deref for DbUrl {
   type Target = Url;

@@ -1,6 +1,7 @@
 pub mod admin;
 pub mod board;
 pub mod comment;
+pub mod local_only;
 pub mod local_user;
 pub mod moderator;
 pub mod post;

@@ -11,7 +11,7 @@ use tinyboards_api_common::{
 };
 use tinyboards_api_crud::PerformCrud;
 use tinyboards_api_graphql::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
-use tinyboards_apub::{api::PerformApub, SendActivity};
+// ActivityPub functionality removed for local-only operation
 use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
 pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
@@ -19,14 +19,14 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
         web::scope("/api/v1")
             .route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/members", web::get().to(route_get::<GetMembers>))
-            .route("/search", web::get().to(route_get_apub::<Search>))
+            .route("/search", web::get().to(route_get::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
             .route("/messages", web::get().to(route_get_crud::<GetMessages>))
             // resolve federated objects (object => post, person, board or comment)
             .route(
                 "/resolve_object",
-                web::get().to(route_get_apub::<ResolveObject>),
+                web::get().to(route_get::<ResolveObject>),
             )
             .route(
                 "/password_reset",
@@ -69,7 +69,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
             .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
             .service(
                 web::scope("/user")
-                    .route("", web::get().to(route_get_apub::<GetPersonDetails>))
+                    .route("", web::get().to(route_get::<GetPersonDetails>))
                     .route("/{username}", web::get().to(route_get::<Profile>))
                     .route(
                         "/verify_email/{token}",
@@ -114,7 +114,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/boards")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateBoard>))
-                    .route("/get", web::get().to(route_get_apub::<GetBoard>))
+                    .route("/get", web::get().to(route_get::<GetBoard>))
                     .route("/exists", web::get().to(route_get_crud::<CheckBoardExists>))
                     .route(
                         "/{board_id}/banned",
@@ -153,7 +153,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                 web::scope("/posts")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
-                    .route("", web::get().to(route_get_apub::<GetPosts>))
+                    .route("", web::get().to(route_get::<GetPosts>))
                     .route(
                         "/{post_id}/removed",
                         web::patch().to(route_post_crud::<TogglePostRemove>),
@@ -210,7 +210,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/{comment_id}/removed",
                         web::patch().to(route_post_crud::<ToggleCommentRemove>),
                     )
-                    .route("", web::get().to(route_get_apub::<GetComments>))
+                    .route("", web::get().to(route_get::<GetComments>))
                     .route(
                         "/{comment_id}/reports",
                         web::post().to(route_post_crud::<CreateCommentReport>),
@@ -355,106 +355,58 @@ async fn perform_graphql(
         .into())
 }
 
+// Simplified local-only perform function
 async fn perform<'a, Data>(
     data: Data,
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<<Data as Perform<'a>>::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, TinyBoardsError>
 where
-    Data: Perform<'a>
-        + SendActivity<
-            Response = <Data as Perform<'a>>::Response,
-            Route = <Data as Perform<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
+    Data: Perform<'a> + Clone + Deserialize<'a> + Send + 'static,
 {
     let auth_header = get_auth(&req);
-
     let path = path.into_inner();
-    let path_clone = path.clone();
-
     let res = data.clone().perform(&context, path, auth_header).await?;
-    SendActivity::send_activity(&data, &res, &apub_data, &path_clone, auth_header).await?;
+    // ActivityPub activity sending removed for local-only operation
     Ok(HttpResponse::Ok().json(res))
 }
 
 async fn route_get<'a, Data>(
     data: web::Query<Data>,
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<<Data as Perform<'a>>::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, TinyBoardsError>
 where
-    Data: Perform<'a>
-        + SendActivity<
-            Response = <Data as Perform<'a>>::Response,
-            Route = <Data as Perform<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
+    Data: Perform<'a> + Clone + Deserialize<'a> + Send + 'static,
 {
-    perform::<Data>(data.0, context, apub_data, path, req).await
+    perform::<Data>(data.0, context, path, req).await
 }
 
-async fn route_get_apub<'a, Data>(
-    req: HttpRequest,
-    data: web::Query<Data>,
-    context: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<()>,
-) -> Result<HttpResponse, Error>
-where
-    Data: PerformApub
-        + SendActivity<Response = <Data as PerformApub>::Response, Route = ()>
-        + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    let auth_header = get_auth(&req);
-    let res = data.perform(&context, auth_header).await?;
-    SendActivity::send_activity(&data.0, &res, &context, &path, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
-}
+// route_get_apub removed - ActivityPub functionality disabled
 
 async fn route_post<'a, Data>(
     data: web::Json<Data>,
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<<Data as Perform<'a>>::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, TinyBoardsError>
 where
-    Data: Perform<'a>
-        + SendActivity<
-            Response = <Data as Perform<'a>>::Response,
-            Route = <Data as Perform<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
+    Data: Perform<'a> + Clone + Deserialize<'a> + Send + 'static,
 {
-    perform::<Data>(data.0, context, apub_data, path, req).await
+    perform::<Data>(data.0, context, path, req).await
 }
 
 async fn perform_crud<'a, Data>(
     data: Data,
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<<Data as PerformCrud<'a>>::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error>
 where
     Data: PerformCrud<'a>
-        + SendActivity<
-            Response = <Data as PerformCrud<'a>>::Response,
-            Route = <Data as PerformCrud<'a>>::Route,
-        > + Clone
+ + Clone
         + Deserialize<'a>
         + Send
         + 'static,
@@ -462,10 +414,8 @@ where
     let auth_header = get_auth(&req);
 
     let path = path.into_inner();
-    let path_clone = path.clone();
-
     let res = data.clone().perform(&context, path, auth_header).await?;
-    SendActivity::send_activity(&data, &res, &apub_data, &path_clone, auth_header).await?;
+    // ActivityPub activity sending removed for local-only operation
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -493,39 +443,31 @@ where
 async fn route_post_crud<'a, Data>(
     data: web::Json<Data>,
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<<Data as PerformCrud<'a>>::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error>
 where
     Data: PerformCrud<'a>
-        + SendActivity<
-            Response = <Data as PerformCrud<'a>>::Response,
-            Route = <Data as PerformCrud<'a>>::Route,
-        > + Clone
+ + Clone
         + Deserialize<'a>
         + Send
         + 'static,
 {
-    perform_crud::<Data>(data.0, context, apub_data, path, req).await
+    perform_crud::<Data>(data.0, context, path, req).await
 }
 
 async fn route_get_crud<'a, Data>(
     data: web::Query<Data>,
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
     path: web::Path<<Data as PerformCrud<'a>>::Route>,
     req: HttpRequest,
 ) -> Result<HttpResponse, Error>
 where
     Data: PerformCrud<'a>
-        + SendActivity<
-            Response = <Data as PerformCrud<'a>>::Response,
-            Route = <Data as PerformCrud<'a>>::Route,
-        > + Clone
+ + Clone
         + Deserialize<'a>
         + Send
         + 'static,
 {
-    perform_crud::<Data>(data.0, context, apub_data, path, req).await
+    perform_crud::<Data>(data.0, context, path, req).await
 }

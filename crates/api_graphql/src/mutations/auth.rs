@@ -15,7 +15,7 @@ use tinyboards_db::models::site::registration_applications::RegistrationApplicat
 use tinyboards_db::models::site::site_invite::SiteInvite as DbSiteInvite;
 use tinyboards_db::models::site::{local_site::LocalSite as DbLocalSite, site::Site as DbSite};
 use tinyboards_db::traits::Crud;
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+use tinyboards_utils::generate_actor_keypair;
 use tinyboards_utils::passhash::{hash_password, verify_password};
 use tinyboards_utils::TinyBoardsError;
 use url::Url;
