@@ -1,0 +1,52 @@
+# Docker security hardening configurations
+# Include this in your main docker-compose.yml for enhanced security
+
+x-security-opts: &security-opts
+  security_opt:
+    - no-new-privileges:true
+    - apparmor:docker-default
+    - seccomp:default
+  cap_drop:
+    - ALL
+  read_only: true
+  tmpfs:
+    - /tmp:noexec,nosuid,size=128m
+  
+x-logging: &logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "10m"
+      max-file: "3"
+      labels: "service"
+
+# Add these settings to your services for enhanced security:
+# 
+# Example usage in docker-compose.yml:
+# services:
+#   tinyboards:
+#     <<: *security-opts
+#     <<: *logging
+#     environment:
+#       - DOCKER_CONTENT_TRUST=1
+#     volumes:
+#       - type: tmpfs
+#         target: /tmp
+#         tmpfs:
+#           size: 128m
+#           noexec: true
+#           nosuid: true
+
+# Network security
+networks:
+  tinyboards_secure:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "false"
+      com.docker.network.bridge.enable_ip_masquerade: "true" 
+      com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          ip_range: 172.20.240.0/20

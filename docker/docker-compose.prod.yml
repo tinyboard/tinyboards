@@ -1,0 +1,217 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf/:/etc/nginx/conf.d:ro
+      - /etc/ssl:/etc/ssl/:ro
+      - nginx_cache:/var/cache/nginx
+    networks:
+      - tinyboards
+    restart: unless-stopped
+    depends_on:
+      tinyboards-fe:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
+      - NET_BIND_SERVICE
+
+  tinyboards:
+    image: kronusdev/tinyboards-be:latest
+    ports:
+      - "127.0.0.1:8536:8536"
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - TB_CONFIG_LOCATION=/config/defaults.hjson
+      - RUST_BACKTRACE=1
+    volumes:
+      - ./tinyboards.hjson:/config/defaults.hjson:ro
+      - ./volumes/media:/app/media
+    networks:
+      - tinyboards
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8536/api/v1/site || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  tinyboards-fe:
+    image: kronusdev/tinyboards-fe:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./.env:/usr/src/app/.env:ro
+    networks:
+      - tinyboards
+    depends_on:
+      tinyboards:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  postgres:
+    image: postgres:15-alpine
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
+      - POSTGRES_INITDB_ARGS="--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - tinyboards
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tinyboards} -d ${POSTGRES_DB:-tinyboards}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - DAC_OVERRIDE
+      - CHOWN
+      - SETGID
+      - SETUID
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    command: [
+      "postgres",
+      "-c", "max_connections=200",
+      "-c", "shared_buffers=256MB",
+      "-c", "effective_cache_size=768MB",
+      "-c", "maintenance_work_mem=64MB",
+      "-c", "checkpoint_completion_target=0.9",
+      "-c", "wal_buffers=16MB",
+      "-c", "default_statistics_target=100",
+      "-c", "random_page_cost=1.1",
+      "-c", "effective_io_concurrency=200",
+      "-c", "work_mem=4MB",
+      "-c", "min_wal_size=1GB",
+      "-c", "max_wal_size=4GB",
+      "-c", "max_worker_processes=4",
+      "-c", "max_parallel_workers_per_gather=2",
+      "-c", "max_parallel_workers=4",
+      "-c", "max_parallel_maintenance_workers=2",
+      "-c", "log_min_duration_statement=1000",
+      "-c", "log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h ",
+      "-c", "log_checkpoints=on",
+      "-c", "log_connections=on",
+      "-c", "log_disconnections=on",
+      "-c", "log_lock_waits=on"
+    ]
+
+  # Redis for caching (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - tinyboards
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETGID
+      - SETUID
+    command: [
+      "redis-server",
+      "--appendonly", "yes",
+      "--maxmemory", "128mb",
+      "--maxmemory-policy", "allkeys-lru"
+    ]
+
+  # Log aggregation with rotation
+  logrotate:
+    image: linkyard/docker-logrotate
+    restart: unless-stopped
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./logrotate.conf:/etc/logrotate.d/docker:ro
+
+networks:
+  tinyboards:
+    driver: bridge
+    name: tinyboards_network
+
+volumes:
+  postgres_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./volumes/postgres
+  nginx_cache:
+    driver: local
+  redis_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind  
+      device: ./volumes/redis

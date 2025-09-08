@@ -4106,6 +4106,7 @@ dependencies = [
  "anyhow",
  "async-graphql",
  "async-graphql-actix-web",
+ "chrono",
  "regex",
  "tinyboards_db",
  "tinyboards_utils",
