@@ -39,6 +39,7 @@ pub struct Person {
     pub bio_html: Option<String>,
     pub profile_music: Option<DbUrl>,
     pub profile_music_youtube: Option<String>,
+    pub board_creation_approved: bool,
 }
 
 /// A safe representation of user, without the sensitive info
@@ -71,6 +72,7 @@ pub struct PersonSafe {
     pub bio_html: Option<String>,
     pub profile_music: Option<DbUrl>,
     pub profile_music_youtube: Option<String>,
+    pub board_creation_approved: bool,
 }
 
 #[derive(
@@ -119,4 +121,5 @@ pub struct PersonForm {
     pub bio_html: Option<String>,
     pub profile_music: Option<Option<DbUrl>>,
     pub profile_music_youtube: Option<Option<String>>,
+    pub board_creation_approved: Option<bool>,
 }

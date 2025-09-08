@@ -32,6 +32,11 @@ pub struct UpdateSiteConfigInput {
     pub application_question: Option<String>,
     pub private_instance: Option<bool>,
     pub invite_only: Option<bool>,
+    pub board_creation_mode: Option<String>,
+    pub trusted_user_min_reputation: Option<i32>,
+    pub trusted_user_min_account_age_days: Option<i32>,
+    pub trusted_user_manual_approval: Option<bool>,
+    pub trusted_user_min_posts: Option<i32>,
 }
 
 #[Object]
@@ -70,6 +75,11 @@ impl SiteConfig {
             application_question: input.application_question.map(Some),
             private_instance: input.private_instance,
             invite_only: input.invite_only,
+            board_creation_mode: input.board_creation_mode,
+            trusted_user_min_reputation: input.trusted_user_min_reputation,
+            trusted_user_min_account_age_days: input.trusted_user_min_account_age_days,
+            trusted_user_manual_approval: input.trusted_user_manual_approval,
+            trusted_user_min_posts: input.trusted_user_min_posts,
             updated: Some(naive_now()),
             ..LocalSiteForm::default()
         };

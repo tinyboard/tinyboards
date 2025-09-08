@@ -44,6 +44,22 @@ pub enum RegistrationMode {
     Open,
 }
 
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum BoardCreationMode {
+    /// Board creation disabled site-wide
+    #[strum(ascii_case_insensitive)]
+    Disabled,
+    /// Only admins with Boards permission can create boards
+    #[strum(ascii_case_insensitive)]
+    AdminOnly,
+    /// Trusted users meeting criteria can create boards
+    #[strum(ascii_case_insensitive)]
+    TrustedUsers,
+    /// Anyone can create boards
+    #[strum(ascii_case_insensitive)]
+    Open,
+}
+
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SortType {
     #[strum(ascii_case_insensitive)]

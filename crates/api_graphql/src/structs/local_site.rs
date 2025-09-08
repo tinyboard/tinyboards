@@ -47,6 +47,11 @@ pub struct LocalSite {
     #[graphql(skip)]
     pub welcome_message_: Option<String>,
     pub boards_enabled: bool,
+    pub board_creation_mode: String,
+    pub trusted_user_min_reputation: i32,
+    pub trusted_user_min_account_age_days: i32,
+    pub trusted_user_manual_approval: bool,
+    pub trusted_user_min_posts: i32,
 }
 
 #[ComplexObject]
@@ -108,6 +113,11 @@ impl From<DbLocalSite> for LocalSite {
             icon: value.icon,
             welcome_message_: value.welcome_message,
             boards_enabled: value.boards_enabled,
+            board_creation_mode: value.board_creation_mode,
+            trusted_user_min_reputation: value.trusted_user_min_reputation,
+            trusted_user_min_account_age_days: value.trusted_user_min_account_age_days,
+            trusted_user_manual_approval: value.trusted_user_manual_approval,
+            trusted_user_min_posts: value.trusted_user_min_posts,
         }
     }
 }

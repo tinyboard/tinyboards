@@ -1,7 +1,8 @@
-use crate::schema::local_site;
+use crate::{schema::local_site, BoardCreationMode};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = local_site)]
@@ -43,6 +44,11 @@ pub struct LocalSite {
     pub icon: Option<String>,
     pub welcome_message: Option<String>,
     pub boards_enabled: bool,
+    pub board_creation_mode: String,
+    pub trusted_user_min_reputation: i32,
+    pub trusted_user_min_account_age_days: i32,
+    pub trusted_user_manual_approval: bool,
+    pub trusted_user_min_posts: i32,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -83,4 +89,17 @@ pub struct LocalSiteForm {
     pub icon: Option<Option<String>>,
     pub welcome_message: Option<String>,
     pub boards_enabled: Option<bool>,
+    pub board_creation_mode: Option<String>,
+    pub trusted_user_min_reputation: Option<i32>,
+    pub trusted_user_min_account_age_days: Option<i32>,
+    pub trusted_user_manual_approval: Option<bool>,
+    pub trusted_user_min_posts: Option<i32>,
+}
+
+impl LocalSite {
+    /// Get the board creation mode as an enum
+    pub fn get_board_creation_mode(&self) -> BoardCreationMode {
+        BoardCreationMode::from_str(&self.board_creation_mode)
+            .unwrap_or(BoardCreationMode::AdminOnly)
+    }
 }

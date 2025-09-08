@@ -17,10 +17,11 @@ use tinyboards_db::{
         site::{registration_applications::RegistrationApplication, email_verification::{EmailVerificationForm, EmailVerification}, uploads::Upload},
         person::{local_user::*, person_blocks::*}, site::local_site::LocalSite, message::message::{MessageForm, Message /*MessageNotifForm, MessageNotif*/},
     },
-    traits::Crud, SiteMode, 
+    traits::Crud, SiteMode, BoardCreationMode,
     utils::DbPool,
     newtypes::DbUrl,
 };
+use chrono::Utc;
 //use tinyboards_db_views::{structs::{BoardPersonBanView, BoardView, LocalUserSettingsView, LocalUserView, BoardModeratorView, PersonView}, CommentQuery};
 use tinyboards_utils::{
     error::TinyBoardsError, 
@@ -777,4 +778,78 @@ pub async fn remove_user_data_in_board(
 //       Lang::from_language_id(&en).expect("default language")
 //     })
 // }
+
+/// Check if user has permission to create boards based on site configuration
+#[tracing::instrument(skip_all)]
+pub async fn check_board_creation_permission(
+    user: &User,
+    site: &LocalSite,
+    pool: &DbPool,
+) -> Result<(), TinyBoardsError> {
+    // First check if boards are globally enabled
+    if !site.boards_enabled {
+        return Err(TinyBoardsError::from_message(403, "Board creation is disabled site-wide"));
+    }
+
+    let creation_mode = site.get_board_creation_mode();
+    
+    match creation_mode {
+        BoardCreationMode::Disabled => {
+            Err(TinyBoardsError::from_message(403, "Board creation is disabled"))
+        },
+        BoardCreationMode::AdminOnly => {
+            if user.has_permission(AdminPerms::Boards) {
+                Ok(())
+            } else {
+                Err(TinyBoardsError::from_message(403, "Only administrators can create boards"))
+            }
+        },
+        BoardCreationMode::TrustedUsers => {
+            if user.has_permission(AdminPerms::Boards) {
+                // Admins always allowed
+                Ok(())
+            } else if is_trusted_user(user, site, pool).await? {
+                Ok(())
+            } else {
+                Err(TinyBoardsError::from_message(403, "Board creation is restricted to trusted users. You may need more reputation, account age, or admin approval."))
+            }
+        },
+        BoardCreationMode::Open => {
+            // Anyone with an account can create boards
+            Ok(())
+        },
+    }
+}
+
+/// Check if a user meets the trusted user criteria for board creation
+#[tracing::instrument(skip_all)]
+async fn is_trusted_user(
+    user: &User,
+    site: &LocalSite,
+    _pool: &DbPool,
+) -> Result<bool, TinyBoardsError> {
+    // Check reputation
+    if user.counts.rep < site.trusted_user_min_reputation.into() {
+        return Ok(false);
+    }
+    
+    // Check account age
+    let account_age_days = (Utc::now().naive_utc() - user.person.creation_date).num_days();
+    if account_age_days < site.trusted_user_min_account_age_days as i64 {
+        return Ok(false);
+    }
+    
+    // Check post/comment count
+    let total_contributions = user.counts.post_count + user.counts.comment_count;
+    if total_contributions < site.trusted_user_min_posts as i64 {
+        return Ok(false);
+    }
+    
+    // Check manual approval if required
+    if site.trusted_user_manual_approval && !user.person.board_creation_approved {
+        return Ok(false);
+    }
+    
+    Ok(true)
+}
 

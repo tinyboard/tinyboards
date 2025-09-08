@@ -334,6 +334,12 @@ diesel::table! {
         #[max_length = 255]
         welcome_message -> Nullable<Varchar>,
         boards_enabled -> Bool,
+        #[max_length = 20]
+        board_creation_mode -> Varchar,
+        trusted_user_min_reputation -> Int4,
+        trusted_user_min_account_age_days -> Int4,
+        trusted_user_manual_approval -> Bool,
+        trusted_user_min_posts -> Int4,
     }
 }
 
@@ -573,6 +579,7 @@ diesel::table! {
         profile_music -> Nullable<Varchar>,
         #[max_length = 255]
         profile_music_youtube -> Nullable<Varchar>,
+        board_creation_approved -> Bool,
     }
 }
 
