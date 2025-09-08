@@ -52,6 +52,13 @@ impl CommentActions {
             .into());
         }
 
+        if board.is_banned {
+            let reason = board.public_ban_reason
+                .as_deref()
+                .unwrap_or("This board has been banned");
+            return Err(TinyBoardsError::from_message(403, reason).into());
+        }
+
         let is_banned_from_board = DbBoard::board_has_ban(pool, board.id, v.person.id)
             .await
             .unwrap_or(true);

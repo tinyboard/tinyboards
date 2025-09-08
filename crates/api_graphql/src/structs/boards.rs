@@ -39,9 +39,14 @@ pub struct Board {
     featured_url: Option<String>,
     icon: Option<String>,
     banner: Option<String>,
-    #[graphql(name = "isBanned")]
+    #[graphql(name = "isRemoved")]
     is_removed: bool,
     ban_reason: Option<String>,
+    #[graphql(name = "isBanned")]
+    is_banned: bool,
+    public_ban_reason: Option<String>,
+    banned_by: Option<i32>,
+    banned_at: Option<String>,
     primary_color: String,
     secondary_color: String,
     hover_color: String,
@@ -203,6 +208,10 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             moderators_url: board.moderators_url.map(|a| a.as_str().into()),
             featured_url: board.featured_url.map(|a| a.as_str().into()),
             ban_reason: board.ban_reason,
+            is_banned: board.is_banned,
+            public_ban_reason: board.public_ban_reason,
+            banned_by: board.banned_by,
+            banned_at: board.banned_at.map(|t| t.to_string()),
             primary_color: board.primary_color,
             secondary_color: board.secondary_color,
             hover_color: board.hover_color,

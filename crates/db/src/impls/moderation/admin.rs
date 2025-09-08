@@ -3,6 +3,37 @@ use diesel::{result::Error, *};
 use diesel_async::RunQueryDsl;
 
 #[async_trait::async_trait]
+impl Crud for AdminBanBoard {
+    type Form = AdminBanBoardForm;
+    type IdType = i32;
+    async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
+        use crate::schema::admin_ban_board::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        admin_ban_board.find(id_).first::<Self>(conn)
+        .await
+    }
+    async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
+        use crate::schema::admin_ban_board::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        diesel::delete(admin_ban_board.find(id_)).execute(conn)
+        .await
+    }
+    async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error> {
+        use crate::schema::admin_ban_board::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        let new = diesel::insert_into(admin_ban_board)
+            .values(form)
+            .get_result::<Self>(conn).await?;
+        Ok(new)
+    }
+    async fn update(pool: &DbPool, id_: i32, form: &Self::Form) -> Result<Self, Error> {
+        use crate::schema::admin_ban_board::dsl::*;
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(admin_ban_board.find(id_)).set(form).get_result::<Self>(conn).await
+    }
+}
+
+#[async_trait::async_trait]
 impl Crud for AdminPurgeBoard {
     type Form = AdminPurgeBoardForm;
     type IdType = i32;

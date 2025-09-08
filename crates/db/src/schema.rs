@@ -13,6 +13,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    admin_ban_board (id) {
+        id -> Int4,
+        admin_id -> Int4,
+        board_id -> Int4,
+        internal_notes -> Nullable<Text>,
+        public_ban_reason -> Nullable<Text>,
+        #[max_length = 10]
+        action -> Varchar,
+        when_ -> Timestamp,
+    }
+}
+
+diesel::table! {
     admin_purge_board (id) {
         id -> Int4,
         admin_id -> Int4,
@@ -147,6 +160,10 @@ diesel::table! {
         #[max_length = 10000]
         sidebar -> Nullable<Varchar>,
         sidebar_html -> Nullable<Text>,
+        is_banned -> Bool,
+        public_ban_reason -> Nullable<Text>,
+        banned_by -> Nullable<Int4>,
+        banned_at -> Nullable<Timestamp>,
     }
 }
 
@@ -834,6 +851,8 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(admin_ban_board -> boards (board_id));
+diesel::joinable!(admin_ban_board -> person (admin_id));
 diesel::joinable!(admin_purge_board -> boards (board_id));
 diesel::joinable!(admin_purge_board -> person (admin_id));
 diesel::joinable!(admin_purge_comment -> comments (comment_id));
@@ -850,6 +869,7 @@ diesel::joinable!(board_person_bans -> person (person_id));
 diesel::joinable!(board_subscriber -> boards (board_id));
 diesel::joinable!(board_subscriber -> person (person_id));
 diesel::joinable!(boards -> instance (instance_id));
+diesel::joinable!(boards -> person (banned_by));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
 diesel::joinable!(comment_report -> comments (comment_id));
 diesel::joinable!(comment_saved -> comments (comment_id));
@@ -916,6 +936,7 @@ diesel::joinable!(uploads -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     activity,
+    admin_ban_board,
     admin_purge_board,
     admin_purge_comment,
     admin_purge_person,

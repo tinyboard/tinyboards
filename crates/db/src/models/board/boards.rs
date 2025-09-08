@@ -36,6 +36,10 @@ pub struct Board {
     pub hover_color: String,
     pub sidebar: Option<String>,
     pub sidebar_html: Option<String>,
+    pub is_banned: bool,
+    pub public_ban_reason: Option<String>,
+    pub banned_by: Option<i32>,
+    pub banned_at: Option<NaiveDateTime>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -69,6 +73,10 @@ pub struct BoardForm {
     pub hover_color: Option<String>,
     pub sidebar: Option<Option<String>>,
     pub sidebar_html: Option<Option<String>>,
+    pub is_banned: Option<bool>,
+    pub public_ban_reason: Option<Option<String>>,
+    pub banned_by: Option<Option<i32>>,
+    pub banned_at: Option<Option<NaiveDateTime>>,
 }
 
 /// A safe representation of board, without the sensitive info
@@ -99,4 +107,8 @@ pub struct BoardSafe {
     pub hover_color: String,
     pub sidebar: Option<String>,
     pub sidebar_html: Option<String>,
+    pub is_banned: bool,
+    pub public_ban_reason: Option<String>,
+    pub banned_by: Option<i32>,
+    pub banned_at: Option<NaiveDateTime>,
 }

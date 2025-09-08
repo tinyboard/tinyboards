@@ -217,6 +217,104 @@ impl Board {
             .map(|_| ())
     }
 
+    /// Admin ban a board with reason (permanent)
+    pub async fn admin_ban(
+        &self, 
+        pool: &DbPool, 
+        admin_id: i32, 
+        public_reason: &str,
+        admin_notes: Option<&str>
+    ) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+
+        diesel::update(boards.find(self.id))
+            .set((
+                is_banned.eq(true),
+                public_ban_reason.eq(public_reason),
+                banned_by.eq(admin_id),
+                banned_at.eq(naive_now()),
+                updated.eq(naive_now())
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())?;
+
+        // Log the admin action
+        use crate::models::moderator::admin_actions::{AdminBanBoard, AdminBanBoardForm};
+        use crate::traits::Crud;
+        
+        let log_form = AdminBanBoardForm {
+            admin_id,
+            board_id: self.id,
+            internal_notes: admin_notes.map(|s| Some(s.to_string())),
+            public_ban_reason: Some(public_reason.to_string()),
+            action: "ban".to_string(),
+        };
+        
+        AdminBanBoard::create(pool, &log_form).await?;
+        Ok(())
+    }
+
+    /// Admin unban a board
+    pub async fn admin_unban(&self, pool: &DbPool, admin_id: i32) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+
+        diesel::update(boards.find(self.id))
+            .set((
+                is_banned.eq(false),
+                public_ban_reason.eq::<Option<String>>(None),
+                banned_by.eq::<Option<i32>>(None),
+                banned_at.eq::<Option<chrono::NaiveDateTime>>(None),
+                updated.eq(naive_now())
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())?;
+
+        // Log the admin action
+        use crate::models::moderator::admin_actions::{AdminBanBoard, AdminBanBoardForm};
+        use crate::traits::Crud;
+        
+        let log_form = AdminBanBoardForm {
+            admin_id,
+            board_id: self.id,
+            internal_notes: None,
+            public_ban_reason: None,
+            action: "unban".to_string(),
+        };
+        
+        AdminBanBoard::create(pool, &log_form).await?;
+        Ok(())
+    }
+
+    /// Get all banned boards with counts
+    pub async fn get_banned_boards_with_counts(pool: &DbPool) -> Result<Vec<(Self, BoardAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{boards, board_aggregates};
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        
+        boards::table
+            .inner_join(board_aggregates::table)
+            .filter(boards::is_banned.eq(true))
+            .load::<(Self, BoardAggregates)>(conn)
+            .await
+    }
+
+    /// Get ban history for a specific board
+    pub async fn get_ban_history(pool: &DbPool, target_board_id: i32) -> Result<Vec<crate::models::moderator::admin_actions::AdminBanBoard>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::admin_ban_board::dsl::*;
+        
+        admin_ban_board
+            .filter(board_id.eq(target_board_id))
+            .order(when_.desc())
+            .load::<crate::models::moderator::admin_actions::AdminBanBoard>(conn)
+            .await
+    }
+
     pub async fn update_deleted(
         pool: &DbPool,
         board_id: i32,

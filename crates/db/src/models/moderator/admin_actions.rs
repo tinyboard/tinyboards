@@ -2,12 +2,35 @@ use serde::{Deserialize, Serialize};
 use diesel::prelude::*;
 use chrono::NaiveDateTime;
 use crate::schema::{
+    admin_ban_board,
     admin_purge_board,
     admin_purge_comment,
     admin_purge_post,
     admin_purge_person,
 };
 
+
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
+#[diesel(table_name = admin_ban_board)]
+pub struct AdminBanBoard {
+    pub id: i32,
+    pub admin_id: i32,
+    pub board_id: i32,
+    pub internal_notes: Option<String>,
+    pub public_ban_reason: Option<String>,
+    pub action: String,
+    pub when_: NaiveDateTime,
+}
+
+#[derive(Clone, Default, Insertable, AsChangeset)]
+#[diesel(table_name = admin_ban_board)]
+pub struct AdminBanBoardForm {
+    pub admin_id: i32,
+    pub board_id: i32,
+    pub internal_notes: Option<Option<String>>,
+    pub public_ban_reason: Option<String>,
+    pub action: String,
+}
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = admin_purge_board)]

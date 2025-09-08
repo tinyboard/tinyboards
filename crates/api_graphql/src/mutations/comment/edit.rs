@@ -51,6 +51,13 @@ impl EditComment {
             .into());
         }
 
+        if board.is_banned {
+            let reason = board.public_ban_reason
+                .as_deref()
+                .unwrap_or("This board has been banned");
+            return Err(TinyBoardsError::from_message(403, reason).into());
+        }
+
         // we need to re-parse the markdown here
         let mut body_html = parse_markdown_opt(body.as_str());
         body_html = Some(custom_body_parsing(

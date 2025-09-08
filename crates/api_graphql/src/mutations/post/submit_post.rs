@@ -51,6 +51,13 @@ impl SubmitPost {
             .into());
         }
 
+        if board.is_banned {
+            let reason = board.public_ban_reason
+                .as_deref()
+                .unwrap_or("This board has been banned");
+            return Err(TinyBoardsError::from_message(403, reason).into());
+        }
+
         // mod or admin check
         let is_mod_or_admin = if v.has_permission(AdminPerms::Content) {
             // user is admin
