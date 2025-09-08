@@ -110,6 +110,9 @@ pub async fn get_user_from_header_opt(pool: &DbPool, master_key: &Secret, auth: 
 
     let user = User::from_jwt(pool, token, master_key).await?;
 
+    // Check and update ban status in real-time for this user
+    tinyboards_db::utils::check_and_update_person_ban_status(pool, user.person.id).await?;
+
     Ok(Some(user))
 }
 

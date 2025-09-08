@@ -10,3 +10,10 @@ pub struct PersonBan {
     pub person_id: i32,
     pub creation_date: NaiveDateTime,
 }
+
+/// Struct for SQL query results containing ban status
+#[derive(Debug, QueryableByName)]
+pub struct BanStatus {
+    #[diesel(sql_type = diesel::sql_types::Bool)]
+    pub is_banned: bool,
+}

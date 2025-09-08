@@ -26,7 +26,6 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
         active_counts(&mut conn1);
-        update_banned_when_expired(&mut conn1);
         reindex_aggregates_tables(&mut conn1, true);
     });
 
@@ -37,6 +36,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     .every(TimeUnits::minutes(5))
     .run(move || {
         update_person_aggregates_rep(&mut conn2);
+        update_banned_when_expired(&mut conn2);
     });
 
     // Manually run the scheduler in an event loop
