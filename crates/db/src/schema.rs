@@ -164,6 +164,7 @@ diesel::table! {
         public_ban_reason -> Nullable<Text>,
         banned_by -> Nullable<Int4>,
         banned_at -> Nullable<Timestamp>,
+        exclude_from_all -> Bool,
     }
 }
 

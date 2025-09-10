@@ -59,6 +59,9 @@ pub struct Board {
     // this value is only accessible to admins thru a resolver
     #[graphql(skip)]
     hidden_: bool,
+    // this value is only accessible to admins thru a resolver
+    #[graphql(skip)]
+    exclude_from_all_: bool,
 }
 
 // resolvers for BoardAggregates fields
@@ -70,6 +73,15 @@ impl Board {
 
         match v_opt {
             Some(v) => v.has_permission(AdminPerms::Boards) && self.hidden_,
+            None => false,
+        }
+    }
+
+    pub async fn exclude_from_all(&self, ctx: &Context<'_>) -> bool {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        match v_opt {
+            Some(v) => v.has_permission(AdminPerms::Boards) && self.exclude_from_all_,
             None => false,
         }
     }
@@ -218,6 +230,7 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             sidebar: board.sidebar,
             sidebar_html: board.sidebar_html,
             hidden_: board.is_hidden,
+            exclude_from_all_: board.exclude_from_all,
             counts,
         }
     }

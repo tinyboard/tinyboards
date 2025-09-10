@@ -40,6 +40,7 @@ pub struct Board {
     pub public_ban_reason: Option<String>,
     pub banned_by: Option<i32>,
     pub banned_at: Option<NaiveDateTime>,
+    pub exclude_from_all: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -77,6 +78,7 @@ pub struct BoardForm {
     pub public_ban_reason: Option<Option<String>>,
     pub banned_by: Option<Option<i32>>,
     pub banned_at: Option<Option<NaiveDateTime>>,
+    pub exclude_from_all: Option<bool>,
 }
 
 /// A safe representation of board, without the sensitive info
@@ -111,4 +113,5 @@ pub struct BoardSafe {
     pub public_ban_reason: Option<String>,
     pub banned_by: Option<i32>,
     pub banned_at: Option<NaiveDateTime>,
+    pub exclude_from_all: bool,
 }

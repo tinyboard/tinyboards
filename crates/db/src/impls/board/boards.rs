@@ -411,10 +411,11 @@ impl Board {
         };
 
         query = match listing_type {
-            // All except hidden boards
+            // All except hidden boards and boards excluded from /all
             ListingType::All => query.filter(
                 boards::is_hidden
                     .eq(false)
+                    .and(boards::exclude_from_all.eq(false))
                     .or(board_subscriber::id.is_not_null()),
             ),
             // Subscribed boards

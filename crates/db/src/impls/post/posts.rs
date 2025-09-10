@@ -519,11 +519,12 @@ impl Post {
         }
 
         match listing_type {
-            // All posts feed: hide posts from hidden boards, except those which the user is a member of
+            // All posts feed: hide posts from hidden boards and boards excluded from /all, except those which the user is a member of
             ListingType::All => {
                 query = query.filter(
                     boards::is_hidden
                         .eq(false)
+                        .and(boards::exclude_from_all.eq(false))
                         .or(board_subscriber::id.is_not_null()),
                 )
             }

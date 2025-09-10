@@ -2,7 +2,7 @@ use crate::{DbPool, LoggedInUser, structs::boards::Board};
 use async_graphql::*;
 use tinyboards_db::{
     models::{
-        board::boards::Board as DbBoard,
+        board::boards::{Board as DbBoard, BoardForm},
         person::local_user::AdminPerms,
         moderator::admin_actions::AdminBanBoard,
     },
@@ -151,6 +151,49 @@ impl AdminBoardModeration {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to fetch ban history"))?;
 
         Ok(history.into_iter().map(AdminBanBoardResult::from).collect())
+    }
+
+    /// Exclude a board from the global feed (/all) - admin only
+    pub async fn exclude_board_from_all(
+        &self,
+        ctx: &Context<'_>,
+        board_id: i32,
+        exclude: bool,
+    ) -> Result<Board> {
+        let user = ctx
+            .data_unchecked::<LoggedInUser>()
+            .require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+
+        // Check admin permissions
+        if !user.has_permission(AdminPerms::Boards) {
+            return Err(TinyBoardsError::from_message(403, "Admin permissions required").into());
+        }
+
+        // Get the board
+        let _board = DbBoard::read(pool, board_id)
+            .await
+            .map_err(|_| TinyBoardsError::from_message(404, "Board not found"))?;
+
+        // Update the exclude_from_all setting
+        let update_form = BoardForm {
+            exclude_from_all: Some(exclude),
+            ..BoardForm::default()
+        };
+
+        DbBoard::update(pool, board_id, &update_form)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to update board"))?;
+
+        // Return updated board
+        let updated_boards = DbBoard::get_with_counts_for_ids(pool, vec![board_id])
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to fetch updated board"))?;
+            
+        let updated_board = updated_boards.into_iter().next()
+            .ok_or_else(|| TinyBoardsError::from_message(404, "Board not found after update"))?;
+
+        Ok(Board::from(updated_board))
     }
 }
 
