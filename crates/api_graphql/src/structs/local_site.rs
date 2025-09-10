@@ -52,6 +52,18 @@ pub struct LocalSite {
     pub trusted_user_min_account_age_days: i32,
     pub trusted_user_manual_approval: bool,
     pub trusted_user_min_posts: i32,
+    pub allowed_post_types: Option<String>,
+    #[graphql(name = "enableNSFWTagging")]
+    pub enable_nsfw_tagging: Option<bool>,
+    pub word_filter_enabled: Option<bool>,
+    pub filtered_words: Option<String>,
+    pub word_filter_applies_to_posts: Option<bool>,
+    pub word_filter_applies_to_comments: Option<bool>,
+    pub word_filter_applies_to_usernames: Option<bool>,
+    pub link_filter_enabled: Option<bool>,
+    pub banned_domains: Option<String>,
+    pub approved_image_hosts: Option<String>,
+    pub image_embed_hosts_only: Option<bool>,
 }
 
 #[ComplexObject]
@@ -118,6 +130,17 @@ impl From<DbLocalSite> for LocalSite {
             trusted_user_min_account_age_days: value.trusted_user_min_account_age_days,
             trusted_user_manual_approval: value.trusted_user_manual_approval,
             trusted_user_min_posts: value.trusted_user_min_posts,
+            allowed_post_types: value.allowed_post_types,
+            enable_nsfw_tagging: value.enable_nsfw_tagging,
+            word_filter_enabled: value.word_filter_enabled,
+            filtered_words: value.filtered_words,
+            word_filter_applies_to_posts: value.word_filter_applies_to_posts,
+            word_filter_applies_to_comments: value.word_filter_applies_to_comments,
+            word_filter_applies_to_usernames: value.word_filter_applies_to_usernames,
+            link_filter_enabled: value.link_filter_enabled,
+            banned_domains: value.banned_domains,
+            approved_image_hosts: value.approved_image_hosts,
+            image_embed_hosts_only: value.image_embed_hosts_only,
         }
     }
 }

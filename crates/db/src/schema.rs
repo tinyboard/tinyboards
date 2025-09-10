@@ -357,6 +357,17 @@ diesel::table! {
         trusted_user_min_account_age_days -> Int4,
         trusted_user_manual_approval -> Bool,
         trusted_user_min_posts -> Int4,
+        allowed_post_types -> Nullable<Text>,
+        enable_nsfw_tagging -> Nullable<Bool>,
+        word_filter_enabled -> Nullable<Bool>,
+        filtered_words -> Nullable<Text>,
+        word_filter_applies_to_posts -> Nullable<Bool>,
+        word_filter_applies_to_comments -> Nullable<Bool>,
+        word_filter_applies_to_usernames -> Nullable<Bool>,
+        link_filter_enabled -> Nullable<Bool>,
+        banned_domains -> Nullable<Text>,
+        approved_image_hosts -> Nullable<Text>,
+        image_embed_hosts_only -> Nullable<Bool>,
     }
 }
 

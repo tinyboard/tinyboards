@@ -14,7 +14,7 @@ use tinyboards_db::models::{
 };
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
-use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, TinyBoardsError};
+use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, content_filter::ContentFilter, TinyBoardsError};
 use url::Url;
 
 #[derive(Default)]
@@ -37,6 +37,9 @@ impl SubmitPost {
             .require_user_not_banned()?;
         let pool = ctx.data::<DbPool>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
+
+        // Load site configuration for content filtering
+        let site_config = tinyboards_db::models::site::local_site::LocalSite::read(pool).await?;
 
         let board = match board {
             Some(ref board) => DbBoard::get_by_name(pool, board).await?,
@@ -100,12 +103,39 @@ impl SubmitPost {
             None => Some(String::new()),
         };
 
-        let type_ = if link.is_some() { "link" } else { "text" }.to_owned();
+        let type_ = if file.is_some() {
+            "image".to_owned()
+        } else if link.is_some() {
+            "link".to_owned()
+        } else {
+            "text".to_owned()
+        };
+
+        // Validate content against site policies
+        ContentFilter::validate_post_content(
+            &site_config.allowed_post_types,
+            &site_config.word_filter_enabled,
+            &site_config.word_filter_applies_to_posts,
+            &site_config.filtered_words,
+            &site_config.link_filter_enabled,
+            &site_config.banned_domains,
+            &type_,
+            &title,
+            &body,
+            &link,
+        )?;
+
+        // Check NSFW tagging requirement
+        if site_config.enable_nsfw_tagging.unwrap_or(true) && site_config.enable_nsfw && is_nsfw.unwrap_or(false) {
+            // NSFW content is allowed and user tagged it as NSFW - this is fine
+        } else if !site_config.enable_nsfw && is_nsfw.unwrap_or(false) {
+            return Err(TinyBoardsError::from_message(403, "NSFW content is not allowed on this site").into());
+        }
 
         //let data_url = data.url.as_ref().map(|url| url.inner());
         let is_nsfw = is_nsfw.unwrap_or(false);
-        let url = match link {
-            Some(link) => Some(Url::parse(&link)?),
+        let url = match &link {
+            Some(link) => Some(Url::parse(link)?),
             None => None,
         };
 
@@ -138,6 +168,39 @@ impl SubmitPost {
             Some(file) => Some(upload_file(file, None, v.person.id, None, ctx).await?),
             None => None,
         };
+
+        // Validate image host if image embed restrictions are enabled
+        if let Some(ref image_url) = file_url {
+            if !ContentFilter::is_image_host_approved(
+                &site_config.approved_image_hosts,
+                &site_config.image_embed_hosts_only,
+                &image_url.to_string(),
+            )? {
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "Image uploads from this host are not allowed"
+                ).into());
+            }
+        }
+
+        // Also check URL image links if it's a link post with an image
+        if let Some(ref url_str) = link {
+            let url_string = url_str.to_string();
+            if url_string.ends_with(".jpg") || url_string.ends_with(".jpeg") || 
+               url_string.ends_with(".png") || url_string.ends_with(".gif") || 
+               url_string.ends_with(".webp") {
+                if !ContentFilter::is_image_host_approved(
+                    &site_config.approved_image_hosts,
+                    &site_config.image_embed_hosts_only,
+                    &url_string,
+                )? {
+                    return Err(TinyBoardsError::from_message(
+                        403,
+                        "Image links from this host are not allowed"
+                    ).into());
+                }
+            }
+        }
 
         // do not override url unless image is uplaoded
         let update_form = if file_url.is_some() {

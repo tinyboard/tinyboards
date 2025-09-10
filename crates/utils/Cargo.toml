@@ -45,6 +45,7 @@ tokio = { workspace = true }
 typed-builder = { workspace = true }
 itertools = { workspace = true }
 rosetta-i18n = { workspace = true }
+glob = "0.3"
 
 [dependencies.uuid]
 version = "1.1.2"

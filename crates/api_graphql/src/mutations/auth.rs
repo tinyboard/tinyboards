@@ -17,6 +17,7 @@ use tinyboards_db::models::site::{local_site::LocalSite as DbLocalSite, site::Si
 use tinyboards_db::traits::Crud;
 //use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::passhash::{hash_password, verify_password};
+use tinyboards_utils::content_filter::ContentFilter;
 use tinyboards_utils::TinyBoardsError;
 use url::Url;
 
@@ -127,6 +128,14 @@ impl Auth {
         if !re.is_match(&username) {
             return Err(TinyBoardsError::from_message(400, "Invalid username.").into());
         }
+
+        // Validate username against content filters
+        ContentFilter::validate_username(
+            &site.word_filter_enabled,
+            &site.word_filter_applies_to_usernames,
+            &site.filtered_words,
+            &username,
+        )?;
 
         // PASSWORD CHECK
         // password_length_check(&data.password)?;

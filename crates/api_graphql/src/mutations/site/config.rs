@@ -37,6 +37,17 @@ pub struct UpdateSiteConfigInput {
     pub trusted_user_min_account_age_days: Option<i32>,
     pub trusted_user_manual_approval: Option<bool>,
     pub trusted_user_min_posts: Option<i32>,
+    pub allowed_post_types: Option<String>,
+    pub enable_nsfw_tagging: Option<bool>,
+    pub word_filter_enabled: Option<bool>,
+    pub filtered_words: Option<String>,
+    pub word_filter_applies_to_posts: Option<bool>,
+    pub word_filter_applies_to_comments: Option<bool>,
+    pub word_filter_applies_to_usernames: Option<bool>,
+    pub link_filter_enabled: Option<bool>,
+    pub banned_domains: Option<String>,
+    pub approved_image_hosts: Option<String>,
+    pub image_embed_hosts_only: Option<bool>,
 }
 
 #[Object]
@@ -80,6 +91,17 @@ impl SiteConfig {
             trusted_user_min_account_age_days: input.trusted_user_min_account_age_days,
             trusted_user_manual_approval: input.trusted_user_manual_approval,
             trusted_user_min_posts: input.trusted_user_min_posts,
+            allowed_post_types: input.allowed_post_types.map(Some),
+            enable_nsfw_tagging: input.enable_nsfw_tagging,
+            word_filter_enabled: input.word_filter_enabled,
+            filtered_words: input.filtered_words.map(Some),
+            word_filter_applies_to_posts: input.word_filter_applies_to_posts,
+            word_filter_applies_to_comments: input.word_filter_applies_to_comments,
+            word_filter_applies_to_usernames: input.word_filter_applies_to_usernames,
+            link_filter_enabled: input.link_filter_enabled,
+            banned_domains: input.banned_domains.map(Some),
+            approved_image_hosts: input.approved_image_hosts.map(Some),
+            image_embed_hosts_only: input.image_embed_hosts_only,
             updated: Some(naive_now()),
             ..LocalSiteForm::default()
         };

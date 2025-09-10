@@ -49,6 +49,17 @@ pub struct LocalSite {
     pub trusted_user_min_account_age_days: i32,
     pub trusted_user_manual_approval: bool,
     pub trusted_user_min_posts: i32,
+    pub allowed_post_types: Option<String>,
+    pub enable_nsfw_tagging: Option<bool>,
+    pub word_filter_enabled: Option<bool>,
+    pub filtered_words: Option<String>,
+    pub word_filter_applies_to_posts: Option<bool>,
+    pub word_filter_applies_to_comments: Option<bool>,
+    pub word_filter_applies_to_usernames: Option<bool>,
+    pub link_filter_enabled: Option<bool>,
+    pub banned_domains: Option<String>,
+    pub approved_image_hosts: Option<String>,
+    pub image_embed_hosts_only: Option<bool>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -94,6 +105,17 @@ pub struct LocalSiteForm {
     pub trusted_user_min_account_age_days: Option<i32>,
     pub trusted_user_manual_approval: Option<bool>,
     pub trusted_user_min_posts: Option<i32>,
+    pub allowed_post_types: Option<Option<String>>,
+    pub enable_nsfw_tagging: Option<bool>,
+    pub word_filter_enabled: Option<bool>,
+    pub filtered_words: Option<Option<String>>,
+    pub word_filter_applies_to_posts: Option<bool>,
+    pub word_filter_applies_to_comments: Option<bool>,
+    pub word_filter_applies_to_usernames: Option<bool>,
+    pub link_filter_enabled: Option<bool>,
+    pub banned_domains: Option<Option<String>>,
+    pub approved_image_hosts: Option<Option<String>>,
+    pub image_embed_hosts_only: Option<bool>,
 }
 
 impl LocalSite {

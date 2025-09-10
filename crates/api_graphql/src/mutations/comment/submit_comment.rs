@@ -19,6 +19,7 @@ use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
 use tinyboards_utils::parser::parse_markdown_opt;
 use tinyboards_utils::utils::custom_body_parsing;
+use tinyboards_utils::content_filter::ContentFilter;
 use tinyboards_utils::TinyBoardsError;
 
 #[derive(Default)]
@@ -38,6 +39,19 @@ impl SubmitComment {
             .require_user_not_banned()?;
         let pool = ctx.data::<DbPool>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
+
+        // Load site configuration for content filtering
+        let site_config = tinyboards_db::models::site::local_site::LocalSite::read(pool).await?;
+
+        // Validate comment content against site policies
+        ContentFilter::validate_comment_content(
+            &site_config.word_filter_enabled,
+            &site_config.word_filter_applies_to_comments,
+            &site_config.filtered_words,
+            &site_config.link_filter_enabled,
+            &site_config.banned_domains,
+            &body,
+        )?;
 
         // either a post id or a parent comment id must be provided
         if reply_to_post_id.is_none() && reply_to_comment_id.is_none() {
