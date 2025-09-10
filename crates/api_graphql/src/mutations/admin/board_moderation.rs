@@ -3,11 +3,12 @@ use async_graphql::*;
 use tinyboards_db::{
     models::{
         board::boards::{Board as DbBoard, BoardForm},
+        board::board_mods::{BoardModerator as DbBoardMod, BoardModeratorForm, ModPerms},
         person::local_user::AdminPerms,
         moderator::admin_actions::AdminBanBoard,
     },
-    traits::Crud,
-    utils::DbPool as DbPoolTrait,
+    traits::{Crud, Joinable},
+    utils::{DbPool as DbPoolTrait, naive_now},
 };
 use tinyboards_utils::TinyBoardsError;
 
@@ -184,6 +185,112 @@ impl AdminBoardModeration {
         DbBoard::update(pool, board_id, &update_form)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to update board"))?;
+
+        // Return updated board
+        let updated_boards = DbBoard::get_with_counts_for_ids(pool, vec![board_id])
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to fetch updated board"))?;
+            
+        let updated_board = updated_boards.into_iter().next()
+            .ok_or_else(|| TinyBoardsError::from_message(404, "Board not found after update"))?;
+
+        Ok(Board::from(updated_board))
+    }
+
+    /// Add admin as moderator to any board (admin only)
+    pub async fn admin_add_self_as_mod(
+        &self,
+        ctx: &Context<'_>,
+        board_id: i32,
+        permissions: Option<i32>,
+    ) -> Result<Board> {
+        let user = ctx
+            .data_unchecked::<LoggedInUser>()
+            .require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+
+        // Check admin permissions
+        if !user.has_permission(AdminPerms::Boards) {
+            return Err(TinyBoardsError::from_message(403, "Admin permissions required").into());
+        }
+
+        // Get the board to verify it exists
+        let _board = DbBoard::read(pool, board_id)
+            .await
+            .map_err(|_| TinyBoardsError::from_message(404, "Board not found"))?;
+
+        // Check if admin is already a moderator
+        let existing_mod = DbBoardMod::get_by_person_id_for_board(pool, user.person.id, board_id, false).await;
+        
+        if existing_mod.is_ok() {
+            return Err(TinyBoardsError::from_message(400, "You are already a moderator of this board").into());
+        }
+
+        // Get the highest rank (lowest number) to place admin at the top
+        let existing_mods = DbBoardMod::for_board(pool, board_id).await.unwrap_or_default();
+        let highest_rank = existing_mods.iter().map(|m| m.rank).min().unwrap_or(1);
+        let admin_rank = if highest_rank > 1 { highest_rank - 1 } else { 0 };
+
+        // Set permissions - default to Full if not specified
+        let mod_permissions = permissions.unwrap_or(ModPerms::Full.as_i32());
+
+        // Create moderator relationship
+        let mod_form = BoardModeratorForm {
+            board_id: Some(board_id),
+            person_id: Some(user.person.id),
+            permissions: Some(mod_permissions),
+            rank: Some(admin_rank),
+            invite_accepted: Some(true), // Admin doesn't need to accept invite
+            invite_accepted_date: Some(Some(naive_now())),
+        };
+
+        DbBoardMod::join(pool, &mod_form)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to add admin as moderator"))?;
+
+        // Return updated board
+        let updated_boards = DbBoard::get_with_counts_for_ids(pool, vec![board_id])
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to fetch updated board"))?;
+            
+        let updated_board = updated_boards.into_iter().next()
+            .ok_or_else(|| TinyBoardsError::from_message(404, "Board not found after update"))?;
+
+        Ok(Board::from(updated_board))
+    }
+
+    /// Remove admin from board moderation (admin only)
+    pub async fn admin_remove_self_as_mod(
+        &self,
+        ctx: &Context<'_>,
+        board_id: i32,
+    ) -> Result<Board> {
+        let user = ctx
+            .data_unchecked::<LoggedInUser>()
+            .require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+
+        // Check admin permissions
+        if !user.has_permission(AdminPerms::Boards) {
+            return Err(TinyBoardsError::from_message(403, "Admin permissions required").into());
+        }
+
+        // Get the board to verify it exists
+        let _board = DbBoard::read(pool, board_id)
+            .await
+            .map_err(|_| TinyBoardsError::from_message(404, "Board not found"))?;
+
+        // Check if admin is actually a moderator
+        let existing_mod = DbBoardMod::get_by_person_id_for_board(pool, user.person.id, board_id, false).await;
+        
+        if existing_mod.is_err() {
+            return Err(TinyBoardsError::from_message(400, "You are not a moderator of this board").into());
+        }
+
+        // Remove moderator relationship
+        DbBoardMod::remove_board_mod(pool, user.person.id, board_id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to remove admin as moderator"))?;
 
         // Return updated board
         let updated_boards = DbBoard::get_with_counts_for_ids(pool, vec![board_id])
