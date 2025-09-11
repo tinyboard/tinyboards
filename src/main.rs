@@ -124,39 +124,19 @@ async fn main() -> Result<(), TinyBoardsError> {
             graphql_schema.clone(),
         );
 
-        /*let federation_config = FederationConfig::builder()
-        .domain(settings.hostname.clone())
-        .app_data(context.clone())
-        .client(client.clone())
-        .http_fetch_limit(FEDERATION_HTTP_FETCH_LIMIT)
-        .worker_count(local_site.federation_worker_count as u64)
-        .debug(cfg!(debug_assertions))
-        .http_signature_compat(true)
-        .url_verifier(Box::new(VerifyUrlData(context.pool().clone())))
-        .build()
-        .expect("configure federation");*/
-
-        let cors_config = Cors::default().allow_any_origin();
+        let cors_config = Cors::default()
+            .allowed_methods(vec!["GET", "POST", "OPTIONS", "PUT"])
+            .allowed_headers(vec!["Content-Type", "Accepts"]);
 
         App::new()
             .wrap(actix_web::middleware::Logger::default())
             .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
-            //.app_data(Data::new(rate_limit_cell.clone()))
-            //.wrap(FederationMiddleware::new(federation_config))
             // the routes
             //.configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
             // GraphQL
             .configure(api_routes::graphql_config)
-            // federation
-            /*.configure(|cfg| {
-                if federation_enabled {
-                    tinyboards_apub::http::routes::config(cfg);
-                    webfinger::config(cfg);
-                }
-            })*/
-            //.configure(nodeinfo::config)
             .configure(media::config)
     })
     .bind((settings_bind.bind, settings_bind.port))
