@@ -1,6 +1,5 @@
 use tinyboards_api_common::utils::{
-    generate_inbox_url, generate_local_apub_endpoint, generate_shared_inbox_url,
-    generate_site_inbox_url, generate_subscribers_url, EndpointType,
+    generate_local_apub_endpoint, EndpointType,
 };
 use tinyboards_db::{
     models::{
@@ -66,20 +65,15 @@ async fn initialize_local_site_and_admin_user(
         let person_admin_form = PersonForm::builder()
             .name(Some(setup.admin_username.clone()))
             .is_admin(Some(true))
-            .actor_id(Some(person_actor_id.clone()))
-            .inbox_url(Some(generate_inbox_url(&person_actor_id)?))
-            .shared_inbox_url(Some(generate_shared_inbox_url(&person_actor_id)?))
             .instance_id(Some(instance.id.clone()))
             .build();
 
-        // create the admin person object, or get existing one
-        let inserted_admin_person = match Person::create(pool, &person_admin_form).await {
-            Ok(person) => person,
-            Err(_) => {
-                // If creation fails due to duplicate, try to find existing admin
-                Person::read_from_name(pool, &setup.admin_username, false).await?
-            }
-        };
+        // create the admin person object, or return if exists
+        let inserted_admin_person = Person::create(pool, &person_admin_form).await
+            .map_err(|e| {
+                eprintln!("Admin user might already exist: {:?}", e);
+                e
+            })?;
 
         let local_user_admin_form = LocalUserForm {
             name: Some(setup.admin_username.clone()),
@@ -113,10 +107,6 @@ async fn initialize_local_site_and_admin_user(
             description: Some(setup.default_board_description.clone()),
             //public_key: Some(board_key_pair.public_key),
             //private_key: Some(board_key_pair.private_key),
-            actor_id: Some(board_actor_id.clone()),
-            subscribers_url: Some(generate_subscribers_url(&board_actor_id.clone())?),
-            inbox_url: Some(generate_inbox_url(&board_actor_id.clone())?),
-            shared_inbox_url: Some(Some(generate_shared_inbox_url(&board_actor_id.clone())?)),
             instance_id: Some(instance.id.clone()),
             ..BoardForm::default()
         };
@@ -142,9 +132,7 @@ async fn initialize_local_site_and_admin_user(
         let site_form = SiteForm {
             name: Some(site_name.clone()),
             instance_id: Some(instance.id.clone()),
-            actor_id: Some(site_actor_id.clone().into()),
             last_refreshed_date: Some(naive_now()),
-            inbox_url: Some(generate_site_inbox_url(&site_actor_id.into())?),
             //private_key: Some(Some(site_key_pair.private_key)),
             //public_key: Some(site_key_pair.public_key),
             ..SiteForm::default()

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 
 use async_graphql::*;
 use dataloader::DataLoader;
@@ -122,7 +121,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             level: comment.level,
             updated: comment.updated.map(|u| u.to_string()),
             board_id: comment.board_id,
-            local: comment.local,
+            local: true,
             counts,
             replies: None,
         }

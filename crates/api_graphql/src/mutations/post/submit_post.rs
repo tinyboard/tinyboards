@@ -205,16 +205,12 @@ impl SubmitPost {
         // do not override url unless image is uplaoded
         let update_form = if file_url.is_some() {
             PostForm {
-                ap_id: Some(apub_id),
                 url: file_url.clone().map(|url| url.into()),
                 image: file_url.map(|url| url.into()),
                 ..PostForm::default()
             }
         } else {
-            PostForm {
-                ap_id: Some(apub_id),
-                ..PostForm::default()
-            }
+            PostForm::default()
         };
 
         let updated_post = DbPost::update(pool, published_post.id.clone(), &update_form).await?;

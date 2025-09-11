@@ -24,8 +24,6 @@ pub struct Post {
     pub updated: Option<NaiveDateTime>,
     pub image: Option<DbUrl>,
     pub language_id: i32,
-    pub ap_id: Option<DbUrl>,
-    pub local: bool,
     pub featured_board: bool,
     pub featured_local: bool,
     pub title_chunk: String,

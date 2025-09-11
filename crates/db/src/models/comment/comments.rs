@@ -1,4 +1,4 @@
-use crate::{newtypes::DbUrl, schema::comments};
+use crate::schema::comments;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -20,8 +20,6 @@ pub struct Comment {
     pub updated: Option<NaiveDateTime>,
     pub is_locked: bool,
     pub board_id: i32,
-    pub local: bool,
-    pub ap_id: Option<DbUrl>,
     pub language_id: i32,
     pub is_pinned: Option<bool>,
 }

@@ -1,4 +1,4 @@
-use crate::schema::{pm_notif, private_message};
+use crate::schema::private_message;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};

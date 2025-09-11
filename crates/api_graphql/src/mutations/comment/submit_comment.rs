@@ -187,10 +187,7 @@ impl SubmitComment {
             &protocol_and_hostname,
         )?;
 
-        let update_form = CommentForm {
-            ap_id: Some(apub_id),
-            ..CommentForm::default()
-        };
+        let update_form = CommentForm::default();
 
         let updated_comment = DbComment::update(pool, inserted_comment_id, &update_form).await?;
 
