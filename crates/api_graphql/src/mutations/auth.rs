@@ -1,6 +1,3 @@
-use crate::helpers::apub::{
-    generate_inbox_url, generate_local_apub_endpoint, generate_shared_inbox_url, EndpointType,
-};
 /**
  * Login and registration
  **/
@@ -179,8 +176,6 @@ impl Auth {
 
         //let actor_keypair = generate_actor_keypair()?;
 
-        let actor_id =
-            generate_local_apub_endpoint(EndpointType::Person, &username, &protocol_and_hostname)?;
 
         // if we have a default avatar for the site, then use it
         if site.default_avatar.is_some() {
@@ -191,11 +186,6 @@ impl Auth {
         let person_form = PersonForm {
             name: Some(username.clone()),
             display_name: Some(display_name.unwrap_or(username.clone())),
-            actor_id: Some(actor_id.clone()),
-            private_key: Some("-".to_string()),
-            public_key: Some("-".to_string()),
-            inbox_url: Some(generate_inbox_url(&actor_id)?),
-            shared_inbox_url: Some(generate_shared_inbox_url(&actor_id)?),
             instance_id: Some(instance_id),
             avatar: Some(avatar_url.into()),
             ..PersonForm::default()

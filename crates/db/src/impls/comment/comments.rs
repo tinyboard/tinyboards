@@ -156,7 +156,7 @@ impl Comment {
         query = match listing_type {
             ListingType::All => query,
             ListingType::Subscribed => query.filter(board_subscriber::id.is_not_null()),
-            ListingType::Local => query.filter(comments::local.eq(true)),
+            ListingType::Local => query,
             ListingType::Moderated => query.filter(board_mods::id.is_not_null()),
         };
 
@@ -267,7 +267,7 @@ impl Comment {
             .await
     }
 
-    pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
+    /*pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comments::dsl::*;
         let object_id: DbUrl = object_id.into();
@@ -277,7 +277,7 @@ impl Comment {
             .await
             .ok()
             .map(Into::into))
-    }
+    }*/
 
     pub fn parent_comment_id(&self) -> Option<i32> {
         let parent_comment_id = self.parent_id;

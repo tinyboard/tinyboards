@@ -420,8 +420,8 @@ impl Board {
             ),
             // Subscribed boards
             ListingType::Subscribed => query.filter(board_subscriber::id.is_not_null()),
-            // Local: local boards only \ hidden boards
-            ListingType::Local => query.filter(boards::local.eq(true)).filter(
+            // Local: all boards \ hidden boards
+            ListingType::Local => query.filter(
                 boards::is_hidden
                     .eq(false)
                     .or(board_subscriber::id.is_not_null()),
@@ -478,10 +478,6 @@ pub mod safe_type {
         is_removed,
         is_nsfw,
         is_hidden,
-        actor_id,
-        subscribers_url,
-        inbox_url,
-        shared_inbox_url,
         moderators_url,
         featured_url,
         ban_reason,
@@ -508,10 +504,6 @@ pub mod safe_type {
                 is_removed,
                 is_nsfw,
                 is_hidden,
-                actor_id,
-                subscribers_url,
-                inbox_url,
-                shared_inbox_url,
                 moderators_url,
                 featured_url,
                 ban_reason,
@@ -587,7 +579,7 @@ impl Bannable for BoardPersonBan {
     }
 }
 
-#[async_trait::async_trait]
+/*#[async_trait::async_trait]
 impl ApubActor for Board {
     async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -597,9 +589,9 @@ impl ApubActor for Board {
             .await
             .ok()
             .map(Into::into))
-    }
+    }*/
 
-    async fn read_from_name(
+    /*async fn read_from_name(
         pool: &DbPool,
         board_name: &str,
         include_deleted: bool,
@@ -628,5 +620,4 @@ impl ApubActor for Board {
             .select(boards::all_columns)
             .first::<Self>(conn)
             .await
-    }
-}
+    }*/

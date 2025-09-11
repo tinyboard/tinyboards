@@ -82,7 +82,7 @@ impl Site {
         url
     }
 
-    pub async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
+    /*pub async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
         use crate::schema::site::dsl::*;
         let conn = &mut get_conn(pool).await?;
         Ok(
@@ -93,7 +93,7 @@ impl Site {
                 .ok()
                 .map(Into::into)
         )
-    }
+    }*/
 
     pub async fn read_remote_sites(pool: &DbPool) -> Result<Vec<Self>, Error> {
         use crate::schema::site::dsl::*;

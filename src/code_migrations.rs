@@ -14,7 +14,7 @@ use tinyboards_db::{
             site::{Site, SiteForm},
         },
     },
-    traits::Crud,
+    traits::{ApubActor, Crud},
     utils::{naive_now, DbPool},
 };
 //use tinyboards_federation::http_signatures::generate_actor_keypair;
@@ -67,15 +67,19 @@ async fn initialize_local_site_and_admin_user(
             .name(Some(setup.admin_username.clone()))
             .is_admin(Some(true))
             .actor_id(Some(person_actor_id.clone()))
-            //.private_key(Some(person_keypair.private_key))
-            .public_key(/* Some(person_keypair.public_key) */ None)
             .inbox_url(Some(generate_inbox_url(&person_actor_id)?))
             .shared_inbox_url(Some(generate_shared_inbox_url(&person_actor_id)?))
             .instance_id(Some(instance.id.clone()))
             .build();
 
-        // create the admin person object
-        let inserted_admin_person = Person::create(pool, &person_admin_form).await?;
+        // create the admin person object, or get existing one
+        let inserted_admin_person = match Person::create(pool, &person_admin_form).await {
+            Ok(person) => person,
+            Err(_) => {
+                // If creation fails due to duplicate, try to find existing admin
+                Person::read_from_name(pool, &setup.admin_username, false).await?
+            }
+        };
 
         let local_user_admin_form = LocalUserForm {
             name: Some(setup.admin_username.clone()),
@@ -87,8 +91,14 @@ async fn initialize_local_site_and_admin_user(
             ..LocalUserForm::default()
         };
 
-        // create the local user admin object
-        LocalUser::create(pool, &local_user_admin_form).await?;
+        // create the local user admin object, or skip if exists
+        match LocalUser::create(pool, &local_user_admin_form).await {
+            Ok(_) => {},
+            Err(_) => {
+                // If creation fails due to duplicate, continue
+                info!("Admin user already exists, skipping creation");
+            }
+        };
 
         //let board_key_pair = generate_actor_keypair()?;
         let board_actor_id = generate_local_apub_endpoint(
@@ -111,8 +121,14 @@ async fn initialize_local_site_and_admin_user(
             ..BoardForm::default()
         };
 
-        // make the default board
-        Board::create(pool, &board_form).await?;
+        // make the default board, or skip if exists
+        match Board::create(pool, &board_form).await {
+            Ok(_) => {},
+            Err(_) => {
+                // If creation fails due to duplicate, continue
+                info!("Default board already exists, skipping creation");
+            }
+        };
 
         // add an entry to the site table
         //let site_key_pair = generate_actor_keypair()?;

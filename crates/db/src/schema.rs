@@ -134,17 +134,8 @@ diesel::table! {
         is_deleted -> Bool,
         is_nsfw -> Bool,
         is_hidden -> Bool,
-        actor_id -> Text,
-        local -> Bool,
-        private_key -> Nullable<Text>,
-        public_key -> Text,
-        subscribers_url -> Text,
-        inbox_url -> Text,
-        shared_inbox_url -> Nullable<Text>,
         last_refreshed_date -> Timestamp,
         instance_id -> Int4,
-        moderators_url -> Nullable<Text>,
-        featured_url -> Nullable<Text>,
         icon -> Nullable<Text>,
         banner -> Nullable<Text>,
         posting_restricted_to_mods -> Bool,
@@ -165,6 +156,8 @@ diesel::table! {
         banned_by -> Nullable<Int4>,
         banned_at -> Nullable<Timestamp>,
         exclude_from_all -> Bool,
+        moderators_url -> Nullable<Text>,
+        featured_url -> Nullable<Text>,
     }
 }
 
@@ -230,8 +223,6 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
         board_id -> Int4,
-        local -> Bool,
-        ap_id -> Nullable<Text>,
         language_id -> Int4,
         is_pinned -> Nullable<Bool>,
     }
@@ -586,12 +577,6 @@ diesel::table! {
         banner -> Nullable<Text>,
         bio -> Nullable<Text>,
         signature -> Nullable<Text>,
-        actor_id -> Text,
-        local -> Bool,
-        private_key -> Nullable<Text>,
-        public_key -> Text,
-        inbox_url -> Text,
-        shared_inbox_url -> Nullable<Text>,
         bot_account -> Bool,
         last_refreshed_date -> Timestamp,
         instance_id -> Int4,
@@ -750,8 +735,6 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         image -> Nullable<Text>,
         language_id -> Int4,
-        ap_id -> Nullable<Text>,
-        local -> Bool,
         featured_board -> Bool,
         featured_local -> Bool,
         #[max_length = 255]
@@ -800,15 +783,11 @@ diesel::table! {
         sidebar -> Nullable<Text>,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
-        actor_id -> Text,
         instance_id -> Int4,
         icon -> Nullable<Text>,
         banner -> Nullable<Text>,
         description -> Nullable<Text>,
         last_refreshed_date -> Timestamp,
-        inbox_url -> Text,
-        private_key -> Nullable<Text>,
-        public_key -> Text,
     }
 }
 

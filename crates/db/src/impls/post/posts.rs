@@ -51,7 +51,7 @@ impl Post {
             .await
     }
 
-    pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
+    /*pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         let object_id: DbUrl = object_id.into();
         Ok(posts::table
@@ -60,7 +60,7 @@ impl Post {
             .await
             .ok()
             .map(Into::into))
-    }
+    }*/
 
     pub async fn resolve_reports(
         pool: &DbPool,
@@ -530,9 +530,9 @@ impl Post {
             }
             // Subscribed boards: home page, hide nothing
             ListingType::Subscribed => query = query.filter(board_subscriber::id.is_not_null()),
-            // Local: local posts only \ hidden boards
+            // Local: all posts \ hidden boards
             ListingType::Local => {
-                query = query.filter(posts::local.eq(true)).filter(
+                query = query.filter(
                     boards::is_hidden
                         .eq(false)
                         .or(board_subscriber::id.is_not_null()),
@@ -609,9 +609,6 @@ impl Crud for Post {
         let conn = &mut get_conn(pool).await?;
         let new_post = diesel::insert_into(posts::table)
             .values(form)
-            .on_conflict(posts::ap_id)
-            .do_update()
-            .set(form)
             .get_result::<Self>(conn)
             .await?;
 

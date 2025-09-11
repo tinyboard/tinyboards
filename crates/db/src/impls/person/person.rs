@@ -226,7 +226,7 @@ impl Person {
             .map(|_| ())
     }
 
-    /// Update or insert the person.
+    /*/// Update or insert the person.
     ///
     /// necessary for federation because Apub does not distinguish between these actions
     pub async fn upsert(pool: &DbPool, form: &PersonForm) -> Result<Person, Error> {
@@ -238,7 +238,7 @@ impl Person {
             .set(form)
             .get_result::<Self>(conn)
             .await
-    }
+    }*/
 
     /// Load a bunch of people with their counts.
     pub async fn list_with_counts(
@@ -337,8 +337,6 @@ pub mod safe_type {
         name,
         display_name,
         is_banned,
-        local,
-        actor_id,
         creation_date,
         updated,
         avatar,
@@ -347,8 +345,6 @@ pub mod safe_type {
         unban_date,
         banner,
         bio,
-        inbox_url,
-        shared_inbox_url,
         bot_account,
         last_refreshed_date,
         is_admin,
@@ -370,8 +366,6 @@ pub mod safe_type {
                 name,
                 display_name,
                 is_banned,
-                local,
-                actor_id,
                 creation_date,
                 updated,
                 avatar,
@@ -380,8 +374,6 @@ pub mod safe_type {
                 unban_date,
                 banner,
                 bio,
-                inbox_url,
-                shared_inbox_url,
                 bot_account,
                 last_refreshed_date,
                 is_admin,
@@ -397,7 +389,7 @@ pub mod safe_type {
     }
 }
 
-#[async_trait::async_trait]
+/*#[async_trait::async_trait]
 impl ApubActor for Person {
     async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -409,9 +401,9 @@ impl ApubActor for Person {
             .await
             .ok()
             .map(Into::into))
-    }
+    }*/
 
-    async fn read_from_name(
+    /*async fn read_from_name(
         pool: &DbPool,
         from_name: &str,
         include_deleted: bool,
@@ -419,7 +411,6 @@ impl ApubActor for Person {
         let conn = &mut get_conn(pool).await?;
         let mut q = person::table
             .into_boxed()
-            .filter(person::local.eq(true))
             .filter(lower(person::name).eq(from_name.to_lowercase()));
         if !include_deleted {
             q = q.filter(person::is_deleted.eq(false))
@@ -441,5 +432,4 @@ impl ApubActor for Person {
             .select(person::all_columns)
             .first::<Self>(conn)
             .await
-    }
-}
+    }*/

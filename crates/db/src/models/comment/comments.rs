@@ -40,8 +40,6 @@ pub struct CommentForm {
     pub updated: Option<NaiveDateTime>,
     pub is_deleted: Option<bool>,
     pub board_id: Option<i32>,
-    pub local: Option<bool>,
-    pub ap_id: Option<DbUrl>,
     pub language_id: Option<i32>,
     pub creation_date: Option<NaiveDateTime>,
     pub is_pinned: Option<Option<bool>>,
