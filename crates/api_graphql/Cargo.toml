@@ -20,5 +20,6 @@ tinyboards_utils = { workspace = true }
 regex = { workspace = true }
 tokio = { workspace = true }
 url = { workspace = true }
+uuid = { workspace = true }
 #tinyboards_federation = { workspace = true }
 #tinyboards_api_common = { workspace = true }

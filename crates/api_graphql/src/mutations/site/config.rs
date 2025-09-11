@@ -48,6 +48,7 @@ pub struct UpdateSiteConfigInput {
     pub banned_domains: Option<String>,
     pub approved_image_hosts: Option<String>,
     pub image_embed_hosts_only: Option<bool>,
+    pub registration_mode: Option<String>,
 }
 
 #[Object]
@@ -102,6 +103,7 @@ impl SiteConfig {
             banned_domains: input.banned_domains.map(Some),
             approved_image_hosts: input.approved_image_hosts.map(Some),
             image_embed_hosts_only: input.image_embed_hosts_only,
+            registration_mode: input.registration_mode,
             updated: Some(naive_now()),
             ..LocalSiteForm::default()
         };

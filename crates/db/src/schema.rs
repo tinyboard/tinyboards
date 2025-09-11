@@ -369,6 +369,7 @@ diesel::table! {
         banned_domains -> Nullable<Text>,
         approved_image_hosts -> Nullable<Text>,
         image_embed_hosts_only -> Nullable<Bool>,
+        registration_mode -> Varchar,
     }
 }
 

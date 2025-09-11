@@ -1,4 +1,4 @@
-use crate::{schema::local_site, BoardCreationMode};
+use crate::{schema::local_site, BoardCreationMode, RegistrationMode};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -60,6 +60,7 @@ pub struct LocalSite {
     pub banned_domains: Option<String>,
     pub approved_image_hosts: Option<String>,
     pub image_embed_hosts_only: Option<bool>,
+    pub registration_mode: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -116,6 +117,7 @@ pub struct LocalSiteForm {
     pub banned_domains: Option<Option<String>>,
     pub approved_image_hosts: Option<Option<String>>,
     pub image_embed_hosts_only: Option<bool>,
+    pub registration_mode: Option<String>,
 }
 
 impl LocalSite {
@@ -123,5 +125,11 @@ impl LocalSite {
     pub fn get_board_creation_mode(&self) -> BoardCreationMode {
         BoardCreationMode::from_str(&self.board_creation_mode)
             .unwrap_or(BoardCreationMode::AdminOnly)
+    }
+
+    /// Get the registration mode as an enum
+    pub fn get_registration_mode(&self) -> RegistrationMode {
+        RegistrationMode::from_str(&self.registration_mode)
+            .unwrap_or(RegistrationMode::Open)
     }
 }

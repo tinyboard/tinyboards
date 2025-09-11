@@ -33,15 +33,21 @@ pub enum RegistrationMode {
     /// Closed to the public
     #[strum(ascii_case_insensitive)]
     Closed,
-    /// Open, but you need to have an approved application,
-    #[strum(ascii_case_insensitive)]
-    RequireApplication,
-    /// Open, but an invite link is required
-    #[strum(ascii_case_insensitive)]
-    RequireInvite,
-    /// Open to all
+    /// Open registration - no restrictions
     #[strum(ascii_case_insensitive)]
     Open,
+    /// Open registration with email verification required
+    #[strum(ascii_case_insensitive)]
+    OpenWithEmailVerification,
+    /// Invite only - admins can create invites
+    #[strum(ascii_case_insensitive)]
+    InviteOnlyAdmin,
+    /// Invite only - both admins and users can create invites
+    #[strum(ascii_case_insensitive)]
+    InviteOnlyUser,
+    /// Application required with approval
+    #[strum(ascii_case_insensitive)]
+    RequireApplication,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]

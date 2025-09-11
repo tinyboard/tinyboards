@@ -4118,6 +4118,7 @@ dependencies = [
  "tinyboards_utils",
  "tokio",
  "url",
+ "uuid",
 ]
 
 [[package]]

@@ -64,6 +64,7 @@ pub struct LocalSite {
     pub banned_domains: Option<String>,
     pub approved_image_hosts: Option<String>,
     pub image_embed_hosts_only: Option<bool>,
+    pub registration_mode: String,
 }
 
 #[ComplexObject]
@@ -141,6 +142,7 @@ impl From<DbLocalSite> for LocalSite {
             banned_domains: value.banned_domains,
             approved_image_hosts: value.approved_image_hosts,
             image_embed_hosts_only: value.image_embed_hosts_only,
+            registration_mode: value.registration_mode,
         }
     }
 }

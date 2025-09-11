@@ -14,6 +14,7 @@ use tinyboards_db::models::site::registration_applications::RegistrationApplicat
 use tinyboards_db::models::site::registration_applications::RegistrationApplicationForm;
 use tinyboards_db::models::site::site_invite::SiteInvite as DbSiteInvite;
 use tinyboards_db::models::site::{local_site::LocalSite as DbLocalSite, site::Site as DbSite};
+use tinyboards_db::RegistrationMode;
 use tinyboards_db::traits::Crud;
 //use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::passhash::{hash_password, verify_password};
@@ -73,7 +74,7 @@ impl Auth {
         let site = DbLocalSite::read(pool).await?;
 
         // if application mode is enabled, each acccount must be admin approved before it can be used
-        if site.require_application && !u.is_application_accepted {
+        if site.get_registration_mode() == RegistrationMode::RequireApplication && !u.is_application_accepted {
             return Err(TinyBoardsError::from_message(
                 403,
                 "You cannot use your account yet because your application hasn't been accepted.",
@@ -112,16 +113,31 @@ impl Auth {
 
         let protocol_and_hostname = settings.get_protocol_and_hostname();
 
-        if site.invite_only && invite_code.is_none() {
-            return Err(
-                TinyBoardsError::from_message(403, "You need an invite to register.").into(),
-            );
-        }
+        let registration_mode = site.get_registration_mode();
 
-        if site.require_application && application_answer.is_none() {
-            return Err(
-                TinyBoardsError::from_message(400, "You need to write an application.").into(),
-            );
+        // Check registration policy constraints
+        match registration_mode {
+            RegistrationMode::Closed => {
+                return Err(TinyBoardsError::from_message(403, "Registration is closed.").into());
+            }
+            RegistrationMode::InviteOnlyAdmin | RegistrationMode::InviteOnlyUser => {
+                if invite_code.is_none() {
+                    return Err(TinyBoardsError::from_message(403, "You need an invite to register.").into());
+                }
+            }
+            RegistrationMode::RequireApplication => {
+                if application_answer.is_none() {
+                    return Err(TinyBoardsError::from_message(400, "You need to write an application.").into());
+                }
+            }
+            RegistrationMode::OpenWithEmailVerification => {
+                if email.is_none() {
+                    return Err(TinyBoardsError::from_message(400, "Email verification is required, please provide an email.").into());
+                }
+            }
+            RegistrationMode::Open => {
+                // No additional restrictions
+            }
         }
 
         let re = Regex::new(r"^[A-Za-z][A-Za-z0-9_]{0,29}$").unwrap();
@@ -147,24 +163,18 @@ impl Auth {
             .into());
         }
 
-        if site.require_email_verification && email.is_none() {
-            return Err(TinyBoardsError::from_message(
-                400,
-                "Email verification is required, please provide an email.",
-            )
-            .into());
-        }
 
         let mut avatar_url =
             Url::parse(format!("{}/media/default_pfp.png", &protocol_and_hostname).as_str())?;
 
-        let invite = if site.invite_only {
-            let invite = DbSiteInvite::read_for_token(pool, &invite_code.unwrap())
-                .await
-                .map_err(|e| TinyBoardsError::from_error_message(e, 403, "Invalid invite"))?;
-            Some(invite)
-        } else {
-            None
+        let invite = match registration_mode {
+            RegistrationMode::InviteOnlyAdmin | RegistrationMode::InviteOnlyUser => {
+                let invite = DbSiteInvite::read_for_token(pool, &invite_code.unwrap())
+                    .await
+                    .map_err(|e| TinyBoardsError::from_error_message(e, 403, "Invalid invite"))?;
+                Some(invite)
+            }
+            _ => None,
         };
 
         //let actor_keypair = generate_actor_keypair()?;
@@ -229,12 +239,12 @@ impl Auth {
         //let inserted_user = LocalUser::register(context.pool(), user_form).await?;
 
         // if the user was invited, invalidate the invite token here by removing from db
-        if site.invite_only {
-            DbSiteInvite::delete(pool, invite.unwrap().id).await?;
+        if let Some(invite) = invite {
+            DbSiteInvite::delete(pool, invite.id).await?;
         }
 
         // if site is in application mode, add the application to the database
-        if site.require_application {
+        if registration_mode == RegistrationMode::RequireApplication {
             let form = RegistrationApplicationForm {
                 person_id: person.id,
                 answer: application_answer,
@@ -250,14 +260,19 @@ impl Auth {
 
         Ok(SignupResponse {
             token: {
-                if site.open_registration || site.invite_only {
-                    Some(inserted_local_user.get_jwt(master_key.as_ref()))
-                } else {
-                    None
+                match registration_mode {
+                    RegistrationMode::Open 
+                    | RegistrationMode::OpenWithEmailVerification
+                    | RegistrationMode::InviteOnlyAdmin 
+                    | RegistrationMode::InviteOnlyUser => {
+                        Some(inserted_local_user.get_jwt(master_key.as_ref()))
+                    }
+                    RegistrationMode::RequireApplication 
+                    | RegistrationMode::Closed => None,
                 }
             },
-            account_created: !site.require_application,
-            application_submitted: site.require_application,
+            account_created: registration_mode != RegistrationMode::RequireApplication,
+            application_submitted: registration_mode == RegistrationMode::RequireApplication,
         })
     }
 }

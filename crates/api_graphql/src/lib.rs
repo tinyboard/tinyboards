@@ -13,7 +13,7 @@ use crate::mutations::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
     },
     post::{actions::*, edit::EditPost, moderation::PostModeration, submit_post::SubmitPost},
-    site::config::SiteConfig,
+    site::{config::SiteConfig, invite::SiteInvite},
 };
 use async_graphql::*;
 use queries::{
@@ -82,6 +82,7 @@ pub struct Mutation(
     CommentActions,
     CommentModeration,
     SiteConfig,
+    SiteInvite,
 );
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
