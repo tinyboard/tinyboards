@@ -4,7 +4,7 @@
     # Username to connect to postgres
     user: "tinyboards"
     # Password to connect to postgres
-    password: "tinyboards"
+    password: "tinyboards123"
     # Host where postgres is running
     host: "postgres"
     # Port where postgres can be accessed

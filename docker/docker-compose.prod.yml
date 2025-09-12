@@ -51,7 +51,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8536/api/v1/site || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8536/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -106,7 +106,7 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
-      - POSTGRES_INITDB_ARGS="--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --lc-collate=C --lc-ctype=C
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
@@ -187,13 +187,13 @@ services:
       "--maxmemory-policy", "allkeys-lru"
     ]
 
-  # Log aggregation with rotation
-  logrotate:
-    image: linkyard/docker-logrotate
-    restart: unless-stopped
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - ./logrotate.conf:/etc/logrotate.d/docker:ro
+  # Log aggregation with rotation (commented out - image not available)
+  # logrotate:
+  #   image: linkyard/docker-logrotate
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
+  #     - ./logrotate.conf:/etc/logrotate.d/docker:ro
 
 networks:
   tinyboards:
@@ -203,15 +203,7 @@ networks:
 volumes:
   postgres_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./volumes/postgres
   nginx_cache:
     driver: local
   redis_data:
     driver: local
-    driver_opts:
-      type: none
-      o: bind  
-      device: ./volumes/redis
