@@ -8,16 +8,28 @@ pub(crate) mod structs;
 use crate::mutations::{
     admin::board_moderation::AdminBoardModeration,
     auth::Auth,
+    board_moderation::BoardModerationMutations,
+    notifications::NotificationMutations,
     person::settings::UpdateSettings,
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
     },
     post::{actions::*, edit::EditPost, moderation::PostModeration, submit_post::SubmitPost},
+    reports::ReportMutations,
     site::{config::SiteConfig, invite::SiteInvite},
 };
 use async_graphql::*;
 use queries::{
-    boards::QueryBoards, local_site::QuerySite, me::MeQuery, person::QueryPerson, posts::QueryPosts,
+    banned_users::QueryBannedUsers,
+    board_moderators::QueryBoardModerators,
+    boards::QueryBoards, 
+    invites::QueryInvites,
+    local_site::QuerySite, 
+    me::MeQuery, 
+    notifications::QueryNotifications,
+    person::QueryPerson, 
+    posts::QueryPosts,
+    search::QuerySearch,
 };
 use tinyboards_db::{models::person::user::User, utils::DbPool};
 //use queries::Query;
@@ -66,6 +78,11 @@ pub struct Query(
     QueryBoards,
     QueryPerson,
     QuerySite,
+    QueryNotifications,
+    QueryInvites,
+    QueryBoardModerators,
+    QueryBannedUsers,
+    QuerySearch,
 );
 
 #[derive(MergedObject, Default)]
@@ -83,6 +100,9 @@ pub struct Mutation(
     CommentModeration,
     SiteConfig,
     SiteInvite,
+    NotificationMutations,
+    ReportMutations,
+    BoardModerationMutations,
 );
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {

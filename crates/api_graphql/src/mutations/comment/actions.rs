@@ -9,11 +9,11 @@ use crate::DbPool;
 use crate::LoggedInUser;
 use async_graphql::*;
 use tinyboards_db::models::board::boards::Board as DbBoard;
+use tinyboards_db::models::comment::comment_saved::{CommentSaved, CommentSavedForm};
 use tinyboards_db::models::comment::comment_votes::CommentVote as DbCommentVote;
 use tinyboards_db::models::comment::comment_votes::CommentVoteForm;
 use tinyboards_db::models::comment::comments::Comment as DbComment;
-use tinyboards_db::traits::Crud;
-use tinyboards_db::traits::Voteable;
+use tinyboards_db::traits::{Crud, Saveable, Voteable};
 use tinyboards_utils::TinyBoardsError;
 
 #[derive(Default)]
@@ -86,6 +86,41 @@ impl CommentActions {
 
         let res = DbComment::get_with_counts(pool, comment.id).await?;
 
+        Ok(Comment::from(res))
+    }
+
+    /// Save or unsave a comment
+    pub async fn save_comment(
+        &self,
+        ctx: &Context<'_>,
+        comment_id: i32,
+        save: bool,
+    ) -> Result<Comment> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        let comment = DbComment::read(pool, comment_id).await?;
+
+        if comment.is_deleted || comment.is_removed {
+            return Err(TinyBoardsError::from_message(
+                404,
+                "That comment has been deleted or removed.",
+            )
+            .into());
+        }
+
+        let form = CommentSavedForm {
+            comment_id,
+            person_id: user.person.id,
+        };
+
+        if save {
+            CommentSaved::save(pool, &form).await?;
+        } else {
+            CommentSaved::unsave(pool, &form).await?;
+        }
+
+        let res = DbComment::get_with_counts(pool, comment_id).await?;
         Ok(Comment::from(res))
     }
 

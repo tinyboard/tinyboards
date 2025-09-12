@@ -4113,6 +4113,8 @@ dependencies = [
  "async-graphql",
  "async-graphql-actix-web",
  "chrono",
+ "diesel",
+ "diesel-async",
  "regex",
  "tinyboards_db",
  "tinyboards_utils",
