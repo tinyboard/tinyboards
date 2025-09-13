@@ -1,4 +1,4 @@
-use crate::schema::private_message;
+use crate::schema::{pm_notif, private_message};
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -31,14 +31,14 @@ pub struct MessageForm {
     pub title: Option<String>,
 }
 
-/*#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Queryable, Identifiable)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Queryable, Identifiable)]
 #[diesel(table_name = pm_notif)]
 pub struct MessageNotif {
-    id: i32,
-    recipient_id: i32,
-    pm_id: i32,
-    read: bool,
-    creation_date: NaiveDateTime,
+    pub id: i32,
+    pub recipient_id: i32,
+    pub pm_id: i32,
+    pub read: bool,
+    pub creation_date: NaiveDateTime,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -47,4 +47,4 @@ pub struct MessageNotifForm {
     pub recipient_id: Option<i32>,
     pub pm_id: Option<i32>,
     pub read: Option<bool>,
-}*/
+}

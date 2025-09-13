@@ -4,6 +4,7 @@ pub mod boards;
 pub mod invites;
 pub mod local_site;
 pub mod me;
+pub mod messages;
 pub mod notifications;
 pub mod person;
 pub mod posts;
