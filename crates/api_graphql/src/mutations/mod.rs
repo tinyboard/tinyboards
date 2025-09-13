@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod auth;
+pub mod board;
 pub mod board_moderation;
 pub mod comment;
 pub mod notifications;

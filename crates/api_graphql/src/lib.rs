@@ -8,6 +8,7 @@ pub(crate) mod structs;
 use crate::mutations::{
     admin::board_moderation::AdminBoardModeration,
     auth::Auth,
+    board::{actions::BoardActions, create::CreateBoard, settings::UpdateBoardSettings},
     board_moderation::BoardModerationMutations,
     notifications::NotificationMutations,
     person::settings::UpdateSettings,
@@ -89,6 +90,9 @@ pub struct Query(
 pub struct Mutation(
     AdminBoardModeration,
     Auth,
+    BoardActions,
+    CreateBoard,
+    UpdateBoardSettings,
     UpdateSettings,
     SubmitPost,
     SubmitComment,
