@@ -11,7 +11,7 @@ use crate::mutations::{
     board::{actions::BoardActions, create::CreateBoard, settings::UpdateBoardSettings},
     board_moderation::BoardModerationMutations,
     notifications::NotificationMutations,
-    person::settings::UpdateSettings,
+    person::{actions::PersonActions, settings::UpdateSettings},
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
     },
@@ -93,6 +93,7 @@ pub struct Mutation(
     BoardActions,
     CreateBoard,
     UpdateBoardSettings,
+    PersonActions,
     UpdateSettings,
     SubmitPost,
     SubmitComment,

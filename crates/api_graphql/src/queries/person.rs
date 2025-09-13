@@ -1,7 +1,10 @@
 use crate::helpers::validation::check_private_instance;
 use crate::LoggedInUser;
 use async_graphql::*;
-use tinyboards_db::{models::person::person::Person as DbPerson, utils::DbPool};
+use tinyboards_db::{
+    models::person::{person::Person as DbPerson, person_subscriber::PersonSubscriber, user::User as DbUser}, 
+    utils::DbPool
+};
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{structs::person::Person, UserListingType, UserSortType};
@@ -64,5 +67,72 @@ impl QueryPerson {
         })?;
 
         Ok(users.into_iter().map(Person::from).collect::<Vec<Person>>())
+    }
+
+    /// Get list of followers for a user
+    pub async fn user_followers(
+        &self,
+        context: &Context<'_>,
+        person_id: i32,
+    ) -> Result<Vec<Person>> {
+        let pool = context.data::<DbPool>()?;
+        let v_opt = context.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
+
+        let followers = PersonSubscriber::list_subscribers(pool, person_id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to get followers"))?;
+
+        Ok(followers.into_iter().map(Person::from).collect::<Vec<Person>>())
+    }
+
+    /// Get list of users that a person is following
+    pub async fn user_following(
+        &self,
+        context: &Context<'_>,
+        person_id: i32,
+    ) -> Result<Vec<Person>> {
+        let pool = context.data::<DbPool>()?;
+        let v_opt = context.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
+
+        let following = PersonSubscriber::list_following(pool, person_id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to get following list"))?;
+
+        Ok(following.into_iter().map(Person::from).collect::<Vec<Person>>())
+    }
+
+    /// Get pending follow requests for the current user
+    pub async fn pending_follow_requests(
+        &self,
+        context: &Context<'_>,
+    ) -> Result<Vec<Person>> {
+        let pool = context.data::<DbPool>()?;
+        let user = context.data::<LoggedInUser>()?.require_user_not_banned()?;
+
+        let pending_requests = PersonSubscriber::list_pending_follow_requests(pool, user.person.id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to get pending follow requests"))?;
+
+        Ok(pending_requests.into_iter().map(Person::from).collect::<Vec<Person>>())
+    }
+
+    /// Check if current user is following another user
+    pub async fn is_following_user(
+        &self,
+        context: &Context<'_>,
+        person_id: i32,
+    ) -> Result<bool> {
+        let pool = context.data::<DbPool>()?;
+        let user = context.data::<LoggedInUser>()?.require_user_not_banned()?;
+
+        let is_following = PersonSubscriber::is_following(pool, user.person.id, person_id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to check following status"))?;
+
+        Ok(is_following)
     }
 }
