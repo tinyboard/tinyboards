@@ -2,8 +2,8 @@ use actix_web::*;
 use async_graphql::dataloader::DataLoader;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 //use tinyboards_api::{Perform, PerformUpload};
-use tinyboards_api_graphql::{context::TinyBoardsContext, utils::auth::get_user_from_header_opt};
-use tinyboards_api_graphql::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
+use tinyboards_api::{context::TinyBoardsContext, utils::auth::get_user_from_header_opt};
+use tinyboards_api::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
 //use tinyboards_apub::{api::PerformApub, SendActivity};
 //use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 

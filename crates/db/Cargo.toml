@@ -5,16 +5,12 @@ edition = "2021"
 
 [dependencies]
 tinyboards_utils = { workspace = true }
-#tinyboards_federation = { workspace = true }
 chrono = { workspace = true }
 diesel = { workspace = true, features = ["64-column-tables"] }
 diesel-async = { workspace = true, features = ["postgres", "bb8"] }
 diesel_migrations = { workspace = true }
 diesel-derive-newtype = { workspace = true }
-r2d2 = { workspace = true }
-dotenvy = { workspace = true }
 serde = { workspace = true }
-bigdecimal = { workspace = true }
 url = { workspace = true }
 jwt = { workspace = true }
 hmac = { workspace = true }

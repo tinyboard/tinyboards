@@ -10,20 +10,15 @@ use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
 use std::{thread, time::Duration};
-use tinyboards_api_graphql::{
+use tinyboards_api::{
     context::TinyBoardsContext,
     utils::request::build_user_agent,
 };
-use tinyboards_api_graphql::gen_schema;
-//use tinyboards_api_graphql::config as graphql_config;
-//use tinyboards_apub::{VerifyUrlData, FEDERATION_HTTP_FETCH_LIMIT};
+use tinyboards_api::gen_schema;
 use tinyboards_db::{
     models::secret::Secret,
     utils::{build_db_pool, get_db_url, run_migrations},
 };
-//use tinyboards_db_views::structs::SiteView;
-//use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
-use tinyboards_routes::media;
 use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
@@ -66,23 +61,6 @@ async fn main() -> Result<(), TinyBoardsError> {
     let secret = Secret::init(db_url).expect("Couldn't initialize secrets.");
 
     // make sure local site is setup
-    /*let site_view = SiteView::read_local(&pool)
-        .await
-        .expect("local site is not set up");
-
-    let local_site = site_view.local_site;
-    let federation_enabled = local_site.federation_enabled;*/
-
-    /*if federation_enabled {
-        println!("federation is enabled, host is {}", &settings.hostname);
-    }*/
-
-    // make sure private instance and federation enabled are not turned on at the same time
-    //check_private_instance_and_federation_enabled(&local_site)?;
-
-    /*let rate_limit_config =
-        local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
-    let rate_limit_cell = RateLimitCell::new(rate_limit_config).await;*/
 
     println!(
         "Starting http server at {}:{}",
@@ -130,11 +108,8 @@ async fn main() -> Result<(), TinyBoardsError> {
             .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
-            // the routes
-            //.configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
             // GraphQL
             .configure(api_routes::graphql_config)
-            .configure(media::config)
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?
