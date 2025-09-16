@@ -1,9 +1,10 @@
 use hmac::{Hmac, Mac};
-use jwt::{AlgorithmType, Header, SignWithKey, Token};
+use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
 use sha2::Sha384;
 use std::collections::BTreeMap;
 use tinyboards_db::{
     models::{secret::Secret, user::user::User},
+    traits::Crud,
     utils::DbPool,
 };
 use tinyboards_utils::TinyBoardsError;
@@ -53,14 +54,31 @@ pub async fn get_user_from_header_opt(
 
     // Reference to the string stored in `auth` skipping the `Bearer ` part
     let token = String::from(&auth[7..]);
-    let _master_key = master_key.jwt.clone();
+    let master_key_str = master_key.jwt.clone();
 
-    // TODO: Implement proper JWT validation for User model
-    // This needs to parse the JWT token and validate it, then load the user
-    // For now, return None to allow compilation while maintaining auth structure
-    let _user: Option<User> = None;
+    // Parse and validate JWT token
 
-    Ok(None) // Temporarily return None until JWT auth is properly implemented for User model
+    let key: Hmac<Sha384> = Hmac::new_from_slice(master_key_str.as_bytes())
+        .map_err(|_| TinyBoardsError::from_message(500, "Invalid JWT key"))?;
+
+    let token: Token<Header, BTreeMap<String, String>, _> = token
+        .verify_with_key(&key)
+        .map_err(|_| TinyBoardsError::from_message(401, "Invalid or expired token"))?;
+
+    let claims = token.claims();
+
+    // Extract user ID from JWT claims
+    let user_id: i32 = claims
+        .get("uid")
+        .ok_or_else(|| TinyBoardsError::from_message(401, "Invalid token: missing user ID"))?
+        .parse()
+        .map_err(|_| TinyBoardsError::from_message(401, "Invalid token: invalid user ID"))?;
+
+    // Load user from database
+    let user = User::read(pool, user_id).await
+        .map_err(|_| TinyBoardsError::from_message(401, "User not found"))?;
+
+    Ok(Some(user))
 }
 
 /// Checks the password length

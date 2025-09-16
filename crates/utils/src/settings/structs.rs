@@ -149,6 +149,9 @@ pub struct MediaConfig {
   /// media file path to which uploads will be stored and served from
   #[default("/app/tinyboards/media")]
   pub media_path: String,
+  /// maximum file size in megabytes for uploads
+  #[default(50)]
+  pub max_file_size_mb: u32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]

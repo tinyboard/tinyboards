@@ -75,7 +75,6 @@ impl CreateBoard {
             primary_color: input.primary_color.or(Some("#1976d2".to_string())),
             secondary_color: input.secondary_color.or(Some("#424242".to_string())),
             hover_color: input.hover_color.or(Some("#1565c0".to_string())),
-            instance_id: Some(1), // TODO: Get proper instance ID
             last_refreshed_date: Some(Utc::now().naive_utc()),
             ..Default::default()
         };

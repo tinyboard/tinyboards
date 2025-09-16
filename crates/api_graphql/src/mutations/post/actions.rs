@@ -9,6 +9,7 @@ use crate::DbPool;
 use crate::LoggedInUser;
 use async_graphql::*;
 use tinyboards_db::models::board::boards::Board as DbBoard;
+use tinyboards_db::models::board::board_mods::{BoardModerator, ModPerms};
 use tinyboards_db::models::post::post_saved::{PostSaved, PostSavedForm};
 use tinyboards_db::models::post::post_votes::PostVote as DbPostVote;
 use tinyboards_db::models::post::post_votes::PostVoteForm;
@@ -154,8 +155,10 @@ impl PostActions {
                     true // Admins can always feature
                 } else {
                     // Check if user is a moderator of this board with content permissions
-                    // For now, we'll implement a basic check
-                    false // TODO: Implement proper mod permission check
+                    match BoardModerator::get_by_user_id_for_board(pool, user.id, post.board_id, true).await {
+                        Ok(moderator) => moderator.has_permission(ModPerms::Content),
+                        Err(_) => false, // User is not a moderator
+                    }
                 }
             }
             _ => false,

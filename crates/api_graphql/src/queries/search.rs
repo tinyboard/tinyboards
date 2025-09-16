@@ -17,7 +17,7 @@ use crate::{
     structs::{
         boards::Board as GqlBoard,
         comment::Comment as GqlComment,
-        user::User as GqlPerson, 
+        user::User as GqlUser, 
         post::Post as GqlPost,
     },
     LoggedInUser, ListingType, SortType,
@@ -30,7 +30,7 @@ pub struct QuerySearch;
 pub struct SearchResult {
     pub posts: Vec<GqlPost>,
     pub comments: Vec<GqlComment>,
-    pub people: Vec<GqlPerson>,
+    pub users: Vec<GqlUser>,
     pub boards: Vec<GqlBoard>,
 }
 
@@ -42,8 +42,8 @@ pub enum SearchType {
     Posts,
     #[graphql(name = "comments")]
     Comments,
-    #[graphql(name = "people")]
-    People,
+    #[graphql(name = "users")]
+    Users,
     #[graphql(name = "boards")]
     Boards,
 }
@@ -85,7 +85,7 @@ impl QuerySearch {
         let search_term = format!("%{}%", q.to_lowercase());
         let mut posts = Vec::new();
         let mut comments = Vec::new();
-        let _people = Vec::new();
+        let mut users = Vec::new();
         let mut boards = Vec::new();
 
         match search_type {
@@ -158,7 +158,7 @@ impl QuerySearch {
         }
 
         match search_type {
-            SearchType::All | SearchType::People => {
+            SearchType::All | SearchType::Users => {
                 use tinyboards_db::schema::users;
                 let mut query = users::table.into_boxed();
 
@@ -167,7 +167,7 @@ impl QuerySearch {
                         .or(users::display_name.ilike(&search_term))
                 );
 
-                let _person_results = query
+                let user_results = query
                     .filter(users::is_banned.eq(false))
                     .filter(users::is_deleted.eq(false))
                     .order(users::creation_date.desc())
@@ -176,9 +176,10 @@ impl QuerySearch {
                     .load::<User>(conn)
                     .await?;
 
-                // For people search, we need to create User objects, but for simplicity 
-                // we'll skip people search for now since it requires more complex User struct creation
-                // TODO: Implement proper people search with User struct
+                // Convert database users to GraphQL users
+                for user in user_results {
+                    users.push(GqlUser::from(user));
+                }
             }
             _ => {}
         }
@@ -227,7 +228,7 @@ impl QuerySearch {
         Ok(SearchResult {
             posts,
             comments,
-            people: _people,
+            users,
             boards,
         })
     }

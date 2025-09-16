@@ -34,17 +34,47 @@ impl MeQuery {
         let v = ctx.data::<LoggedInUser>()?.require_user()?;
         let pool = ctx.data::<DbPool>()?;
 
-        // TODO: Implement unread replies count for unified User model
-        // For now, return 0 as placeholder
-        Ok(0)
+        // Count unread reply notifications for this user
+        use tinyboards_db::schema::notifications;
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        use tinyboards_db::utils::get_conn;
+
+        let conn = &mut get_conn(pool).await.map_err(|e| async_graphql::Error::new(format!("Database error: {}", e)))?;
+
+        let count = notifications::table
+            .filter(notifications::recipient_user_id.eq(v.id))
+            .filter(notifications::is_read.eq(false))
+            .filter(notifications::kind.eq("reply"))
+            .count()
+            .get_result::<i64>(conn)
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Database error: {}", e)))?;
+
+        Ok(count)
     }
 
     pub async fn unread_mentions_count<'ctx>(&self, ctx: &Context<'ctx>) -> Result<i64> {
         let v = ctx.data::<LoggedInUser>()?.require_user()?;
         let pool = ctx.data::<DbPool>()?;
 
-        // TODO: Implement unread mentions count for unified User model
-        // For now, return 0 as placeholder
-        Ok(0)
+        // Count unread mention notifications for this user
+        use tinyboards_db::schema::notifications;
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        use tinyboards_db::utils::get_conn;
+
+        let conn = &mut get_conn(pool).await.map_err(|e| async_graphql::Error::new(format!("Database error: {}", e)))?;
+
+        let count = notifications::table
+            .filter(notifications::recipient_user_id.eq(v.id))
+            .filter(notifications::is_read.eq(false))
+            .filter(notifications::kind.eq("mention"))
+            .count()
+            .get_result::<i64>(conn)
+            .await
+            .map_err(|e| async_graphql::Error::new(format!("Database error: {}", e)))?;
+
+        Ok(count)
     }
 }

@@ -28,8 +28,9 @@ pub async fn upload_file(
     let upload_value = upload.value(ctx)?;
     let original_file_name = upload_value.filename;
     let content_type = upload_value.content_type.unwrap_or(String::new());
-    // TODO: read max allowed file size from either the config or the site settings instead
-    let max_size = (max_size_mb.unwrap_or(50) * 1024 * 1024) as i64;
+    // Use max_size_mb parameter if provided, otherwise fall back to config setting
+    let max_size_mb_final = max_size_mb.unwrap_or(settings.media.max_file_size_mb);
+    let max_size = (max_size_mb_final * 1024 * 1024) as i64;
 
     if !is_acceptable_file_type(&content_type) {
         return Err(TinyBoardsError::from_message(
