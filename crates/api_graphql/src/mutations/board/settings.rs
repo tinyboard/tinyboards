@@ -1,11 +1,10 @@
-use crate::{LoggedInUser, PostgresLoader, structs::boards::Board};
+use crate::{LoggedInUser, structs::boards::Board};
 use async_graphql::*;
 use tinyboards_db::{
     models::board::{
         boards::{Board as DbBoard, BoardForm},
         board_mods::BoardModerator,
     },
-    aggregates::structs::BoardAggregates,
     traits::Crud,
     utils::DbPool,
 };
@@ -49,15 +48,15 @@ impl UpdateBoardSettings {
         let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         // Check if board exists
-        let board = DbBoard::read(pool, input.board_id).await
+        let _board = DbBoard::read(pool, input.board_id).await
             .map_err(|_| TinyBoardsError::from_message(404, "Board not found"))?;
 
         // Check if user is a moderator of this board or admin
-        let admin_level = user.local_user.as_ref().map(|lu| lu.admin_level).unwrap_or(0);
+        let admin_level = user.admin_level;
         let is_admin = admin_level > 0;
         let is_mod = if !is_admin {
             // Check if user is a moderator by trying to get the mod relationship
-            BoardModerator::get_by_person_id_for_board(pool, user.person.id, input.board_id, true).await.is_ok()
+            BoardModerator::get_by_user_id_for_board(pool, user.id, input.board_id, true).await.is_ok()
         } else {
             true
         };
@@ -85,7 +84,7 @@ impl UpdateBoardSettings {
         };
 
         // Update the board
-        let updated_db_board = DbBoard::update(pool, input.board_id, &board_form).await
+        let _updated_db_board = DbBoard::update(pool, input.board_id, &board_form).await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to update board settings"))?;
 
         // Get board with counts for the GraphQL response

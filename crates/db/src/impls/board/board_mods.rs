@@ -35,14 +35,14 @@ impl BoardModerator {
     /// Returns the mod relationship between a person and a board.
     /// Arguments:
     ///     - &DbPool pool: connection pool
-    ///     - i32 person_id_: ID of the person
+    ///     - i32 user_id_: ID of the person
     ///     - i32 board_id_: ID of the board
     ///     - bool require_invite_accepted: if `true`, will not return mod invites
     ///
     /// Will return an error if the person isn't a mod of the board.
-    pub async fn get_by_person_id_for_board(
+    pub async fn get_by_user_id_for_board(
         pool: &DbPool,
-        person_id_: i32,
+        user_id_: i32,
         board_id_: i32,
         require_invite_accepted: bool,
     ) -> Result<Self, Error> {
@@ -52,15 +52,15 @@ impl BoardModerator {
         if require_invite_accepted {
             board_mods
                 .filter(
-                    person_id
-                        .eq(person_id_)
+                    user_id
+                        .eq(user_id_)
                         .and(board_id.eq(board_id_))
                         .and(invite_accepted.eq(true)),
                 )
                 .first::<Self>(conn)
         } else {
             board_mods
-                .filter(person_id.eq(person_id_).and(board_id.eq(board_id_)))
+                .filter(user_id.eq(user_id_).and(board_id.eq(board_id_)))
                 .first::<Self>(conn)
         }
         .await
@@ -70,7 +70,7 @@ impl BoardModerator {
     pub async fn get_perms_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
-        for_person_id: i32,
+        for_user_id: i32,
     ) -> Result<Vec<(i32, i32)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{board_mods, boards};
@@ -79,7 +79,7 @@ impl BoardModerator {
             .left_join(
                 board_mods::table.on(board_mods::board_id
                     .eq(boards::id)
-                    .and(board_mods::person_id.eq(for_person_id))
+                    .and(board_mods::user_id.eq(for_user_id))
                     .and(board_mods::invite_accepted.eq(true))),
             )
             .filter(boards::id.eq_any(ids))
@@ -106,7 +106,7 @@ impl BoardModerator {
     }
 
     /// Load the list of boards that the person moderates.
-    pub async fn for_person(pool: &DbPool, for_person_id: i32) -> Result<Vec<Self>, Error> {
+    pub async fn for_person(pool: &DbPool, for_user_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{board_aggregates, board_mods};
 
@@ -115,8 +115,8 @@ impl BoardModerator {
                 board_aggregates::table.on(board_mods::board_id.eq(board_aggregates::board_id)),
             )
             .filter(
-                board_mods::person_id
-                    .eq(for_person_id)
+                board_mods::user_id
+                    .eq(for_user_id)
                     .and(board_mods::invite_accepted.eq(true)),
             )
             .order_by(board_aggregates::subscribers.desc())
@@ -162,7 +162,7 @@ impl BoardModerator {
 
     pub async fn remove_board_mod(
         pool: &DbPool,
-        person_id_: i32,
+        user_id_: i32,
         board_id_: i32,
     ) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
@@ -171,16 +171,16 @@ impl BoardModerator {
         diesel::delete(
             board_mods
                 .filter(board_id.eq(board_id_))
-                .filter(person_id.eq(person_id_)),
+                .filter(user_id.eq(user_id_)),
         )
         .execute(conn)
         .await
     }
 
-    pub async fn leave_all_boards(pool: &DbPool, for_person_id: i32) -> Result<usize, Error> {
-        use crate::schema::board_mods::dsl::{board_mods, person_id};
+    pub async fn leave_all_boards(pool: &DbPool, for_user_id: i32) -> Result<usize, Error> {
+        use crate::schema::board_mods::dsl::{board_mods, user_id};
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(board_mods.filter(person_id.eq(for_person_id)))
+        diesel::delete(board_mods.filter(user_id.eq(for_user_id)))
             .execute(conn)
             .await
     }
@@ -189,10 +189,10 @@ impl BoardModerator {
         pool: &DbPool,
         mod_id: i32,
     ) -> Result<Vec<i32>, Error> {
-        use crate::schema::board_mods::dsl::{board_id, board_mods, person_id};
+        use crate::schema::board_mods::dsl::{board_id, board_mods, user_id};
         let conn = &mut get_conn(pool).await?;
         board_mods
-            .filter(person_id.eq(mod_id))
+            .filter(user_id.eq(mod_id))
             .select(board_id)
             .load::<i32>(conn)
             .await
@@ -245,16 +245,16 @@ impl Joinable for BoardModerator {
     }
 
     async fn leave(pool: &DbPool, form: &BoardModeratorForm) -> Result<usize, Error> {
-        use crate::schema::board_mods::dsl::{board_id, board_mods, person_id};
+        use crate::schema::board_mods::dsl::{board_id, board_mods, user_id};
 
-        let person_id_ = form.person_id.unwrap();
+        let user_id_ = form.user_id.unwrap();
         let board_id_ = form.board_id.unwrap();
 
         let conn = &mut get_conn(pool).await?;
         diesel::delete(
             board_mods
                 .filter(board_id.eq(board_id_))
-                .filter(person_id.eq(person_id_)),
+                .filter(user_id.eq(user_id_)),
         )
         .execute(conn)
         .await

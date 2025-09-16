@@ -138,34 +138,34 @@ impl Crud for AdminPurgePost {
 }
 
 #[async_trait::async_trait]
-impl Crud for AdminPurgePerson {
-    type Form = AdminPurgePersonForm;
+impl Crud for AdminPurgeUser {
+    type Form = AdminPurgeUserForm;
     type IdType = i32;
     async fn read(pool: &DbPool, id_: i32) -> Result<Self, Error> {
-        use crate::schema::admin_purge_person::dsl::*;
+        use crate::schema::admin_purge_user::dsl::*;
         let conn = &mut get_conn(pool).await?;
-        admin_purge_person.find(id_).first::<Self>(conn)
+        admin_purge_user.find(id_).first::<Self>(conn)
         .await
     }
     async fn delete(pool: &DbPool, id_: i32) -> Result<usize, Error> {
-        use crate::schema::admin_purge_person::dsl::*;
+        use crate::schema::admin_purge_user::dsl::*;
         let conn = &mut get_conn(pool).await?;
-        diesel::delete(admin_purge_person.find(id_)).execute(conn)
+        diesel::delete(admin_purge_user.find(id_)).execute(conn)
         .await
     }
     async fn create(pool: &DbPool, form: &Self::Form) -> Result<Self, Error> {
-        use crate::schema::admin_purge_person::dsl::*;
+        use crate::schema::admin_purge_user::dsl::*;
         let conn = &mut get_conn(pool).await?;
-        let new = diesel::insert_into(admin_purge_person)
+        let new = diesel::insert_into(admin_purge_user)
             .values(form)
             .get_result::<Self>(conn)
             .await?;
         Ok(new)
     }
     async fn update(pool: &DbPool, id_: i32, form: &Self::Form) -> Result<Self, Error> {
-        use crate::schema::admin_purge_person::dsl::*;
+        use crate::schema::admin_purge_user::dsl::*;
         let conn = &mut get_conn(pool).await?;
-        diesel::update(admin_purge_person.find(id_))
+        diesel::update(admin_purge_user.find(id_))
             .set(form)
             .get_result::<Self>(conn)
             .await

@@ -1,9 +1,9 @@
 use async_graphql::*;
 use tinyboards_db::{
     models::{
-        person::local_user::AdminPerms,
+        user::user::AdminPerms,
         site::{
-            local_site::LocalSite as DbLocalSite,
+            site::Site as DbSite,
             site_invite::SiteInvite as DbSiteInvite,
         },
     },
@@ -31,7 +31,7 @@ impl QueryInvites {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
 
-        let site = DbLocalSite::read(pool).await?;
+        let site = DbSite::read(pool).await?;
         let registration_mode = site.get_registration_mode();
 
         // Check if user can view invites

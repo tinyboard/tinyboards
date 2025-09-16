@@ -1,14 +1,14 @@
 use async_graphql::*;
 use tinyboards_db::{
     models::{
-        person::local_user::AdminPerms,
-        site::local_site::{LocalSite as DbLocalSite, LocalSiteForm},
+        user::user::AdminPerms,
+        site::site::{Site as DbSite, SiteForm},
     },
     utils::{naive_now, DbPool},
 };
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{structs::local_site::LocalSite, LoggedInUser};
+use crate::{structs::site::LocalSite, LoggedInUser};
 
 #[derive(Default)]
 pub struct SiteConfig;
@@ -67,9 +67,9 @@ impl SiteConfig {
             return Err(TinyBoardsError::from_message(403, "Admin permissions required").into());
         }
 
-        let _site = DbLocalSite::read(pool).await?;
+        let _site = DbSite::read(pool).await?;
 
-        let form = LocalSiteForm {
+        let form = SiteForm {
             name: input.name,
             description: input.description.map(Some),
             icon: input.icon.map(Some),
@@ -105,10 +105,10 @@ impl SiteConfig {
             image_embed_hosts_only: input.image_embed_hosts_only,
             registration_mode: input.registration_mode,
             updated: Some(naive_now()),
-            ..LocalSiteForm::default()
+            ..SiteForm::default()
         };
 
-        let updated_site = DbLocalSite::update(pool, &form)
+        let updated_site = DbSite::update(pool, &form)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to update site configuration"))?;
 

@@ -1,18 +1,17 @@
 use async_graphql::*;
 use tinyboards_db::{
-    aggregates::structs::PersonAggregates,
+    aggregates::structs::UserAggregates,
     models::{
         board::board_mods::BoardModerator as DbBoardModerator,
-        person::{local_user::LocalUser, person::Person, user::User},
+        user::user::User,
     },
     utils::{DbPool, get_conn},
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    structs::person::Person as GqlPerson,
+    structs::user::User as GqlUser,
     LoggedInUser,
 };
 
@@ -23,7 +22,7 @@ pub struct QueryBoardModerators;
 pub struct BoardModerator {
     pub id: i32,
     pub board_id: i32,
-    pub person: GqlPerson,
+    pub user: GqlUser,
     pub creation_date: String,
     pub permissions: i32,
     pub rank: i32,
@@ -43,22 +42,22 @@ impl QueryBoardModerators {
         let conn = &mut get_conn(pool).await?;
         let _user = ctx.data_unchecked::<LoggedInUser>(); // Allow unauthenticated access
 
-        use tinyboards_db::schema::{board_mods, person};
+        use tinyboards_db::schema::{board_mods, users};
 
         let results = board_mods::table
-            .inner_join(person::table.on(board_mods::person_id.eq(person::id)))
+            .inner_join(users::table.on(board_mods::user_id.eq(users::id)))
             .filter(board_mods::board_id.eq(board_id))
             .order(board_mods::rank.asc())
-            .select((board_mods::all_columns, person::all_columns))
-            .load::<(DbBoardModerator, Person)>(conn)
+            .select((board_mods::all_columns, users::all_columns))
+            .load::<(DbBoardModerator, User)>(conn)
             .await?;
 
         let mut result = Vec::new();
-        for (board_mod, person) in results {
+        for (board_mod, user_db) in results {
             // Create default aggregates for moderators
-            let aggregates = PersonAggregates {
-                id: person.id,
-                person_id: person.id,
+            let aggregates = UserAggregates {
+                id: 0, // Default ID for manually created aggregates
+                user_id: user_db.id,
                 post_count: 0,
                 post_score: 0,
                 comment_count: 0,
@@ -66,24 +65,10 @@ impl QueryBoardModerators {
                 rep: 0,
             };
 
-            // Get local user if exists (optional)
-            use tinyboards_db::schema::local_user;
-            let local_user = local_user::table
-                .filter(local_user::person_id.eq(person.id))
-                .first::<LocalUser>(conn)
-                .await
-                .optional()?;
-
-            let user = User {
-                person,
-                counts: aggregates,
-                local_user,
-            };
-
             result.push(BoardModerator {
                 id: board_mod.id,
                 board_id: board_mod.board_id,
-                person: GqlPerson::from(user),
+                user: GqlUser::from((user_db, aggregates)),
                 creation_date: board_mod.creation_date.to_string(),
                 permissions: board_mod.permissions,
                 rank: board_mod.rank,

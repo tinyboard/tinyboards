@@ -1,7 +1,7 @@
 use async_graphql::*;
 use tinyboards_db::models::message::message::Message as DbMessage;
 
-use crate::structs::person::Person;
+use crate::structs::user::User;
 
 #[derive(SimpleObject)]
 #[graphql(complex)]
@@ -19,24 +19,24 @@ pub struct Message {
 
 #[ComplexObject]
 impl Message {
-    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Person> {
-        use tinyboards_db::{models::person::person::Person as DbPerson, utils::DbPool};
+    pub async fn creator(&self, ctx: &Context<'_>) -> Result<User> {
+        use tinyboards_db::{models::user::user::User as DbUser, utils::DbPool};
         let pool = ctx.data::<DbPool>()?;
-        
-        let creator = DbPerson::get_user_by_id(pool, self.creator_id).await
+
+        let creator = DbUser::get_by_id(pool, self.creator_id).await
             .map_err(|e| Error::new(format!("Failed to load message creator: {}", e)))?;
-            
-        Ok(Person::from(creator))
+
+        Ok(User::from(creator))
     }
 
-    pub async fn recipient(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
-        use tinyboards_db::{models::person::person::Person as DbPerson, utils::DbPool};
+    pub async fn recipient(&self, ctx: &Context<'_>) -> Result<Option<User>> {
+        use tinyboards_db::{models::user::user::User as DbUser, utils::DbPool};
         let pool = ctx.data::<DbPool>()?;
-        
+
         if let Some(recipient_id) = self.recipient_user_id {
-            let recipient = DbPerson::get_user_by_id(pool, recipient_id).await
+            let recipient = DbUser::get_by_id(pool, recipient_id).await
                 .map_err(|e| Error::new(format!("Failed to load message recipient: {}", e)))?;
-            Ok(Some(Person::from(recipient)))
+            Ok(Some(User::from(recipient)))
         } else {
             Ok(None)
         }
@@ -45,7 +45,7 @@ impl Message {
 
 #[derive(SimpleObject)]
 pub struct Conversation {
-    pub other_user: Person,
+    pub other_user: User,
     pub last_message: Message,
     pub unread_count: i32,
     pub last_activity: String,

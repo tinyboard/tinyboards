@@ -4,11 +4,11 @@ use tinyboards_db::{
     models::{
         board::boards::{Board as DbBoard, BoardForm},
         board::board_mods::{BoardModerator as DbBoardMod, BoardModeratorForm, ModPerms},
-        person::local_user::AdminPerms,
+        user::user::AdminPerms,
         moderator::admin_actions::AdminBanBoard,
     },
     traits::{Crud, Joinable},
-    utils::{DbPool as DbPoolTrait, naive_now},
+    utils::naive_now,
 };
 use tinyboards_utils::TinyBoardsError;
 
@@ -49,7 +49,7 @@ impl AdminBoardModeration {
         board
             .admin_ban(
                 pool, 
-                user.person.id, 
+                user.id, 
                 &public_reason,
                 admin_notes.as_deref()
             )
@@ -95,7 +95,7 @@ impl AdminBoardModeration {
 
         // Unban the board
         board
-            .admin_unban(pool, user.person.id)
+            .admin_unban(pool, user.id)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to unban board"))?;
 
@@ -220,7 +220,7 @@ impl AdminBoardModeration {
             .map_err(|_| TinyBoardsError::from_message(404, "Board not found"))?;
 
         // Check if admin is already a moderator
-        let existing_mod = DbBoardMod::get_by_person_id_for_board(pool, user.person.id, board_id, false).await;
+        let existing_mod = DbBoardMod::get_by_user_id_for_board(pool, user.id, board_id, false).await;
         
         if existing_mod.is_ok() {
             return Err(TinyBoardsError::from_message(400, "You are already a moderator of this board").into());
@@ -237,7 +237,7 @@ impl AdminBoardModeration {
         // Create moderator relationship
         let mod_form = BoardModeratorForm {
             board_id: Some(board_id),
-            person_id: Some(user.person.id),
+            user_id: Some(user.id),
             permissions: Some(mod_permissions),
             rank: Some(admin_rank),
             invite_accepted: Some(true), // Admin doesn't need to accept invite
@@ -281,14 +281,14 @@ impl AdminBoardModeration {
             .map_err(|_| TinyBoardsError::from_message(404, "Board not found"))?;
 
         // Check if admin is actually a moderator
-        let existing_mod = DbBoardMod::get_by_person_id_for_board(pool, user.person.id, board_id, false).await;
+        let existing_mod = DbBoardMod::get_by_user_id_for_board(pool, user.id, board_id, false).await;
         
         if existing_mod.is_err() {
             return Err(TinyBoardsError::from_message(400, "You are not a moderator of this board").into());
         }
 
         // Remove moderator relationship
-        DbBoardMod::remove_board_mod(pool, user.person.id, board_id)
+        DbBoardMod::remove_board_mod(pool, user.id, board_id)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to remove admin as moderator"))?;
 

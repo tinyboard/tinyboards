@@ -3,7 +3,7 @@
     fetch::webfinger::{extract_webfinger_name, Webfinger, WebfingerLink},
 };
 use actix_web::{web, web::Query, HttpResponse};
-use tinyboards_api_common::data::TinyBoardsContext;
+use tinyboards_api_graphql::context::TinyBoardsContext;
 use tinyboards_db::{
     models::{board::boards::Board, person::person::Person},
     traits::ApubActor,

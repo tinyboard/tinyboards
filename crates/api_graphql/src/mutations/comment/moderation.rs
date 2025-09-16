@@ -5,7 +5,7 @@ use crate::LoggedInUser;
 use async_graphql::*;
 use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::models::comment::comments::Comment as DbComment;
-use tinyboards_db::models::person::local_user::AdminPerms;
+use tinyboards_db::models::user::user::AdminPerms;
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
 
@@ -38,7 +38,7 @@ impl CommentModeration {
 
         DbComment::update_removed(pool, comment.id, value).await?;
         // mark reports as resolved
-        DbComment::resolve_reports(pool, comment.id, v.person.id).await?;
+        DbComment::resolve_reports(pool, comment.id, v.id).await?;
         let res = DbComment::get_with_counts(pool, comment.id).await?;
 
         Ok(Comment::from(res))

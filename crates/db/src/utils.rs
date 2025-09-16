@@ -10,7 +10,6 @@ use diesel::{
     Connection, PgConnection,
 };
 use diesel_async::RunQueryDsl;
-use crate::models::person::person_ban::BanStatus;
 //use tinyboards_federation::{fetch::object_id::ObjectId, traits::Object};
 use bb8::PooledConnection;
 use diesel_async::{
@@ -81,25 +80,31 @@ pub fn naive_now() -> chrono::NaiveDateTime {
     chrono::prelude::Utc::now().naive_utc()
 }
 
-/// Check and update ban status for a specific person if their ban has expired
-pub async fn check_and_update_person_ban_status(pool: &DbPool, person_id: i32) -> Result<bool, TinyBoardsError> {
+#[derive(diesel::QueryableByName)]
+struct BanStatus {
+    #[diesel(sql_type = diesel::sql_types::Bool)]
+    is_banned: bool,
+}
+
+/// Check and update ban status for a specific user if their ban has expired
+pub async fn check_and_update_person_ban_status(pool: &DbPool, user_id: i32) -> Result<bool, TinyBoardsError> {
     let conn = &mut get_conn(pool).await?;
-    
+
     let update_ban_expires_stmt =
-        "UPDATE person SET is_banned = false WHERE id = $1 AND is_banned = true AND unban_date < now() RETURNING is_banned";
-    
+        "UPDATE users SET is_banned = false WHERE id = $1 AND is_banned = true AND unban_date < now() RETURNING is_banned";
+
     let result: Result<BanStatus, diesel::result::Error> = sql_query(update_ban_expires_stmt)
-        .bind::<diesel::sql_types::Integer, _>(person_id)
+        .bind::<diesel::sql_types::Integer, _>(user_id)
         .get_result(conn)
         .await;
-    
+
     match result {
         Ok(ban_status) => Ok(ban_status.is_banned),
         Err(diesel::result::Error::NotFound) => {
             // No update was made, check current ban status
-            let check_ban_stmt = "SELECT is_banned FROM person WHERE id = $1";
+            let check_ban_stmt = "SELECT is_banned FROM users WHERE id = $1";
             let ban_status: BanStatus = sql_query(check_ban_stmt)
-                .bind::<diesel::sql_types::Integer, _>(person_id)
+                .bind::<diesel::sql_types::Integer, _>(user_id)
                 .get_result(conn)
                 .await?;
             Ok(ban_status.is_banned)

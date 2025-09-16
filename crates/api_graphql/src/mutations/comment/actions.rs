@@ -59,14 +59,14 @@ impl CommentActions {
             return Err(TinyBoardsError::from_message(403, reason).into());
         }
 
-        let is_banned_from_board = DbBoard::board_has_ban(pool, board.id, v.person.id)
+        let is_banned_from_board = DbBoard::board_has_ban(pool, board.id, v.id)
             .await
             .unwrap_or(true);
 
         // vote is not registered if the user is banned from the board
         if !is_banned_from_board {
             // remove any existing votes first
-            DbCommentVote::remove(pool, v.person.id, comment.id).await?;
+            DbCommentVote::remove(pool, v.id, comment.id).await?;
 
             // if vote type is 0, only remove the user's existing vote
             // otherwise register the new vote
@@ -75,7 +75,7 @@ impl CommentActions {
             if do_add {
                 let vote_form = CommentVoteForm {
                     comment_id: comment.id,
-                    person_id: v.person.id,
+                    user_id: v.id,
                     post_id: comment.post_id,
                     score: vote_type,
                 };
@@ -111,7 +111,7 @@ impl CommentActions {
 
         let form = CommentSavedForm {
             comment_id,
-            person_id: user.person.id,
+            user_id: user.id,
         };
 
         if save {

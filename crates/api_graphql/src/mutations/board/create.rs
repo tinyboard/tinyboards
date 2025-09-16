@@ -1,4 +1,4 @@
-use crate::{LoggedInUser, PostgresLoader, structs::boards::Board};
+use crate::{LoggedInUser, structs::boards::Board};
 use async_graphql::*;
 use tinyboards_db::{
     models::board::{
@@ -6,8 +6,7 @@ use tinyboards_db::{
         board_mods::{BoardModerator, BoardModeratorForm},
         board_subscriber::{BoardSubscriber, BoardSubscriberForm},
     },
-    models::site::local_site::LocalSite,
-    aggregates::structs::BoardAggregates,
+    models::site::site::Site,
     traits::{Crud, Subscribeable, Joinable},
     utils::DbPool,
 };
@@ -45,16 +44,16 @@ impl CreateBoard {
         let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         // Check if board creation is allowed
-        let local_site = LocalSite::read(pool).await
+        let site = Site::read(pool).await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to read site settings"))?;
 
         // Check if user can create boards
-        let admin_level = user.local_user.as_ref().map(|lu| lu.admin_level).unwrap_or(0);
-        if local_site.board_creation_admin_only && admin_level == 0 {
+        let admin_level = user.admin_level;
+        if site.board_creation_admin_only && admin_level == 0 {
             return Err(TinyBoardsError::from_message(403, "Board creation is restricted to admins").into());
         }
 
-        if !user.person.board_creation_approved && admin_level == 0 {
+        if !user.board_creation_approved && admin_level == 0 {
             return Err(TinyBoardsError::from_message(403, "Board creation requires approval").into());
         }
 
@@ -88,7 +87,7 @@ impl CreateBoard {
         // Add creator as moderator
         let mod_form = BoardModeratorForm {
             board_id: Some(db_board.id),
-            person_id: Some(user.person.id),
+            user_id: Some(user.id),
             permissions: Some(8191), // All permissions
             rank: Some(1), // Top rank
             invite_accepted: Some(true),
@@ -101,7 +100,7 @@ impl CreateBoard {
         // Subscribe creator to the board
         let sub_form = BoardSubscriberForm {
             board_id: db_board.id,
-            person_id: user.person.id,
+            user_id: user.id,
             pending: Some(false),
         };
 

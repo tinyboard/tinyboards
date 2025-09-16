@@ -1,5 +1,3 @@
-use crate::helpers::apub::generate_local_apub_endpoint;
-use crate::helpers::apub::EndpointType;
 use crate::structs::comment::Comment;
 use crate::DbPool;
 use crate::LoggedInUser;
@@ -11,9 +9,9 @@ use tinyboards_db::models::comment::comment_votes::CommentVote as DbCommentVote;
 use tinyboards_db::models::comment::comment_votes::CommentVoteForm;
 use tinyboards_db::models::comment::comments::Comment as DbComment;
 use tinyboards_db::models::comment::comments::CommentForm;
-use tinyboards_db::models::person::local_user::AdminPerms;
-//use tinyboards_db::models::person::person_mentions::PersonMention as DbPersonMention;
-//use tinyboards_db::models::person::person_mentions::PersonMentionForm;
+use tinyboards_db::models::user::user::AdminPerms;
+//use tinyboards_db::models::user::person_mentions::PersonMention as DbPersonMention;
+//use tinyboards_db::models::user::person_mentions::PersonMentionForm;
 use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
@@ -41,7 +39,7 @@ impl SubmitComment {
         let settings = ctx.data::<Settings>()?.as_ref();
 
         // Load site configuration for content filtering
-        let site_config = tinyboards_db::models::site::local_site::LocalSite::read(pool).await?;
+        let site_config = tinyboards_db::models::site::site::Site::read(pool).await?;
 
         // Validate comment content against site policies
         ContentFilter::validate_comment_content(
@@ -99,7 +97,7 @@ impl SubmitComment {
             true
         } else {
             // user is not admin: check mod permissions instead
-            let m = DbBoard::board_get_mod(pool, parent_board.id, v.person.id).await;
+            let m = DbBoard::board_get_mod(pool, parent_board.id, v.id).await;
 
             match m {
                 Ok(m_opt) => match m_opt {
@@ -114,7 +112,7 @@ impl SubmitComment {
         };
 
         // check if user is banned from board
-        if !is_mod_or_admin && DbBoard::board_has_ban(pool, parent_board.id, v.person.id).await? {
+        if !is_mod_or_admin && DbBoard::board_has_ban(pool, parent_board.id, v.id).await? {
             return Err(TinyBoardsError::from_message(
                 410,
                 &format!("You are banned from +{}.", &parent_board.name),
@@ -165,7 +163,7 @@ impl SubmitComment {
 
         // insert new comment into db
         let new_comment = CommentForm {
-            creator_id: Some(v.person.id),
+            creator_id: Some(v.id),
             body: Some(body),
             body_html,
             post_id: Some(parent_post.id),
@@ -177,15 +175,7 @@ impl SubmitComment {
 
         let new_comment = DbComment::submit(pool, new_comment).await?;
 
-        // add apub id
         let inserted_comment_id = new_comment.id;
-        let protocol_and_hostname = settings.get_protocol_and_hostname();
-
-        let apub_id = generate_local_apub_endpoint(
-            EndpointType::Comment,
-            &inserted_comment_id.to_string(),
-            &protocol_and_hostname,
-        )?;
 
         let update_form = CommentForm::default();
 
@@ -193,7 +183,7 @@ impl SubmitComment {
 
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
-            person_id: v.person.id,
+            user_id: v.id,
             comment_id: updated_comment.id,
             score: 1,
             post_id: updated_comment.post_id,
@@ -202,7 +192,7 @@ impl SubmitComment {
         DbCommentVote::vote(pool, &comment_vote).await?;
 
         //let new_comment =
-        //   CommentView::read(context.pool(), new_comment.id, Some(view.person.id)).await?;
+        //   CommentView::read(context.pool(), new_comment.id, Some(view.id)).await?;
 
         // send notifications
         //let mentions = scrape_text_for_mentions(&new_comment.comment.body_html);
@@ -212,7 +202,7 @@ impl SubmitComment {
 
         // if parent comment has person_mentions then mark them as read
         /*if let Some(ref parent_comment) = parent_comment {
-            let person_id = v.person.id;
+            let person_id = v.id;
             let person_mention =
                 DbPersonMention::read_by_comment_and_person(pool, parent_comment.id, person_id)
                     .await;

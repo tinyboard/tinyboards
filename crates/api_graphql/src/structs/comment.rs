@@ -1,3 +1,4 @@
+use crate::PostgresLoader;
 
 use async_graphql::*;
 use dataloader::DataLoader;
@@ -7,9 +8,9 @@ use tinyboards_db::{
 };
 
 use crate::{
-    newtypes::{BoardId, PersonId, PostIdForComment, SavedForCommentId, VoteForCommentId},
-    structs::{boards::Board, person::Person},
-    Censorable, PostgresLoader,
+    newtypes::{BoardId, UserId, PostIdForComment, SavedForCommentId, VoteForCommentId},
+    structs::{boards::Board, user::User},
+    Censorable,
 };
 
 use super::post::Post;
@@ -56,10 +57,10 @@ impl Comment {
         self.counts.reply_count
     }
 
-    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
+    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<User>> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
-            .load_one(PersonId(self.creator_id))
+            .load_one(UserId(self.creator_id))
             .await
             .map_err(|e| e.into())
     }
@@ -130,7 +131,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
 
 impl Censorable for Comment {
     /// Censor comment body for deleted/removed comments. Used when comments are nested.
-    fn censor(&mut self, my_person_id: i32, is_admin: bool, is_mod: bool) {
+    fn censor(&mut self, my_user_id: i32, is_admin: bool, is_mod: bool) {
         // nothing to do here lol
         if !(self.is_removed || self.is_deleted) {
             return;
@@ -142,7 +143,7 @@ impl Censorable for Comment {
         }
 
         // mods can see removed content, and you can see your own removed content
-        if self.is_removed && (is_mod || self.creator_id == my_person_id) {
+        if self.is_removed && (is_mod || self.creator_id == my_user_id) {
             return;
         }
 

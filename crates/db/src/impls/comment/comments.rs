@@ -1,7 +1,6 @@
-use crate::aggregates::structs::{CommentAggregates, PersonAggregates};
+use crate::aggregates::structs::CommentAggregates;
 use crate::models::comment::comment_report::CommentReport;
-use crate::models::person::person::Person;
-use crate::newtypes::DbUrl;
+use crate::models::user::User;
 use crate::schema::comments::dsl::*;
 use crate::traits::Moderateable;
 use crate::utils::functions::hot_rank;
@@ -9,7 +8,6 @@ use crate::utils::{fuzzy_search, limit_and_offset_unlimited, naive_now};
 use crate::{
     models::comment::comments::{Comment, CommentForm},
     models::moderator::mod_actions::{ModRemoveComment, ModRemoveCommentForm},
-    models::person::{local_user::LocalUser, user::User},
     schema::comment_report,
     traits::Crud,
     utils::{get_conn, DbPool},
@@ -18,7 +16,6 @@ use crate::{CommentSortType, ListingType};
 use diesel::{prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
-use url::Url;
 
 impl Comment {
     /// Returns a list of users who commented on a given post.
@@ -26,25 +23,16 @@ impl Comment {
         pool: &DbPool,
         for_post_id: i32,
     ) -> Result<Vec<User>, Error> {
-        use crate::schema::{comments, local_user, person, person_aggregates};
+        use crate::schema::{comments, users};
         let conn = &mut get_conn(pool).await?;
 
         comments::table
-            .inner_join(person::table)
-            .inner_join(
-                person_aggregates::table.on(person_aggregates::person_id.eq(comments::creator_id)),
-            )
-            .left_join(local_user::table.on(local_user::person_id.eq(person::id)))
+            .inner_join(users::table.on(users::id.eq(comments::creator_id)))
             .filter(comments::post_id.eq(for_post_id))
-            .select((
-                person::all_columns,
-                person_aggregates::all_columns,
-                local_user::all_columns.nullable(),
-            ))
+            .select(users::all_columns)
             .distinct_on(comments::creator_id)
-            .load::<(Person, PersonAggregates, Option<LocalUser>)>(conn)
+            .load::<User>(conn)
             .await
-            .map(|res| res.into_iter().map(User::from).collect::<Vec<User>>())
     }
 
     /// Get a single comment with its counts
@@ -66,7 +54,7 @@ impl Comment {
     /// List comments with counts
     pub async fn load_with_counts(
         pool: &DbPool,
-        person_id_join: i32,
+        user_id_join: i32,
         sort: CommentSortType,
         listing_type: ListingType,
         page: Option<i64>,
@@ -93,17 +81,17 @@ impl Comment {
             .left_join(
                 board_mods::table.on(board_mods::board_id
                     .eq(comments::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::user_id.eq(user_id_join))),
             )
             .left_join(
                 board_subscriber::table.on(board_subscriber::board_id
                     .eq(comments::board_id)
-                    .and(board_subscriber::person_id.eq(person_id_join))),
+                    .and(board_subscriber::user_id.eq(user_id_join))),
             )
             .left_join(
                 comment_saved::table.on(comment_saved::comment_id
                     .eq(comments::id)
-                    .and(comment_saved::person_id.eq(person_id_join))),
+                    .and(comment_saved::user_id.eq(user_id_join))),
             )
             .select((comments::all_columns, comment_aggregates::all_columns))
             .into_boxed();
@@ -133,8 +121,8 @@ impl Comment {
             query = query.filter(comment_saved::id.is_not_null());
         }
 
-        if let Some(person_id) = for_user {
-            query = query.filter(comments::creator_id.eq(person_id));
+        if let Some(user_id) = for_user {
+            query = query.filter(comments::creator_id.eq(user_id));
         }
 
         if let Some(board_id_) = for_board {
@@ -185,12 +173,11 @@ impl Comment {
         id_: i32,
         context: Option<u16>,
         sort: CommentSortType,
-        person_id_join: i32,
+        user_id_join: i32,
         check_for_post_id: Option<i32>,
         max_depth: Option<i32>,
     ) -> Result<(i32, Vec<(Self, CommentAggregates)>), Error> {
         //let conn = &mut get_conn(pool).await?;
-        use crate::schema::{comment_aggregates, comments};
 
         let context = std::cmp::min(context.unwrap_or(0), 3) as i32;
         let comment_with_counts = Self::get_with_counts(pool, id_).await?;
@@ -222,7 +209,7 @@ impl Comment {
         for _ in 0..max_depth - context {
             let mut replies_with_counts = Self::load_with_counts(
                 pool,
-                person_id_join,
+                user_id_join,
                 sort,
                 ListingType::All,
                 None,
@@ -267,17 +254,6 @@ impl Comment {
             .await
     }
 
-    /*pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
-        let conn = &mut get_conn(pool).await?;
-        use crate::schema::comments::dsl::*;
-        let object_id: DbUrl = object_id.into();
-        Ok(comments
-            .filter(ap_id.eq(object_id))
-            .first::<Comment>(conn)
-            .await
-            .ok()
-            .map(Into::into))
-    }*/
 
     pub fn parent_comment_id(&self) -> Option<i32> {
         let parent_comment_id = self.parent_id;
@@ -318,8 +294,8 @@ impl Comment {
             .map(|_| ())
     }
 
-    pub fn is_comment_creator(person_id: i32, comment_creator_id: i32) -> bool {
-        person_id == comment_creator_id
+    pub fn is_comment_creator(user_id: i32, comment_creator_id: i32) -> bool {
+        user_id == comment_creator_id
     }
 
     pub async fn update_deleted(
@@ -491,7 +467,7 @@ impl Moderateable for Comment {
 
         // create mod log entry
         let remove_comment_form = ModRemoveCommentForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             comment_id: self.id,
             reason: Some(reason),
             removed: Some(Some(true)),
@@ -514,7 +490,7 @@ impl Moderateable for Comment {
 
         // create mod log entry
         let remove_comment_form = ModRemoveCommentForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             comment_id: self.id,
             reason: None,
             removed: Some(Some(false)),

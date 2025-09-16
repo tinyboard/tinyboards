@@ -4,7 +4,7 @@ use crate::DbPool;
 use crate::LoggedInUser;
 use async_graphql::*;
 use tinyboards_db::models::board::board_mods::ModPerms;
-use tinyboards_db::models::person::local_user::AdminPerms;
+use tinyboards_db::models::user::user::AdminPerms;
 use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_db::traits::Crud;
 
@@ -32,7 +32,7 @@ impl PostModeration {
 
         DbPost::update_removed(pool, post.id, value).await?;
         // mark reports as resolved
-        DbPost::resolve_reports(pool, post.id, v.person.id).await?;
+        DbPost::resolve_reports(pool, post.id, v.id).await?;
         let res = DbPost::get_with_counts(pool, post.id, false).await?;
 
         Ok(Post::from(res))

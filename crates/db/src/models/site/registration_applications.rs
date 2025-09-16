@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = registration_applications)]
 pub struct RegistrationApplication {
     pub id: i32,
-    pub person_id: i32,
+    pub user_id: i32,
     pub answer: String,
     pub admin_id: Option<i32>,
     pub deny_reason: Option<String>,
@@ -17,7 +17,7 @@ pub struct RegistrationApplication {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = registration_applications)]
 pub struct RegistrationApplicationForm {
-    pub person_id: i32,
+    pub user_id: i32,
     pub answer: Option<String>,
     pub admin_id: Option<Option<i32>>,
     pub deny_reason: Option<Option<String>>,

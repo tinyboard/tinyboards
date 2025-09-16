@@ -1,5 +1,5 @@
 use crate::schema::{
-    board_aggregates, comment_aggregates, person_aggregates, post_aggregates, site_aggregates,
+    board_aggregates, comment_aggregates, post_aggregates, site_aggregates,
 };
 use chrono::NaiveDateTime;
 use diesel::{Associations, Identifiable, Queryable};
@@ -55,20 +55,7 @@ pub struct PostAggregates {
     pub newest_comment_time: NaiveDateTime,
 }
 
-#[derive(
-    PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
-)]
-#[diesel(table_name = person_aggregates)]
-#[diesel(belongs_to(crate::models::person::person::Person))]
-pub struct PersonAggregates {
-    pub id: i32,
-    pub person_id: i32,
-    pub post_count: i64,
-    pub post_score: i64,
-    pub comment_count: i64,
-    pub comment_score: i64,
-    pub rep: i64,
-}
+pub use crate::aggregates::user_aggregates::UserAggregates;
 
 #[derive(
     PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
@@ -87,3 +74,4 @@ pub struct SiteAggregates {
     pub users_active_month: i64,
     pub users_active_half_year: i64,
 }
+

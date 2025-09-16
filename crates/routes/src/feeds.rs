@@ -1,7 +1,7 @@
 // use actix_web::{error::ErrorBadRequest, web, Error, HttpRequest, HttpResponse, Result};
 // use anyhow::anyhow;
 // use chrono::{DateTime, NaiveDateTime, Utc};
-// use tinyboards_api_common::data::TinyBoardsContext;
+// use tinyboards_api_graphql::context::TinyBoardsContext;
 // use tinyboards_db::{
 //   models::{board::boards::Board, person::local_user::LocalUser, person::person::Person},
 //   traits::{ApubActor, Crud},
@@ -119,7 +119,7 @@
 //   limit: i64,
 //   page: i64,
 // ) -> Result<HttpResponse, LemmyError> {
-//   let site_view = SiteView::read_local(context.pool()).await?;
+//   let site_view = SiteView::read(context.pool()).await?;
 
 //   let posts = PostQuery::builder()
 //     .pool(context.pool())
@@ -231,7 +231,7 @@
 //   user_name: &str,
 //   protocol_and_hostname: &str,
 // ) -> Result<ChannelBuilder, TinyBoardsError> {
-//   let site_view = SiteView::read_local(pool).await?;
+//   let site_view = SiteView::read(pool).await?;
 //   let person = Person::read_from_name(pool, user_name, false).await?;
 
 //   let posts = PostQuery::builder()
@@ -266,7 +266,7 @@
 //   board_name: &str,
 //   protocol_and_hostname: &str,
 // ) -> Result<ChannelBuilder, LemmyError> {
-//   let site_view = SiteView::read_local(pool).await?;
+//   let site_view = SiteView::read(pool).await?;
 //   let board = Board::read_from_name(pool, board_name, false).await?;
 
 //   let posts = PostQuery::builder()
@@ -305,7 +305,7 @@
 //   jwt: &str,
 //   protocol_and_hostname: &str,
 // ) -> Result<ChannelBuilder, LemmyError> {
-//   let site_view = SiteView::read_local(pool).await?;
+//   let site_view = SiteView::read(pool).await?;
 //   let local_user_id = Claims::decode(jwt, jwt_secret)?.claims.sub;
 //   let local_user = LocalUser::read(pool, local_user_id).await?;
 
@@ -343,7 +343,7 @@
 //   jwt: &str,
 //   protocol_and_hostname: &str,
 // ) -> Result<ChannelBuilder, LemmyError> {
-//   let site_view = SiteView::read_local(pool).await?;
+//   let site_view = SiteView::read(pool).await?;
 //   let local_user_id = Claims::decode(jwt, jwt_secret)?.claims.sub;
 //   let local_user = LocalUser::read(pool, local_user_id).await?;
 //   let person_id = local_user.person_id;

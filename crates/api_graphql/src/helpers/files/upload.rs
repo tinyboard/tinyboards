@@ -15,7 +15,7 @@ use url::Url;
 pub async fn upload_file(
     upload: Upload,
     file_name: Option<String>,
-    for_person_id: i32,
+    for_user_id: i32,
     max_size_mb: Option<u32>,
     ctx: &Context<'_>,
 ) -> Result<Url> {
@@ -83,7 +83,7 @@ pub async fn upload_file(
     ))?;
 
     let upload_form = UploadForm {
-        person_id: for_person_id,
+        user_id: for_user_id,
         original_name: original_file_name,
         file_name: file_name,
         file_path: path,

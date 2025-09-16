@@ -12,7 +12,7 @@ impl PostSaved {
     pub async fn get_saved_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
-        for_person_id: i32,
+        for_user_id: i32,
     ) -> Result<Vec<(i32, bool)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{post_saved, posts};
@@ -21,7 +21,7 @@ impl PostSaved {
             .left_join(
                 post_saved::table.on(post_saved::post_id
                     .eq(posts::id)
-                    .and(post_saved::person_id.eq(for_person_id))),
+                    .and(post_saved::user_id.eq(for_user_id))),
             )
             .filter(posts::id.eq_any(ids))
             .select((posts::id, post_saved::id.nullable()))
@@ -43,7 +43,7 @@ impl Saveable for PostSaved {
         use crate::schema::post_saved::dsl::*;
         insert_into(post_saved)
             .values(form)
-            .on_conflict((post_id, person_id))
+            .on_conflict((post_id, user_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -57,7 +57,7 @@ impl Saveable for PostSaved {
         diesel::delete(
             post_saved
                 .filter(post_id.eq(form.post_id))
-                .filter(person_id.eq(form.person_id)),
+                .filter(user_id.eq(form.user_id)),
         )
         .execute(conn)
         .await

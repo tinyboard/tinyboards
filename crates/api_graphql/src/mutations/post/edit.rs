@@ -26,7 +26,7 @@ impl EditPost {
 
         let post = DbPost::read(pool, id).await?;
         // you can only edit your own content.
-        if v.person.id != post.creator_id {
+        if v.id != post.creator_id {
             return Err(TinyBoardsError::from_message(403, "bruh").into());
         }
 

@@ -8,7 +8,7 @@ use crate::schema::post_read;
 pub struct PostRead {
     pub id: i32,
     pub post_id: i32,
-    pub person_id: i32,
+    pub user_id: i32,
     pub creation_date: chrono::NaiveDateTime,
 }
 
@@ -16,5 +16,5 @@ pub struct PostRead {
 #[diesel(table_name = post_read)]
 pub struct PostReadForm {
     pub post_id: i32,
-    pub person_id: i32,
+    pub user_id: i32,
 }

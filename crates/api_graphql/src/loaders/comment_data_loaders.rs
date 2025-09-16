@@ -8,7 +8,7 @@ use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::newtypes::{PostIdForComment, SavedForCommentId, VoteForCommentId};
-use crate::{structs::post::Post, PostgresLoader};
+use crate::{PostgresLoader, structs::post::Post}; 
 
 impl Loader<PostIdForComment> for PostgresLoader {
     type Value = Post;
@@ -44,11 +44,11 @@ impl Loader<VoteForCommentId> for PostgresLoader {
         HashMap<VoteForCommentId, <Self as Loader<VoteForCommentId>>::Value>,
         <Self as Loader<VoteForCommentId>>::Error,
     > {
-        let my_person_id = self.my_person_id;
+        let my_user_id = self.my_user_id;
 
         let keys = keys.into_iter().map(|id| id.0).collect::<Vec<i32>>();
 
-        let list = DbCommentVote::get_my_vote_for_ids(&self.pool, keys, my_person_id)
+        let list = DbCommentVote::get_my_vote_for_ids(&self.pool, keys, my_user_id)
             .await
             .map_err(|e| {
                 TinyBoardsError::from_error_message(e, 500, "Failed to load comment votes.")
@@ -73,7 +73,7 @@ impl Loader<SavedForCommentId> for PostgresLoader {
     > {
         let keys = keys.into_iter().map(|id| id.0).collect::<Vec<i32>>();
 
-        let list = DbCommentSaved::get_saved_for_ids(&self.pool, keys, self.my_person_id)
+        let list = DbCommentSaved::get_saved_for_ids(&self.pool, keys, self.my_user_id)
             .await
             .map_err(|e| {
                 TinyBoardsError::from_error_message(

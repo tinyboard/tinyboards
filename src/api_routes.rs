@@ -2,7 +2,7 @@ use actix_web::*;
 use async_graphql::dataloader::DataLoader;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 //use tinyboards_api::{Perform, PerformUpload};
-use tinyboards_api_common::{data::TinyBoardsContext, utils::get_user_from_header_opt};
+use tinyboards_api_graphql::{context::TinyBoardsContext, utils::auth::get_user_from_header_opt};
 use tinyboards_api_graphql::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
 //use tinyboards_apub::{api::PerformApub, SendActivity};
 //use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
@@ -326,7 +326,7 @@ async fn perform_graphql(
         get_user_from_header_opt(context.pool(), context.master_key(), auth_header).await?;
 
     let my_person_id = match logged_in_user {
-        Some(ref v) => v.person.id,
+        Some(ref v) => v.id,
         None => -1,
     };
 

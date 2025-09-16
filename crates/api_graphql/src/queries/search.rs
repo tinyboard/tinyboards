@@ -4,12 +4,10 @@ use tinyboards_db::{
     models::{
         board::boards::Board,
         comment::comments::Comment,
-        person::person::Person,
+        user::user::User,
         post::posts::Post,
     },
     utils::{DbPool, get_conn},
-    ListingType as DbListingType,
-    SortType as DbSortType,
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
@@ -19,7 +17,7 @@ use crate::{
     structs::{
         boards::Board as GqlBoard,
         comment::Comment as GqlComment,
-        person::Person as GqlPerson, 
+        user::User as GqlPerson, 
         post::Post as GqlPost,
     },
     LoggedInUser, ListingType, SortType,
@@ -67,7 +65,7 @@ impl QuerySearch {
     ) -> Result<SearchResult> {
         let pool = ctx.data::<DbPool>()?;
         let conn = &mut get_conn(pool).await?;
-        let user = ctx.data_unchecked::<LoggedInUser>();
+        let _user = ctx.data_unchecked::<LoggedInUser>();
 
         if q.trim().len() < 2 {
             return Err(TinyBoardsError::from_message(
@@ -87,7 +85,7 @@ impl QuerySearch {
         let search_term = format!("%{}%", q.to_lowercase());
         let mut posts = Vec::new();
         let mut comments = Vec::new();
-        let mut people = Vec::new();
+        let _people = Vec::new();
         let mut boards = Vec::new();
 
         match search_type {
@@ -161,21 +159,21 @@ impl QuerySearch {
 
         match search_type {
             SearchType::All | SearchType::People => {
-                use tinyboards_db::schema::person;
-                let mut query = person::table.into_boxed();
+                use tinyboards_db::schema::users;
+                let mut query = users::table.into_boxed();
 
                 query = query.filter(
-                    person::name.ilike(&search_term)
-                        .or(person::display_name.ilike(&search_term))
+                    users::name.ilike(&search_term)
+                        .or(users::display_name.ilike(&search_term))
                 );
 
-                let person_results = query
-                    .filter(person::is_banned.eq(false))
-                    .filter(person::is_deleted.eq(false))
-                    .order(person::creation_date.desc())
+                let _person_results = query
+                    .filter(users::is_banned.eq(false))
+                    .filter(users::is_deleted.eq(false))
+                    .order(users::creation_date.desc())
                     .limit(limit as i64)
                     .offset(offset as i64)
-                    .load::<Person>(conn)
+                    .load::<User>(conn)
                     .await?;
 
                 // For people search, we need to create User objects, but for simplicity 
@@ -229,7 +227,7 @@ impl QuerySearch {
         Ok(SearchResult {
             posts,
             comments,
-            people,
+            people: _people,
             boards,
         })
     }

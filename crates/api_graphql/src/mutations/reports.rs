@@ -58,7 +58,7 @@ impl ReportMutations {
         let post = Post::read(pool, post_id).await?;
         
         // Don't allow reporting own posts
-        if post.creator_id == user.person.id {
+        if post.creator_id == user.id {
             return Err(TinyBoardsError::from_message(
                 400,
                 "You cannot report your own post",
@@ -67,7 +67,7 @@ impl ReportMutations {
         }
 
         let form = PostReportForm {
-            creator_id: Some(user.person.id),
+            creator_id: Some(user.id),
             post_id: Some(post_id),
             original_post_title: Some(post.title),
             original_post_url: post.url,
@@ -114,7 +114,7 @@ impl ReportMutations {
         let comment = Comment::read(pool, comment_id).await?;
         
         // Don't allow reporting own comments
-        if comment.creator_id == user.person.id {
+        if comment.creator_id == user.id {
             return Err(TinyBoardsError::from_message(
                 400,
                 "You cannot report your own comment",
@@ -123,7 +123,7 @@ impl ReportMutations {
         }
 
         let form = CommentReportForm {
-            creator_id: Some(user.person.id),
+            creator_id: Some(user.id),
             comment_id: Some(comment_id),
             original_comment_text: Some(comment.body),
             reason: Some(reason),

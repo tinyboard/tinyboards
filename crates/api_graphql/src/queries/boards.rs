@@ -1,7 +1,7 @@
 use crate::helpers::validation::check_private_instance;
 use async_graphql::*;
 use tinyboards_db::{
-    models::{board::boards::Board as DbBoard, person::local_user::AdminPerms},
+    models::{board::boards::Board as DbBoard, user::user::AdminPerms},
     utils::DbPool,
 };
 use tinyboards_utils::TinyBoardsError;
@@ -58,7 +58,7 @@ impl QueryBoards {
         let limit = Some(std::cmp::min(limit.unwrap_or(25), 25));
         let search_title_and_desc = search_title_and_desc.unwrap_or(false);
         let person_id_join = match v_opt {
-            Some(v) => v.person.id,
+            Some(v) => v.id,
             None => -1,
         };
         let banned_boards = match v_opt {

@@ -12,7 +12,7 @@ impl PostVote {
     pub async fn get_my_vote_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
-        for_person_id: i32,
+        for_user_id: i32,
     ) -> Result<Vec<(i32, i16)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{post_votes, posts};
@@ -21,7 +21,7 @@ impl PostVote {
             .left_join(
                 post_votes::table.on(post_votes::post_id
                     .eq(posts::id)
-                    .and(post_votes::person_id.eq(for_person_id))),
+                    .and(post_votes::user_id.eq(for_user_id))),
             )
             .filter(posts::id.eq_any(ids))
             .select((posts::id, post_votes::score.nullable()))
@@ -45,7 +45,7 @@ impl Voteable for PostVote {
         use crate::schema::post_votes::dsl::*;
         diesel::insert_into(post_votes)
             .values(form)
-            .on_conflict((post_id, person_id))
+            .on_conflict((post_id, user_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -53,13 +53,13 @@ impl Voteable for PostVote {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create post vote"))
     }
 
-    async fn remove(pool: &DbPool, person_id: i32, post_id: i32) -> Result<usize, TinyBoardsError> {
+    async fn remove(pool: &DbPool, user_id: i32, post_id: i32) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::post_votes::dsl;
         diesel::delete(
             dsl::post_votes
                 .filter(dsl::post_id.eq(post_id))
-                .filter(dsl::person_id.eq(person_id)),
+                .filter(dsl::user_id.eq(user_id)),
         )
         .execute(conn)
         .await

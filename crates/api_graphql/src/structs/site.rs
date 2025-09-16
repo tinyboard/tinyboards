@@ -1,0 +1,134 @@
+use async_graphql::*;
+use tinyboards_db::models::{
+    user::user::AdminPerms, site::site::Site as DbSite,
+};
+
+use crate::LoggedInUser;
+
+#[derive(SimpleObject)]
+#[graphql(complex)]
+pub struct LocalSite {
+    pub id: i32,
+    pub site_setup: bool,
+    pub invite_only: bool,
+    pub enable_downvotes: bool,
+    pub open_registration: bool,
+    #[graphql(name = "enableNSFW")]
+    pub enable_nsfw: bool,
+    pub board_creation_admin_only: bool,
+    pub require_email_verification: bool,
+    pub require_application: bool,
+    pub application_question: Option<String>,
+    pub private_instance: bool,
+    pub default_theme: String,
+    pub default_post_listing_type: String,
+    pub default_avatar: Option<String>,
+    pub legal_information: Option<String>,
+    pub hide_modlog_mod_names: bool,
+    pub application_email_admins: bool,
+    pub captcha_enabled: bool,
+    pub captcha_difficulty: String,
+    pub creation_date: String,
+    pub updated: Option<String>,
+    pub reports_email_admins: bool,
+    pub name: String,
+    pub primary_color: Option<String>,
+    pub secondary_color: Option<String>,
+    pub hover_color: Option<String>,
+    pub description: Option<String>,
+    pub icon: Option<String>,
+    #[graphql(skip)]
+    pub welcome_message_: Option<String>,
+    pub boards_enabled: bool,
+    pub board_creation_mode: String,
+    pub trusted_user_min_reputation: i32,
+    pub trusted_user_min_account_age_days: i32,
+    pub trusted_user_manual_approval: bool,
+    pub trusted_user_min_posts: i32,
+    pub allowed_post_types: Option<String>,
+    #[graphql(name = "enableNSFWTagging")]
+    pub enable_nsfw_tagging: Option<bool>,
+    pub word_filter_enabled: Option<bool>,
+    pub filtered_words: Option<String>,
+    pub word_filter_applies_to_posts: Option<bool>,
+    pub word_filter_applies_to_comments: Option<bool>,
+    pub word_filter_applies_to_usernames: Option<bool>,
+    pub link_filter_enabled: Option<bool>,
+    pub banned_domains: Option<String>,
+    pub approved_image_hosts: Option<String>,
+    pub image_embed_hosts_only: Option<bool>,
+    pub registration_mode: String,
+}
+
+#[ComplexObject]
+impl LocalSite {
+    // only admins can read the welcome message
+    pub async fn welcome_message(&self, ctx: &Context<'_>) -> Option<String> {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        match v_opt {
+            Some(v) => {
+                if v.has_permission(AdminPerms::Config) {
+                    self.welcome_message_.clone()
+                } else {
+                    None
+                }
+            }
+            None => None,
+        }
+    }
+}
+
+impl From<tinyboards_db::models::site::site::Site> for LocalSite {
+    fn from(value: tinyboards_db::models::site::site::Site) -> Self {
+        Self {
+            id: value.id,
+            site_setup: value.site_setup,
+            invite_only: value.invite_only,
+            enable_downvotes: value.enable_downvotes,
+            open_registration: value.open_registration,
+            enable_nsfw: value.enable_nsfw,
+            board_creation_admin_only: value.board_creation_admin_only,
+            require_email_verification: value.require_email_verification,
+            require_application: value.require_application,
+            application_question: value.application_question,
+            private_instance: value.private_instance,
+            default_theme: value.default_theme,
+            default_post_listing_type: value.default_post_listing_type,
+            default_avatar: value.default_avatar,
+            legal_information: value.legal_information,
+            hide_modlog_mod_names: value.hide_modlog_mod_names,
+            application_email_admins: value.application_email_admins,
+            captcha_enabled: value.captcha_enabled,
+            captcha_difficulty: value.captcha_difficulty,
+            creation_date: value.creation_date.to_string(),
+            updated: value.updated.map(|u| u.to_string()),
+            reports_email_admins: value.reports_email_admins,
+            name: value.name,
+            primary_color: value.primary_color,
+            secondary_color: value.secondary_color,
+            hover_color: value.hover_color,
+            description: value.description,
+            icon: value.icon,
+            welcome_message_: value.welcome_message,
+            boards_enabled: value.boards_enabled,
+            board_creation_mode: value.board_creation_mode,
+            trusted_user_min_reputation: value.trusted_user_min_reputation,
+            trusted_user_min_account_age_days: value.trusted_user_min_account_age_days,
+            trusted_user_manual_approval: value.trusted_user_manual_approval,
+            trusted_user_min_posts: value.trusted_user_min_posts,
+            allowed_post_types: value.allowed_post_types,
+            enable_nsfw_tagging: value.enable_nsfw_tagging,
+            word_filter_enabled: value.word_filter_enabled,
+            filtered_words: value.filtered_words,
+            word_filter_applies_to_posts: value.word_filter_applies_to_posts,
+            word_filter_applies_to_comments: value.word_filter_applies_to_comments,
+            word_filter_applies_to_usernames: value.word_filter_applies_to_usernames,
+            link_filter_enabled: value.link_filter_enabled,
+            banned_domains: value.banned_domains,
+            approved_image_hosts: value.approved_image_hosts,
+            image_embed_hosts_only: value.image_embed_hosts_only,
+            registration_mode: value.registration_mode,
+        }
+    }
+}

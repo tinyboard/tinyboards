@@ -6,14 +6,14 @@ use tinyboards_db::{
         board_mods::BoardModerator as DbBoardMod, board_subscriber::BoardSubscriber as DbBoardSub,
         boards::Board as DbBoard,
     },
-    SubscribedType as DbSubType,
 };
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
+    PostgresLoader,
     newtypes::{BoardId, ModPermsForBoardId, SubscribedTypeForBoardId},
     structs::boards::Board,
-    PostgresLoader, SubscribedType,
+    SubscribedType,
 };
 
 impl Loader<BoardId> for PostgresLoader {
@@ -48,11 +48,11 @@ impl Loader<ModPermsForBoardId> for PostgresLoader {
         HashMap<ModPermsForBoardId, <Self as Loader<ModPermsForBoardId>>::Value>,
         <Self as Loader<ModPermsForBoardId>>::Error,
     > {
-        let my_person_id = self.my_person_id;
+        let my_user_id = self.my_user_id;
 
         let keys = keys.into_iter().map(|k| k.0).collect::<Vec<i32>>();
 
-        let res = DbBoardMod::get_perms_for_ids(&self.pool, keys, my_person_id)
+        let res = DbBoardMod::get_perms_for_ids(&self.pool, keys, my_user_id)
             .await
             .map_err(|e| {
                 TinyBoardsError::from_error_message(e, 500, "Failed to load mod permissions.")
@@ -75,11 +75,11 @@ impl Loader<SubscribedTypeForBoardId> for PostgresLoader {
         HashMap<SubscribedTypeForBoardId, <Self as Loader<SubscribedTypeForBoardId>>::Value>,
         <Self as Loader<SubscribedTypeForBoardId>>::Error,
     > {
-        let my_person_id = self.my_person_id;
+        let my_user_id = self.my_user_id;
 
         let keys = keys.into_iter().map(|k| k.0).collect::<Vec<i32>>();
 
-        let res = DbBoardSub::subscribed_type_for_ids(&self.pool, keys, my_person_id)
+        let res = DbBoardSub::subscribed_type_for_ids(&self.pool, keys, my_user_id)
             .await
             .map_err(|e| {
                 TinyBoardsError::from_error_message(e, 500, "Failed to load subscriber type.")

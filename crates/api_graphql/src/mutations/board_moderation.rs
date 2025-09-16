@@ -4,10 +4,9 @@ use tinyboards_db::{
     models::{
         board::{
             board_mods::{BoardModerator, BoardModeratorForm, ModPerms},
-            board_person_bans::{BoardPersonBan, BoardPersonBanForm},
             boards::Board,
         },
-        person::{local_user::AdminPerms, person::Person},
+        user::user::{AdminPerms, User as DbUser},
     },
     traits::Crud,
     utils::{DbPool, get_conn},
@@ -39,7 +38,7 @@ impl BoardModerationMutations {
         &self,
         ctx: &Context<'_>,
         board_id: i32,
-        person_id: i32,
+        user_id: i32,
         permissions: Option<i32>,
     ) -> Result<AddModeratorResponse> {
         let pool = ctx.data::<DbPool>()?;
@@ -65,7 +64,7 @@ impl BoardModerationMutations {
             use tinyboards_db::schema::board_mods;
             let mod_entry: Option<BoardModerator> = board_mods::table
                 .filter(board_mods::board_id.eq(board_id))
-                .filter(board_mods::person_id.eq(user.person.id))
+                .filter(board_mods::user_id.eq(user.id))
                 .first(conn)
                 .await
                 .optional()?;
@@ -88,14 +87,14 @@ impl BoardModerationMutations {
             .into());
         }
 
-        // Verify target person exists
-        Person::read(pool, person_id).await?;
+        // Verify target user exists
+        DbUser::read(pool, user_id).await?;
 
-        // Check if person is already a moderator
+        // Check if user is already a moderator
         use tinyboards_db::schema::board_mods;
         let existing_mod = board_mods::table
             .filter(board_mods::board_id.eq(board_id))
-            .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::user_id.eq(user_id))
             .first::<BoardModerator>(conn)
             .await
             .optional()?;
@@ -103,7 +102,7 @@ impl BoardModerationMutations {
         if existing_mod.is_some() {
             return Err(TinyBoardsError::from_message(
                 400,
-                "Person is already a moderator of this board",
+                "User is already a moderator of this board",
             )
             .into());
         }
@@ -119,7 +118,7 @@ impl BoardModerationMutations {
 
         let form = BoardModeratorForm {
             board_id: Some(board_id),
-            person_id: Some(person_id),
+            user_id: Some(user_id),
             permissions: permissions.or(Some(ModPerms::Content as i32)),
             rank: Some(next_rank),
             invite_accepted: Some(true),
@@ -155,8 +154,8 @@ impl BoardModerationMutations {
     pub async fn ban_user(
         &self,
         ctx: &Context<'_>,
-        person_id: i32,
-        reason: Option<String>,
+        user_id: i32,
+        _reason: Option<String>,
         expires: Option<String>, // ISO date string
     ) -> Result<BanUserResponse> {
         let pool = ctx.data::<DbPool>()?;
@@ -171,9 +170,9 @@ impl BoardModerationMutations {
             .into());
         }
 
-        // Verify target person exists and isn't already banned
-        let target_person = Person::read(pool, person_id).await?;
-        if target_person.is_banned {
+        // Verify target user exists and isn't already banned
+        let target_user = DbUser::read(pool, user_id).await?;
+        if target_user.is_banned {
             return Err(TinyBoardsError::from_message(
                 400,
                 "User is already banned",
@@ -182,7 +181,7 @@ impl BoardModerationMutations {
         }
 
         // Don't allow banning other admins
-        if target_person.is_admin {
+        if target_user.is_admin {
             return Err(TinyBoardsError::from_message(
                 400,
                 "Cannot ban other administrators",
@@ -198,12 +197,12 @@ impl BoardModerationMutations {
             None
         };
 
-        // Update person to banned status
-        use tinyboards_db::schema::person;
-        diesel::update(person::table.find(person_id))
+        // Update user to banned status
+        use tinyboards_db::schema::users;
+        diesel::update(users::table.find(user_id))
             .set((
-                person::is_banned.eq(true),
-                person::unban_date.eq(expires_date),
+                users::is_banned.eq(true),
+                users::unban_date.eq(expires_date),
             ))
             .execute(&mut get_conn(pool).await?)
             .await?;

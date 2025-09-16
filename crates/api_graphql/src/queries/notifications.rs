@@ -1,20 +1,29 @@
 use async_graphql::*;
 use tinyboards_db::{
     models::{
-        person::notifications::Notification as DbNotification,
-        person::person::Person,
         post::posts::Post,
         comment::comments::Comment,
     },
-    traits::Crud,
     utils::{DbPool, get_conn},
 };
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
-use tinyboards_utils::TinyBoardsError;
+use chrono::NaiveDateTime;
+
+#[derive(Queryable, Debug)]
+pub struct DbNotification {
+    pub id: i32,
+    pub kind: String,
+    pub recipient_user_id: i32,
+    pub comment_id: Option<i32>,
+    pub post_id: Option<i32>,
+    pub message_id: Option<i32>,
+    pub created: NaiveDateTime,
+    pub is_read: bool,
+}
 
 use crate::{
-    structs::{comment::Comment as GqlComment, person::Person as GqlPerson, post::Post as GqlPost},
+    structs::{comment::Comment as GqlComment, user::User as GqlPerson, post::Post as GqlPost},
     LoggedInUser,
 };
 
@@ -54,7 +63,7 @@ impl QueryNotifications {
         use tinyboards_db::schema::notifications;
         
         let mut query = notifications::table
-            .filter(notifications::recipient_id.eq(user.person.id))
+            .filter(notifications::recipient_user_id.eq(user.id))
             .into_boxed();
 
         if unread_only {

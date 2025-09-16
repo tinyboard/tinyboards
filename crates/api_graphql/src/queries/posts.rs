@@ -6,7 +6,7 @@ use tinyboards_db::{
     models::{
         board::board_mods::BoardModerator as DbBoardMod,
         board::boards::Board as DbBoard,
-        person::{local_user::AdminPerms, person::Person as DbPerson},
+        user::user::{AdminPerms, User as DbUser},
         post::posts::Post as DbPost,
     },
     utils::DbPool,
@@ -43,7 +43,7 @@ impl QueryPosts {
         let is_mod = match v_opt {
             Some(v) => {
                 let mod_rel =
-                    DbBoardMod::get_by_person_id_for_board(pool, v.person.id, post.board_id, true)
+                    DbBoardMod::get_by_user_id_for_board(pool, v.id, post.board_id, true)
                         .await;
                 match mod_rel {
                     Ok(m) => m.has_permission(ModPerms::Content),
@@ -53,9 +53,9 @@ impl QueryPosts {
             None => false,
         };
 
-        let my_person_id = v_opt.as_ref().map(|v| v.person.id).unwrap_or(-1);
+        let my_user_id = v_opt.as_ref().map(|v| v.id).unwrap_or(-1);
         if !is_admin {
-            post.censor(my_person_id, is_admin, is_mod);
+            post.censor(my_user_id, is_admin, is_mod);
         }
 
         Ok(post)
@@ -71,7 +71,7 @@ impl QueryPosts {
             ListingType,
         >,
         #[graphql(desc = "If specified, only posts from the given user will be loaded.")]
-        person_id: Option<i32>,
+        user_id: Option<i32>,
         #[graphql(desc = "If specified, only posts in the given board will be loaded.")]
         board_id: Option<i32>,
         person_name: Option<String>,
@@ -87,17 +87,17 @@ impl QueryPosts {
         let sort = sort.unwrap_or(SortType::NewComments);
         let listing_type = listing_type.unwrap_or(ListingType::Local);
         let limit = std::cmp::min(limit.unwrap_or(25), 25);
-        let person_id_join = match v_opt {
-            Some(v) => v.person.id,
+        let user_id_join = match v_opt {
+            Some(v) => v.id,
             None => -1,
         };
 
-        let person_id = match person_name {
-            Some(name) => DbPerson::get_by_name(pool, name)
+        let user_id = match person_name {
+            Some(name) => DbUser::get_by_name(pool, name)
                 .await
                 .map(|u| Some(u.id))
                 .unwrap_or(Some(0)),
-            None => person_id,
+            None => None,
         };
 
         let board_id = match board_name {
@@ -110,7 +110,7 @@ impl QueryPosts {
 
         let posts = DbPost::load_with_counts(
             pool,
-            person_id_join,
+            user_id_join,
             Some(limit),
             page,
             false,
@@ -118,7 +118,7 @@ impl QueryPosts {
             false,
             saved_only.unwrap_or(false),
             board_id,
-            person_id,
+            user_id,
             sort.into(),
             listing_type.into(),
         )

@@ -1,16 +1,17 @@
 /**
  * Login and registration
  **/
-use crate::{DbPool, LoggedInUser, MasterKey, Settings};
+use crate::{utils::auth::password_length_check, DbPool, LoggedInUser, MasterKey, Settings};
 use async_graphql::*;
 use regex::Regex;
-use tinyboards_db::models::person::local_user::LocalUser as DbLocalUser;
-use tinyboards_db::models::person::local_user::*;
-use tinyboards_db::models::person::person::*;
+
+use tinyboards_db::models::user::user::*;
+use tinyboards_db::newtypes::DbUrl;
+
 use tinyboards_db::models::site::registration_applications::RegistrationApplication;
 use tinyboards_db::models::site::registration_applications::RegistrationApplicationForm;
 use tinyboards_db::models::site::site_invite::SiteInvite as DbSiteInvite;
-use tinyboards_db::models::site::{local_site::LocalSite as DbLocalSite, site::Site as DbSite};
+use tinyboards_db::models::site::site::Site as DbSite;
 use tinyboards_db::RegistrationMode;
 use tinyboards_db::traits::Crud;
 //use tinyboards_federation::http_signatures::generate_actor_keypair;
@@ -53,10 +54,10 @@ impl Auth {
 
         // attempted login with email - look up account by email
         let u = if username_or_email.contains('@') {
-            DbLocalUser::get_by_email(pool, &username_or_email).await
+            User::get_by_email(pool, &username_or_email).await
         } else {
             // look up account by username
-            DbLocalUser::get_by_name(pool, &username_or_email).await
+            User::get_by_name(pool, username_or_email.to_string()).await
         }?;
 
         // password check - also deleted accounts cannot be logged into
@@ -68,7 +69,7 @@ impl Auth {
             .into());
         }
 
-        let site = DbLocalSite::read(pool).await?;
+        let site = DbSite::read(pool).await?;
 
         // if application mode is enabled, each acccount must be admin approved before it can be used
         if site.get_registration_mode() == RegistrationMode::RequireApplication && !u.is_application_accepted {
@@ -81,7 +82,7 @@ impl Auth {
 
         // all good: generate access token
         Ok(LoginResponse {
-            token: u.get_jwt(master_key.as_ref()),
+            token: u.get_jwt(master_key),
         })
     }
 
@@ -105,8 +106,8 @@ impl Auth {
         let master_key = ctx.data::<MasterKey>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
-        let site = DbLocalSite::read(pool).await?;
-        let instance_id = DbSite::read_local(pool).await?.instance_id;
+        let site = DbSite::read(pool).await?;
+        let site_info = DbSite::read(pool).await?;
 
         let protocol_and_hostname = settings.get_protocol_and_hostname();
 
@@ -151,14 +152,7 @@ impl Auth {
         )?;
 
         // PASSWORD CHECK
-        // password_length_check(&data.password)?;
-        if !(8..60).contains(&password.len()) {
-            return Err(TinyBoardsError::from_message(
-                400,
-                "Your password must be between 8 and 60 characters long.",
-            )
-            .into());
-        }
+        password_length_check(&password)?;
 
 
         let mut avatar_url =
@@ -182,40 +176,30 @@ impl Auth {
             avatar_url = Url::parse(&site.default_avatar.unwrap().clone())?;
         }
 
-        // now we need to create both a local_user and a person (for apub)
-        let person_form = PersonForm {
+        // create user account
+        let passhash = hash_password(password);
+        let requires_application = registration_mode == RegistrationMode::RequireApplication;
+
+        let user_form = UserForm {
             name: Some(username.clone()),
             display_name: Some(display_name.unwrap_or(username.clone())),
-            instance_id: Some(instance_id),
-            avatar: Some(avatar_url.into()),
-            ..PersonForm::default()
-        };
-
-        let person = Person::create(pool, &person_form).await?;
-
-        let passhash = hash_password(password);
-
-        let local_user_form = LocalUserForm {
-            name: Some(username),
             email: Some(email),
             passhash: Some(passhash),
-            person_id: Some(person.id),
-            ..LocalUserForm::default()
+            avatar: Some(Some(avatar_url.into())),
+            is_application_accepted: Some(!requires_application),
+            ..UserForm::default()
         };
 
-        let inserted_local_user = match LocalUser::create(pool, &local_user_form).await {
-            Ok(lu) => lu,
+        let inserted_user = match User::create(pool, &user_form).await {
+            Ok(u) => u,
             Err(e) => {
                 let err_type = if e.to_string()
-                    == "duplicate key value violates unique constraint \"local_user_email_key\""
+                    == "duplicate key value violates unique constraint \"users_email_key\""
                 {
                     "email address"
                 } else {
                     "username"
                 };
-
-                // if local_user creation failed then delete the person
-                Person::delete(pool, person.id).await?;
 
                 return Err(TinyBoardsError::from_error_message(
                     e,
@@ -236,7 +220,7 @@ impl Auth {
         // if site is in application mode, add the application to the database
         if registration_mode == RegistrationMode::RequireApplication {
             let form = RegistrationApplicationForm {
-                person_id: person.id,
+                user_id: inserted_user.id,
                 answer: application_answer,
                 ..RegistrationApplicationForm::default()
             };
@@ -255,7 +239,7 @@ impl Auth {
                     | RegistrationMode::OpenWithEmailVerification
                     | RegistrationMode::InviteOnlyAdmin 
                     | RegistrationMode::InviteOnlyUser => {
-                        Some(inserted_local_user.get_jwt(master_key.as_ref()))
+                        Some(inserted_user.get_jwt(master_key))
                     }
                     RegistrationMode::RequireApplication 
                     | RegistrationMode::Closed => None,

@@ -1,9 +1,8 @@
 use crate::DbPool;
 use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::models::board::boards::Board as DbBoard;
-use tinyboards_db::models::person::local_user::AdminPerms;
-use tinyboards_db::models::person::user::User as DbUser;
-use tinyboards_db::models::site::local_site::LocalSite as DbLocalSite;
+use tinyboards_db::models::user::user::{AdminPerms, User as DbUser};
+use tinyboards_db::models::site::site::Site as DbSite;
 use tinyboards_utils::TinyBoardsError;
 
 /// Check if the instance is private. Return an error if the instance is private and the user is not logged in.
@@ -12,7 +11,7 @@ pub async fn check_private_instance(
     pool: &DbPool,
 ) -> Result<(), TinyBoardsError> {
     if user.is_none() {
-        let site = DbLocalSite::read(pool).await?;
+        let site = DbSite::read(pool).await?;
 
         if site.private_instance {
             return Err(TinyBoardsError::from_message(
@@ -48,7 +47,7 @@ pub async fn require_mod_or_admin(
         Ok(())
     } else {
         // user is not admin: check mod permissions instead
-        let m = DbBoard::board_get_mod(pool, board_id, v.person.id)
+        let m = DbBoard::board_get_mod(pool, board_id, v.id)
             .await?
             .ok_or(TinyBoardsError::from_message(
                 403,

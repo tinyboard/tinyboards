@@ -41,7 +41,7 @@ impl EditMessageMutations {
         let existing_message = DbMessage::read(pool, input.message_id).await
             .map_err(|_| TinyBoardsError::from_message(404, "Message not found"))?;
 
-        if existing_message.creator_id != user.person.id {
+        if existing_message.creator_id != user.id {
             return Err(TinyBoardsError::from_message(403, "You can only edit your own messages").into());
         }
 

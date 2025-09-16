@@ -1,10 +1,9 @@
-use crate::helpers::apub::EndpointType;
-use crate::helpers::{apub::generate_local_apub_endpoint, files::upload::upload_file};
+use crate::helpers::files::upload::upload_file;
 use crate::structs::post::Post;
 use crate::{DbPool, LoggedInUser, Settings};
 use async_graphql::*;
 use tinyboards_db::models::board::board_mods::ModPerms;
-use tinyboards_db::models::person::local_user::AdminPerms;
+use tinyboards_db::models::user::user::AdminPerms;
 use tinyboards_db::models::{
     board::boards::Board as DbBoard,
     post::{
@@ -39,7 +38,7 @@ impl SubmitPost {
         let settings = ctx.data::<Settings>()?.as_ref();
 
         // Load site configuration for content filtering
-        let site_config = tinyboards_db::models::site::local_site::LocalSite::read(pool).await?;
+        let site_config = tinyboards_db::models::site::site::Site::read(pool).await?;
 
         let board = match board {
             Some(ref board) => DbBoard::get_by_name(pool, board).await?,
@@ -67,7 +66,7 @@ impl SubmitPost {
             true
         } else {
             // user is not admin: check mod permissions instead
-            let m = DbBoard::board_get_mod(pool, board.id, v.person.id).await;
+            let m = DbBoard::board_get_mod(pool, board.id, v.id).await;
 
             match m {
                 Ok(m_opt) => match m_opt {
@@ -82,7 +81,7 @@ impl SubmitPost {
         };
 
         // check if user is banned from board
-        if !is_mod_or_admin && DbBoard::board_has_ban(pool, board.id, v.person.id).await? {
+        if !is_mod_or_admin && DbBoard::board_has_ban(pool, board.id, v.id).await? {
             return Err(TinyBoardsError::from_message(
                 410,
                 &format!("You are banned from +{}.", &board.name),
@@ -146,7 +145,7 @@ impl SubmitPost {
             // image: data.image,
             body: body, // once told me, the world was gonna roll me
             body_html: body_html,
-            creator_id: Some(v.person.id),
+            creator_id: Some(v.id),
             board_id: Some(board.id),
             is_nsfw: Some(is_nsfw),
             title_chunk: Some(DbPost::generate_chunk(title)),
@@ -155,17 +154,10 @@ impl SubmitPost {
 
         let published_post = DbPost::submit(pool, post_form).await?;
 
-        // apub id add
-        let protocol_and_hostname = settings.get_protocol_and_hostname();
-        let apub_id = generate_local_apub_endpoint(
-            EndpointType::Post,
-            &published_post.id.clone().to_string(),
-            &protocol_and_hostname,
-        )?;
 
         // handle file upload
         let file_url = match file {
-            Some(file) => Some(upload_file(file, None, v.person.id, None, ctx).await?),
+            Some(file) => Some(upload_file(file, None, v.id, None, ctx).await?),
             None => None,
         };
 
@@ -218,7 +210,7 @@ impl SubmitPost {
         // auto upvote own post
         let post_vote = PostVoteForm {
             post_id: updated_post.id,
-            person_id: v.person.id,
+            user_id: v.id,
             score: 1,
         };
 

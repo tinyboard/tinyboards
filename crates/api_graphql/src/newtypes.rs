@@ -25,7 +25,7 @@ macro_rules! generate_newtypes {
 }
 
 generate_newtypes![
-    PersonId,
+    UserId,
     PostIdForComment,
     VoteForCommentId,
     SavedForCommentId,

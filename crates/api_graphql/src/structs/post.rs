@@ -1,3 +1,4 @@
+use crate::PostgresLoader;
 use async_graphql::*;
 use dataloader::DataLoader;
 use tinyboards_db::{
@@ -5,7 +6,7 @@ use tinyboards_db::{
     models::{
         board::board_mods::{BoardModerator as DbBoardMod, ModPerms},
         comment::comments::Comment as DbComment,
-        person::local_user::AdminPerms,
+        user::user::AdminPerms,
         post::posts::Post as DbPost,
     },
     utils::DbPool,
@@ -13,11 +14,11 @@ use tinyboards_db::{
 use tinyboards_utils::TinyBoardsError;
 
 use crate::{
-    newtypes::{BoardId, ModPermsForBoardId, PersonId, SavedForPostId, VoteForPostId},
-    Censorable, CommentSortType, ListingType, LoggedInUser, PostgresLoader,
+    newtypes::{BoardId, ModPermsForBoardId, UserId, SavedForPostId, VoteForPostId},
+    Censorable, CommentSortType, ListingType, LoggedInUser,
 };
 
-use super::{boards::Board, comment::Comment, person::Person};
+use super::{boards::Board, comment::Comment, user::User};
 
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]
@@ -74,10 +75,10 @@ impl Post {
         self.counts.newest_comment_time.to_string()
     }
 
-    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<Person>> {
+    pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<User>> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
         loader
-            .load_one(PersonId(self.creator_id))
+            .load_one(UserId(self.creator_id))
             .await
             .map_err(|e| e.into())
     }
@@ -120,7 +121,7 @@ impl Post {
             .map_err(|e| e.into())
     }
 
-    pub async fn participants(&self, ctx: &Context<'_>) -> Result<Vec<Person>> {
+    pub async fn participants(&self, ctx: &Context<'_>) -> Result<Vec<User>> {
         let pool = ctx.data_unchecked::<DbPool>();
 
         let resp = DbComment::load_participants_for_post(pool, self.id)
@@ -129,7 +130,7 @@ impl Post {
                 TinyBoardsError::from_error_message(e, 500, "Failed to load participants for post.")
             })?;
 
-        Ok(resp.into_iter().map(Person::from).collect::<Vec<Person>>())
+        Ok(resp.into_iter().map(User::from).collect::<Vec<User>>())
     }
 
     pub async fn comments(
@@ -151,7 +152,7 @@ impl Post {
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         let person_id_join = match v_opt {
-            Some(v) => v.person.id,
+            Some(v) => v.id,
             None => -1,
         };
         let is_admin = match v_opt {
@@ -161,7 +162,7 @@ impl Post {
         let is_mod = match v_opt {
             Some(v) => {
                 let mod_rel =
-                    DbBoardMod::get_by_person_id_for_board(pool, v.person.id, self.board_id, true)
+                    DbBoardMod::get_by_user_id_for_board(pool, v.id, self.board_id, true)
                         .await;
                 match mod_rel {
                     Ok(m) => m.has_permission(ModPerms::Content),
@@ -256,7 +257,7 @@ impl Post {
 }
 
 impl Censorable for Post {
-    fn censor(&mut self, my_person_id: i32, is_admin: bool, is_mod: bool) {
+    fn censor(&mut self, my_user_id: i32, is_admin: bool, is_mod: bool) {
         // do nothing
         if !(self.is_removed || self.is_deleted) {
             return;
@@ -268,7 +269,7 @@ impl Censorable for Post {
         }
 
         // you can see your own removed content
-        if self.is_removed && (is_mod || self.creator_id == my_person_id) {
+        if self.is_removed && (is_mod || self.creator_id == my_user_id) {
             return;
         }
 
@@ -366,7 +367,7 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             featured_local: post.featured_local,
             title_chunk: post.title_chunk,
             counts,
-            creator: creator.map(|c| Person::from((c, creator_counts.unwrap()))),
+            creator: creator.map(|c| User::from((c, creator_counts.unwrap()))),
             is_creator_banned_from_board: creator_banned_from_board,
             is_saved: saved,
             my_vote,

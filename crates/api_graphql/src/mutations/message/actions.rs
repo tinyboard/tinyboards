@@ -22,7 +22,7 @@ impl MessageActionMutations {
         let pool = ctx.data::<DbPool>()?;
         let current_user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
 
-        DbMessage::mark_conversation_read(pool, current_user.person.id, user_id).await
+        DbMessage::mark_conversation_read(pool, current_user.id, user_id).await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to mark conversation as read"))?;
 
         Ok(true)
@@ -41,7 +41,7 @@ impl MessageActionMutations {
         let message = DbMessage::read(pool, message_id).await
             .map_err(|_| TinyBoardsError::from_message(404, "Message not found"))?;
 
-        if message.creator_id != user.person.id {
+        if message.creator_id != user.id {
             return Err(TinyBoardsError::from_message(403, "You can only delete your own messages").into());
         }
 

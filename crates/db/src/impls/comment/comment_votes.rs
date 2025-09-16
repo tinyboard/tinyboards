@@ -13,7 +13,7 @@ impl CommentVote {
     pub async fn get_my_vote_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
-        for_person_id: i32,
+        for_user_id: i32,
     ) -> Result<Vec<(i32, i16)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{comment_votes, comments};
@@ -22,7 +22,7 @@ impl CommentVote {
             .left_join(
                 comment_votes::table.on(comment_votes::comment_id
                     .eq(comments::id)
-                    .and(comment_votes::person_id.eq(for_person_id))),
+                    .and(comment_votes::user_id.eq(for_user_id))),
             )
             .filter(comments::id.eq_any(ids))
             .select((comments::id, comment_votes::score.nullable()))
@@ -46,7 +46,7 @@ impl Voteable for CommentVote {
         use crate::schema::comment_votes::dsl::*;
         diesel::insert_into(comment_votes)
             .values(form)
-            .on_conflict((comment_id, person_id))
+            .on_conflict((comment_id, user_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -54,13 +54,13 @@ impl Voteable for CommentVote {
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not vote on comment"))
     }
 
-    async fn remove(pool: &DbPool, person_id: i32, cid: i32) -> Result<usize, TinyBoardsError> {
+    async fn remove(pool: &DbPool, user_id: i32, cid: i32) -> Result<usize, TinyBoardsError> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::comment_votes::dsl;
         diesel::delete(
             dsl::comment_votes
                 .filter(dsl::comment_id.eq(cid))
-                .filter(dsl::person_id.eq(person_id)),
+                .filter(dsl::user_id.eq(user_id)),
         )
         .execute(conn)
         .await

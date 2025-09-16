@@ -8,7 +8,6 @@ use crate::{
         ModLockPost, ModLockPostForm, ModRemovePost, ModRemovePostForm,
     },
     models::post::posts::{Post, PostForm},
-    newtypes::DbUrl,
     schema::{post_report, posts},
     traits::{Crud, Moderateable},
     utils::{get_conn, naive_now, DbPool, FETCH_LIMIT_MAX},
@@ -19,7 +18,6 @@ use diesel::{prelude::*, result::Error};
 use diesel_async::RunQueryDsl;
 use regex::Regex;
 use tinyboards_utils::TinyBoardsError;
-use url::Url;
 
 impl Post {
     pub async fn list_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
@@ -51,16 +49,6 @@ impl Post {
             .await
     }
 
-    /*pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
-        let conn = &mut get_conn(pool).await?;
-        let object_id: DbUrl = object_id.into();
-        Ok(posts::table
-            .filter(posts::ap_id.eq(object_id))
-            .first::<Post>(conn)
-            .await
-            .ok()
-            .map(Into::into))
-    }*/
 
     pub async fn resolve_reports(
         pool: &DbPool,
@@ -179,8 +167,8 @@ impl Post {
             })
     }
 
-    pub fn is_post_creator(person_id: i32, post_creator_id: i32) -> bool {
-        person_id == post_creator_id
+    pub fn is_post_creator(user_id: i32, post_creator_id: i32) -> bool {
+        user_id == post_creator_id
     }
 
     pub async fn fetch_image_posts_for_creator(
@@ -452,7 +440,7 @@ impl Post {
     /// To be used for graphql queries. When you need all data, use `PostView`.
     pub async fn load_with_counts(
         pool: &DbPool,
-        person_id_join: i32,
+        user_id_join: i32,
         limit: Option<i64>,
         page: Option<i64>,
         show_deleted: bool,
@@ -460,7 +448,7 @@ impl Post {
         include_banned_boards: bool,
         saved_only: bool,
         board_id: Option<i32>,
-        person_id: Option<i32>,
+        user_id: Option<i32>,
         sort: SortType,
         listing_type: ListingType,
     ) -> Result<Vec<(Self, PostAggregates)>, Error> {
@@ -475,17 +463,17 @@ impl Post {
             .left_join(
                 post_saved::table.on(post_saved::post_id
                     .eq(posts::id)
-                    .and(post_saved::person_id.eq(person_id_join))),
+                    .and(post_saved::user_id.eq(user_id_join))),
             )
             .left_join(
                 board_mods::table.on(board_mods::board_id
                     .eq(posts::board_id)
-                    .and(board_mods::person_id.eq(person_id_join))),
+                    .and(board_mods::user_id.eq(user_id_join))),
             )
             .left_join(
                 board_subscriber::table.on(board_subscriber::board_id
                     .eq(posts::board_id)
-                    .and(board_subscriber::person_id.eq(person_id_join))),
+                    .and(board_subscriber::user_id.eq(user_id_join))),
             )
             .select((posts::all_columns, post_aggregates::all_columns))
             .into_boxed();
@@ -510,8 +498,8 @@ impl Post {
             );
         }
 
-        if let Some(person_id) = person_id {
-            query = query.filter(posts::creator_id.eq(person_id));
+        if let Some(user_id) = user_id {
+            query = query.filter(posts::creator_id.eq(user_id));
         }
 
         if let Some(board_id) = board_id {
@@ -642,7 +630,7 @@ impl Moderateable for Post {
 
         // form for submitting remove action to mod log
         let remove_post_form = ModRemovePostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             reason: Some(reason),
             removed: Some(Some(true)),
@@ -664,7 +652,7 @@ impl Moderateable for Post {
 
         // form for submitting remove action to mod log
         let remove_post_form = ModRemovePostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             reason: None,
             removed: Some(Some(false)),
@@ -686,7 +674,7 @@ impl Moderateable for Post {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             locked: Some(Some(true)),
         };
@@ -706,7 +694,7 @@ impl Moderateable for Post {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             locked: Some(Some(false)),
         };

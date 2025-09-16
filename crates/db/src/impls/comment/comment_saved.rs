@@ -14,7 +14,7 @@ impl CommentSaved {
     pub async fn get_saved_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
-        for_person_id: i32,
+        for_user_id: i32,
     ) -> Result<Vec<(i32, bool)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{comment_saved, comments};
@@ -23,7 +23,7 @@ impl CommentSaved {
             .left_join(
                 comment_saved::table.on(comment_saved::comment_id
                     .eq(comments::id)
-                    .and(comment_saved::person_id.eq(for_person_id))),
+                    .and(comment_saved::user_id.eq(for_user_id))),
             )
             .filter(comments::id.eq_any(ids))
             .select((comments::id, comment_saved::id.nullable()))
@@ -45,7 +45,7 @@ impl Saveable for CommentSaved {
         let conn = &mut get_conn(pool).await?;
         diesel::insert_into(comment_saved)
             .values(form)
-            .on_conflict((comment_id, person_id))
+            .on_conflict((comment_id, user_id))
             .do_update()
             .set(form)
             .get_result::<Self>(conn)
@@ -58,7 +58,7 @@ impl Saveable for CommentSaved {
         diesel::delete(
             comment_saved
                 .filter(comment_id.eq(form.comment_id))
-                .filter(person_id.eq(form.person_id)),
+                .filter(user_id.eq(form.user_id)),
         )
         .execute(conn)
         .await

@@ -1,10 +1,5 @@
 use async_graphql::*;
-use tinyboards_db::{
-    models::person::notifications::{Notification as DbNotification, NotificationForm},
-    traits::Crud,
-    utils::{DbPool, get_conn},
-};
-use diesel::prelude::*;
+use tinyboards_db::utils::{DbPool, get_conn};
 use diesel::ExpressionMethods;
 use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
@@ -40,7 +35,7 @@ impl NotificationMutations {
         let marked_count = if mark_all {
             // Mark all notifications as read for this user
             diesel::update(notifications::table)
-                .filter(notifications::recipient_id.eq(user.person.id))
+                .filter(notifications::recipient_user_id.eq(user.id))
                 .filter(notifications::is_read.eq(false))
                 .set(notifications::is_read.eq(true))
                 .execute(conn)
@@ -56,7 +51,7 @@ impl NotificationMutations {
             // Mark specific notifications as read (only ones owned by user)
             diesel::update(notifications::table)
                 .filter(notifications::id.eq_any(ids))
-                .filter(notifications::recipient_id.eq(user.person.id))
+                .filter(notifications::recipient_user_id.eq(user.id))
                 .filter(notifications::is_read.eq(false))
                 .set(notifications::is_read.eq(true))
                 .execute(conn)

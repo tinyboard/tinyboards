@@ -1,10 +1,11 @@
+use crate::PostgresLoader;
 use async_graphql::*;
 use dataloader::DataLoader;
 use tinyboards_db::{
     aggregates::structs::BoardAggregates as DbBoardAggregates,
     models::{
         board::{board_mods::BoardModerator as DbBoardMod, boards::Board as DbBoard},
-        person::local_user::AdminPerms,
+        user::user::AdminPerms,
         post::posts::Post as DbPost,
     },
     utils::DbPool,
@@ -13,7 +14,7 @@ use tinyboards_utils::TinyBoardsError;
 
 use crate::{
     newtypes::{ModPermsForBoardId, SubscribedTypeForBoardId},
-    ListingType, LoggedInUser, PostgresLoader, SortType, SubscribedType,
+    ListingType, LoggedInUser, SortType, SubscribedType,
 };
 
 use super::{board_mods::BoardMod, post::Post};
@@ -152,7 +153,7 @@ impl Board {
         limit: Option<i64>,
         #[graphql(desc = "Sorting type.")] sort: Option<SortType>,
         #[graphql(desc = "If specified, only posts from the given user will be loaded.")]
-        person_id: Option<i32>,
+        user_id: Option<i32>,
         #[graphql(desc = "Page.")] page: Option<i64>,
     ) -> Result<Vec<Post>> {
         let pool = ctx.data::<DbPool>()?;
@@ -161,8 +162,8 @@ impl Board {
         let sort = sort.unwrap_or(SortType::NewComments);
         let listing_type = ListingType::All;
         let limit = std::cmp::min(limit.unwrap_or(25), 25);
-        let person_id_join = match v_opt {
-            Some(v) => v.person.id,
+        let user_id_join = match v_opt {
+            Some(v) => v.id,
             None => -1,
         };
         // If the board is banned (or deleted), only admins can view its posts
@@ -177,7 +178,7 @@ impl Board {
 
         let posts = DbPost::load_with_counts(
             pool,
-            person_id_join,
+            user_id_join,
             Some(limit),
             page,
             false,
@@ -185,7 +186,7 @@ impl Board {
             can_view_posts,
             false,
             Some(self.id),
-            person_id,
+            None,
             sort.into(),
             listing_type.into(),
         )

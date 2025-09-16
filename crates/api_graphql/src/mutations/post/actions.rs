@@ -54,14 +54,14 @@ impl PostActions {
             return Err(TinyBoardsError::from_message(403, reason).into());
         }
 
-        let is_banned_from_board = DbBoard::board_has_ban(pool, board.id, v.person.id)
+        let is_banned_from_board = DbBoard::board_has_ban(pool, board.id, v.id)
             .await
             .unwrap_or(true);
 
         // vote is not registered if the user is banned from the board
         if !is_banned_from_board {
             // remove any existing votes first
-            DbPostVote::remove(pool, v.person.id, post.id).await?;
+            DbPostVote::remove(pool, v.id, post.id).await?;
 
             // if vote type is 0, only remove the user's existing vote
             // otherwise register the new vote
@@ -70,7 +70,7 @@ impl PostActions {
             if do_add {
                 let vote_form = PostVoteForm {
                     post_id: post.id,
-                    person_id: v.person.id,
+                    user_id: v.id,
                     score: vote_type,
                 };
 
@@ -105,7 +105,7 @@ impl PostActions {
 
         let form = PostSavedForm {
             post_id,
-            person_id: user.person.id,
+            user_id: user.id,
         };
 
         if save {
@@ -130,7 +130,7 @@ impl PostActions {
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
 
         let post = DbPost::read(pool, post_id).await?;
-        let board = DbBoard::read(pool, post.board_id).await?;
+        let _board = DbBoard::read(pool, post.board_id).await?;
 
         if post.is_deleted || post.is_removed {
             return Err(TinyBoardsError::from_message(
@@ -146,11 +146,11 @@ impl PostActions {
         let can_feature = match feature_type.as_str() {
             "local" => {
                 // Only admins can feature locally (site-wide)
-                user.has_permission(tinyboards_db::models::person::local_user::AdminPerms::Content)
+                user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content)
             }
             "board" => {
                 // Moderators with content permissions can feature in board
-                if user.has_permission(tinyboards_db::models::person::local_user::AdminPerms::Content) {
+                if user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content) {
                     true // Admins can always feature
                 } else {
                     // Check if user is a moderator of this board with content permissions

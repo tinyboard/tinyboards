@@ -1,38 +1,40 @@
-use tinyboards_api_common::utils::{
-    generate_local_apub_endpoint, EndpointType,
-};
+// use tinyboards_api_common::utils::{
+//     generate_local_apub_endpoint, EndpointType,
+// };
 use tinyboards_db::{
-    models::{
-        apub::instance::Instance,
-        board::boards::{Board, BoardForm},
-        person::local_user::*,
-        person::person::*,
-        site::{
-            local_site::{LocalSite, LocalSiteForm},
-            local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitForm},
-            site::{Site, SiteForm},
-        },
-    },
-    traits::{ApubActor, Crud},
-    utils::{naive_now, DbPool},
+    // models::{
+    //     // apub::instance::Instance,
+    //     board::boards::{Board, BoardForm},
+    //     // person::local_user::*,
+    //     // person::person::*,
+    //     user::user::{User, UserForm},
+    //     site::{
+    //         // local_site::{LocalSite, LocalSiteForm},
+    //         // local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitForm},
+    //         site::{Site, SiteForm},
+    //     },
+    // },
+    // traits::Crud,
+    utils::DbPool,
 };
 //use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::{
-    error::TinyBoardsError, passhash::hash_password, settings::structs::Settings,
+    error::TinyBoardsError, settings::structs::Settings,
 };
-use tracing::info;
-use url::Url;
+// use tracing::info;
+// use url::Url;
 
 pub async fn run_advanced_migrations(
-    pool: &DbPool,
-    settings: &Settings,
+    _pool: &DbPool,
+    _settings: &Settings,
 ) -> Result<(), TinyBoardsError> {
-    initialize_local_site_and_admin_user(pool, settings).await?;
+    // Commented out during Person -> User migration
+    // initialize_local_site_and_admin_user(pool, settings).await?;
 
     Ok(())
 }
 
-/// This ensures the site is initialized
+/*/// This ensures the site is initialized
 ///
 /// If the site is already initialized, this will not run
 async fn initialize_local_site_and_admin_user(
@@ -56,7 +58,7 @@ async fn initialize_local_site_and_admin_user(
 
     if let Some(setup) = &settings.setup {
         //let person_keypair = generate_actor_keypair()?;
-        let person_actor_id = generate_local_apub_endpoint(
+        let _person_actor_id = generate_local_apub_endpoint(
             EndpointType::Person,
             &setup.admin_username,
             &settings.get_protocol_and_hostname(),
@@ -95,7 +97,7 @@ async fn initialize_local_site_and_admin_user(
         };
 
         //let board_key_pair = generate_actor_keypair()?;
-        let board_actor_id = generate_local_apub_endpoint(
+        let _board_actor_id = generate_local_apub_endpoint(
             EndpointType::Board,
             &setup.default_board_name.clone(),
             &settings.get_protocol_and_hostname(),
@@ -122,7 +124,7 @@ async fn initialize_local_site_and_admin_user(
 
         // add an entry to the site table
         //let site_key_pair = generate_actor_keypair()?;
-        let site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
+        let _site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
         let site_name = settings
             .setup
             .clone()
@@ -171,4 +173,4 @@ async fn initialize_local_site_and_admin_user(
     } else {
         Ok(())
     }
-}
+}*/

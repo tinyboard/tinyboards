@@ -5,7 +5,7 @@ pub mod board_moderation;
 pub mod comment;
 pub mod message;
 pub mod notifications;
-pub mod person;
+pub mod user;
 pub mod post;
 pub mod reports;
 pub mod site;

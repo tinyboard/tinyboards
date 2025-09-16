@@ -2,13 +2,14 @@ use async_graphql::*;
 use tinyboards_db::{
     models::{
         message::message::Message as DbMessage,
-        person::person::Person as DbPerson,
+        user::user::User as DbUser,
     },
+    traits::Crud,
     utils::DbPool,
 };
 
 use crate::{
-    structs::{message::{Conversation, Message}, person::Person},
+    structs::{message::{Conversation, Message}, user::User},
     LoggedInUser,
 };
 
@@ -22,22 +23,33 @@ impl QueryMessages {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
 
-        let conversations_data = DbMessage::list_conversations_for_user(pool, user.person.id).await
+        let conversations_data = DbMessage::list_conversations_for_user(pool, user.id).await
             .map_err(|e| Error::new(format!("Failed to load conversations: {}", e)))?;
 
         let mut conversations = Vec::new();
         
         for (other_user_id, last_message) in conversations_data {
             // Get the other user's info
-            let other_user = DbPerson::get_user_by_id(pool, other_user_id).await
+            let other_user = DbUser::read(pool, other_user_id).await
                 .map_err(|e| Error::new(format!("Failed to load user: {}", e)))?;
 
             // Get unread count for this conversation
-            let unread_count = DbMessage::get_unread_count_for_user(pool, user.person.id).await
+            let unread_count = DbMessage::get_unread_count_for_user(pool, user.id).await
                 .map_err(|e| Error::new(format!("Failed to get unread count: {}", e)))? as i32;
 
+            // Create default aggregates for the other user
+            let default_aggregates = tinyboards_db::aggregates::structs::UserAggregates {
+                id: 0,
+                user_id: other_user.id,
+                post_count: 0,
+                post_score: 0,
+                comment_count: 0,
+                comment_score: 0,
+                rep: 0,
+            };
+
             conversations.push(Conversation {
-                other_user: Person::from(other_user),
+                other_user: User::from((other_user, default_aggregates)),
                 last_message: Message::from(last_message.clone()),
                 unread_count,
                 last_activity: last_message.published.to_string(),
@@ -59,12 +71,12 @@ impl QueryMessages {
         let current_user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
 
         // Mark conversation as read
-        DbMessage::mark_conversation_read(pool, current_user.person.id, user_id).await
+        DbMessage::mark_conversation_read(pool, current_user.id, user_id).await
             .map_err(|e| Error::new(format!("Failed to mark conversation as read: {}", e)))?;
 
         let messages = DbMessage::list_messages_between_users(
             pool,
-            current_user.person.id,
+            current_user.id,
             user_id,
             limit,
             offset,
@@ -79,7 +91,7 @@ impl QueryMessages {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
 
-        let count = DbMessage::get_unread_count_for_user(pool, user.person.id).await
+        let count = DbMessage::get_unread_count_for_user(pool, user.id).await
             .map_err(|e| Error::new(format!("Failed to get unread count: {}", e)))?;
 
         Ok(count as i32)

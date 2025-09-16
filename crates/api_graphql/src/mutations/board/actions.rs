@@ -1,4 +1,4 @@
-use crate::{LoggedInUser, PostgresLoader};
+use crate::LoggedInUser;
 use async_graphql::*;
 use tinyboards_db::{
     models::board::board_subscriber::BoardSubscriberForm,
@@ -24,7 +24,7 @@ impl BoardActions {
 
         let form = BoardSubscriberForm {
             board_id,
-            person_id: user.person.id,
+            user_id: user.id,
             pending: Some(false),
         };
 
@@ -45,7 +45,7 @@ impl BoardActions {
 
         let form = BoardSubscriberForm {
             board_id,
-            person_id: user.person.id,
+            user_id: user.id,
             pending: Some(false),
         };
 

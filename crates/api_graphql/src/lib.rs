@@ -1,18 +1,20 @@
+pub mod context;
 pub(crate) mod helpers;
 pub(crate) mod loaders;
 pub mod mutations;
 pub(crate) mod newtypes;
 pub mod queries;
 pub(crate) mod structs;
+pub mod utils;
 
 use crate::mutations::{
-    admin::board_moderation::AdminBoardModeration,
+    admin::{board_moderation::AdminBoardModeration, registration_applications::RegistrationApplicationMutations},
     auth::Auth,
     board::{actions::BoardActions, create::CreateBoard, settings::UpdateBoardSettings},
     board_moderation::BoardModerationMutations,
     message::{actions::MessageActionMutations, send_message::SendMessageMutations, edit_message::EditMessageMutations},
     notifications::NotificationMutations,
-    person::{actions::PersonActions, settings::UpdateSettings},
+    user::{actions::UserActions, profile_management::ProfileManagement, settings::UpdateSettings},
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
     },
@@ -24,20 +26,21 @@ use async_graphql::*;
 use queries::{
     banned_users::QueryBannedUsers,
     board_moderators::QueryBoardModerators,
-    boards::QueryBoards, 
+    boards::QueryBoards,
     invites::QueryInvites,
-    local_site::QuerySite, 
-    me::MeQuery, 
+    site::QuerySite,
+    me::MeQuery,
     messages::QueryMessages,
     notifications::QueryNotifications,
-    person::QueryPerson, 
+    user::QueryUser,
     posts::QueryPosts,
+    registration_applications::RegistrationApplicationQueries,
     search::QuerySearch,
 };
-use tinyboards_db::{models::person::user::User, utils::DbPool};
+use tinyboards_db::{models::user::user::User, utils::DbPool};
 //use queries::Query;
 use tinyboards_utils::{settings::structs::Settings as Settings_, TinyBoardsError};
-//use tinyboards_api_common::data::TinyBoardsContext;
+// Context moved to crate::context::TinyBoardsContext
 
 /// wrapper around logged in user
 pub struct LoggedInUser(Option<User>);
@@ -49,15 +52,15 @@ pub struct Settings(&'static Settings_);
 /// Dataloader for batch loading
 pub struct PostgresLoader {
     pool: DbPool,
-    // id of the logged in person to use in queries
-    my_person_id: i32,
+    // id of the logged in user to use in queries
+    my_user_id: i32,
 }
 
 impl PostgresLoader {
-    pub fn new(pool: &DbPool, my_person_id: i32) -> Self {
+    pub fn new(pool: &DbPool, my_user_id: i32) -> Self {
         Self {
             pool: pool.clone(),
-            my_person_id,
+            my_user_id,
         }
     }
 }
@@ -79,7 +82,7 @@ pub struct Query(
     MeQuery,
     QueryPosts,
     QueryBoards,
-    QueryPerson,
+    QueryUser,
     QuerySite,
     QueryMessages,
     QueryNotifications,
@@ -87,6 +90,7 @@ pub struct Query(
     QueryBoardModerators,
     QueryBannedUsers,
     QuerySearch,
+    RegistrationApplicationQueries,
 );
 
 #[derive(MergedObject, Default)]
@@ -96,7 +100,8 @@ pub struct Mutation(
     BoardActions,
     CreateBoard,
     UpdateBoardSettings,
-    PersonActions,
+    UserActions,
+    ProfileManagement,
     UpdateSettings,
     SubmitPost,
     SubmitComment,
@@ -114,6 +119,7 @@ pub struct Mutation(
     NotificationMutations,
     ReportMutations,
     BoardModerationMutations,
+    RegistrationApplicationMutations,
 );
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {
@@ -153,7 +159,7 @@ impl LoggedInUser {
     pub(crate) fn require_user_not_banned(&self) -> Result<&User> {
         match self.inner() {
             Some(v) => {
-                if v.person.is_banned {
+                if v.is_banned {
                     Err(TinyBoardsError::from_message(403, "Your account is banned").into())
                 } else {
                     Ok(v)
@@ -178,7 +184,7 @@ impl Settings {
 
 // censor contents of deleted/removed posts/comments
 pub(crate) trait Censorable {
-    fn censor(&mut self, my_person_id: i32, is_admin: bool, is_mod: bool);
+    fn censor(&mut self, my_user_id: i32, is_admin: bool, is_mod: bool);
 }
 
 // custom enums from the db crate
