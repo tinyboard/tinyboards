@@ -77,9 +77,9 @@
     # Email for the admin user (optional, can be omitted and set later through the website)
     admin_email: "user@example.com"
     # Name of the default board created upon site initialization
-    default_board_name: "campfire"
+    default_board_name: "general"
     # Description of the default board created upon site initialization
-    default_board_description: ""
+    default_board_description: "General discussion and community topics"
   }
   # the domain name of your server (mandatory)
   hostname: "tinyboards.test"
