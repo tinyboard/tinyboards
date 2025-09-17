@@ -11,6 +11,14 @@ impl SiteInvite {
             .first::<Self>(conn)
             .await
     }
+
+    pub async fn read_all(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        site_invite
+            .order(created.desc())
+            .load::<Self>(conn)
+            .await
+    }
 }
 
 #[async_trait::async_trait]

@@ -1,39 +1,40 @@
-use tinyboards_api_common::utils::{
-    generate_inbox_url, generate_local_apub_endpoint, generate_shared_inbox_url,
-    generate_site_inbox_url, generate_subscribers_url, EndpointType,
-};
+// use tinyboards_api_common::utils::{
+//     generate_local_apub_endpoint, EndpointType,
+// };
 use tinyboards_db::{
-    models::{
-        apub::instance::Instance,
-        board::boards::{Board, BoardForm},
-        person::local_user::*,
-        person::person::*,
-        site::{
-            local_site::{LocalSite, LocalSiteForm},
-            local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitForm},
-            site::{Site, SiteForm},
-        },
-    },
-    traits::Crud,
-    utils::{naive_now, DbPool},
+    // models::{
+    //     // apub::instance::Instance,
+    //     board::boards::{Board, BoardForm},
+    //     // person::local_user::*,
+    //     // person::person::*,
+    //     user::user::{User, UserForm},
+    //     site::{
+    //         // local_site::{LocalSite, LocalSiteForm},
+    //         // local_site_rate_limit::{LocalSiteRateLimit, LocalSiteRateLimitForm},
+    //         site::{Site, SiteForm},
+    //     },
+    // },
+    // traits::Crud,
+    utils::DbPool,
 };
-use tinyboards_federation::http_signatures::generate_actor_keypair;
+//use tinyboards_federation::http_signatures::generate_actor_keypair;
 use tinyboards_utils::{
-    error::TinyBoardsError, passhash::hash_password, settings::structs::Settings,
+    error::TinyBoardsError, settings::structs::Settings,
 };
-use tracing::info;
-use url::Url;
+// use tracing::info;
+// use url::Url;
 
 pub async fn run_advanced_migrations(
-    pool: &DbPool,
-    settings: &Settings,
+    _pool: &DbPool,
+    _settings: &Settings,
 ) -> Result<(), TinyBoardsError> {
-    initialize_local_site_and_admin_user(pool, settings).await?;
+    // Commented out during Person -> User migration
+    // initialize_local_site_and_admin_user(pool, settings).await?;
 
     Ok(())
 }
 
-/// This ensures the site is initialized
+/*/// This ensures the site is initialized
 ///
 /// If the site is already initialized, this will not run
 async fn initialize_local_site_and_admin_user(
@@ -56,8 +57,8 @@ async fn initialize_local_site_and_admin_user(
     let instance = Instance::read_or_create(pool, domain).await?;
 
     if let Some(setup) = &settings.setup {
-        let person_keypair = generate_actor_keypair()?;
-        let person_actor_id = generate_local_apub_endpoint(
+        //let person_keypair = generate_actor_keypair()?;
+        let _person_actor_id = generate_local_apub_endpoint(
             EndpointType::Person,
             &setup.admin_username,
             &settings.get_protocol_and_hostname(),
@@ -66,16 +67,15 @@ async fn initialize_local_site_and_admin_user(
         let person_admin_form = PersonForm::builder()
             .name(Some(setup.admin_username.clone()))
             .is_admin(Some(true))
-            .actor_id(Some(person_actor_id.clone()))
-            .private_key(Some(person_keypair.private_key))
-            .public_key(Some(person_keypair.public_key))
-            .inbox_url(Some(generate_inbox_url(&person_actor_id)?))
-            .shared_inbox_url(Some(generate_shared_inbox_url(&person_actor_id)?))
             .instance_id(Some(instance.id.clone()))
             .build();
 
-        // create the admin person object
-        let inserted_admin_person = Person::create(pool, &person_admin_form).await?;
+        // create the admin person object, or return if exists
+        let inserted_admin_person = Person::create(pool, &person_admin_form).await
+            .map_err(|e| {
+                eprintln!("Admin user might already exist: {:?}", e);
+                e
+            })?;
 
         let local_user_admin_form = LocalUserForm {
             name: Some(setup.admin_username.clone()),
@@ -87,11 +87,17 @@ async fn initialize_local_site_and_admin_user(
             ..LocalUserForm::default()
         };
 
-        // create the local user admin object
-        LocalUser::create(pool, &local_user_admin_form).await?;
+        // create the local user admin object, or skip if exists
+        match LocalUser::create(pool, &local_user_admin_form).await {
+            Ok(_) => {},
+            Err(_) => {
+                // If creation fails due to duplicate, continue
+                info!("Admin user already exists, skipping creation");
+            }
+        };
 
-        let board_key_pair = generate_actor_keypair()?;
-        let board_actor_id = generate_local_apub_endpoint(
+        //let board_key_pair = generate_actor_keypair()?;
+        let _board_actor_id = generate_local_apub_endpoint(
             EndpointType::Board,
             &setup.default_board_name.clone(),
             &settings.get_protocol_and_hostname(),
@@ -101,22 +107,24 @@ async fn initialize_local_site_and_admin_user(
             name: Some(setup.default_board_name.clone()),
             title: Some(setup.default_board_name.clone()),
             description: Some(setup.default_board_description.clone()),
-            public_key: Some(board_key_pair.public_key),
-            private_key: Some(board_key_pair.private_key),
-            actor_id: Some(board_actor_id.clone()),
-            subscribers_url: Some(generate_subscribers_url(&board_actor_id.clone())?),
-            inbox_url: Some(generate_inbox_url(&board_actor_id.clone())?),
-            shared_inbox_url: Some(Some(generate_shared_inbox_url(&board_actor_id.clone())?)),
+            //public_key: Some(board_key_pair.public_key),
+            //private_key: Some(board_key_pair.private_key),
             instance_id: Some(instance.id.clone()),
             ..BoardForm::default()
         };
 
-        // make the default board
-        Board::create(pool, &board_form).await?;
+        // make the default board, or skip if exists
+        match Board::create(pool, &board_form).await {
+            Ok(_) => {},
+            Err(_) => {
+                // If creation fails due to duplicate, continue
+                info!("Default board already exists, skipping creation");
+            }
+        };
 
         // add an entry to the site table
-        let site_key_pair = generate_actor_keypair()?;
-        let site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
+        //let site_key_pair = generate_actor_keypair()?;
+        let _site_actor_id = Url::parse(&settings.get_protocol_and_hostname())?;
         let site_name = settings
             .setup
             .clone()
@@ -126,11 +134,9 @@ async fn initialize_local_site_and_admin_user(
         let site_form = SiteForm {
             name: Some(site_name.clone()),
             instance_id: Some(instance.id.clone()),
-            actor_id: Some(site_actor_id.clone().into()),
             last_refreshed_date: Some(naive_now()),
-            inbox_url: Some(generate_site_inbox_url(&site_actor_id.into())?),
-            private_key: Some(Some(site_key_pair.private_key)),
-            public_key: Some(site_key_pair.public_key),
+            //private_key: Some(Some(site_key_pair.private_key)),
+            //public_key: Some(site_key_pair.public_key),
             ..SiteForm::default()
         };
 
@@ -167,4 +173,4 @@ async fn initialize_local_site_and_admin_user(
     } else {
         Ok(())
     }
-}
+}*/

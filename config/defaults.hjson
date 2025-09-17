@@ -50,6 +50,8 @@
   media: {
     # media file path to which uploads will be stored and served from
     media_path: "/app/media"
+    # maximum file size in megabytes for uploads
+    max_file_size_mb: 50
   }
   # Email sending configuration. All options except login/password are mandatory
   email: {

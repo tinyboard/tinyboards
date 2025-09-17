@@ -9,22 +9,22 @@ use reqwest::Client;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use reqwest_tracing::TracingMiddleware;
-use tinyboards_apub::{FEDERATION_HTTP_FETCH_LIMIT, VerifyUrlData};
-use tinyboards_db_views::structs::SiteView;
-use tinyboards_federation::config::{FederationConfig, FederationMiddleware};
-use tinyboards_routes::{nodeinfo, webfinger, media};
 use std::{thread, time::Duration};
-use tinyboards_api_common::{
-    data::TinyBoardsContext,
-    request::build_user_agent,
-    utils::{check_private_instance_and_federation_enabled, local_site_rate_limit_to_rate_limit_config},
+use tinyboards_api::{
+    context::TinyBoardsContext,
+    utils::request::build_user_agent,
 };
-use tinyboards_db::{models::secret::Secret, utils::{build_db_pool, run_migrations, get_db_url}};
+use tinyboards_api::gen_schema;
+use tinyboards_db::{
+    models::secret::Secret,
+    utils::{build_db_pool, get_db_url, run_migrations},
+};
 use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
 };
-use tinyboards_utils::{error::TinyBoardsError, rate_limit::RateLimitCell, settings::SETTINGS};
+use tinyboards_utils::utils::ensure_upload_directories;
+use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 use tracing_actix_web::TracingLogger;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
@@ -34,10 +34,10 @@ pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[actix_web::main]
 async fn main() -> Result<(), TinyBoardsError> {
-    dotenv().ok(); // TODO - remove this (should be un-needed)
+    dotenv().ok();
 
     let settings = SETTINGS.to_owned();
-    
+
     // Set up the bb8 connection pool
     let db_url = get_db_url(Some(&settings));
     run_migrations(&db_url);
@@ -45,13 +45,18 @@ async fn main() -> Result<(), TinyBoardsError> {
     init_logging(&settings.opentelemetry_url)
         .map_err(|_| TinyBoardsError::from_message(500, "failed to initialize logger"))?;
 
-    
     let pool = build_db_pool(&settings).await?;
 
     let _protocol_and_hostname = settings.get_protocol_and_hostname();
 
     // run advanced migrations
     run_advanced_migrations(&pool, &settings).await?;
+
+    // ensure upload directories exist
+    let media_path = settings.get_media_path();
+    ensure_upload_directories(&media_path).await.map_err(|e| {
+        TinyBoardsError::from_message(500, &format!("Failed to create upload directories: {}", e))
+    })?;
 
     let db_url = get_db_url(Some(&settings));
     thread::spawn(move || {
@@ -63,24 +68,6 @@ async fn main() -> Result<(), TinyBoardsError> {
     let secret = Secret::init(db_url).expect("Couldn't initialize secrets.");
 
     // make sure local site is setup
-    let site_view = SiteView::read_local(&pool)
-        .await
-        .expect("local site is not set up");
-
-    let local_site = site_view.local_site;
-    let federation_enabled = local_site.federation_enabled;
-
-    if federation_enabled {
-        println!("federation is enabled, host is {}", &settings.hostname);
-    }
-
-    // make sure private instance and federation enabled are not turned on at the same time
-    check_private_instance_and_federation_enabled(&local_site)?;
-
-    let rate_limit_config 
-        = local_site_rate_limit_to_rate_limit_config(&site_view.local_site_rate_limit);
-    let rate_limit_cell = 
-        RateLimitCell::new(rate_limit_config).await;
 
     println!(
         "Starting http server at {}:{}",
@@ -101,6 +88,8 @@ async fn main() -> Result<(), TinyBoardsError> {
         backoff_exponent: 2,
     };
 
+    let graphql_schema = gen_schema();
+
     let client: ClientWithMiddleware = ClientBuilder::new(reqwest_client.clone())
         .with(TracingMiddleware::default())
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
@@ -113,40 +102,23 @@ async fn main() -> Result<(), TinyBoardsError> {
             client.clone(),
             settings.clone(),
             secret.clone(),
-            rate_limit_cell.clone(),
+            //rate_limit_cell.clone(),
+            graphql_schema.clone(),
         );
 
-        let federation_config = FederationConfig::builder()
-            .domain(settings.hostname.clone())
-            .app_data(context.clone())
-            .client(client.clone())
-            .http_fetch_limit(FEDERATION_HTTP_FETCH_LIMIT)
-            .worker_count(local_site.federation_worker_count as u64)
-            .debug(cfg!(debug_assertions))
-            .http_signature_compat(true)
-            .url_verifier(Box::new(VerifyUrlData(context.pool().clone())))
-            .build()
-            .expect("configure federation");
-
-        let cors_config = Cors::default().allow_any_origin();
+        let cors_config = Cors::default()
+            .allowed_methods(vec!["GET", "POST", "OPTIONS", "PUT"])
+            .allowed_headers(vec!["Content-Type", "Accepts"]);
 
         App::new()
             .wrap(actix_web::middleware::Logger::default())
             .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
-            .app_data(Data::new(rate_limit_cell.clone()))
-            .wrap(FederationMiddleware::new(federation_config))
-            // the routes
-            .configure(|cfg| api_routes::config(cfg, &rate_limit_cell))
-            .configure(|cfg| {
-                if federation_enabled {
-                    tinyboards_apub::http::routes::config(cfg);
-                    webfinger::config(cfg);
-                }
-            })
-            .configure(nodeinfo::config)
-            .configure(media::config)
+            // GraphQL
+            .configure(api_routes::graphql_config)
+            // Static file serving for uploaded media
+            .configure(|cfg| api_routes::static_files_config(cfg, settings.get_media_path()))
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?

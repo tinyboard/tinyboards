@@ -1,56 +1,54 @@
-use actix_multipart::Multipart;
+use actix_files::Files;
 use actix_web::*;
-use serde::Deserialize;
-use tinyboards_api::{Perform, PerformUpload};
-use tinyboards_api_common::{
-    admin::*, applications::*, board::*, comment::*, data::TinyBoardsContext, emoji::*,
-    message::GetMessages, moderator::*, person::*, post::*, site::*,
-};
-use tinyboards_api_crud::PerformCrud;
-use tinyboards_apub::{api::PerformApub, SendActivity};
-use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
+use async_graphql::dataloader::DataLoader;
+use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
+//use tinyboards_api::{Perform, PerformUpload};
+use tinyboards_api::{context::TinyBoardsContext, utils::auth::get_user_from_header_opt};
+use tinyboards_api::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
+//use tinyboards_apub::{api::PerformApub, SendActivity};
+//use tinyboards_utils::{rate_limit::RateLimitCell, TinyBoardsError};
 
-pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
+/*pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
     cfg.service(
         web::scope("/api/v1")
-            .route("/me", web::get().to(route_get::<GetLoggedInUser>))
+            /*.route("/me", web::get().to(route_get::<GetLoggedInUser>))
             .route("/members", web::get().to(route_get::<GetMembers>))
             .route("/search", web::get().to(route_get_apub::<Search>))
             .route("/settings", web::get().to(route_get::<GetUserSettings>))
             .route("/settings", web::put().to(route_post::<SaveUserSettings>))
-            .route("/messages", web::get().to(route_get_crud::<GetMessages>))
+            .route("/messages", web::get().to(route_get_crud::<GetMessages>))*/
             // resolve federated objects (object => post, person, board or comment)
-            .route(
+            /*.route(
                 "/resolve_object",
                 web::get().to(route_get_apub::<ResolveObject>),
-            )
-            .route(
+            )*/
+            /*.route(
                 "/password_reset",
                 web::post().to(route_post::<PasswordResetRequest>),
-            )
-            .route(
+            )*/
+            /*.route(
                 "/password_reset/{reset_token}",
                 web::post().to(route_post::<ExecutePasswordReset>),
-            )
+            )*/
             // Get Federated Instances
-            .service(
+            /*.service(
                 web::scope("/federated_instances")
                     .wrap(rate_limit.message())
                     .route("", web::get().to(route_get::<GetFederatedInstances>)),
-            )
+            )*/
             // Validate Site Invite
-            .route(
+            /*.route(
                 "/validate_invite/{invite_token}",
                 web::post().to(route_post::<ValidateSiteInvite>),
-            )
+            )*/
             // File Upload / Deletion
-            .service(
+            /*.service(
                 web::scope("/file")
                     .route("/upload", web::put().to(upload_file::<Multipart>))
                     .route("/{file_name}", web::delete().to(route_post::<DeleteFile>)),
-            )
+            )*/
             // Authenticate
-            .service(
+            /*.service(
                 web::scope("/auth")
                     //.wrap(rate_limit.message())
                     .route("/login", web::post().to(route_post::<Login>))
@@ -60,9 +58,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/delete_account",
                         web::post().to(route_post_crud::<DeleteAccount>),
                     ),
-            )
+            )*/
             // User
-            .service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
+            /*.service(web::scope("/names").route("", web::get().to(route_get::<SearchNames>)))
             .service(
                 web::scope("/user")
                     .route("", web::get().to(route_get_apub::<GetPersonDetails>))
@@ -71,9 +69,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/verify_email/{token}",
                         web::post().to(route_post::<VerifyEmail>),
                     ),
-            )
+            )*/
             // Notifications
-            .service(
+            /*.service(
                 web::scope("/notifications")
                     .wrap(rate_limit.message())
                     .route("/unread", web::get().to(route_get::<GetUnreadCount>))
@@ -91,7 +89,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/messages/mark_read",
                         web::post().to(route_post::<MarkAllMessagesRead>),
                     ),
-            )
+            )*/
             // Subscriptions
             .service(
                 web::scope("/subscriptions")
@@ -106,7 +104,7 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                     ),
             )
             // Board
-            .service(
+            /*.service(
                 web::scope("/boards")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<CreateBoard>))
@@ -143,9 +141,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/{board_id}/mods/{person_id}",
                         web::delete().to(route_post_crud::<RemoveBoardMod>),
                     ),
-            )
+            )*/
             // Post
-            .service(
+            /*.service(
                 web::scope("/posts")
                     .wrap(rate_limit.message())
                     .route("", web::post().to(route_post_crud::<SubmitPost>))
@@ -197,9 +195,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/{post_id}/comments",
                         web::post().to(route_post_crud::<CreateComment>),
                     ),
-            )
+            )*/
             // Comment
-            .service(
+            /*.service(
                 web::scope("/comments")
                     .wrap(rate_limit.message())
                     .route(
@@ -240,9 +238,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/{comment_id}/saved",
                         web::patch().to(route_post::<SaveComment>),
                     ),
-            )
+            )*/
             // Mod Actions
-            .service(
+            /*.service(
                 web::scope("/mod")
                     .route("/board_ban", web::post().to(route_post::<BanFromBoard>))
                     //.route("/ban_board", web::post().to(route_post::<BanBoard>))
@@ -253,9 +251,9 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/queue/comments",
                         web::get().to(route_get::<CommentModQueue>),
                     ),
-            )
+            )*/
             // Admin Actions
-            .service(
+            /*.service(
                 web::scope("/admin")
                     .route("/ban", web::post().to(route_post::<ToggleBan>))
                     .route("/add_admin", web::post().to(route_post::<AddAdmin>))
@@ -295,7 +293,21 @@ pub fn config(cfg: &mut web::ServiceConfig, rate_limit: &RateLimitCell) {
                         "/emoji/{emoji_id}",
                         web::delete().to(route_post_crud::<DeleteEmoji>),
                     ),
-            ),
+            ),*/
+    );
+}*/
+
+pub fn graphql_config(cfg: &mut web::ServiceConfig) {
+    cfg.route("/api/v2/graphql", web::post().to(perform_graphql));
+}
+
+pub fn static_files_config(cfg: &mut web::ServiceConfig, media_path: String) {
+    cfg.service(
+        Files::new("/media", media_path)
+            .show_files_listing()
+            .use_last_modified(true)
+            .use_etag(true)
+            .prefer_utf8(true)
     );
 }
 
@@ -314,177 +326,35 @@ fn get_auth(req: &HttpRequest) -> Option<&str> {
     }
 }
 
-async fn perform<'a, Data>(
-    data: Data,
+async fn perform_graphql(
     context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<<Data as Perform<'a>>::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Data: Perform<'a>
-        + SendActivity<
-            Response = <Data as Perform<'a>>::Response,
-            Route = <Data as Perform<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    let auth_header = get_auth(&req);
+    graphql_request: GraphQLRequest,
+    http_request: HttpRequest,
+) -> Result<GraphQLResponse> {
+    let auth_header = get_auth(&http_request);
 
-    let path = path.into_inner();
-    let path_clone = path.clone();
+    let logged_in_user =
+        get_user_from_header_opt(context.pool(), context.master_key(), auth_header).await?;
 
-    let res = data.clone().perform(&context, path, auth_header).await?;
-    SendActivity::send_activity(&data, &res, &apub_data, &path_clone, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
-}
+    let my_person_id = match logged_in_user {
+        Some(ref v) => v.id,
+        None => -1,
+    };
 
-async fn route_get<'a, Data>(
-    data: web::Query<Data>,
-    context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<<Data as Perform<'a>>::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Data: Perform<'a>
-        + SendActivity<
-            Response = <Data as Perform<'a>>::Response,
-            Route = <Data as Perform<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    perform::<Data>(data.0, context, apub_data, path, req).await
-}
-
-async fn route_get_apub<'a, Data>(
-    req: HttpRequest,
-    data: web::Query<Data>,
-    context: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<()>,
-) -> Result<HttpResponse, Error>
-where
-    Data: PerformApub
-        + SendActivity<Response = <Data as PerformApub>::Response, Route = ()>
-        + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    let auth_header = get_auth(&req);
-    let res = data.perform(&context, auth_header).await?;
-    SendActivity::send_activity(&data.0, &res, &context, &path, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
-}
-
-async fn route_post<'a, Data>(
-    data: web::Json<Data>,
-    context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<<Data as Perform<'a>>::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Data: Perform<'a>
-        + SendActivity<
-            Response = <Data as Perform<'a>>::Response,
-            Route = <Data as Perform<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    perform::<Data>(data.0, context, apub_data, path, req).await
-}
-
-async fn perform_crud<'a, Data>(
-    data: Data,
-    context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<<Data as PerformCrud<'a>>::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error>
-where
-    Data: PerformCrud<'a>
-        + SendActivity<
-            Response = <Data as PerformCrud<'a>>::Response,
-            Route = <Data as PerformCrud<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    let auth_header = get_auth(&req);
-
-    let path = path.into_inner();
-    let path_clone = path.clone();
-
-    let res = data.clone().perform(&context, path, auth_header).await?;
-    SendActivity::send_activity(&data, &res, &apub_data, &path_clone, auth_header).await?;
-    Ok(HttpResponse::Ok().json(res))
-}
-
-async fn upload_file<'des, Multipart>(
-    data: web::Data<TinyBoardsContext>,
-    payload: Multipart,
-    path: web::Path<Multipart::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, TinyBoardsError>
-where
-    Multipart: PerformUpload<'des> + 'static,
-{
-    let result = Multipart::perform_upload(
-        payload,
-        &data,
-        path.into_inner(),
-        req.headers()
-            .get("Authorization")
-            .and_then(|header| header.to_str().ok()),
-    )
-    .await?;
-    Ok(HttpResponse::Ok().json(result))
-}
-
-async fn route_post_crud<'a, Data>(
-    data: web::Json<Data>,
-    context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<<Data as PerformCrud<'a>>::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error>
-where
-    Data: PerformCrud<'a>
-        + SendActivity<
-            Response = <Data as PerformCrud<'a>>::Response,
-            Route = <Data as PerformCrud<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    perform_crud::<Data>(data.0, context, apub_data, path, req).await
-}
-
-async fn route_get_crud<'a, Data>(
-    data: web::Query<Data>,
-    context: web::Data<TinyBoardsContext>,
-    apub_data: tinyboards_federation::config::Data<TinyBoardsContext>,
-    path: web::Path<<Data as PerformCrud<'a>>::Route>,
-    req: HttpRequest,
-) -> Result<HttpResponse, Error>
-where
-    Data: PerformCrud<'a>
-        + SendActivity<
-            Response = <Data as PerformCrud<'a>>::Response,
-            Route = <Data as PerformCrud<'a>>::Route,
-        > + Clone
-        + Deserialize<'a>
-        + Send
-        + 'static,
-{
-    perform_crud::<Data>(data.0, context, apub_data, path, req).await
+    Ok(context
+        .schema()
+        .execute(
+            graphql_request
+                .into_inner()
+                .data(LoggedInUser::from(logged_in_user))
+                .data(MasterKey::from(context.master_key().jwt.clone()))
+                .data(GQLSettings::from(context.settings()))
+                .data(context.pool().clone())
+                .data(DataLoader::new(
+                    PostgresLoader::new(context.pool(), my_person_id),
+                    tokio::spawn,
+                )),
+        )
+        .await
+        .into())
 }

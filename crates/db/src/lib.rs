@@ -1,7 +1,6 @@
 #![recursion_limit = "512"]
 
 pub mod aggregates;
-pub mod database;
 pub mod models;
 pub mod newtypes;
 pub mod traits;
@@ -10,15 +9,9 @@ pub mod impls;
 pub mod schema;
 pub mod utils;
 
-pub use database::Database;
-//use diesel::numeric_expr;
-
-//use schema::board_mods;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumString};
 
-// allow doing operations on this column
-// numeric_expr!(board_mods::rank);
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
 pub enum SiteMode {
@@ -32,13 +25,35 @@ pub enum RegistrationMode {
     /// Closed to the public
     #[strum(ascii_case_insensitive)]
     Closed,
-    /// Open, but you need to have an approved application,
+    /// Open registration - no restrictions
+    #[strum(ascii_case_insensitive)]
+    Open,
+    /// Open registration with email verification required
+    #[strum(ascii_case_insensitive)]
+    OpenWithEmailVerification,
+    /// Invite only - admins can create invites
+    #[strum(ascii_case_insensitive)]
+    InviteOnlyAdmin,
+    /// Invite only - both admins and users can create invites
+    #[strum(ascii_case_insensitive)]
+    InviteOnlyUser,
+    /// Application required with approval
     #[strum(ascii_case_insensitive)]
     RequireApplication,
-    /// Open, but an invite link is required
+}
+
+#[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy, PartialEq, Eq)]
+pub enum BoardCreationMode {
+    /// Board creation disabled site-wide
     #[strum(ascii_case_insensitive)]
-    RequireInvite,
-    /// Open to all
+    Disabled,
+    /// Only admins with Boards permission can create boards
+    #[strum(ascii_case_insensitive)]
+    AdminOnly,
+    /// Trusted users meeting criteria can create boards
+    #[strum(ascii_case_insensitive)]
+    TrustedUsers,
+    /// Anyone can create boards
     #[strum(ascii_case_insensitive)]
     Open,
 }
@@ -105,6 +120,13 @@ pub enum ListingType {
     Local,
     #[strum(ascii_case_insensitive)]
     Moderated,
+}
+
+pub enum UserListingType {
+    All,
+    NotBanned,
+    Banned,
+    Admins,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]

@@ -16,18 +16,14 @@ serde_json = { workspace = true }
 derive_more = { workspace = true }
 rust-argon2 = { workspace = true }
 dotenv = { workspace = true }
-dotenv_codegen = { workspace = true }
 chrono = { workspace = true }
-temp-env = { workspace = true }
 regex = { workspace = true }
 tracing = { workspace = true }
 tracing-error = { workspace = true }
 rand = { workspace = true }
-comrak = { workspace = true }
 once_cell = { workspace = true }
 openssl = { workspace = true }
 url = { workspace = true }
-lettre = { workspace = true }
 anyhow = { workspace = true }
 reqwest-middleware = { workspace = true }
 strum = { workspace = true }
@@ -37,14 +33,14 @@ diesel = { workspace = true }
 http = { workspace = true }
 deser-hjson = { workspace = true }
 smart-default = { workspace = true }
-jsonwebtoken = { workspace = true }
 doku = { workspace = true }
 html2text = { workspace = true }
-parking_lot = { workspace = true }
+jsonwebtoken = { workspace = true }
+lettre = { workspace = true }
 tokio = { workspace = true }
 typed-builder = { workspace = true }
 itertools = { workspace = true }
-rosetta-i18n = { workspace = true }
+glob = "0.3"
 
 [dependencies.uuid]
 version = "1.1.2"

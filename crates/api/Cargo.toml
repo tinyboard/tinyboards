@@ -9,23 +9,28 @@ path = "src/lib.rs"
 doctest = false
 
 [dependencies]
-tinyboards_utils = { workspace = true }
-tinyboards_api_common = { workspace = true }
-tinyboards_db = { workspace = true }
-tinyboards_db_views = { workspace = true }
-tinyboards_db_views_mod = { workspace = true }
+anyhow = { workspace = true }
+async-graphql = { workspace = true }
 actix-web = { workspace = true }
-async-trait = { workspace = true }
-diesel = { workspace = true }
-serde = { workspace = true }
-bigdecimal = { workspace = true }
-regex = { workspace = true }
-bcrypt = { workspace = true }
-tracing = { workspace = true }
-url = { workspace = true }
-actix-multipart = { workspace = true }
-actix-files = { workspace = true }
-futures = { workspace = true }
-tokio = { workspace = true }
-image = { workspace = true }
+async-graphql-actix-web = { workspace = true }
 chrono = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true }
+tinyboards_db = { workspace = true }
+tinyboards_utils = { workspace = true }
+regex = { workspace = true }
+tokio = { workspace = true }
+url = { workspace = true }
+uuid = { workspace = true }
+jwt = { workspace = true }
+sha2 = { workspace = true }
+hmac = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_with = { workspace = true }
+encoding = { workspace = true }
+reqwest-middleware = { workspace = true }
+webpage = { version = "1.6.0", default-features = false, features = ["serde"] }
+image = { workspace = true }
+actix-files = { workspace = true }
+lazy_static = "1.4.0"

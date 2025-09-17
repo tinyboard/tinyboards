@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct PostVote {
     pub id: i32,
     pub post_id: i32,
-    pub person_id: i32,
+    pub user_id: i32,
     pub score: i16,
 }
 
@@ -15,6 +15,6 @@ pub struct PostVote {
 #[diesel(table_name = post_votes)]
 pub struct PostVoteForm {
     pub post_id: i32,
-    pub person_id: i32,
+    pub user_id: i32,
     pub score: i16,
 }

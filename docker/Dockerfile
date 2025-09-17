@@ -1,4 +1,4 @@
-FROM rust:1.65 as builder
+FROM rust:latest as builder
 
 ARG RUSTRELEASEDIR="release"
 
@@ -12,7 +12,7 @@ RUN strip ./target/$RUSTRELEASEDIR/tinyboards_server
 
 RUN cp ./target/$RUSTRELEASEDIR/tinyboards_server /app/tinyboards_server
 
-FROM debian:buster-slim as tinyboards
+FROM debian:bookworm-slim as tinyboards
 
 RUN apt-get update && apt-get install libpq-dev -y
 

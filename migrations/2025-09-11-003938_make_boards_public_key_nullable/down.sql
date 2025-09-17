@@ -1,0 +1,1 @@
+ALTER TABLE boards ALTER COLUMN public_key SET NOT NULL;

@@ -7,7 +7,7 @@ use crate::schema::email_verification;
 #[diesel(table_name = email_verification)]
 pub struct EmailVerification {
     pub id: i32,
-    pub local_user_id: i32,
+    pub user_id: i32,
     pub email: String,
     pub verification_code: String,
     pub published: NaiveDateTime,
@@ -16,7 +16,7 @@ pub struct EmailVerification {
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = email_verification)]
 pub struct EmailVerificationForm {
-    pub local_user_id: i32,
+    pub user_id: i32,
     pub email: String,
     pub verification_code: String,
 }

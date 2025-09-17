@@ -1,21 +1,48 @@
+use crate::aggregates::structs::PostAggregates;
 use crate::models::post::post_report::PostReport;
+//use crate::pagination::Paginate;
+use crate::utils::functions::hot_rank;
+use crate::utils::limit_and_offset;
 use crate::{
     models::moderator::mod_actions::{
         ModLockPost, ModLockPostForm, ModRemovePost, ModRemovePostForm,
     },
     models::post::posts::{Post, PostForm},
-    newtypes::DbUrl,
     schema::{post_report, posts},
     traits::{Crud, Moderateable},
     utils::{get_conn, naive_now, DbPool, FETCH_LIMIT_MAX},
 };
+use crate::{ListingType, SortType};
+use diesel::dsl::{now, IntervalDsl};
 use diesel::{prelude::*, result::Error};
 use diesel_async::RunQueryDsl;
 use regex::Regex;
 use tinyboards_utils::TinyBoardsError;
-use url::Url;
 
 impl Post {
+    pub async fn list_posts_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        posts::table
+            .filter(posts::board_id.eq(the_board_id))
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn list_all_posts(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        posts::table
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_body_html(pool: &DbPool, post_id: i32, new_body_html: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(posts::table.find(post_id))
+            .set(posts::body_html.eq(new_body_html))
+            .get_result::<Self>(conn)
+            .await
+    }
+
     pub async fn list_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         posts::table
@@ -45,16 +72,6 @@ impl Post {
             .await
     }
 
-    pub async fn read_from_apub_id(pool: &DbPool, object_id: Url) -> Result<Option<Self>, Error> {
-        let conn = &mut get_conn(pool).await?;
-        let object_id: DbUrl = object_id.into();
-        Ok(posts::table
-            .filter(posts::ap_id.eq(object_id))
-            .first::<Post>(conn)
-            .await
-            .ok()
-            .map(Into::into))
-    }
 
     pub async fn resolve_reports(
         pool: &DbPool,
@@ -173,8 +190,8 @@ impl Post {
             })
     }
 
-    pub fn is_post_creator(person_id: i32, post_creator_id: i32) -> bool {
-        person_id == post_creator_id
+    pub fn is_post_creator(user_id: i32, post_creator_id: i32) -> bool {
+        user_id == post_creator_id
     }
 
     pub async fn fetch_image_posts_for_creator(
@@ -267,6 +284,7 @@ impl Post {
             ["ő", "o"],
             ["ű", "u"],
             ["ß", "ss"],
+            [" ", "-"],
         ];
 
         for [from, to] in replaces.iter() {
@@ -274,7 +292,13 @@ impl Post {
         }
 
         let chunk_regex = Regex::new(r"[^a-zA-Z0-9\-]").unwrap();
-        chunk_regex.replace_all(&title, "_").to_string()
+        let chunk = chunk_regex.replace_all(&title, "").to_string();
+
+        if chunk.is_empty() {
+            "-".to_string()
+        } else {
+            chunk
+        }
     }
 
     /// Checks if a posts with a given id exists. Don't use if you need a whole posts object.
@@ -380,6 +404,201 @@ impl Post {
             .get_results::<Self>(conn)
             .await
     }
+
+    /// Load a single post with its associated aggregates table.
+    pub async fn get_with_counts(
+        pool: &DbPool,
+        id: i32,
+        require_board_not_banned: bool,
+    ) -> Result<(Self, PostAggregates), Error> {
+        use crate::schema::{boards, post_aggregates, posts};
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = posts::table
+            .inner_join(post_aggregates::table)
+            .inner_join(boards::table)
+            .filter(posts::id.eq(id))
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .into_boxed();
+
+        if require_board_not_banned {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
+
+        query.first::<(Self, PostAggregates)>(conn).await
+    }
+
+    /// Load posts for the given ids.
+    pub async fn load_with_counts_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+        require_board_not_banned: bool,
+    ) -> Result<Vec<(Self, PostAggregates)>, Error> {
+        use crate::schema::{boards, post_aggregates, posts};
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = posts::table
+            .inner_join(post_aggregates::table)
+            .inner_join(boards::table)
+            .filter(posts::id.eq_any(ids))
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .into_boxed();
+
+        if require_board_not_banned {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
+
+        query.load::<(Self, PostAggregates)>(conn).await
+    }
+
+    /// Load posts which match the specified criteria, with their associated aggregate tables.
+    /// To be used for graphql queries. When you need all data, use `PostView`.
+    pub async fn load_with_counts(
+        pool: &DbPool,
+        user_id_join: i32,
+        limit: Option<i64>,
+        page: Option<i64>,
+        show_deleted: bool,
+        show_removed: bool,
+        include_banned_boards: bool,
+        saved_only: bool,
+        board_id: Option<i32>,
+        user_id: Option<i32>,
+        sort: SortType,
+        listing_type: ListingType,
+    ) -> Result<Vec<(Self, PostAggregates)>, Error> {
+        use crate::schema::{
+            board_mods, board_subscriber, boards, post_aggregates, post_saved, posts,
+        };
+        let conn = &mut get_conn(pool).await?;
+
+        let mut query = posts::table
+            .inner_join(boards::table)
+            .inner_join(post_aggregates::table)
+            .left_join(
+                post_saved::table.on(post_saved::post_id
+                    .eq(posts::id)
+                    .and(post_saved::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(posts::board_id)
+                    .and(board_mods::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                board_subscriber::table.on(board_subscriber::board_id
+                    .eq(posts::board_id)
+                    .and(board_subscriber::user_id.eq(user_id_join))),
+            )
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .into_boxed();
+
+        if saved_only {
+            query = query.filter(post_saved::id.is_not_null());
+        }
+
+        if !show_removed {
+            query = query.filter(posts::is_removed.eq(false));
+        }
+
+        if !show_deleted {
+            query = query.filter(posts::is_deleted.eq(false));
+        }
+
+        if !include_banned_boards {
+            query = query.filter(
+                boards::is_removed
+                    .eq(false)
+                    .and(boards::is_deleted.eq(false)),
+            );
+        }
+
+        if let Some(user_id) = user_id {
+            query = query.filter(posts::creator_id.eq(user_id));
+        }
+
+        if let Some(board_id) = board_id {
+            query = query.filter(posts::board_id.eq(board_id));
+        }
+
+        match listing_type {
+            // All posts feed: hide posts from hidden boards and boards excluded from /all, except those which the user is a member of
+            ListingType::All => {
+                query = query.filter(
+                    boards::is_hidden
+                        .eq(false)
+                        .and(boards::exclude_from_all.eq(false))
+                        .or(board_subscriber::id.is_not_null()),
+                )
+            }
+            // Subscribed boards: home page, hide nothing
+            ListingType::Subscribed => query = query.filter(board_subscriber::id.is_not_null()),
+            // Local: all posts \ hidden boards
+            ListingType::Local => {
+                query = query.filter(
+                    boards::is_hidden
+                        .eq(false)
+                        .or(board_subscriber::id.is_not_null()),
+                )
+            }
+            // Mod feed: only posts that the user moderates
+            ListingType::Moderated => query = query.filter(board_mods::id.is_not_null()),
+        };
+
+        query = match sort {
+            SortType::Active => query
+                .then_order_by(
+                    hot_rank(post_aggregates::score, post_aggregates::newest_comment_time).desc(),
+                )
+                .then_order_by(post_aggregates::newest_comment_time.desc()),
+            SortType::Hot => query
+                .then_order_by(
+                    hot_rank(post_aggregates::score, post_aggregates::creation_date).desc(),
+                )
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::New => query.then_order_by(post_aggregates::creation_date.desc()),
+            SortType::Old => query.then_order_by(post_aggregates::creation_date.asc()),
+            SortType::NewComments => {
+                query.then_order_by(post_aggregates::newest_comment_time.desc())
+            }
+            SortType::MostComments => query
+                .then_order_by(post_aggregates::comments.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopAll => query
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopYear => query
+                .filter(post_aggregates::creation_date.gt(now - 1.years()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopMonth => query
+                .filter(post_aggregates::creation_date.gt(now - 1.months()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopWeek => query
+                .filter(post_aggregates::creation_date.gt(now - 1.weeks()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::TopDay => query
+                .filter(post_aggregates::creation_date.gt(now - 1.days()))
+                .then_order_by(post_aggregates::score.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
+        };
+
+        let (limit, offset) = limit_and_offset(page, limit)?;
+
+        query = query.limit(limit).offset(offset);
+
+        query.load::<(Self, PostAggregates)>(conn).await
+    }
 }
 
 #[async_trait::async_trait]
@@ -401,9 +620,6 @@ impl Crud for Post {
         let conn = &mut get_conn(pool).await?;
         let new_post = diesel::insert_into(posts::table)
             .values(form)
-            .on_conflict(posts::ap_id)
-            .do_update()
-            .set(form)
             .get_result::<Self>(conn)
             .await?;
 
@@ -437,7 +653,7 @@ impl Moderateable for Post {
 
         // form for submitting remove action to mod log
         let remove_post_form = ModRemovePostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             reason: Some(reason),
             removed: Some(Some(true)),
@@ -459,7 +675,7 @@ impl Moderateable for Post {
 
         // form for submitting remove action to mod log
         let remove_post_form = ModRemovePostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             reason: None,
             removed: Some(Some(false)),
@@ -481,7 +697,7 @@ impl Moderateable for Post {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             locked: Some(Some(true)),
         };
@@ -501,7 +717,7 @@ impl Moderateable for Post {
 
         // form for submitting lock action for mod log
         let lock_form = ModLockPostForm {
-            mod_person_id: admin_id.unwrap_or(1),
+            mod_user_id: admin_id.unwrap_or(1),
             post_id: self.id,
             locked: Some(Some(false)),
         };

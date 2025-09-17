@@ -7,22 +7,30 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = emoji)]
 pub struct Emoji {
     pub id: i32,
-    pub local_site_id: i32,
     pub shortcode: String,
     pub image_url: DbUrl,
     pub alt_text: String,
     pub category: String,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub board_id: Option<i32>,
+    pub created_by_user_id: i32,
+    pub is_active: bool,
+    pub usage_count: i32,
+    pub emoji_scope: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
 #[diesel(table_name = emoji)]
 pub struct EmojiForm {
-    pub local_site_id: Option<i32>,
     pub shortcode: Option<String>,
     pub image_url: Option<DbUrl>,
     pub alt_text: Option<String>,
     pub category: Option<String>,
     pub updated: Option<NaiveDateTime>,
+    pub board_id: Option<i32>,
+    pub created_by_user_id: Option<i32>,
+    pub is_active: Option<bool>,
+    pub usage_count: Option<i32>,
+    pub emoji_scope: Option<String>,
 }

@@ -1,4 +1,5 @@
 .env
+.vscode/*
 target/
 config.hjson
 docker/volumes/*
@@ -6,3 +7,5 @@ docker/volumes/*
 docker/nginx/nginx-certbot.env
 app/media/*
 !app/media/default_pfp.png
+.claude/*
+CLAUDE.md

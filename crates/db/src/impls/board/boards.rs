@@ -1,13 +1,16 @@
+use crate::aggregates::structs::BoardAggregates;
 use crate::models::board::board_mods::BoardModerator;
 use crate::newtypes::DbUrl;
-use crate::schema::{board_mods, board_person_bans, boards, instance};
-use crate::utils::functions::lower;
+use crate::schema::{board_mods, board_user_bans, boards};
+use crate::utils::functions::hot_rank;
+use crate::utils::{fuzzy_search, limit_and_offset};
 use crate::{
-    models::board::board_person_bans::{BoardPersonBan, BoardPersonBanForm},
+    models::board::board_user_bans::{BoardUserBan, BoardUserBanForm},
     models::board::boards::{Board, BoardForm},
-    traits::{ApubActor, Bannable, Crud},
+    traits::{Bannable, Crud},
     utils::{get_conn, naive_now, DbPool},
 };
+use crate::{ListingType, SortType};
 use diesel::{dsl::*, prelude::*, result::Error, QueryDsl};
 use diesel_async::RunQueryDsl;
 
@@ -37,17 +40,52 @@ impl Board {
         c.map(|b| b.is_some())
     }
 
+    pub async fn get_with_counts_for_name(
+        pool: &DbPool,
+        board_name: String,
+    ) -> Result<(Self, BoardAggregates), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, boards};
+
+        boards::table
+            .inner_join(board_aggregates::table)
+            .filter(
+                boards::name.ilike(
+                    board_name
+                        .replace(' ', "")
+                        .replace('%', "\\%")
+                        .replace('_', "\\_"),
+                ),
+            )
+            .first::<(Self, BoardAggregates)>(conn)
+            .await
+    }
+
+    pub async fn get_with_counts_for_ids(
+        pool: &DbPool,
+        ids: Vec<i32>,
+    ) -> Result<Vec<(Self, BoardAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, boards};
+
+        boards::table
+            .inner_join(board_aggregates::table)
+            .filter(boards::id.eq_any(ids))
+            .load::<(Self, BoardAggregates)>(conn)
+            .await
+    }
+
     /// Takes a board id and an user id, and returns true if the user mods the board with the given id or is an admin
     pub async fn board_has_mod(
         pool: &DbPool,
         board_id: i32,
-        person_id: i32,
+        user_id: i32,
     ) -> Result<bool, Error> {
         let conn = &mut get_conn(pool).await?;
         let mod_id = board_mods::table
             .select(board_mods::id)
             .filter(board_mods::board_id.eq(board_id))
-            .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::user_id.eq(user_id))
             .filter(board_mods::invite_accepted.eq(true))
             .first::<i32>(conn)
             .await
@@ -60,13 +98,13 @@ impl Board {
     pub async fn board_get_mod(
         pool: &DbPool,
         board_id: i32,
-        person_id: i32,
+        user_id: i32,
     ) -> Result<Option<BoardModerator>, Error> {
         let conn = &mut get_conn(pool).await?;
         board_mods::table
             .select(board_mods::all_columns)
             .filter(board_mods::board_id.eq(board_id))
-            .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::user_id.eq(user_id))
             .filter(board_mods::invite_accepted.eq(true))
             .first::<BoardModerator>(conn)
             .await
@@ -79,13 +117,13 @@ impl Board {
     pub async fn get_mod_invite(
         pool: &DbPool,
         board_id: i32,
-        person_id: i32,
+        user_id: i32,
     ) -> Result<Option<BoardModerator>, Error> {
         let conn = &mut get_conn(pool).await?;
         board_mods::table
             .select(board_mods::all_columns)
             .filter(board_mods::board_id.eq(board_id))
-            .filter(board_mods::person_id.eq(person_id))
+            .filter(board_mods::user_id.eq(user_id))
             .filter(board_mods::invite_accepted.eq(false))
             .first::<BoardModerator>(conn)
             .await
@@ -138,17 +176,17 @@ impl Board {
     pub async fn board_has_ban(
         pool: &DbPool,
         board_id: i32,
-        person_id: i32,
+        user_id: i32,
     ) -> Result<bool, Error> {
         let conn = &mut get_conn(pool).await?;
-        let ban_id = board_person_bans::table
-            .select(board_person_bans::id)
-            .filter(board_person_bans::board_id.eq(board_id))
-            .filter(board_person_bans::person_id.eq(person_id))
+        let ban_id = board_user_bans::table
+            .select(board_user_bans::id)
+            .filter(board_user_bans::board_id.eq(board_id))
+            .filter(board_user_bans::user_id.eq(user_id))
             .filter(
-                board_person_bans::expires
+                board_user_bans::expires
                     .is_null()
-                    .or(board_person_bans::expires.gt(now)),
+                    .or(board_user_bans::expires.gt(now)),
             )
             .first::<i32>(conn)
             .await
@@ -177,6 +215,104 @@ impl Board {
             .execute(conn)
             .await
             .map(|_| ())
+    }
+
+    /// Admin ban a board with reason (permanent)
+    pub async fn admin_ban(
+        &self, 
+        pool: &DbPool, 
+        admin_id: i32, 
+        public_reason: &str,
+        admin_notes: Option<&str>
+    ) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+
+        diesel::update(boards.find(self.id))
+            .set((
+                is_banned.eq(true),
+                public_ban_reason.eq(public_reason),
+                banned_by.eq(admin_id),
+                banned_at.eq(naive_now()),
+                updated.eq(naive_now())
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())?;
+
+        // Log the admin action
+        use crate::models::moderator::admin_actions::{AdminBanBoard, AdminBanBoardForm};
+        use crate::traits::Crud;
+        
+        let log_form = AdminBanBoardForm {
+            admin_id,
+            board_id: self.id,
+            internal_notes: admin_notes.map(|s| Some(s.to_string())),
+            public_ban_reason: Some(public_reason.to_string()),
+            action: "ban".to_string(),
+        };
+        
+        AdminBanBoard::create(pool, &log_form).await?;
+        Ok(())
+    }
+
+    /// Admin unban a board
+    pub async fn admin_unban(&self, pool: &DbPool, admin_id: i32) -> Result<(), Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::boards::dsl::*;
+
+        diesel::update(boards.find(self.id))
+            .set((
+                is_banned.eq(false),
+                public_ban_reason.eq::<Option<String>>(None),
+                banned_by.eq::<Option<i32>>(None),
+                banned_at.eq::<Option<chrono::NaiveDateTime>>(None),
+                updated.eq(naive_now())
+            ))
+            .execute(conn)
+            .await
+            .map(|_| ())?;
+
+        // Log the admin action
+        use crate::models::moderator::admin_actions::{AdminBanBoard, AdminBanBoardForm};
+        use crate::traits::Crud;
+        
+        let log_form = AdminBanBoardForm {
+            admin_id,
+            board_id: self.id,
+            internal_notes: None,
+            public_ban_reason: None,
+            action: "unban".to_string(),
+        };
+        
+        AdminBanBoard::create(pool, &log_form).await?;
+        Ok(())
+    }
+
+    /// Get all banned boards with counts
+    pub async fn get_banned_boards_with_counts(pool: &DbPool) -> Result<Vec<(Self, BoardAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{boards, board_aggregates};
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        
+        boards::table
+            .inner_join(board_aggregates::table)
+            .filter(boards::is_banned.eq(true))
+            .load::<(Self, BoardAggregates)>(conn)
+            .await
+    }
+
+    /// Get ban history for a specific board
+    pub async fn get_ban_history(pool: &DbPool, target_board_id: i32) -> Result<Vec<crate::models::moderator::admin_actions::AdminBanBoard>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::admin_ban_board::dsl::*;
+        
+        admin_ban_board
+            .filter(board_id.eq(target_board_id))
+            .order(when_.desc())
+            .load::<crate::models::moderator::admin_actions::AdminBanBoard>(conn)
+            .await
     }
 
     pub async fn update_deleted(
@@ -230,6 +366,100 @@ impl Board {
             .get_result::<Self>(conn)
             .await
     }
+
+    pub async fn list_with_counts(
+        pool: &DbPool,
+        user_id_join: i32,
+        limit: Option<i64>,
+        page: Option<i64>,
+        sort: SortType,
+        listing_type: ListingType,
+        search: Option<String>,
+        search_title_and_desc: bool,
+        banned_boards: bool,
+    ) -> Result<Vec<(Self, BoardAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{board_aggregates, board_mods, board_subscriber, boards};
+
+        let mut query = boards::table
+            .inner_join(board_aggregates::table)
+            .left_join(
+                board_subscriber::table.on(board_subscriber::board_id
+                    .eq(boards::id)
+                    .and(board_subscriber::user_id.eq(user_id_join))),
+            )
+            .left_join(
+                board_mods::table.on(board_mods::board_id
+                    .eq(boards::id)
+                    .and(board_mods::user_id.eq(user_id_join))),
+            )
+            .filter(boards::is_removed.eq(banned_boards))
+            .select((boards::all_columns, board_aggregates::all_columns))
+            .into_boxed();
+
+        if let Some(search_query) = search {
+            query = if search_title_and_desc {
+                query.filter(
+                    boards::name
+                        .ilike(fuzzy_search(search_query.as_str()))
+                        .or(boards::title.ilike(fuzzy_search(search_query.as_str())))
+                        .or(boards::description.ilike(fuzzy_search(search_query.as_str()))),
+                )
+            } else {
+                query.filter(boards::name.ilike(fuzzy_search(search_query.as_str())))
+            }
+        };
+
+        query = match listing_type {
+            // All except hidden boards and boards excluded from /all
+            ListingType::All => query.filter(
+                boards::is_hidden
+                    .eq(false)
+                    .and(boards::exclude_from_all.eq(false))
+                    .or(board_subscriber::id.is_not_null()),
+            ),
+            // Subscribed boards
+            ListingType::Subscribed => query.filter(board_subscriber::id.is_not_null()),
+            // Local: all boards \ hidden boards
+            ListingType::Local => query.filter(
+                boards::is_hidden
+                    .eq(false)
+                    .or(board_subscriber::id.is_not_null()),
+            ),
+            // Mod feed: only boards that the user moderates
+            ListingType::Moderated => query.filter(board_mods::id.is_not_null()),
+        };
+
+        query = match sort {
+            SortType::New => query.order_by(boards::creation_date.desc()),
+            SortType::TopAll => query.order_by(board_aggregates::subscribers.desc()),
+            SortType::Hot => query
+                .order_by(
+                    hot_rank(
+                        board_aggregates::subscribers,
+                        board_aggregates::creation_date,
+                    )
+                    .desc(),
+                )
+                .then_order_by(board_aggregates::creation_date.desc()),
+            SortType::Old => query.order_by(boards::creation_date.asc()),
+            _ => query
+                .order_by(
+                    hot_rank(
+                        board_aggregates::subscribers,
+                        board_aggregates::creation_date,
+                    )
+                    .desc(),
+                )
+                .then_order_by(board_aggregates::creation_date.desc()),
+        };
+
+        let (limit, offset) = limit_and_offset(page, limit)?;
+
+        query = query.limit(limit).offset(offset);
+
+        query.load::<(Self, BoardAggregates)>(conn).await
+    }
 }
 
 pub mod safe_type {
@@ -248,10 +478,6 @@ pub mod safe_type {
         is_removed,
         is_nsfw,
         is_hidden,
-        actor_id,
-        subscribers_url,
-        inbox_url,
-        shared_inbox_url,
         moderators_url,
         featured_url,
         ban_reason,
@@ -278,10 +504,6 @@ pub mod safe_type {
                 is_removed,
                 is_nsfw,
                 is_hidden,
-                actor_id,
-                subscribers_url,
-                inbox_url,
-                shared_inbox_url,
                 moderators_url,
                 featured_url,
                 ban_reason,
@@ -329,15 +551,15 @@ impl Crud for Board {
 }
 
 #[async_trait::async_trait]
-impl Bannable for BoardPersonBan {
-    type Form = BoardPersonBanForm;
+impl Bannable for BoardUserBan {
+    type Form = BoardUserBanForm;
 
     async fn ban(pool: &DbPool, ban_form: &Self::Form) -> Result<Self, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_person_bans::dsl::{board_id, board_person_bans, person_id};
-        insert_into(board_person_bans)
+        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
+        insert_into(board_user_bans)
             .values(ban_form)
-            .on_conflict((board_id, person_id))
+            .on_conflict((board_id, user_id))
             .do_update()
             .set(ban_form)
             .get_result::<Self>(conn)
@@ -346,57 +568,14 @@ impl Bannable for BoardPersonBan {
 
     async fn unban(pool: &DbPool, ban_form: &Self::Form) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
-        use crate::schema::board_person_bans::dsl::{board_id, board_person_bans, person_id};
+        use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
         diesel::delete(
-            board_person_bans
+            board_user_bans
                 .filter(board_id.eq(ban_form.board_id))
-                .filter(person_id.eq(ban_form.person_id)),
+                .filter(user_id.eq(ban_form.user_id)),
         )
         .execute(conn)
         .await
     }
 }
 
-#[async_trait::async_trait]
-impl ApubActor for Board {
-    async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error> {
-        let conn = &mut get_conn(pool).await?;
-        Ok(boards::table
-            .filter(boards::actor_id.eq(object_id.to_string()))
-            .first::<Board>(conn)
-            .await
-            .ok()
-            .map(Into::into))
-    }
-
-    async fn read_from_name(
-        pool: &DbPool,
-        board_name: &str,
-        include_deleted: bool,
-    ) -> Result<Board, Error> {
-        let conn = &mut get_conn(pool).await?;
-        let mut q = boards::table
-            .into_boxed()
-            .filter(boards::local.eq(true))
-            .filter(lower(boards::name).eq(board_name.to_lowercase()));
-        if !include_deleted {
-            q = q.filter(boards::is_deleted.eq(false));
-        }
-        q.first::<Self>(conn).await
-    }
-
-    async fn read_from_name_and_domain(
-        pool: &DbPool,
-        board_name: &str,
-        for_domain: &str,
-    ) -> Result<Board, Error> {
-        let conn = &mut get_conn(pool).await?;
-        boards::table
-            .inner_join(instance::table)
-            .filter(lower(boards::name).eq(board_name.to_lowercase()))
-            .filter(instance::domain.eq(for_domain))
-            .select(boards::all_columns)
-            .first::<Self>(conn)
-            .await
-    }
-}

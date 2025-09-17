@@ -1,0 +1,1 @@
+ALTER TABLE person ALTER COLUMN public_key SET NOT NULL;

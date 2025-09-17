@@ -1,0 +1,1 @@
+ALTER TABLE boards ALTER COLUMN public_key DROP NOT NULL;

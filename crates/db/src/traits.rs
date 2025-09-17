@@ -1,4 +1,4 @@
-use crate::{newtypes::{DbUrl}, utils::DbPool};
+use crate::utils::DbPool;
 use diesel::{result::Error};
 use tinyboards_utils::TinyBoardsError;
 
@@ -33,7 +33,7 @@ pub trait Subscribeable {
     async fn unsubscribe(pool: &DbPool, form: &Self::Form) -> Result<usize, Error>
     where
         Self: Sized;
-    async fn subscribe_accepted(pool: &DbPool, board_id: i32, person_id: i32) -> Result<Self, Error>
+    async fn subscribe_accepted(pool: &DbPool, board_id: i32, user_id: i32) -> Result<Self, Error>
     where
         Self: Sized;
 }
@@ -58,7 +58,7 @@ pub trait Voteable {
         Self: Sized;
     async fn remove(
         pool: &DbPool,
-        person_id: i32,
+        user_id: i32,
         item_id: Self::IdType,
     ) -> Result<usize, TinyBoardsError>
     where
@@ -162,28 +162,6 @@ pub trait Moderateable {
         -> Result<(), TinyBoardsError>;
 }
 
-#[async_trait::async_trait]
-pub trait ApubActor {
-    async fn read_from_apub_id(pool: &DbPool, object_id: &DbUrl) -> Result<Option<Self>, Error>
-    where
-        Self: Sized;
-    /// - actor_name is the name of the board or user to read
-    /// - include_deleted, if true, will return boards or users that were deleted/removed
-    async fn read_from_name(
-        pool: &DbPool,
-        actor_name: &str,
-        include_deleted: bool,
-    ) -> Result<Self, Error>
-    where
-        Self: Sized;
-    async fn read_from_name_and_domain(
-        pool: &DbPool,
-        actor_name: &str,
-        protocol_domain: &str,
-    ) -> Result<Self, Error>
-    where
-        Self: Sized;
-}
 
 pub trait JoinView {
     type JoinTuple;

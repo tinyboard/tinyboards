@@ -1,0 +1,12 @@
+pub mod admin;
+pub mod auth;
+pub mod board;
+pub mod board_moderation;
+pub mod comment;
+pub mod emoji;
+pub mod message;
+pub mod notifications;
+pub mod user;
+pub mod post;
+pub mod reports;
+pub mod site;

@@ -4,7 +4,7 @@ use std::fmt::{Debug, Display};
 use tracing_error::SpanTrace;
 
 #[derive(serde::Serialize)]
-struct ApiError {
+pub struct ApiError {
     error: String,
     error_code: u16,
 }
@@ -67,6 +67,17 @@ impl TinyBoardsError {
     }
 }
 
+impl Clone for TinyBoardsError {
+    fn clone(&self) -> Self {
+        Self {
+            message: self.message.clone(),
+            inner: anyhow::anyhow!("{}", self.inner.to_string()),
+            context: SpanTrace::capture(),
+            error_code: self.error_code,
+        }
+    }
+}
+
 impl<T> From<T> for TinyBoardsError
 where
     T: Into<anyhow::Error>,
@@ -91,13 +102,23 @@ impl Debug for TinyBoardsError {
     }
 }
 
-impl Display for TinyBoardsError {
+/*impl Display for TinyBoardsError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if let Some(message) = &self.message {
             write!(f, "{}: ", message)?;
         }
         writeln!(f, "{}", self.inner)?;
         fmt::Display::fmt(&self.context, f)
+    }
+}*/
+
+impl Display for TinyBoardsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(message) = &self.message {
+            write!(f, "{}", message)
+        } else {
+            write!(f, "{}", self.inner)
+        }
     }
 }
 
