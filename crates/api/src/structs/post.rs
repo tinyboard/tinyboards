@@ -49,7 +49,7 @@ pub struct Post {
     /*creator: Option<Person>,
     is_creator_banned_from_board: bool,
     is_saved: bool,
-    my_vote: Option<i16>,
+    my_vote: Option<i32>,
     mod_permissions: Option<i32>,*/
 }
 
@@ -91,7 +91,7 @@ impl Post {
             .map_err(|e| e.into())
     }
 
-    pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i16> {
+    pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i32> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
 
         loader

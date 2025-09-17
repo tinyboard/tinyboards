@@ -157,13 +157,18 @@ impl SubmitPost {
             type_: Some(type_),
             url: url.map(|url| url.into()),
             // image: data.image,
-            body: body, // once told me, the world was gonna roll me
+            body: Some(body.unwrap_or_default()), // Ensure body is always Some(String)
             body_html: body_html,
             creator_id: Some(v.id),
             board_id: Some(board.id),
             is_nsfw: Some(is_nsfw),
             title_chunk: Some(DbPost::generate_chunk(title)),
-            ..PostForm::default()
+            is_removed: Some(false),
+            is_locked: Some(false),
+            is_deleted: Some(false),
+            featured_board: Some(false),
+            featured_local: Some(false),
+            ..Default::default()
         };
 
         let published_post = DbPost::submit(pool, post_form).await?;

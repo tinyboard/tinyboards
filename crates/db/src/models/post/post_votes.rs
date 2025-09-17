@@ -8,7 +8,7 @@ pub struct PostVote {
     pub id: i32,
     pub post_id: i32,
     pub user_id: i32,
-    pub score: i16,
+    pub score: i32,
 }
 
 #[derive(Clone, Insertable, AsChangeset)]
@@ -16,5 +16,5 @@ pub struct PostVote {
 pub struct PostVoteForm {
     pub post_id: i32,
     pub user_id: i32,
-    pub score: i16,
+    pub score: i32,
 }

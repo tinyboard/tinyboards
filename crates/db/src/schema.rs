@@ -189,7 +189,7 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         comment_id -> Int4,
-        score -> Int2,
+        score -> Int4,
         creation_date -> Timestamp,
         post_id -> Int4,
     }
@@ -489,7 +489,7 @@ diesel::table! {
         id -> Int4,
         post_id -> Int4,
         user_id -> Int4,
-        score -> Int2,
+        score -> Int4,
     }
 }
 

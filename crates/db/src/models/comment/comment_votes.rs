@@ -9,7 +9,7 @@ pub struct CommentVote {
     pub id: i32,
     pub user_id: i32,
     pub comment_id: i32,
-    pub score: i16,
+    pub score: i32,
     pub creation_date: NaiveDateTime,
     pub post_id: i32,
 }
@@ -19,6 +19,6 @@ pub struct CommentVote {
 pub struct CommentVoteForm {
     pub comment_id: i32,
     pub user_id: i32,
-    pub score: i16,
+    pub score: i32,
     pub post_id: i32,
 }

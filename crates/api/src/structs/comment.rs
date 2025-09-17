@@ -84,7 +84,7 @@ impl Comment {
             .map_err(|e| e.into())
     }
 
-    pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i16> {
+    pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i32> {
         let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
 
         loader

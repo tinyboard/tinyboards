@@ -25,7 +25,7 @@ impl CommentActions {
         &self,
         ctx: &Context<'_>,
         id: i32,
-        vote_type: i16,
+        vote_type: i32,
     ) -> Result<Comment> {
         let v = ctx
             .data_unchecked::<LoggedInUser>()

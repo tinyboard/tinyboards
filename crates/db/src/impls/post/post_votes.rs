@@ -13,7 +13,7 @@ impl PostVote {
         pool: &DbPool,
         ids: Vec<i32>,
         for_user_id: i32,
-    ) -> Result<Vec<(i32, i16)>, Error> {
+    ) -> Result<Vec<(i32, i32)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{post_votes, posts};
 
@@ -25,12 +25,12 @@ impl PostVote {
             )
             .filter(posts::id.eq_any(ids))
             .select((posts::id, post_votes::score.nullable()))
-            .load::<(i32, Option<i16>)>(conn)
+            .load::<(i32, Option<i32>)>(conn)
             .await
             .map(|list| {
                 list.into_iter()
                     .map(|(post_id, vote_type)| (post_id, vote_type.unwrap_or(0)))
-                    .collect::<Vec<(i32, i16)>>()
+                    .collect::<Vec<(i32, i32)>>()
             })
     }
 }

@@ -6,7 +6,7 @@ use tinyboards_utils::TinyBoardsError;
 
 /// Check if downvotes are enabled for the site
 #[tracing::instrument(skip_all)]
-pub async fn check_downvotes_enabled(score: i16, pool: &DbPool) -> Result<(), TinyBoardsError> {
+pub async fn check_downvotes_enabled(score: i32, pool: &DbPool) -> Result<(), TinyBoardsError> {
     if score == -1 {
         let site = Site::read(pool).await?;
 

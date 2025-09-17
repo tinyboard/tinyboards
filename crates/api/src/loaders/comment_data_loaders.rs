@@ -34,7 +34,7 @@ impl Loader<PostIdForComment> for PostgresLoader {
 }
 
 impl Loader<VoteForCommentId> for PostgresLoader {
-    type Value = i16;
+    type Value = i32;
     type Error = TinyBoardsError;
 
     async fn load(

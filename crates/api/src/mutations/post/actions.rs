@@ -22,7 +22,7 @@ pub struct PostActions;
 
 #[Object]
 impl PostActions {
-    pub async fn vote_on_post(&self, ctx: &Context<'_>, id: i32, vote_type: i16) -> Result<Post> {
+    pub async fn vote_on_post(&self, ctx: &Context<'_>, id: i32, vote_type: i32) -> Result<Post> {
         let v = ctx
             .data_unchecked::<LoggedInUser>()
             .require_user_not_banned()?;

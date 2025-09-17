@@ -10,7 +10,7 @@ use crate::newtypes::{ModPermsForPostId, SavedForPostId, VoteForPostId};
 use crate::PostgresLoader; 
 
 impl Loader<VoteForPostId> for PostgresLoader {
-    type Value = i16;
+    type Value = i32;
     type Error = TinyBoardsError;
 
     async fn load(
