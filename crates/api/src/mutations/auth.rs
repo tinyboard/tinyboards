@@ -90,7 +90,7 @@ impl Auth {
         })?;
 
         Ok(LoginResponse {
-            token: get_jwt(u.id, &u.name, &jwt_secret),
+            token: get_jwt(u.id, &u.name, &jwt_secret)?,
         })
     }
 
@@ -255,7 +255,7 @@ impl Auth {
                     | RegistrationMode::OpenWithEmailVerification
                     | RegistrationMode::InviteOnlyAdmin
                     | RegistrationMode::InviteOnlyUser => {
-                        Some(get_jwt(inserted_user.id, &inserted_user.name, &jwt_secret))
+                        Some(get_jwt(inserted_user.id, &inserted_user.name, &jwt_secret)?)
                     }
                     RegistrationMode::RequireApplication
                     | RegistrationMode::Closed => None,

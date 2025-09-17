@@ -12,9 +12,6 @@ diesel_migrations = { workspace = true }
 diesel-derive-newtype = { workspace = true }
 serde = { workspace = true }
 url = { workspace = true }
-jwt = { workspace = true }
-hmac = { workspace = true }
-sha2 = { workspace = true }
 strum = { workspace = true }
 strum_macros = { workspace = true }
 async-trait = { workspace = true }

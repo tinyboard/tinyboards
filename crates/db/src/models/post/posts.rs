@@ -23,7 +23,7 @@ pub struct Post {
     pub is_nsfw: bool,
     pub updated: Option<NaiveDateTime>,
     pub image: Option<DbUrl>,
-    pub language_id: i32,
+    pub language_id: Option<i32>,
     pub featured_board: bool,
     pub featured_local: bool,
     pub title_chunk: String,

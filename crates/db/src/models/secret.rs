@@ -6,5 +6,5 @@ use diesel::prelude::*;
 #[diesel(table_name = secret)]
 pub struct Secret {
     pub id: i32,
-    pub jwt: String,
+    pub jwt_secret: String,
 }

@@ -1,7 +1,6 @@
-use hmac::{Hmac, Mac};
-use jwt::{AlgorithmType, Header, SignWithKey, Token, VerifyWithKey};
-use sha2::Sha384;
-use std::collections::BTreeMap;
+use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, TokenData, Validation};
+use serde::{Deserialize, Serialize};
+use chrono::Utc;
 use tinyboards_db::{
     models::{secret::Secret, user::user::User},
     traits::Crud,
@@ -9,25 +8,37 @@ use tinyboards_db::{
 };
 use tinyboards_utils::TinyBoardsError;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    /// User ID
+    pub sub: i32,
+    /// Username
+    pub uname: String,
+    /// Issuer (hostname)
+    pub iss: String,
+    /// Issued at time as UNIX timestamp
+    pub iat: i64,
+    /// Expiration time as UNIX timestamp (optional)
+    pub exp: Option<i64>,
+}
+
 /// Generate a JWT token for a user
-pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
-    let key: Hmac<Sha384> = Hmac::new_from_slice(master_key.jwt.as_bytes()).unwrap();
-    let header = Header {
-        algorithm: AlgorithmType::Hs384,
-        ..Default::default()
+pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> Result<String, TinyBoardsError> {
+    let now = Utc::now().timestamp();
+
+    let claims = Claims {
+        sub: uid,
+        uname: uname.to_string(),
+        iss: "tinyboards".to_string(), // or get from config
+        iat: now,
+        exp: Some(now + 86400), // 24 hours from now
     };
 
-    let mut claims = BTreeMap::new();
-    claims.insert("uid".to_string(), uid.to_string());
-    claims.insert("uname".to_string(), uname.to_string());
+    let key = EncodingKey::from_secret(master_key.jwt_secret.as_bytes());
+    let token = encode(&Header::default(), &claims, &key)
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to create JWT token"))?;
 
-    let token = Token::new(header, claims)
-        .sign_with_key(&key)
-        .unwrap()
-        .as_str()
-        .to_string();
-
-    token
+    Ok(token)
 }
 
 /// Extract user from Authorization header (Bearer token)
@@ -52,30 +63,21 @@ pub async fn get_user_from_header_opt(
         ));
     }
 
-    // Reference to the string stored in `auth` skipping the `Bearer ` part
-    let token = String::from(&auth[7..]);
-    let master_key_str = master_key.jwt.clone();
+    // Extract token from "Bearer <token>"
+    let token = &auth[7..];
 
-    // Parse and validate JWT token
+    // Decode and validate JWT token
+    let mut validation = Validation::default();
+    validation.validate_exp = true; // Enable expiration validation
 
-    let key: Hmac<Sha384> = Hmac::new_from_slice(master_key_str.as_bytes())
-        .map_err(|_| TinyBoardsError::from_message(500, "Invalid JWT key"))?;
-
-    let token: Token<Header, BTreeMap<String, String>, _> = token
-        .verify_with_key(&key)
+    let key = DecodingKey::from_secret(master_key.jwt_secret.as_bytes());
+    let token_data: TokenData<Claims> = decode(token, &key, &validation)
         .map_err(|_| TinyBoardsError::from_message(401, "Invalid or expired token"))?;
 
-    let claims = token.claims();
-
-    // Extract user ID from JWT claims
-    let user_id: i32 = claims
-        .get("uid")
-        .ok_or_else(|| TinyBoardsError::from_message(401, "Invalid token: missing user ID"))?
-        .parse()
-        .map_err(|_| TinyBoardsError::from_message(401, "Invalid token: invalid user ID"))?;
+    let claims = token_data.claims;
 
     // Load user from database
-    let user = User::read(pool, user_id).await
+    let user = User::read(pool, claims.sub).await
         .map_err(|_| TinyBoardsError::from_message(401, "User not found"))?;
 
     Ok(Some(user))

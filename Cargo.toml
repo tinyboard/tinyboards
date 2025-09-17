@@ -81,8 +81,6 @@ rand = "0.8.5"
 opentelemetry = { version = "0.18.0", features = ["rt-tokio"] }
 tracing-opentelemetry = { version = "0.18.0" }
 dotenv = "0.15.0"
-jwt = "0.16.0"
-hmac = "0.12.1"
 encoding = "0.2.33"
 markdown = "0.3.0"
 derive_more = "0.99.17"

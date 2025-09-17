@@ -56,7 +56,7 @@ async fn perform_graphql(
             graphql_request
                 .into_inner()
                 .data(LoggedInUser::from(logged_in_user))
-                .data(MasterKey::from(context.master_key().jwt.clone()))
+                .data(MasterKey::from(context.master_key().jwt_secret.clone()))
                 .data(GQLSettings::from(context.settings()))
                 .data(context.pool().clone())
                 .data(DataLoader::new(

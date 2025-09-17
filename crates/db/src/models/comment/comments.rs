@@ -20,7 +20,7 @@ pub struct Comment {
     pub updated: Option<NaiveDateTime>,
     pub is_locked: bool,
     pub board_id: i32,
-    pub language_id: i32,
+    pub language_id: Option<i32>,
     pub is_pinned: Option<bool>,
 }
 

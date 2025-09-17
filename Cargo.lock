@@ -2082,21 +2082,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jwt"
-version = "0.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6204285f77fe7d9784db3fdc449ecce1a0114927a51d5a41c4c7a292011c015f"
-dependencies = [
- "base64 0.13.1",
- "crypto-common",
- "digest",
- "hmac",
- "serde",
- "serde_json",
- "sha2",
-]
-
-[[package]]
 name = "language-tags"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4110,15 +4095,13 @@ dependencies = [
  "diesel",
  "diesel-async",
  "encoding",
- "hmac",
  "image",
- "jwt",
+ "jsonwebtoken",
  "lazy_static",
  "regex",
  "reqwest-middleware",
  "serde",
  "serde_with",
- "sha2",
  "tinyboards_db",
  "tinyboards_utils",
  "tokio",
@@ -4140,13 +4123,10 @@ dependencies = [
  "diesel-async",
  "diesel-derive-newtype",
  "diesel_migrations",
- "hmac",
- "jwt",
  "regex",
  "serde",
  "serde_json",
  "serde_with",
- "sha2",
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "tinyboards_utils",

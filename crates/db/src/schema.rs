@@ -211,7 +211,7 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         is_locked -> Bool,
         board_id -> Int4,
-        language_id -> Int4,
+        language_id -> Nullable<Int4>,
         is_pinned -> Nullable<Bool>,
     }
 }
@@ -514,7 +514,7 @@ diesel::table! {
         is_nsfw -> Bool,
         updated -> Nullable<Timestamp>,
         image -> Nullable<Text>,
-        language_id -> Int4,
+        language_id -> Nullable<Int4>,
         featured_board -> Bool,
         featured_local -> Bool,
         #[max_length = 255]
