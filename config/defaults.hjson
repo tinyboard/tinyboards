@@ -97,4 +97,28 @@
   environment: "dev"
   # Username of the site owner
   owner_name: "admin"
+  # CORS configuration for cross-origin requests
+  cors: {
+    # List of allowed origins for CORS requests
+    allowed_origins: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3001"
+    ]
+    # Whether to allow credentials in CORS requests
+    allow_credentials: true
+    # Maximum age for preflight requests in seconds
+    max_age: 3600
+    # Allowed methods for CORS requests
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    # Allowed headers for CORS requests
+    allowed_headers: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With"
+    ]
+  }
 }

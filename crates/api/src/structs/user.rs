@@ -182,7 +182,7 @@ impl User {
     pub async fn moderates(&self, ctx: &Context<'_>) -> Result<Vec<BoardMod>> {
         let pool = ctx.data_unchecked::<DbPool>();
 
-        DbBoardMod::for_person(pool, self.id)
+        DbBoardMod::for_user(pool, self.id)
             .await
             .map(|res| {
                 res.into_iter()

@@ -106,8 +106,8 @@ impl BoardModerator {
             .await
     }
 
-    /// Load the list of boards that the person moderates.
-    pub async fn for_person(pool: &DbPool, for_user_id: i32) -> Result<Vec<Self>, Error> {
+    /// Load the list of boards that the user moderates.
+    pub async fn for_user(pool: &DbPool, for_user_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{board_aggregates, board_mods};
 

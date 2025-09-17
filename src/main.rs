@@ -106,10 +106,32 @@ async fn main() -> Result<(), TinyBoardsError> {
             graphql_schema.clone(),
         );
 
-        let cors_config = Cors::default(); // todo we need to properly fix this CORS thing
-            //.allowed_origin("http://localhost")
-            //.allowed_methods(vec!["GET", "POST", "OPTIONS", "PUT"])
-            //.allowed_headers(vec!["Content-Type", "Accepts"]);
+        // Configure CORS based on settings
+        let mut cors_config = Cors::default();
+
+        // Add allowed origins
+        for origin in &settings.cors.allowed_origins {
+            cors_config = cors_config.allowed_origin(origin);
+        }
+
+        // Configure methods
+        let methods: Vec<actix_web::http::Method> = settings.cors.allowed_methods
+            .iter()
+            .filter_map(|method| method.parse().ok())
+            .collect();
+        cors_config = cors_config.allowed_methods(methods);
+
+        // Configure headers
+        let headers: Vec<actix_web::http::header::HeaderName> = settings.cors.allowed_headers
+            .iter()
+            .filter_map(|header| header.parse().ok())
+            .collect();
+        cors_config = cors_config.allowed_headers(headers);
+
+        // Configure credentials and max age
+        cors_config = cors_config
+            .supports_credentials()
+            .max_age(settings.cors.max_age as usize);
 
         App::new()
             .wrap(actix_web::middleware::Logger::default())

@@ -91,4 +91,30 @@
   salt_suffix: "somesalt"
   # Environment where the code is being ran (prod or dev)
   environment: "dev"
+  # CORS configuration for cross-origin requests
+  cors: {
+    # List of allowed origins for CORS requests
+    allowed_origins: [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://tinyboards.test",
+      "http://tinyboards-fe:3000",
+      "http://localhost",
+      "http://127.0.0.1"
+    ]
+    # Whether to allow credentials in CORS requests
+    allow_credentials: true
+    # Maximum age for preflight requests in seconds
+    max_age: 3600
+    # Allowed methods for CORS requests
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    # Allowed headers for CORS requests
+    allowed_headers: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With"
+    ]
+  }
 }

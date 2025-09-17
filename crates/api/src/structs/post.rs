@@ -151,7 +151,7 @@ impl Post {
         let pool = ctx.data::<DbPool>()?;
         let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
-        let person_id_join = match v_opt {
+        let user_id_join = match v_opt {
             Some(v) => v.id,
             None => -1,
         };
@@ -197,7 +197,7 @@ impl Post {
                     top_comment_id,
                     context,
                     sort.into(),
-                    person_id_join,
+                    user_id_join,
                     Some(self.id),
                     Some(max_depth),
                 )
@@ -212,7 +212,7 @@ impl Post {
         } else {
             let comments = DbComment::load_with_counts(
                 pool,
-                person_id_join,
+                user_id_join,
                 sort.into(),
                 listing_type.into(),
                 page,
@@ -243,7 +243,7 @@ impl Post {
                 .iter_mut()
                 .filter(|comment| comment.is_removed || comment.is_deleted)
             {
-                comment.censor(person_id_join, is_admin, is_mod);
+                comment.censor(user_id_join, is_admin, is_mod);
             }
         }
 

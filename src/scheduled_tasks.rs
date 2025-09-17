@@ -15,7 +15,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
         .expect("could not establish connection");
 
     update_banned_when_expired(&mut conn1);
-    update_person_aggregates_rep(&mut conn1);
+    update_user_aggregates_rep(&mut conn1);
 
     // On startup, reindex the tables non-concurrently
     reindex_aggregates_tables(&mut conn1, true);
@@ -35,7 +35,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     frequent_scheduler
     .every(TimeUnits::minutes(5))
     .run(move || {
-        update_person_aggregates_rep(&mut conn2);
+        update_user_aggregates_rep(&mut conn2);
         update_banned_when_expired(&mut conn2);
     });
 
@@ -66,25 +66,25 @@ fn reindex_table(conn: &mut PgConnection, table_name: &str, concurrently: bool) 
 
 /// Set banned to false after ban expires
 fn update_banned_when_expired(conn: &mut PgConnection) {
-    info!("Updating is_banned column if it expired on the person table...");
+    info!("Updating is_banned column if it expired on the user table...");
     let update_ban_expires_stmt =
-        "update person set is_banned = false where is_banned = true and unban_date < now()";
+        "update users set is_banned = false where is_banned = true and unban_date < now()";
     sql_query(update_ban_expires_stmt)
         .execute(conn)
         .expect("update banned when expires");
 }
 
-/// update the rep calculation on person_aggregates
-fn update_person_aggregates_rep(conn: &mut PgConnection) {
-    info!("Updating rep values on person_aggregates ...");
-    let update_person_aggregates_rep_stmt = 
-    "update person_aggregates pa
+/// update the rep calculation on user_aggregates
+fn update_user_aggregates_rep(conn: &mut PgConnection) {
+    info!("Updating rep values on user_aggregates ...");
+    let update_user_aggregates_rep_stmt =
+    "update user_aggregates ua
      set rep = calc.rep
      from (
          select
-             pu.id as person_id, 
-             round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep 
-         from person pu
+             u.id as user_id,
+             round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep
+         from users u
          left join (
              select p.creator_id,
                  count(distinct p.id) as posts,
@@ -92,7 +92,7 @@ fn update_person_aggregates_rep(conn: &mut PgConnection) {
                  from posts p
                  left join post_votes pv on p.id = pv.post_id
                  group by p.creator_id
-             ) pd on pu.id = pd.creator_id
+             ) pd on u.id = pd.creator_id
          left join (
              select c.creator_id,
                  count(distinct c.id) as comments,
@@ -100,12 +100,12 @@ fn update_person_aggregates_rep(conn: &mut PgConnection) {
                  from comments c
                  left join comment_votes cv on c.id = cv.comment_id
                  group by c.creator_id
-             ) cd on pu.id = cd.creator_id
-         ) calc 
-     where pa.person_id = calc.person_id;";
-     sql_query(update_person_aggregates_rep_stmt)
+             ) cd on u.id = cd.creator_id
+         ) calc
+     where ua.user_id = calc.user_id;";
+     sql_query(update_user_aggregates_rep_stmt)
          .execute(conn)
-         .expect("update person aggregates rep values");
+         .expect("update user aggregates rep values");
 }
 
 /// Re-calculate the site and board active counts every 12 hours

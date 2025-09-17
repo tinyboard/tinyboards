@@ -132,7 +132,7 @@ pub enum UserListingType {
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum SearchType {
     #[strum(ascii_case_insensitive)]
-    Person,
+    User,
     #[strum(ascii_case_insensitive)]
     Post,
     #[strum(ascii_case_insensitive)]
@@ -216,7 +216,7 @@ pub fn map_to_modlog_type(match_string: Option<&str>) -> ModLogActionType {
 
 pub fn map_to_search_type(match_string: Option<&str>) -> SearchType {
     match match_string {
-        Some("person") => SearchType::Person,
+        Some("user") => SearchType::User,
         Some("post") => SearchType::Post,
         Some("comment") => SearchType::Comment,
         Some("board") => SearchType::Board,

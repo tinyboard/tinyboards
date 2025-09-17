@@ -59,6 +59,9 @@ pub struct Settings {
   #[default("admin")]
   #[doku(example = "admin")]
   pub owner_name: String,
+  /// CORS configuration
+  #[default(Default::default())]
+  pub cors: CorsConfig,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
@@ -200,3 +203,24 @@ pub struct CaptchaConfig {
 //   #[default(None)]
 //   pub api_key: Option<String>,
 // }
+
+#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
+#[serde(default)]
+pub struct CorsConfig {
+  /// List of allowed origins for CORS requests
+  #[default(vec!["http://localhost:3000".to_string(), "http://127.0.0.1:3000".to_string()])]
+  #[doku(example = "[\"http://localhost:3000\", \"https://your-domain.com\"]")]
+  pub allowed_origins: Vec<String>,
+  /// Whether to allow credentials in CORS requests
+  #[default(true)]
+  pub allow_credentials: bool,
+  /// Maximum age for preflight requests in seconds
+  #[default(3600)]
+  pub max_age: u32,
+  /// Allowed methods for CORS requests
+  #[default(vec!["GET".to_string(), "POST".to_string(), "PUT".to_string(), "DELETE".to_string(), "OPTIONS".to_string(), "PATCH".to_string()])]
+  pub allowed_methods: Vec<String>,
+  /// Allowed headers for CORS requests
+  #[default(vec!["Content-Type".to_string(), "Authorization".to_string(), "Accept".to_string(), "Origin".to_string(), "X-Requested-With".to_string()])]
+  pub allowed_headers: Vec<String>,
+}

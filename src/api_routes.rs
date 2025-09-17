@@ -45,7 +45,7 @@ async fn perform_graphql(
     let logged_in_user =
         get_user_from_header_opt(context.pool(), context.master_key(), auth_header).await?;
 
-    let my_person_id = match logged_in_user {
+    let my_user_id = match logged_in_user {
         Some(ref v) => v.id,
         None => -1,
     };
@@ -60,7 +60,7 @@ async fn perform_graphql(
                 .data(GQLSettings::from(context.settings()))
                 .data(context.pool().clone())
                 .data(DataLoader::new(
-                    PostgresLoader::new(context.pool(), my_person_id),
+                    PostgresLoader::new(context.pool(), my_user_id),
                     tokio::spawn,
                 )),
         )
