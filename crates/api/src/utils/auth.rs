@@ -18,8 +18,8 @@ pub fn get_jwt(uid: i32, uname: &str, master_key: &Secret) -> String {
     };
 
     let mut claims = BTreeMap::new();
-    claims.insert("uid", uid.to_string());
-    claims.insert("uname", uname.to_string());
+    claims.insert("uid".to_string(), uid.to_string());
+    claims.insert("uname".to_string(), uname.to_string());
 
     let token = Token::new(header, claims)
         .sign_with_key(&key)

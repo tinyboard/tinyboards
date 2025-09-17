@@ -49,7 +49,7 @@
   # Parameters to configure how media uploads are stored on the instance
   media: {
     # media file path to which uploads will be stored and served from
-    media_path: "/app/media"
+    media_path: "media"
     # maximum file size in megabytes for uploads
     max_file_size_mb: 50
   }

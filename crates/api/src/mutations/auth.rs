@@ -1,17 +1,18 @@
 /**
  * Login and registration
  **/
-use crate::{utils::auth::password_length_check, DbPool, LoggedInUser, MasterKey, Settings};
+use crate::{utils::auth::{password_length_check, get_jwt}, DbPool, LoggedInUser, MasterKey, Settings};
 use async_graphql::*;
 use regex::Regex;
 
 use tinyboards_db::models::user::user::*;
-use tinyboards_db::newtypes::DbUrl;
 
 use tinyboards_db::models::site::registration_applications::RegistrationApplication;
 use tinyboards_db::models::site::registration_applications::RegistrationApplicationForm;
 use tinyboards_db::models::site::site_invite::SiteInvite as DbSiteInvite;
 use tinyboards_db::models::site::site::Site as DbSite;
+use tinyboards_db::models::secret::Secret;
+use diesel_async::RunQueryDsl;
 use tinyboards_db::RegistrationMode;
 use tinyboards_db::traits::Crud;
 //use tinyboards_federation::http_signatures::generate_actor_keypair;
@@ -81,8 +82,15 @@ impl Auth {
         }
 
         // all good: generate access token
+        // Read the secret from database to generate proper JWT
+        use tinyboards_db::schema::secret::dsl::secret as secret_table;
+        let mut conn = pool.get().await?;
+        let jwt_secret = secret_table.first::<Secret>(&mut conn).await.map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Failed to load JWT secret")
+        })?;
+
         Ok(LoginResponse {
-            token: u.get_jwt(master_key),
+            token: get_jwt(u.id, &u.name, &jwt_secret),
         })
     }
 
@@ -233,16 +241,23 @@ impl Auth {
 
         // TODO: email verification, if that's required
 
+        // Read the secret from database to generate proper JWT
+        use tinyboards_db::schema::secret::dsl::secret as secret_table;
+        let mut conn = pool.get().await?;
+        let jwt_secret = secret_table.first::<Secret>(&mut conn).await.map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Failed to load JWT secret")
+        })?;
+
         Ok(SignupResponse {
             token: {
                 match registration_mode {
-                    RegistrationMode::Open 
+                    RegistrationMode::Open
                     | RegistrationMode::OpenWithEmailVerification
-                    | RegistrationMode::InviteOnlyAdmin 
+                    | RegistrationMode::InviteOnlyAdmin
                     | RegistrationMode::InviteOnlyUser => {
-                        Some(inserted_user.get_jwt(master_key))
+                        Some(get_jwt(inserted_user.id, &inserted_user.name, &jwt_secret))
                     }
-                    RegistrationMode::RequireApplication 
+                    RegistrationMode::RequireApplication
                     | RegistrationMode::Closed => None,
                 }
             },

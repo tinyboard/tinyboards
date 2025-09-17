@@ -182,10 +182,10 @@ impl User {
     }
 
     /// Generate JWT token for this user - to be called from API layer with proper key
-    pub fn get_jwt<T>(&self, master_key: &T) -> String {
-        // This is a simplified implementation - the actual JWT generation
-        // should use the API common utils with proper key handling
-        format!("jwt_token_for_user_{}_{}", self.id, self.name)
+    /// This is a placeholder - the actual JWT generation should be done in the API layer
+    pub fn get_jwt<T>(&self, _master_key: &T) -> String {
+        // This should not be used directly - use the API utils auth::get_jwt function instead
+        unimplemented!("Use tinyboards_api::utils::auth::get_jwt instead")
     }
 
 }
