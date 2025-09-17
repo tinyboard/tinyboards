@@ -1,6 +1,7 @@
 pub mod banned_users;
 pub mod board_moderators;
 pub mod boards;
+pub mod emojis;
 pub mod invites;
 pub mod site;
 pub mod me;

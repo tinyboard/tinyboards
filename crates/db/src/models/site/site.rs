@@ -54,6 +54,11 @@ pub struct Site {
     pub approved_image_hosts: Option<String>,
     pub image_embed_hosts_only: Option<bool>,
     pub registration_mode: String,
+    pub emoji_enabled: bool,
+    pub max_emojis_per_post: Option<i32>,
+    pub max_emojis_per_comment: Option<i32>,
+    pub emoji_max_file_size_mb: i32,
+    pub board_emojis_enabled: bool,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -104,6 +109,11 @@ pub struct SiteForm {
     pub approved_image_hosts: Option<Option<String>>,
     pub image_embed_hosts_only: Option<bool>,
     pub registration_mode: Option<String>,
+    pub emoji_enabled: Option<bool>,
+    pub max_emojis_per_post: Option<Option<i32>>,
+    pub max_emojis_per_comment: Option<Option<i32>>,
+    pub emoji_max_file_size_mb: Option<i32>,
+    pub board_emojis_enabled: Option<bool>,
 }
 
 impl Site {

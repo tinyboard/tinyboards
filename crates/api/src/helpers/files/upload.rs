@@ -6,7 +6,11 @@ use tinyboards_db::newtypes::DbUrl;
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::{
     error::TinyBoardsError,
-    utils::{generate_rand_string, get_file_type, is_acceptable_file_type},
+    utils::{
+        generate_secure_filename, get_file_type_extended, is_acceptable_file_type,
+        validate_file_size, validate_file_content, get_file_path_for_type,
+        get_file_url, ensure_upload_directories, format_file_size
+    },
 };
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
@@ -23,70 +27,102 @@ pub async fn upload_file(
     let pool = ctx.data::<DbPool>()?;
     let media_path = settings.get_media_path();
 
+    // Ensure upload directories exist
+    ensure_upload_directories(&media_path).await.map_err(|e| {
+        TinyBoardsError::from_message(500, &format!("Failed to create upload directories: {}", e))
+    })?;
+
     let mut file_bytes: Vec<u8> = Vec::new();
 
     let upload_value = upload.value(ctx)?;
     let original_file_name = upload_value.filename;
     let content_type = upload_value.content_type.unwrap_or(String::new());
-    // Use max_size_mb parameter if provided, otherwise fall back to config setting
-    let max_size_mb_final = max_size_mb.unwrap_or(settings.media.max_file_size_mb);
-    let max_size = (max_size_mb_final * 1024 * 1024) as i64;
 
+    // Enhanced file type validation
     if !is_acceptable_file_type(&content_type) {
         return Err(TinyBoardsError::from_message(
-            500,
+            400,
             &format!("{} is not an acceptable file type", content_type),
         )
         .into());
     }
 
-    let file_type = get_file_type(&content_type);
-    let file_name = format!(
-        "{}.{}",
-        match file_name {
-            Some(file_name) => file_name,
-            None => generate_rand_string(),
-        },
-        file_type
-    );
-    let path = format!("{}/{}", media_path, file_name);
-
-    println!("got here, saving to {:?}", &path);
+    // Read file bytes first for validation
     upload
         .value(ctx)?
         .into_read()
         .read_to_end(&mut file_bytes)?;
-    //let _ = File::create("hi.txt").await?;
+
+    let size = file_bytes.len() as i64;
+
+    // Enhanced size validation with type-specific limits
+    if let Some(max_mb) = max_size_mb {
+        let max_size = (max_mb * 1024 * 1024) as i64;
+        if size > max_size {
+            return Err(TinyBoardsError::from_message(
+                400,
+                &format!("File exceeds maximum allowed size of {}", format_file_size(max_size)),
+            )
+            .into());
+        }
+    } else {
+        // Use type-specific validation
+        validate_file_size(&content_type, size).map_err(|e| {
+            TinyBoardsError::from_message(400, &e)
+        })?;
+    }
+
+    // Validate file content matches declared type
+    validate_file_content(&file_bytes, &content_type).map_err(|e| {
+        TinyBoardsError::from_message(400, &e)
+    })?;
+
+    // Generate secure filename
+    let generated_file_name = generate_secure_filename(
+        file_name.or(Some(original_file_name.clone())),
+        &content_type
+    );
+
+    // Get appropriate file path based on type and content
+    let path = get_file_path_for_type(&media_path, &generated_file_name, &content_type);
+
+    // Ensure the specific subdirectory exists
+    if let Some(parent) = std::path::Path::new(&path).parent() {
+        tokio::fs::create_dir_all(parent).await.map_err(|e| {
+            TinyBoardsError::from_message(500, &format!("Failed to create directory: {}", e))
+        })?;
+    }
+
+    println!("Saving file to: {}", &path);
     let mut file = File::create(&path).await?;
     file.write_all(&file_bytes).await?;
     file.flush().await?;
 
-    let size = file_bytes.len().try_into().unwrap();
-    println!("File size is {}", size);
-    if size > max_size {
-        // File too large! Delete it
-        // Files exceeding the absolute maximum will be rejected by proxy before even hitting the server
-        if let Err(_) = std::fs::remove_file(path.clone()) {
-            eprintln!("File {} exceeds maximum allowed size of {}MB, but couldn't be deleted automatically. Please delete it.", path, max_size);
-        }
-
-        return Err(TinyBoardsError::from_message(
-            400,
-            &format!("File exceeds maximum allowed size of {}MB.", max_size),
-        )
-        .into());
-    }
+    // Generate URL with proper subdirectory structure
+    let url_path = if path.contains("/emojis/") {
+        format!("emojis/{}", generated_file_name)
+    } else if path.contains("/avatars/") {
+        format!("avatars/{}", generated_file_name)
+    } else if path.contains("/videos/") {
+        format!("videos/{}", generated_file_name)
+    } else if path.contains("/audio/") {
+        format!("audio/{}", generated_file_name)
+    } else if path.contains("/documents/") {
+        format!("documents/{}", generated_file_name)
+    } else {
+        generated_file_name.clone()
+    };
 
     let upload_url = Url::parse(&format!(
         "{}/media/{}",
         settings.get_protocol_and_hostname(),
-        &file_name
+        url_path
     ))?;
 
     let upload_form = UploadForm {
         user_id: for_user_id,
-        original_name: original_file_name,
-        file_name: file_name,
+        original_name: original_file_name.clone(),
+        file_name: generated_file_name,
         file_path: path,
         upload_url: Some(upload_url.clone().into()),
         size,
@@ -94,7 +130,7 @@ pub async fn upload_file(
 
     let _upload = DbUpload::create(pool, &upload_form).await?;
 
-    //let upload_url = Url::parse(upload_url)?;
+    println!("File uploaded successfully: {} ({})", upload_url, format_file_size(size));
     Ok(upload_url)
 }
 

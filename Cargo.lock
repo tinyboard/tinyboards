@@ -4113,6 +4113,7 @@ dependencies = [
  "hmac",
  "image",
  "jwt",
+ "lazy_static",
  "regex",
  "reqwest-middleware",
  "serde",

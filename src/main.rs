@@ -23,6 +23,7 @@ use tinyboards_server::{
     api_routes, code_migrations::run_advanced_migrations, init_logging,
     root_span_builder::QuieterRootSpanBuilder, scheduled_tasks,
 };
+use tinyboards_utils::utils::ensure_upload_directories;
 use tinyboards_utils::{error::TinyBoardsError, settings::SETTINGS};
 use tracing_actix_web::TracingLogger;
 
@@ -33,7 +34,7 @@ pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[actix_web::main]
 async fn main() -> Result<(), TinyBoardsError> {
-    dotenv().ok(); // TODO - remove this (should be un-needed)
+    dotenv().ok();
 
     let settings = SETTINGS.to_owned();
 
@@ -50,6 +51,12 @@ async fn main() -> Result<(), TinyBoardsError> {
 
     // run advanced migrations
     run_advanced_migrations(&pool, &settings).await?;
+
+    // ensure upload directories exist
+    let media_path = settings.get_media_path();
+    ensure_upload_directories(&media_path).await.map_err(|e| {
+        TinyBoardsError::from_message(500, &format!("Failed to create upload directories: {}", e))
+    })?;
 
     let db_url = get_db_url(Some(&settings));
     thread::spawn(move || {
@@ -110,6 +117,8 @@ async fn main() -> Result<(), TinyBoardsError> {
             .app_data(Data::new(context))
             // GraphQL
             .configure(api_routes::graphql_config)
+            // Static file serving for uploaded media
+            .configure(|cfg| api_routes::static_files_config(cfg, settings.get_media_path()))
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?

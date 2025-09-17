@@ -33,3 +33,4 @@ reqwest-middleware = { workspace = true }
 webpage = { version = "1.6.0", default-features = false, features = ["serde"] }
 image = { workspace = true }
 actix-files = { workspace = true }
+lazy_static = "1.4.0"

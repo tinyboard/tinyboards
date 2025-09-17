@@ -229,7 +229,6 @@ diesel::table! {
 diesel::table! {
     emoji (id) {
         id -> Int4,
-        local_site_id -> Int4,
         #[max_length = 128]
         shortcode -> Varchar,
         image_url -> Text,
@@ -237,6 +236,12 @@ diesel::table! {
         category -> Text,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
+        board_id -> Nullable<Int4>,
+        created_by_user_id -> Int4,
+        is_active -> Bool,
+        usage_count -> Int4,
+        #[max_length = 10]
+        emoji_scope -> Varchar,
     }
 }
 
@@ -608,6 +613,11 @@ diesel::table! {
         approved_image_hosts -> Nullable<Text>,
         image_embed_hosts_only -> Nullable<Bool>,
         registration_mode -> Varchar,
+        emoji_enabled -> Bool,
+        max_emojis_per_post -> Nullable<Int4>,
+        max_emojis_per_comment -> Nullable<Int4>,
+        emoji_max_file_size_mb -> Int4,
+        board_emojis_enabled -> Bool,
     }
 }
 
@@ -783,7 +793,8 @@ diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(comments -> users (creator_id));
 diesel::joinable!(email_verification -> users (user_id));
-diesel::joinable!(emoji -> site (local_site_id));
+diesel::joinable!(emoji -> boards (board_id));
+diesel::joinable!(emoji -> users (created_by_user_id));
 diesel::joinable!(emoji_keyword -> emoji (emoji_id));
 diesel::joinable!(local_site_rate_limit -> site (local_site_id));
 diesel::joinable!(mod_add_board -> boards (board_id));

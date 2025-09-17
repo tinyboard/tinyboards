@@ -12,6 +12,7 @@ use crate::mutations::{
     auth::Auth,
     board::{actions::BoardActions, create::CreateBoard, settings::UpdateBoardSettings},
     board_moderation::BoardModerationMutations,
+    emoji::EmojiMutations,
     message::{actions::MessageActionMutations, send_message::SendMessageMutations, edit_message::EditMessageMutations},
     notifications::NotificationMutations,
     user::{actions::UserActions, profile_management::ProfileManagement, settings::UpdateSettings},
@@ -27,6 +28,7 @@ use queries::{
     banned_users::QueryBannedUsers,
     board_moderators::QueryBoardModerators,
     boards::QueryBoards,
+    emojis::EmojiQueries,
     invites::QueryInvites,
     site::QuerySite,
     me::MeQuery,
@@ -91,6 +93,7 @@ pub struct Query(
     QueryBannedUsers,
     QuerySearch,
     RegistrationApplicationQueries,
+    EmojiQueries,
 );
 
 #[derive(MergedObject, Default)]
@@ -120,6 +123,7 @@ pub struct Mutation(
     ReportMutations,
     BoardModerationMutations,
     RegistrationApplicationMutations,
+    EmojiMutations,
 );
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {

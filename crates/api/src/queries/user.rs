@@ -22,7 +22,7 @@ impl QueryUser {
         check_private_instance(v_opt, pool).await?;
 
         if name.contains("@") {
-            todo!("Add apub support here");
+            return Err(TinyBoardsError::from_message(501, "Federation not supported").into());
         }
 
         let db_user = DbUser::get_by_name(pool, name)

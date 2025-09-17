@@ -1,3 +1,4 @@
+use actix_files::Files;
 use actix_web::*;
 use async_graphql::dataloader::DataLoader;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
@@ -298,6 +299,16 @@ use tinyboards_api::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSet
 
 pub fn graphql_config(cfg: &mut web::ServiceConfig) {
     cfg.route("/api/v2/graphql", web::post().to(perform_graphql));
+}
+
+pub fn static_files_config(cfg: &mut web::ServiceConfig, media_path: String) {
+    cfg.service(
+        Files::new("/media", media_path)
+            .show_files_listing()
+            .use_last_modified(true)
+            .use_etag(true)
+            .prefer_utf8(true)
+    );
 }
 
 fn get_auth(req: &HttpRequest) -> Option<&str> {

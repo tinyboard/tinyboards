@@ -20,6 +20,29 @@ use regex::Regex;
 use tinyboards_utils::TinyBoardsError;
 
 impl Post {
+    pub async fn list_posts_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        posts::table
+            .filter(posts::board_id.eq(the_board_id))
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn list_all_posts(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        posts::table
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_body_html(pool: &DbPool, post_id: i32, new_body_html: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(posts::table.find(post_id))
+            .set(posts::body_html.eq(new_body_html))
+            .get_result::<Self>(conn)
+            .await
+    }
+
     pub async fn list_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         posts::table

@@ -19,6 +19,7 @@ use tinyboards_utils::parser::parse_markdown_opt;
 use tinyboards_utils::utils::custom_body_parsing;
 use tinyboards_utils::content_filter::ContentFilter;
 use tinyboards_utils::TinyBoardsError;
+use crate::utils::emoji::process_content_with_emojis;
 
 #[derive(Default)]
 pub struct SubmitComment;
@@ -154,12 +155,25 @@ impl SubmitComment {
             None => 1,
         };
 
-        // parse body
-        let mut body_html = parse_markdown_opt(&body);
-        body_html = Some(custom_body_parsing(
-            &body_html.unwrap_or_default(),
-            settings,
-        ));
+        // parse body with emoji support if enabled
+        let body_html = if site_config.emoji_enabled {
+            let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
+            Some(process_content_with_emojis(
+                &body,
+                pool,
+                Some(parent_board.id),
+                settings,
+                emoji_limit,
+            ).await?)
+        } else {
+            // Emojis disabled, use regular markdown processing
+            let mut body_html = parse_markdown_opt(&body);
+            body_html = Some(custom_body_parsing(
+                &body_html.unwrap_or_default(),
+                settings,
+            ));
+            body_html
+        };
 
         // insert new comment into db
         let new_comment = CommentForm {

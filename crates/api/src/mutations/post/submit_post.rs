@@ -14,6 +14,7 @@ use tinyboards_db::models::{
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
 use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, content_filter::ContentFilter, TinyBoardsError};
+use crate::utils::emoji::process_content_with_emojis;
 use url::Url;
 
 #[derive(Default)]
@@ -37,7 +38,7 @@ impl SubmitPost {
         let pool = ctx.data::<DbPool>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
-        // Load site configuration for content filtering
+        // Load site configuration for content filtering and emoji settings
         let site_config = tinyboards_db::models::site::site::Site::read(pool).await?;
 
         let board = match board {
@@ -91,13 +92,26 @@ impl SubmitPost {
 
         let body_html = match body {
             Some(ref body) => {
-                let body_html = parse_markdown_opt(body);
-                let body_html = Some(custom_body_parsing(
-                    &body_html.unwrap_or_default(),
-                    settings,
-                ));
+                if site_config.emoji_enabled {
+                    // Process content with emoji parsing (use site config limit)
+                    let emoji_limit = site_config.max_emojis_per_post.map(|limit| limit as usize);
+                    let processed_html = process_content_with_emojis(
+                        body,
+                        pool,
+                        Some(board.id),
+                        settings,
+                        emoji_limit,
+                    ).await?;
 
-                body_html
+                    Some(processed_html)
+                } else {
+                    // Emojis disabled, use regular markdown processing
+                    let body_html = parse_markdown_opt(body);
+                    Some(custom_body_parsing(
+                        &body_html.unwrap_or_default(),
+                        settings,
+                    ))
+                }
             }
             None => Some(String::new()),
         };

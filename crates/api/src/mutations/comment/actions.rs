@@ -124,5 +124,5 @@ impl CommentActions {
         Ok(Comment::from(res))
     }
 
-    // TODO: comment reporting
+    // Note: Comment reporting is implemented in mutations/reports.rs
 }

@@ -19,6 +19,21 @@ impl Upload {
             .first::<Self>(conn)
             .await
     }
+
+    pub async fn list_all(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        uploads
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn list_by_user(pool: &DbPool, user_id_: i32) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        uploads
+            .filter(user_id.eq(user_id_))
+            .load::<Self>(conn)
+            .await
+    }
 }
 
 

@@ -20,7 +20,7 @@ impl QueryBoards {
         check_private_instance(v_opt, pool).await?;
 
         if name.contains("@") {
-            todo!("Add apub support here");
+            return Err(TinyBoardsError::from_message(501, "Federation not supported").into());
         }
 
         DbBoard::get_with_counts_for_name(pool, name)

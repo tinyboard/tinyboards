@@ -18,6 +18,32 @@ use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
 
 impl Comment {
+    pub async fn list_comments_for_board(pool: &DbPool, the_board_id: i32) -> Result<Vec<Self>, Error> {
+        use crate::schema::posts;
+        let conn = &mut get_conn(pool).await?;
+        comments
+            .inner_join(posts::table.on(posts::id.eq(post_id)))
+            .filter(posts::board_id.eq(the_board_id))
+            .select(comments::all_columns())
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn list_all_comments(pool: &DbPool) -> Result<Vec<Self>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        comments
+            .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn update_body_html(pool: &DbPool, comment_id: i32, new_body_html: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        diesel::update(comments.find(comment_id))
+            .set(body_html.eq(new_body_html))
+            .get_result::<Self>(conn)
+            .await
+    }
+
     /// Returns a list of users who commented on a given post.
     pub async fn load_participants_for_post(
         pool: &DbPool,

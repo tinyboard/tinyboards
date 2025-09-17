@@ -228,7 +228,8 @@ impl Auth {
             RegistrationApplication::create(pool, &form).await?;
         }
 
-        // TODO: send notification to admins about registration application
+        // Send notification to admins about new registration
+        send_registration_notification_to_admins(pool, &user_view.user.name).await?;
 
         // TODO: email verification, if that's required
 

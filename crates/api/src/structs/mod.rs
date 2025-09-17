@@ -1,6 +1,7 @@
 pub mod board_mods;
 pub mod boards;
 pub mod comment;
+pub mod emoji;
 pub mod site;
 pub mod message;
 pub mod user;
