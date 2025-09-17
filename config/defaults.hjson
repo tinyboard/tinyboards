@@ -82,7 +82,7 @@
     default_board_description: "General discussion and community topics"
   }
   # the domain name of your server (mandatory)
-  hostname: "tinyboards.test"
+  hostname: "localhost"
   # Address where tinyboards should listen for incoming requests
   bind: "0.0.0.0"
   # Port where tinyboards should listen for incoming requests
