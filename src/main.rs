@@ -106,9 +106,10 @@ async fn main() -> Result<(), TinyBoardsError> {
             graphql_schema.clone(),
         );
 
-        let cors_config = Cors::default()
-            .allowed_methods(vec!["GET", "POST", "OPTIONS", "PUT"])
-            .allowed_headers(vec!["Content-Type", "Accepts"]);
+        let cors_config = Cors::default(); // todo we need to properly fix this CORS thing
+            //.allowed_origin("http://localhost")
+            //.allowed_methods(vec!["GET", "POST", "OPTIONS", "PUT"])
+            //.allowed_headers(vec!["Content-Type", "Accepts"]);
 
         App::new()
             .wrap(actix_web::middleware::Logger::default())
