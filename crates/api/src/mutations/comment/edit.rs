@@ -44,7 +44,7 @@ impl EditComment {
             return Err(TinyBoardsError::from_message(
                 410,
                 &format!(
-                    "+{} is banned. If you wish, you can delete your comment.",
+                    "/b/{} is banned. If you wish, you can delete your comment.",
                     &board.name
                 ),
             )

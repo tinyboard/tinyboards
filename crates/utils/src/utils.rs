@@ -81,7 +81,7 @@ pub fn custom_body_parsing(body: &str, settings: &Settings) -> String {
 
     for cap in BOARDS_REGEX.captures_iter(rcopy.as_str()) {
         let board_name = cap["name"].to_string();
-        let board_link = format!("{}/+{}", base_url, board_name);
+        let board_link = format!("{}/b/{}", base_url, board_name);
         let board_ref = format!(
             "<a id=\"ref-board-{}\" class=\"board-reference\" href='{}'>+{}</a>",
             board_name, board_link, board_name

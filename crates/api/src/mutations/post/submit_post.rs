@@ -50,7 +50,7 @@ impl SubmitPost {
         if board.is_removed || board.is_deleted {
             return Err(TinyBoardsError::from_message(
                 410,
-                &format!("+{} is banned.", &board.name),
+                &format!("/b/{} is banned.", &board.name),
             )
             .into());
         }
@@ -86,7 +86,7 @@ impl SubmitPost {
         if !is_mod_or_admin && DbBoard::board_has_ban(pool, board.id, v.id).await? {
             return Err(TinyBoardsError::from_message(
                 410,
-                &format!("You are banned from +{}.", &board.name),
+                &format!("You are banned from /b/{}.", &board.name),
             )
             .into());
         }

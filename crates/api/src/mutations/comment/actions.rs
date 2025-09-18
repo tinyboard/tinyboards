@@ -47,7 +47,7 @@ impl CommentActions {
         if board.is_removed {
             return Err(TinyBoardsError::from_message(
                 410,
-                &format!("+{} is banned.", &board.name),
+                &format!("/b/{} is banned.", &board.name),
             )
             .into());
         }

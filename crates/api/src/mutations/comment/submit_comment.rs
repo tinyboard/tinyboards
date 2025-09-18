@@ -80,7 +80,7 @@ impl SubmitComment {
         if parent_board.is_removed {
             return Err(TinyBoardsError::from_message(
                 410,
-                &format!("+{} is banned.", &parent_board.name),
+                &format!("/b/{} is banned.", &parent_board.name),
             )
             .into());
         }
@@ -116,7 +116,7 @@ impl SubmitComment {
         if !is_mod_or_admin && DbBoard::board_has_ban(pool, parent_board.id, v.id).await? {
             return Err(TinyBoardsError::from_message(
                 410,
-                &format!("You are banned from +{}.", &parent_board.name),
+                &format!("You are banned from /b/{}.", &parent_board.name),
             )
             .into());
         }
