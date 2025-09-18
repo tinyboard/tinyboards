@@ -91,7 +91,8 @@ impl User {
     }
 
     pub async fn rep(&self) -> i64 {
-        self.counts.rep
+        // Calculate reputation from post and comment scores
+        self.counts.post_score + self.counts.comment_score
     }
 
     pub async fn is_admin(&self) -> bool {
@@ -378,7 +379,6 @@ impl From<DbUser> for User {
             post_score: 0,
             comment_count: 0,
             comment_score: 0,
-            rep: 0,
         };
 
         Self::from((user, default_counts))

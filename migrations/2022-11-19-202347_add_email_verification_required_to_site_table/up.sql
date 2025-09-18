@@ -1,1 +1,0 @@
-alter table site add column email_verification_required boolean default false not null;

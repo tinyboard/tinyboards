@@ -48,7 +48,14 @@ impl Voteable for PostVote {
             .on_conflict((post_id, user_id))
             .do_update()
             .set(form)
-            .get_result::<Self>(conn)
+            .execute(conn)
+            .await?;
+
+        // Get the resulting vote
+        post_votes
+            .filter(post_id.eq(form.post_id))
+            .filter(user_id.eq(form.user_id))
+            .first::<Self>(conn)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not create post vote"))
     }

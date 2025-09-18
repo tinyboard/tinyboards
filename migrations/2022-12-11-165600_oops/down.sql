@@ -1,1 +1,0 @@
-alter table posts rename column creation_date to published;

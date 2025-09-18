@@ -157,12 +157,28 @@ diesel::table! {
         upvotes -> Int8,
         downvotes -> Int8,
         creation_date -> Timestamp,
-        reply_count -> Nullable<Int4>,
+        child_count -> Int4,
+        hot_rank -> Int4,
+        controversy_rank -> Float8,
     }
 }
 
 diesel::table! {
     comment_report (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        comment_id -> Int4,
+        original_comment_text -> Text,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Nullable<Int4>,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    comment_reports (id) {
         id -> Int4,
         creator_id -> Int4,
         comment_id -> Int4,
@@ -189,9 +205,9 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         comment_id -> Int4,
+        post_id -> Int4,
         score -> Int4,
         creation_date -> Timestamp,
-        post_id -> Int4,
     }
 }
 
@@ -222,7 +238,7 @@ diesel::table! {
         user_id -> Int4,
         email -> Text,
         verification_code -> Text,
-        created -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -257,7 +273,8 @@ diesel::table! {
 diesel::table! {
     language (id) {
         id -> Int4,
-        code -> Text,
+        #[max_length = 3]
+        code -> Varchar,
         name -> Text,
     }
 }
@@ -280,6 +297,24 @@ diesel::table! {
         search_per_second -> Int4,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    messages (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        recipient_id -> Int4,
+        #[max_length = 200]
+        subject -> Varchar,
+        body -> Text,
+        body_html -> Text,
+        read -> Bool,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+        #[max_length = 255]
+        ap_id -> Varchar,
+        local -> Bool,
     }
 }
 
@@ -444,9 +479,16 @@ diesel::table! {
         score -> Int8,
         upvotes -> Int8,
         downvotes -> Int8,
-        is_stickied -> Bool,
         creation_date -> Timestamp,
+        newest_comment_time_necro -> Nullable<Timestamp>,
         newest_comment_time -> Timestamp,
+        featured_board -> Bool,
+        featured_local -> Bool,
+        hot_rank -> Int4,
+        hot_rank_active -> Int4,
+        board_id -> Int4,
+        creator_id -> Int4,
+        controversy_rank -> Float8,
     }
 }
 
@@ -476,6 +518,23 @@ diesel::table! {
 }
 
 diesel::table! {
+    post_reports (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        post_id -> Int4,
+        #[max_length = 200]
+        original_post_title -> Varchar,
+        original_post_url -> Nullable<Text>,
+        original_post_body -> Text,
+        reason -> Text,
+        resolved -> Bool,
+        resolver_id -> Nullable<Int4>,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     post_saved (id) {
         id -> Int4,
         post_id -> Int4,
@@ -487,9 +546,10 @@ diesel::table! {
 diesel::table! {
     post_votes (id) {
         id -> Int4,
-        post_id -> Int4,
         user_id -> Int4,
+        post_id -> Int4,
         score -> Int4,
+        creation_date -> Timestamp,
     }
 }
 
@@ -517,6 +577,12 @@ diesel::table! {
         language_id -> Nullable<Int4>,
         featured_board -> Bool,
         featured_local -> Bool,
+        alt_text -> Nullable<Text>,
+        embed_title -> Nullable<Text>,
+        embed_description -> Nullable<Text>,
+        embed_video_url -> Nullable<Text>,
+        source_url -> Nullable<Text>,
+        last_crawl_date -> Nullable<Timestamp>,
         #[max_length = 255]
         title_chunk -> Varchar,
     }
@@ -545,6 +611,12 @@ diesel::table! {
         admin_id -> Nullable<Int4>,
         deny_reason -> Nullable<Text>,
         creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
+    relations (id) {
+        id -> Int4,
     }
 }
 
@@ -681,7 +753,6 @@ diesel::table! {
         post_score -> Int8,
         comment_count -> Int8,
         comment_score -> Int8,
-        rep -> Int8,
     }
 }
 
@@ -769,10 +840,10 @@ diesel::table! {
     }
 }
 
-diesel::joinable!(admin_ban_board -> boards (board_id));
-diesel::joinable!(admin_purge_board -> boards (board_id));
 diesel::joinable!(admin_purge_comment -> comments (comment_id));
+diesel::joinable!(admin_purge_comment -> users (admin_id));
 diesel::joinable!(admin_purge_post -> posts (post_id));
+diesel::joinable!(admin_purge_post -> users (admin_id));
 diesel::joinable!(board_aggregates -> boards (board_id));
 diesel::joinable!(board_language -> boards (board_id));
 diesel::joinable!(board_language -> language (language_id));
@@ -783,7 +854,7 @@ diesel::joinable!(board_subscriber -> users (user_id));
 diesel::joinable!(board_user_bans -> boards (board_id));
 diesel::joinable!(board_user_bans -> users (user_id));
 diesel::joinable!(comment_aggregates -> comments (comment_id));
-diesel::joinable!(comment_report -> comments (comment_id));
+diesel::joinable!(comment_reports -> comments (comment_id));
 diesel::joinable!(comment_saved -> comments (comment_id));
 diesel::joinable!(comment_saved -> users (user_id));
 diesel::joinable!(comment_votes -> comments (comment_id));
@@ -793,29 +864,14 @@ diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> posts (post_id));
 diesel::joinable!(comments -> users (creator_id));
 diesel::joinable!(email_verification -> users (user_id));
-diesel::joinable!(emoji -> boards (board_id));
-diesel::joinable!(emoji -> users (created_by_user_id));
 diesel::joinable!(emoji_keyword -> emoji (emoji_id));
-diesel::joinable!(local_site_rate_limit -> site (local_site_id));
-diesel::joinable!(mod_add_board -> boards (board_id));
-diesel::joinable!(mod_add_board_mod -> boards (board_id));
-diesel::joinable!(mod_ban_from_board -> boards (board_id));
-diesel::joinable!(mod_feature_post -> posts (post_id));
-diesel::joinable!(mod_hide_board -> boards (board_id));
-diesel::joinable!(mod_lock_post -> posts (post_id));
-diesel::joinable!(mod_remove_board -> boards (board_id));
-diesel::joinable!(mod_remove_comment -> comments (comment_id));
-diesel::joinable!(mod_remove_post -> posts (post_id));
-diesel::joinable!(notifications -> comments (comment_id));
-diesel::joinable!(notifications -> posts (post_id));
 diesel::joinable!(notifications -> private_message (message_id));
-diesel::joinable!(notifications -> users (recipient_user_id));
 diesel::joinable!(password_resets -> users (user_id));
 diesel::joinable!(pm_notif -> private_message (pm_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
 diesel::joinable!(post_read -> posts (post_id));
 diesel::joinable!(post_read -> users (user_id));
-diesel::joinable!(post_report -> posts (post_id));
+diesel::joinable!(post_reports -> posts (post_id));
 diesel::joinable!(post_saved -> posts (post_id));
 diesel::joinable!(post_saved -> users (user_id));
 diesel::joinable!(post_votes -> posts (post_id));
@@ -823,10 +879,13 @@ diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> language (language_id));
 diesel::joinable!(posts -> users (creator_id));
+diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(site_language -> language (language_id));
+diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(uploads -> users (user_id));
-diesel::joinable!(user_ban -> users (user_id));
+diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_board_blocks -> boards (board_id));
+diesel::joinable!(user_board_blocks -> users (user_id));
 diesel::joinable!(user_language -> language (language_id));
 diesel::joinable!(user_language -> users (user_id));
 
@@ -844,6 +903,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     boards,
     comment_aggregates,
     comment_report,
+    comment_reports,
     comment_saved,
     comment_votes,
     comments,
@@ -852,6 +912,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     emoji_keyword,
     language,
     local_site_rate_limit,
+    messages,
     mod_add_admin,
     mod_add_board,
     mod_add_board_mod,
@@ -869,11 +930,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_aggregates,
     post_read,
     post_report,
+    post_reports,
     post_saved,
     post_votes,
     posts,
     private_message,
     registration_applications,
+    relations,
     secret,
     site,
     site_aggregates,

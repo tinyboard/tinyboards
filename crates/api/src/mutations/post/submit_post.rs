@@ -30,6 +30,7 @@ impl SubmitPost {
         body: Option<String>,
         link: Option<String>,
         #[graphql(name = "isNSFW")] is_nsfw: Option<bool>,
+        alt_text: Option<String>,
         file: Option<Upload>,
     ) -> Result<Post> {
         let v = ctx
@@ -162,6 +163,7 @@ impl SubmitPost {
             creator_id: Some(v.id),
             board_id: Some(board.id),
             is_nsfw: Some(is_nsfw),
+            alt_text: alt_text,
             title_chunk: Some(DbPost::generate_chunk(title)),
             is_removed: Some(false),
             is_locked: Some(false),

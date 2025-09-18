@@ -1,1 +1,0 @@
-alter table site drop column invite_only;

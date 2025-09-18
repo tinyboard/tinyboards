@@ -1,1 +1,0 @@
-ALTER TABLE local_user DROP COLUMN is_banned CASCADE;

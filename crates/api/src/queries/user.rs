@@ -97,7 +97,6 @@ impl QueryUser {
                     post_score: 0,
                     comment_count: 0,
                     comment_score: 0,
-                    rep: 0,
                 };
                 result.push(User::from((user_data, default_aggregates)));
             }
@@ -132,7 +131,6 @@ impl QueryUser {
                     post_score: 0,
                     comment_count: 0,
                     comment_score: 0,
-                    rep: 0,
                 };
                 result.push(User::from((user_data, default_aggregates)));
             }
@@ -164,7 +162,6 @@ impl QueryUser {
                     post_score: 0,
                     comment_count: 0,
                     comment_score: 0,
-                    rep: 0,
                 };
                 result.push(User::from((user_data, default_aggregates)));
             }

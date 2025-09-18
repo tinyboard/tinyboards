@@ -1,9 +1,0 @@
-drop view if exists mod_remove_post_view;
-drop view if exists mod_lock_post_view;
-drop view if exists mod_remove_comment_view;
-drop view if exists mod_remove_board_view;
-drop view if exists mod_ban_from_board_view;
-drop view if exists mod_ban_view;
-drop view if exists mod_add_board_view;
-drop view if exists mod_add_view;
-drop view if exists mod_sticky_post_view;

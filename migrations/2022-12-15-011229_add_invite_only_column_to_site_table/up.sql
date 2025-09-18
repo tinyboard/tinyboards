@@ -1,1 +1,0 @@
-alter table site add column invite_only boolean default false not null;

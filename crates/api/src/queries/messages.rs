@@ -45,7 +45,6 @@ impl QueryMessages {
                 post_score: 0,
                 comment_count: 0,
                 comment_score: 0,
-                rep: 0,
             };
 
             conversations.push(Conversation {

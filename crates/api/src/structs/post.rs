@@ -43,6 +43,12 @@ pub struct Post {
     local: bool,
     featured_board: bool,
     featured_local: bool,
+    alt_text: Option<String>,
+    embed_title: Option<String>,
+    embed_description: Option<String>,
+    embed_video_url: Option<String>,
+    source_url: Option<String>,
+    last_crawl_date: Option<String>,
     title_chunk: String,
     #[graphql(skip)]
     counts: DbPostAggregates,
@@ -73,6 +79,18 @@ impl Post {
 
     pub async fn newest_comment_time(&self) -> String {
         self.counts.newest_comment_time.to_string()
+    }
+
+    pub async fn hot_rank(&self) -> i32 {
+        self.counts.hot_rank
+    }
+
+    pub async fn hot_rank_active(&self) -> i32 {
+        self.counts.hot_rank_active
+    }
+
+    pub async fn controversy_rank(&self) -> f64 {
+        self.counts.controversy_rank
     }
 
     pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<User>> {
@@ -316,6 +334,12 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             local: true,
             featured_board: post.featured_board,
             featured_local: post.featured_local,
+            alt_text: post.alt_text,
+            embed_title: post.embed_title,
+            embed_description: post.embed_description,
+            embed_video_url: post.embed_video_url.map(|url| url.as_str().into()),
+            source_url: post.source_url.map(|url| url.as_str().into()),
+            last_crawl_date: post.last_crawl_date.map(|date| date.to_string()),
             title_chunk: post.title_chunk,
             counts,
             /*creator: creator.map(|c| Person::from((c, creator_counts.unwrap()))),

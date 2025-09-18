@@ -6,7 +6,7 @@ use diesel::{Associations, Identifiable, Queryable};
 use serde::{Deserialize, Serialize};
 
 #[derive(
-    PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
+    PartialEq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
 )]
 #[diesel(table_name = comment_aggregates)]
 #[diesel(belongs_to(crate::models::comment::comments::Comment))]
@@ -17,7 +17,9 @@ pub struct CommentAggregates {
     pub upvotes: i64,
     pub downvotes: i64,
     pub creation_date: NaiveDateTime,
-    pub reply_count: Option<i32>,
+    pub child_count: i32,
+    pub hot_rank: i32,
+    pub controversy_rank: f64,
 }
 
 #[derive(
@@ -39,7 +41,7 @@ pub struct BoardAggregates {
 }
 
 #[derive(
-    PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
+    PartialEq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
 )]
 #[diesel(table_name = post_aggregates)]
 #[diesel(belongs_to(crate::models::post::posts::Post))]
@@ -50,9 +52,16 @@ pub struct PostAggregates {
     pub score: i64,
     pub upvotes: i64,
     pub downvotes: i64,
-    pub stickied: bool,
     pub creation_date: NaiveDateTime,
+    pub newest_comment_time_necro: Option<NaiveDateTime>,
     pub newest_comment_time: NaiveDateTime,
+    pub featured_board: bool,
+    pub featured_local: bool,
+    pub hot_rank: i32,
+    pub hot_rank_active: i32,
+    pub board_id: i32,
+    pub creator_id: i32,
+    pub controversy_rank: f64,
 }
 
 pub use crate::aggregates::user_aggregates::UserAggregates;

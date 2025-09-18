@@ -1,1 +1,0 @@
-alter table site_invite drop column validated;

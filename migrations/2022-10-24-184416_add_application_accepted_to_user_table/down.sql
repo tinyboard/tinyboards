@@ -1,1 +1,0 @@
-alter table user_ drop column application_accepted;

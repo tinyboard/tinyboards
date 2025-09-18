@@ -32,7 +32,6 @@ impl Loader<UserId> for PostgresLoader {
                         post_score: 0,
                         comment_count: 0,
                         comment_score: 0,
-                        rep: 0,
                     };
                     (UserId(u.id), User::from((u, default_counts)))
                 }),

@@ -1,1 +1,0 @@
-alter table local_site drop column welcome_message;

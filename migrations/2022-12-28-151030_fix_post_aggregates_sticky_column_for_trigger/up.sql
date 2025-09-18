@@ -1,1 +1,0 @@
-alter table post_aggregates rename column stickied to is_stickied;

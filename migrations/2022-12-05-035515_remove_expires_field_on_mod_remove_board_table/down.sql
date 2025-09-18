@@ -1,1 +1,0 @@
-alter table mod_remove_board add column expires timestamp;

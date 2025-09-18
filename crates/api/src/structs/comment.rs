@@ -53,8 +53,8 @@ impl Comment {
         self.counts.downvotes
     }
 
-    pub async fn reply_count(&self) -> Option<i32> {
-        self.counts.reply_count
+    pub async fn reply_count(&self) -> i32 {
+        self.counts.child_count
     }
 
     pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<User>> {

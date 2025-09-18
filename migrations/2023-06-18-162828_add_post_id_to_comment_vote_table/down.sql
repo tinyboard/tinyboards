@@ -1,1 +1,0 @@
-alter table comment_votes drop column post_id cascade;

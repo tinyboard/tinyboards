@@ -17,7 +17,7 @@ pub struct EditPost;
 
 #[Object]
 impl EditPost {
-    pub async fn edit_post(&self, ctx: &Context<'_>, id: i32, body: String) -> Result<Post> {
+    pub async fn edit_post(&self, ctx: &Context<'_>, id: i32, body: String, alt_text: Option<String>) -> Result<Post> {
         let v = ctx
             .data_unchecked::<LoggedInUser>()
             .require_user_not_banned()?;
@@ -72,6 +72,7 @@ impl EditPost {
             body: Some(body),
             body_html,
             updated,
+            alt_text: alt_text,
             ..PostForm::default()
         };
 

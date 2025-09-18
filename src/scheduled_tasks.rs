@@ -15,7 +15,6 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
         .expect("could not establish connection");
 
     update_banned_when_expired(&mut conn1);
-    update_user_aggregates_rep(&mut conn1);
 
     // On startup, reindex the tables non-concurrently
     reindex_aggregates_tables(&mut conn1, true);
@@ -35,7 +34,6 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     frequent_scheduler
     .every(TimeUnits::minutes(5))
     .run(move || {
-        update_user_aggregates_rep(&mut conn2);
         update_banned_when_expired(&mut conn2);
     });
 
@@ -72,40 +70,6 @@ fn update_banned_when_expired(conn: &mut PgConnection) {
     sql_query(update_ban_expires_stmt)
         .execute(conn)
         .expect("update banned when expires");
-}
-
-/// update the rep calculation on user_aggregates
-fn update_user_aggregates_rep(conn: &mut PgConnection) {
-    info!("Updating rep values on user_aggregates ...");
-    let update_user_aggregates_rep_stmt =
-    "update user_aggregates ua
-     set rep = calc.rep
-     from (
-         select
-             u.id as user_id,
-             round((coalesce(pd.score, 0) + coalesce(cd.score, 0)) / coalesce(pd.posts, 1)) as rep
-         from users u
-         left join (
-             select p.creator_id,
-                 count(distinct p.id) as posts,
-                 sum(pv.score) as score
-                 from posts p
-                 left join post_votes pv on p.id = pv.post_id
-                 group by p.creator_id
-             ) pd on u.id = pd.creator_id
-         left join (
-             select c.creator_id,
-                 count(distinct c.id) as comments,
-                 sum(cv.score) as score
-                 from comments c
-                 left join comment_votes cv on c.id = cv.comment_id
-                 group by c.creator_id
-             ) cd on u.id = cd.creator_id
-         ) calc
-     where ua.user_id = calc.user_id;";
-     sql_query(update_user_aggregates_rep_stmt)
-         .execute(conn)
-         .expect("update user aggregates rep values");
 }
 
 /// Re-calculate the site and board active counts every 12 hours

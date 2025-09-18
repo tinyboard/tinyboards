@@ -26,6 +26,12 @@ pub struct Post {
     pub language_id: Option<i32>,
     pub featured_board: bool,
     pub featured_local: bool,
+    pub alt_text: Option<String>,
+    pub embed_title: Option<String>,
+    pub embed_description: Option<String>,
+    pub embed_video_url: Option<DbUrl>,
+    pub source_url: Option<DbUrl>,
+    pub last_crawl_date: Option<NaiveDateTime>,
     pub title_chunk: String,
 }
 
@@ -51,5 +57,11 @@ pub struct PostForm {
     pub creation_date: Option<NaiveDateTime>,
     pub featured_board: Option<bool>,
     pub featured_local: Option<bool>,
+    pub alt_text: Option<String>,
+    pub embed_title: Option<String>,
+    pub embed_description: Option<String>,
+    pub embed_video_url: Option<DbUrl>,
+    pub source_url: Option<DbUrl>,
+    pub last_crawl_date: Option<NaiveDateTime>,
     pub title_chunk: Option<String>,
 }

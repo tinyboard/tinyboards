@@ -1,1 +1,0 @@
-alter table posts add column image text;

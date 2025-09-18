@@ -15,7 +15,6 @@ pub struct UserAggregates {
     pub post_score: i64,
     pub comment_count: i64,
     pub comment_score: i64,
-    pub rep: i64,
 }
 
 impl UserAggregates {

@@ -1,4 +1,5 @@
 use crate::schema::post_votes;
+use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -6,9 +7,10 @@ use serde::{Deserialize, Serialize};
 #[diesel(table_name = post_votes)]
 pub struct PostVote {
     pub id: i32,
-    pub post_id: i32,
     pub user_id: i32,
+    pub post_id: i32,
     pub score: i32,
+    pub creation_date: NaiveDateTime,
 }
 
 #[derive(Clone, Insertable, AsChangeset)]

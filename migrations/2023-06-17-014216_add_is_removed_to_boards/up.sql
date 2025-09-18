@@ -1,1 +1,0 @@
-alter table boards add column is_removed boolean default false not null;

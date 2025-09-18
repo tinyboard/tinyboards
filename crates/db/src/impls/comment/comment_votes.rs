@@ -49,7 +49,14 @@ impl Voteable for CommentVote {
             .on_conflict((comment_id, user_id))
             .do_update()
             .set(form)
-            .get_result::<Self>(conn)
+            .execute(conn)
+            .await?;
+
+        // Get the resulting vote
+        comment_votes
+            .filter(comment_id.eq(form.comment_id))
+            .filter(user_id.eq(form.user_id))
+            .first::<Self>(conn)
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not vote on comment"))
     }

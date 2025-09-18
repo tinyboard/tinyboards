@@ -1,1 +1,0 @@
-alter table boards drop column creator_id cascade;

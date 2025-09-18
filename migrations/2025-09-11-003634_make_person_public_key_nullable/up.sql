@@ -1,1 +1,0 @@
-ALTER TABLE person ALTER COLUMN public_key DROP NOT NULL;

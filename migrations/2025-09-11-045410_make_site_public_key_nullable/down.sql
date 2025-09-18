@@ -1,1 +1,0 @@
-ALTER TABLE site ALTER COLUMN public_key SET NOT NULL;
