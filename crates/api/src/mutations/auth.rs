@@ -51,7 +51,7 @@ impl Auth {
         }
 
         let pool = ctx.data::<DbPool>()?;
-        let master_key = ctx.data::<MasterKey>()?;
+        let _master_key = ctx.data::<MasterKey>()?;
 
         // attempted login with email - look up account by email
         let u = if username_or_email.contains('@') {
@@ -111,11 +111,10 @@ impl Auth {
         }
 
         let pool = ctx.data::<DbPool>()?;
-        let master_key = ctx.data::<MasterKey>()?;
+        let _master_key = ctx.data::<MasterKey>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
         let site = DbSite::read(pool).await?;
-        let site_info = DbSite::read(pool).await?;
 
         let protocol_and_hostname = settings.get_protocol_and_hostname();
 

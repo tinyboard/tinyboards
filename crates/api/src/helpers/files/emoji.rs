@@ -136,6 +136,7 @@ fn is_emoji_content_type(content_type: &str) -> bool {
     )
 }
 
+#[allow(dead_code)]
 fn sanitize_shortcode(shortcode: &str) -> String {
     shortcode
         .chars()

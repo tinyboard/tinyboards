@@ -153,7 +153,7 @@ impl Board {
         limit: Option<i64>,
         #[graphql(desc = "Sorting type.")] sort: Option<SortType>,
         #[graphql(desc = "If specified, only posts from the given user will be loaded.")]
-        user_id: Option<i32>,
+        _user_id: Option<i32>,
         #[graphql(desc = "Page.")] page: Option<i64>,
     ) -> Result<Vec<Post>> {
         let pool = ctx.data::<DbPool>()?;

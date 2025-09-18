@@ -7,6 +7,7 @@ use tokio::fs;
 use std::collections::HashSet;
 
 /// Clean up orphaned files that exist on disk but not in database
+#[allow(dead_code)]
 pub async fn cleanup_orphaned_files(pool: &DbPool, media_path: &str) -> Result<usize, TinyBoardsError> {
     let mut deleted_count = 0;
 
@@ -57,6 +58,7 @@ pub async fn cleanup_orphaned_files(pool: &DbPool, media_path: &str) -> Result<u
 }
 
 /// Find database entries where files don't exist on disk
+#[allow(dead_code)]
 pub async fn find_broken_upload_records(pool: &DbPool) -> Result<Vec<(i32, String)>, TinyBoardsError> {
     let uploads = DbUpload::list_all(pool).await?;
     let mut broken_records = Vec::new();
@@ -71,6 +73,7 @@ pub async fn find_broken_upload_records(pool: &DbPool) -> Result<Vec<(i32, Strin
 }
 
 /// Remove database entries for files that don't exist on disk
+#[allow(dead_code)]
 pub async fn cleanup_broken_upload_records(pool: &DbPool) -> Result<usize, TinyBoardsError> {
     let broken_records = find_broken_upload_records(pool).await?;
     let count = broken_records.len();
@@ -87,6 +90,7 @@ pub async fn cleanup_broken_upload_records(pool: &DbPool) -> Result<usize, TinyB
 }
 
 /// Get storage statistics for the media directory
+#[allow(dead_code)]
 pub async fn get_storage_stats(media_path: &str) -> Result<StorageStats, TinyBoardsError> {
     let mut stats = StorageStats::default();
 
@@ -146,6 +150,7 @@ pub async fn get_storage_stats(media_path: &str) -> Result<StorageStats, TinyBoa
 
 /// Storage statistics structure
 #[derive(Default, Debug)]
+#[allow(dead_code)]
 pub struct StorageStats {
     pub total_size: u64,
     pub total_files: u64,
@@ -164,6 +169,7 @@ pub struct StorageStats {
 }
 
 impl StorageStats {
+    #[allow(dead_code)]
     pub fn format_summary(&self) -> String {
         use tinyboards_utils::utils::format_file_size;
 
@@ -188,6 +194,7 @@ impl StorageStats {
 }
 
 /// Delete old temporary files
+#[allow(dead_code)]
 pub async fn cleanup_temp_files(media_path: &str, max_age_hours: u64) -> Result<usize, TinyBoardsError> {
     let temp_dir = format!("{}/temp", media_path);
     let mut deleted_count = 0;

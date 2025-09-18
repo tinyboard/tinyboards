@@ -6,7 +6,7 @@ use tinyboards_db::{
         user_blocks::{UserBlock, UserBlockForm},
         user_board_blocks::{UserBoardBlock, UserBoardBlockForm},
     },
-    traits::{Subscribeable, Crud},
+    traits::Crud,
     utils::DbPool,
 };
 use tinyboards_utils::TinyBoardsError;

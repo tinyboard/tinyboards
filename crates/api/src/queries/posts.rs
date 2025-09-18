@@ -71,7 +71,7 @@ impl QueryPosts {
             ListingType,
         >,
         #[graphql(desc = "If specified, only posts from the given user will be loaded.")]
-        user_id: Option<i32>,
+        _user_id: Option<i32>,
         #[graphql(desc = "If specified, only posts in the given board will be loaded.")]
         board_id: Option<i32>,
         person_name: Option<String>,

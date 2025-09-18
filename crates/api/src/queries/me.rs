@@ -1,7 +1,6 @@
 use crate::{structs::user::User, LoggedInUser};
 use async_graphql::*;
 use tinyboards_db::utils::DbPool;
-use tinyboards_utils::TinyBoardsError;
 
 #[derive(Default)]
 pub struct MeQuery;

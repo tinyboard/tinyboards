@@ -7,9 +7,9 @@ use tinyboards_db::traits::Crud;
 use tinyboards_utils::{
     error::TinyBoardsError,
     utils::{
-        generate_secure_filename, get_file_type_extended, is_acceptable_file_type,
+        generate_secure_filename, is_acceptable_file_type,
         validate_file_size, validate_file_content, get_file_path_for_type,
-        get_file_url, ensure_upload_directories, format_file_size
+        ensure_upload_directories, format_file_size
     },
 };
 use tokio::fs::File;

@@ -1,7 +1,5 @@
 use async_graphql::*;
-use tinyboards_db::models::{
-    user::user::AdminPerms, site::site::Site as DbSite,
-};
+use tinyboards_db::models::user::user::AdminPerms;
 
 use crate::LoggedInUser;
 

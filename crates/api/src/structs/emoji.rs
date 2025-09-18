@@ -1,5 +1,4 @@
 use async_graphql::*;
-use chrono::NaiveDateTime;
 use tinyboards_db::models::emoji::emoji::Emoji;
 
 #[derive(SimpleObject, Clone)]

@@ -18,6 +18,7 @@ pub fn build_user_agent(settings: &Settings) -> String {
     )
 }
 
+#[allow(dead_code)]
 #[tracing::instrument(skip_all)]
 async fn is_image_content_type(
     client: &ClientWithMiddleware,

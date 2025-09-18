@@ -1,6 +1,6 @@
 use tinyboards_db::{
     models::{
-        board::{board_mods::BoardModerator, boards::Board},
+        board::boards::Board,
         user::user::{AdminPerms, User},
     },
     traits::Crud,

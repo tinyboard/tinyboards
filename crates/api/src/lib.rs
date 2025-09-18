@@ -47,6 +47,7 @@ use tinyboards_utils::{settings::structs::Settings as Settings_, TinyBoardsError
 /// wrapper around logged in user
 pub struct LoggedInUser(Option<User>);
 /// key for decoding JWTs
+#[allow(dead_code)]
 pub struct MasterKey(String);
 /// Instance settings
 pub struct Settings(&'static Settings_);
@@ -175,6 +176,7 @@ impl LoggedInUser {
 }
 
 impl MasterKey {
+    #[allow(dead_code)]
     pub(crate) fn as_ref(&self) -> &str {
         self.0.as_str()
     }
