@@ -3,6 +3,9 @@ name = "tinyboards_db"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+full = []
+
 [dependencies]
 tinyboards_utils = { workspace = true }
 chrono = { workspace = true }

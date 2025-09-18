@@ -17,12 +17,11 @@ pub fn utc_timestamp() -> i64 {
 }
 
 pub fn naive_from_unix(time: i64) -> NaiveDateTime {
-    NaiveDateTime::from_timestamp_opt(time, 0).expect("convert datetime")
+    DateTime::from_timestamp(time, 0).expect("convert datetime").naive_utc()
 }
 
 pub fn convert_datetime(datetime: NaiveDateTime) -> DateTime<FixedOffset> {
-    DateTime::<FixedOffset>::from_utc(
-        datetime,
-        FixedOffset::east_opt(0).expect("create fixed offset"),
-    )
+    FixedOffset::east_opt(0)
+        .expect("create fixed offset")
+        .from_utc_datetime(&datetime)
 }

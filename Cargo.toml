@@ -29,7 +29,7 @@ members = [
 
 [workspace.dependencies]
 tinyboards_utils = { version = "=0.1.0", path = "./crates/utils" }
-tinyboards_db = { version = "=0.1.0", path = "./crates/db" }
+tinyboards_db = { version = "=0.1.0", path = "./crates/db", features = ["full"] }
 tinyboards_api = { version = "=0.1.0", path = "./crates/api" }
 base64 = "0.21.0"
 diesel = { version = "2.1.0", features = [

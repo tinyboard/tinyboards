@@ -43,12 +43,12 @@ impl Crud for UserBan {
 
 impl UserBan {
     /// Check if a user is banned
-    pub async fn is_banned(pool: &DbPool, user_id: i32) -> Result<bool, Error> {
+    pub async fn is_banned(pool: &DbPool, for_user_id: i32) -> Result<bool, Error> {
         use crate::schema::user_ban::dsl::*;
         let conn = &mut get_conn(pool).await?;
 
         let ban = user_ban
-            .filter(user_id.eq(user_id))
+            .filter(user_id.eq(for_user_id))
             .first::<Self>(conn)
             .await;
 

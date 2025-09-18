@@ -43,13 +43,13 @@ impl Crud for UserBlock {
 
 impl UserBlock {
     /// Check if a user is blocked by another user
-    pub async fn is_blocked(pool: &DbPool, user_id: i32, target_id: i32) -> Result<bool, Error> {
+    pub async fn is_blocked(pool: &DbPool, for_user_id: i32, for_target_id: i32) -> Result<bool, Error> {
         use crate::schema::user_blocks::dsl::*;
         let conn = &mut get_conn(pool).await?;
 
         let blocked = user_blocks
-            .filter(user_id.eq(user_id))
-            .filter(target_id.eq(target_id))
+            .filter(user_id.eq(for_user_id))
+            .filter(target_id.eq(for_target_id))
             .first::<Self>(conn)
             .await;
 
@@ -68,14 +68,14 @@ impl UserBlock {
     }
 
     /// Remove a block between two users
-    pub async fn unblock(pool: &DbPool, user_id: i32, target_id: i32) -> Result<usize, Error> {
+    pub async fn unblock(pool: &DbPool, for_user_id: i32, for_target_id: i32) -> Result<usize, Error> {
         use crate::schema::user_blocks::dsl::*;
         let conn = &mut get_conn(pool).await?;
 
         diesel::delete(
             user_blocks
-                .filter(user_id.eq(user_id))
-                .filter(target_id.eq(target_id))
+                .filter(user_id.eq(for_user_id))
+                .filter(target_id.eq(for_target_id))
         )
         .execute(conn)
         .await

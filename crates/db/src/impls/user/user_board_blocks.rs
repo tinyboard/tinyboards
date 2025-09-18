@@ -43,13 +43,13 @@ impl Crud for UserBoardBlock {
 
 impl UserBoardBlock {
     /// Check if a user has blocked a specific board
-    pub async fn is_board_blocked(pool: &DbPool, user_id: i32, board_id: i32) -> Result<bool, Error> {
+    pub async fn is_board_blocked(pool: &DbPool, for_user_id: i32, for_board_id: i32) -> Result<bool, Error> {
         use crate::schema::user_board_blocks::dsl::*;
         let conn = &mut get_conn(pool).await?;
 
         let blocked = user_board_blocks
-            .filter(user_id.eq(user_id))
-            .filter(board_id.eq(board_id))
+            .filter(user_id.eq(for_user_id))
+            .filter(board_id.eq(for_board_id))
             .first::<Self>(conn)
             .await;
 
@@ -68,14 +68,14 @@ impl UserBoardBlock {
     }
 
     /// Remove a board block for a user
-    pub async fn unblock_board(pool: &DbPool, user_id: i32, board_id: i32) -> Result<usize, Error> {
+    pub async fn unblock_board(pool: &DbPool, for_user_id: i32, for_board_id: i32) -> Result<usize, Error> {
         use crate::schema::user_board_blocks::dsl::*;
         let conn = &mut get_conn(pool).await?;
 
         diesel::delete(
             user_board_blocks
-                .filter(user_id.eq(user_id))
-                .filter(board_id.eq(board_id))
+                .filter(user_id.eq(for_user_id))
+                .filter(board_id.eq(for_board_id))
         )
         .execute(conn)
         .await

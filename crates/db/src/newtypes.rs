@@ -7,6 +7,8 @@
 //use diesel_ltree::Ltree;
 use diesel::{AsExpression, FromSqlRow};
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "full")]
+use diesel_derive_newtype::DieselNewType;
 use std::{
     fmt,
     fmt::{Display, Formatter},
