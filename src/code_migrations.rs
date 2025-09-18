@@ -15,6 +15,8 @@ use tinyboards_utils::{
     error::TinyBoardsError, settings::structs::Settings, passhash::hash_password,
 };
 use tracing::info;
+use diesel::sql_query;
+use diesel_async::RunQueryDsl;
 // use tracing::info;
 // use url::Url;
 
@@ -22,8 +24,35 @@ pub async fn run_advanced_migrations(
     pool: &DbPool,
     settings: &Settings,
 ) -> Result<(), TinyBoardsError> {
+    initialize_core_database_records(pool).await?;
     initialize_site_and_admin_user(pool, settings).await?;
 
+    Ok(())
+}
+
+/// Initialize core database records that are essential for the application to function
+/// This includes language, JWT secret, and site aggregates
+async fn initialize_core_database_records(pool: &DbPool) -> Result<(), TinyBoardsError> {
+    info!("Running initialize_core_database_records");
+
+    let mut conn = pool.get().await?;
+
+    // Insert default English language if it doesn't exist
+    sql_query("INSERT INTO language (id, code, name) VALUES (1, 'en', 'English') ON CONFLICT DO NOTHING")
+        .execute(&mut conn)
+        .await
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to insert default language"))?;
+
+    // Insert JWT secret if it doesn't exist (using PostgreSQL's gen_random_bytes)
+    sql_query("INSERT INTO secret (id, jwt_secret) VALUES (1, encode(gen_random_bytes(32), 'hex')) ON CONFLICT DO NOTHING")
+        .execute(&mut conn)
+        .await
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to insert JWT secret"))?;
+
+    // Insert site aggregates if it doesn't exist (will be created after site is created)
+    // This is handled after site creation in initialize_site_and_admin_user
+
+    info!("Core database records initialized");
     Ok(())
 }
 
@@ -131,6 +160,13 @@ async fn initialize_site_and_admin_user(
 
         let _inserted_site = Site::create(pool, &site_form).await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to create site"))?;
+
+        // Initialize site aggregates after site creation
+        let mut conn = pool.get().await?;
+        sql_query("INSERT INTO site_aggregates (site_id) VALUES (1) ON CONFLICT DO NOTHING")
+            .execute(&mut conn)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to insert site aggregates"))?;
 
         info!("Site '{}' and admin user successfully initialized!", site_name);
 

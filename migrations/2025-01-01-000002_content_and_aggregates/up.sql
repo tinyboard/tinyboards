@@ -373,6 +373,3 @@ ALTER TABLE ONLY public.board_mods ADD CONSTRAINT board_mods_user_id_fkey FOREIG
 CREATE TRIGGER post_aggregates_post AFTER INSERT OR DELETE ON public.posts FOR EACH ROW EXECUTE FUNCTION public.post_aggregates_post();
 CREATE TRIGGER comment_aggregates_comment AFTER INSERT OR DELETE ON public.comments FOR EACH ROW EXECUTE FUNCTION public.comment_aggregates_comment();
 CREATE TRIGGER board_aggregates_board AFTER INSERT OR DELETE ON public.boards FOR EACH ROW EXECUTE FUNCTION public.board_aggregates_board();
-
--- Insert default aggregates for site
-INSERT INTO public.site_aggregates (site_id) VALUES (1) ON CONFLICT DO NOTHING;

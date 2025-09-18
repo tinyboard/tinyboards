@@ -365,14 +365,3 @@ ALTER TABLE ONLY public.users ADD CONSTRAINT users_name_key UNIQUE (name);
 ALTER TABLE ONLY public.boards ADD CONSTRAINT boards_name_key UNIQUE (name);
 
 -- Basic foreign key constraints will be added in later migrations
-
--- Insert default language
-INSERT INTO public.language (id, code, name) VALUES (1, 'en', 'English') ON CONFLICT DO NOTHING;
-
--- Insert default site configuration
-INSERT INTO public.site (id, name, description, site_setup) VALUES
-(1, 'TinyBoards', 'A modern discussion platform', false) ON CONFLICT DO NOTHING;
-
--- Insert JWT secret (generated using pgcrypto)
-INSERT INTO public.secret (id, jwt_secret) VALUES
-(1, encode(gen_random_bytes(32), 'hex')) ON CONFLICT DO NOTHING;
