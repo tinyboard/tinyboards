@@ -15,7 +15,7 @@ use tinyboards_utils::TinyBoardsError;
 use crate::LoggedInUser;
 
 #[derive(Default)]
-pub struct BoardModerationMutations;
+pub struct BoardBanMutations;
 
 #[derive(SimpleObject)]
 pub struct BoardBanResponse {
@@ -39,7 +39,7 @@ pub struct BoardBanUserInput {
 }
 
 #[Object]
-impl BoardModerationMutations {
+impl BoardBanMutations {
     /// Ban a user from a specific board (moderator/admin only)
     pub async fn ban_user_from_board(
         &self,

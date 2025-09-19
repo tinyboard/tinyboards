@@ -27,7 +27,7 @@ pub struct AddModeratorResponse {
 }
 
 #[derive(SimpleObject)]
-pub struct BanUserResponse {
+pub struct BanUserFromBoardResponse {
     pub success: bool,
 }
 
@@ -169,7 +169,7 @@ impl BoardModerationMutations {
         user_id: i32,
         _reason: Option<String>,
         expires: Option<String>, // ISO date string
-    ) -> Result<BanUserResponse> {
+    ) -> Result<BanUserFromBoardResponse> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
 
@@ -221,7 +221,7 @@ impl BoardModerationMutations {
 
         // TODO: Log the ban action with reason
 
-        Ok(BanUserResponse { success: true })
+        Ok(BanUserFromBoardResponse { success: true })
     }
 
     /// Remove a moderator from a board (owner/admin only)
