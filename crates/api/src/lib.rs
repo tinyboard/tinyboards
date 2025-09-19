@@ -14,6 +14,7 @@ use crate::mutations::{
     board_moderation::BoardModerationMutations,
     emoji::EmojiMutations,
     message::{actions::MessageActionMutations, send_message::SendMessageMutations, edit_message::EditMessageMutations},
+    moderation_unified::ModerationMutations,
     notifications::NotificationMutations,
     user::{actions::UserActions, profile_management::ProfileManagement, settings::UpdateSettings},
     comment::{
@@ -26,6 +27,7 @@ use crate::mutations::{
 use async_graphql::*;
 use queries::{
     banned_users::QueryBannedUsers,
+    board_management::QueryBoardManagement,
     board_moderators::QueryBoardModerators,
     boards::QueryBoards,
     emojis::EmojiQueries,
@@ -33,10 +35,12 @@ use queries::{
     site::QuerySite,
     me::MeQuery,
     messages::QueryMessages,
+    moderation_unified::ModerationQueries,
     notifications::QueryNotifications,
     user::QueryUser,
     posts::QueryPosts,
     registration_applications::RegistrationApplicationQueries,
+    reports::ReportQueries,
     search::QuerySearch,
 };
 use tinyboards_db::{models::user::user::User, utils::DbPool};
@@ -85,6 +89,7 @@ pub struct Query(
     MeQuery,
     QueryPosts,
     QueryBoards,
+    QueryBoardManagement,
     QueryUser,
     QuerySite,
     QueryMessages,
@@ -95,6 +100,8 @@ pub struct Query(
     QuerySearch,
     RegistrationApplicationQueries,
     EmojiQueries,
+    ReportQueries,
+    ModerationQueries,
 );
 
 #[derive(MergedObject, Default)]
@@ -125,6 +132,7 @@ pub struct Mutation(
     BoardModerationMutations,
     RegistrationApplicationMutations,
     EmojiMutations,
+    ModerationMutations,
 );
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {

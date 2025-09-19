@@ -188,4 +188,27 @@ impl User {
         unimplemented!("Use tinyboards_api::utils::auth::get_jwt instead")
     }
 
+    /// Update user's banned status
+    pub async fn ban_user(
+        pool: &crate::utils::DbPool,
+        user_id: i32,
+        is_banned: bool,
+    ) -> Result<Self, tinyboards_utils::TinyBoardsError> {
+        use crate::utils::get_conn;
+        use crate::schema::users;
+        let conn = &mut get_conn(pool).await?;
+
+        use diesel_async::RunQueryDsl;
+
+        let updated_user = diesel_async::RunQueryDsl::get_result(
+            diesel::update(users::table.find(user_id))
+                .set(users::is_banned.eq(is_banned)),
+            conn
+        )
+        .await
+            .map_err(|e| tinyboards_utils::TinyBoardsError::from(e))?;
+
+        Ok(updated_user)
+    }
+
 }

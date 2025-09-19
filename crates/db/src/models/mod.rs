@@ -3,6 +3,7 @@ pub mod comment;
 pub mod emoji;
 pub mod message;
 pub mod moderator;
+pub mod notification;
 pub mod post;
 pub mod secret;
 pub mod site;

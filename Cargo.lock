@@ -4101,6 +4101,7 @@ dependencies = [
  "regex",
  "reqwest-middleware",
  "serde",
+ "serde_json",
  "serde_with",
  "tinyboards_db",
  "tinyboards_utils",

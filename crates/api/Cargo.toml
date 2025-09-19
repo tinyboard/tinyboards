@@ -25,6 +25,7 @@ uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
 tracing = { workspace = true }
 serde = { workspace = true }
+serde_json = { workspace = true }
 serde_with = { workspace = true }
 encoding = { workspace = true }
 reqwest-middleware = { workspace = true }

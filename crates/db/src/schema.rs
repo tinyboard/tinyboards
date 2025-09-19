@@ -229,6 +229,10 @@ diesel::table! {
         board_id -> Int4,
         language_id -> Nullable<Int4>,
         is_pinned -> Nullable<Bool>,
+        #[max_length = 20]
+        approval_status -> Varchar,
+        approved_by -> Nullable<Int4>,
+        approved_at -> Nullable<Timestamp>,
     }
 }
 
@@ -440,6 +444,42 @@ diesel::table! {
 }
 
 diesel::table! {
+    moderation_log (id) {
+        id -> Int4,
+        moderator_id -> Int4,
+        #[max_length = 50]
+        action_type -> Varchar,
+        #[max_length = 20]
+        target_type -> Varchar,
+        target_id -> Int4,
+        board_id -> Nullable<Int4>,
+        reason -> Nullable<Text>,
+        metadata -> Nullable<Jsonb>,
+        created_at -> Timestamp,
+        expires_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    notification_settings (id) {
+        id -> Int4,
+        user_id -> Int4,
+        email_enabled -> Bool,
+        comment_replies_enabled -> Bool,
+        post_replies_enabled -> Bool,
+        mentions_enabled -> Bool,
+        post_votes_enabled -> Bool,
+        comment_votes_enabled -> Bool,
+        private_messages_enabled -> Bool,
+        board_invites_enabled -> Bool,
+        moderator_actions_enabled -> Bool,
+        system_notifications_enabled -> Bool,
+        created -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     notifications (id) {
         id -> Int4,
         kind -> Text,
@@ -489,6 +529,15 @@ diesel::table! {
         board_id -> Int4,
         creator_id -> Int4,
         controversy_rank -> Float8,
+    }
+}
+
+diesel::table! {
+    post_hidden (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        creation_date -> Timestamp,
     }
 }
 
@@ -585,6 +634,10 @@ diesel::table! {
         last_crawl_date -> Nullable<Timestamp>,
         #[max_length = 255]
         title_chunk -> Varchar,
+        #[max_length = 20]
+        approval_status -> Varchar,
+        approved_by -> Nullable<Int4>,
+        approved_at -> Nullable<Timestamp>,
     }
 }
 
@@ -761,6 +814,10 @@ diesel::table! {
         id -> Int4,
         user_id -> Int4,
         creation_date -> Timestamp,
+        banned_by -> Nullable<Int4>,
+        reason -> Nullable<Text>,
+        expires_at -> Nullable<Timestamp>,
+        banned_at -> Timestamp,
     }
 }
 
@@ -862,13 +919,17 @@ diesel::joinable!(comment_votes -> posts (post_id));
 diesel::joinable!(comment_votes -> users (user_id));
 diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> posts (post_id));
-diesel::joinable!(comments -> users (creator_id));
 diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(emoji_keyword -> emoji (emoji_id));
+diesel::joinable!(moderation_log -> boards (board_id));
+diesel::joinable!(moderation_log -> users (moderator_id));
+diesel::joinable!(notification_settings -> users (user_id));
 diesel::joinable!(notifications -> private_message (message_id));
 diesel::joinable!(password_resets -> users (user_id));
 diesel::joinable!(pm_notif -> private_message (pm_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
+diesel::joinable!(post_hidden -> posts (post_id));
+diesel::joinable!(post_hidden -> users (user_id));
 diesel::joinable!(post_read -> posts (post_id));
 diesel::joinable!(post_read -> users (user_id));
 diesel::joinable!(post_reports -> posts (post_id));
@@ -878,12 +939,12 @@ diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> language (language_id));
-diesel::joinable!(posts -> users (creator_id));
 diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
 diesel::joinable!(uploads -> users (user_id));
 diesel::joinable!(user_aggregates -> users (user_id));
+diesel::joinable!(user_ban -> users (banned_by));
 diesel::joinable!(user_board_blocks -> boards (board_id));
 diesel::joinable!(user_board_blocks -> users (user_id));
 diesel::joinable!(user_language -> language (language_id));
@@ -924,10 +985,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     mod_remove_board,
     mod_remove_comment,
     mod_remove_post,
+    moderation_log,
+    notification_settings,
     notifications,
     password_resets,
     pm_notif,
     post_aggregates,
+    post_hidden,
     post_read,
     post_report,
     post_reports,

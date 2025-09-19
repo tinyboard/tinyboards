@@ -71,9 +71,11 @@ impl UserBan {
         use crate::schema::user_ban::dsl::*;
         let conn = &mut get_conn(pool).await?;
 
-        diesel::delete(user_ban.filter(user_id.eq(for_user_id)))
-            .execute(conn)
-            .await
+        diesel_async::RunQueryDsl::execute(
+            diesel::delete(user_ban.filter(user_id.eq(for_user_id))),
+            conn
+        )
+        .await
     }
 
     /// Get all banned users

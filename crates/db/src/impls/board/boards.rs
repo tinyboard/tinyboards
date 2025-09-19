@@ -179,6 +179,7 @@ impl Board {
         user_id: i32,
     ) -> Result<bool, Error> {
         let conn = &mut get_conn(pool).await?;
+        let current_time = chrono::Utc::now().naive_utc();
         let ban_id = board_user_bans::table
             .select(board_user_bans::id)
             .filter(board_user_bans::board_id.eq(board_id))
@@ -186,7 +187,7 @@ impl Board {
             .filter(
                 board_user_bans::expires
                     .is_null()
-                    .or(board_user_bans::expires.gt(now)),
+                    .or(board_user_bans::expires.gt(current_time)),
             )
             .first::<i32>(conn)
             .await
@@ -569,10 +570,15 @@ impl Bannable for BoardUserBan {
     async fn unban(pool: &DbPool, ban_form: &Self::Form) -> Result<usize, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::board_user_bans::dsl::{board_id, board_user_bans, user_id};
+
+        // Ensure required fields are present
+        let target_board_id = ban_form.board_id.ok_or_else(|| Error::NotFound)?;
+        let target_user_id = ban_form.user_id.ok_or_else(|| Error::NotFound)?;
+
         diesel::delete(
             board_user_bans
-                .filter(board_id.eq(ban_form.board_id))
-                .filter(user_id.eq(ban_form.user_id)),
+                .filter(board_id.eq(target_board_id))
+                .filter(user_id.eq(target_user_id)),
         )
         .execute(conn)
         .await

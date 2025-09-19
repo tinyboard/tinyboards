@@ -27,6 +27,41 @@ struct Settings {
     show_bots: bool,
 }
 
+/// Public UserSettings object (for GraphQL queries)
+#[derive(SimpleObject, Clone)]
+pub struct UserSettings {
+    pub id: i32,
+    pub name: String,
+    pub email: Option<String>,
+    #[graphql(name = "showNSFW")]
+    pub show_nsfw: bool,
+    pub show_bots: bool,
+    pub theme: String,
+    pub default_sort_type: i16,
+    pub default_listing_type: i16,
+    pub email_notifications_enabled: bool,
+    pub interface_language: String,
+    pub updated: Option<String>,
+}
+
+impl From<tinyboards_db::models::user::user::UserSettings> for UserSettings {
+    fn from(settings: tinyboards_db::models::user::user::UserSettings) -> Self {
+        Self {
+            id: settings.id,
+            name: settings.name,
+            email: settings.email,
+            show_nsfw: settings.show_nsfw,
+            show_bots: settings.show_bots,
+            theme: settings.theme,
+            default_sort_type: settings.default_sort_type,
+            default_listing_type: settings.default_listing_type,
+            email_notifications_enabled: settings.email_notifications_enabled,
+            interface_language: settings.interface_language,
+            updated: settings.updated.map(|u| u.to_string()),
+        }
+    }
+}
+
 /// GraphQL representation of User.
 #[derive(SimpleObject, Clone)]
 #[graphql(complex)]
