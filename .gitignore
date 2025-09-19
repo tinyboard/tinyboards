@@ -9,3 +9,4 @@ app/media/*
 !app/media/default_pfp.png
 .claude/*
 CLAUDE.md
+media/*
