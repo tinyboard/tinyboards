@@ -31,6 +31,18 @@ pub struct BanUserResponse {
     pub success: bool,
 }
 
+#[derive(SimpleObject)]
+pub struct RemoveModeratorResponse {
+    pub success: bool,
+    pub message: String,
+}
+
+#[derive(SimpleObject)]
+pub struct TransferOwnershipResponse {
+    pub success: bool,
+    pub message: String,
+}
+
 #[Object]
 impl BoardModerationMutations {
     /// Add a moderator to a board
@@ -210,5 +222,150 @@ impl BoardModerationMutations {
         // TODO: Log the ban action with reason
 
         Ok(BanUserResponse { success: true })
+    }
+
+    /// Remove a moderator from a board (owner/admin only)
+    pub async fn remove_board_moderator(
+        &self,
+        ctx: &Context<'_>,
+        board_id: i32,
+        user_id: i32,
+    ) -> Result<RemoveModeratorResponse> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        // Verify board exists
+        let board = Board::read(pool, board_id).await?;
+
+        // Check if user has permission to remove moderators
+        let can_remove_mod = if user.has_permission(AdminPerms::Users) {
+            true // Admins can remove mods from any board
+        } else {
+            // Check if user is the board owner (rank 0)
+            match BoardModerator::get_by_user_id_for_board(pool, user.id, board_id, true).await {
+                Ok(mod_entry) => mod_entry.rank == 0, // Only board owner can remove mods
+                Err(_) => false,
+            }
+        };
+
+        if !can_remove_mod {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Only board owners or admins can remove moderators",
+            )
+            .into());
+        }
+
+        // Prevent self-removal unless admin
+        if user.id == user_id && !user.has_permission(AdminPerms::Users) {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Board owners cannot remove themselves. Transfer ownership first.",
+            )
+            .into());
+        }
+
+        // Get the target moderator entry
+        let target_mod = BoardModerator::get_by_user_id_for_board(pool, user_id, board_id, true).await
+            .map_err(|_| TinyBoardsError::from_message(404, "User is not a moderator of this board"))?;
+
+        // Prevent removing the board owner unless admin
+        if target_mod.rank == 0 && !user.has_permission(AdminPerms::Users) {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Cannot remove board owner. Transfer ownership first.",
+            )
+            .into());
+        }
+
+        // Remove the moderator
+        BoardModerator::delete(pool, target_mod.id).await?;
+
+        let target_user = DbUser::read(pool, user_id).await?;
+
+        Ok(RemoveModeratorResponse {
+            success: true,
+            message: format!("User {} has been removed as a moderator", target_user.name),
+        })
+    }
+
+    /// Transfer board ownership to another moderator (owner only)
+    pub async fn transfer_board_ownership(
+        &self,
+        ctx: &Context<'_>,
+        board_id: i32,
+        new_owner_id: i32,
+    ) -> Result<TransferOwnershipResponse> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        // Verify board exists
+        let board = Board::read(pool, board_id).await?;
+
+        // Check if user is the current board owner or admin
+        let can_transfer = if user.has_permission(AdminPerms::Users) {
+            true // Admins can transfer ownership of any board
+        } else {
+            // Check if user is the board owner (rank 0)
+            match BoardModerator::get_by_user_id_for_board(pool, user.id, board_id, true).await {
+                Ok(mod_entry) => mod_entry.rank == 0, // Only board owner can transfer
+                Err(_) => false,
+            }
+        };
+
+        if !can_transfer {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Only board owners or admins can transfer ownership",
+            )
+            .into());
+        }
+
+        // Verify new owner is a moderator of this board
+        let new_owner_mod = BoardModerator::get_by_user_id_for_board(pool, new_owner_id, board_id, true).await
+            .map_err(|_| TinyBoardsError::from_message(400, "New owner must be a moderator of this board"))?;
+
+        // Prevent transferring to someone who is already the owner
+        if new_owner_mod.rank == 0 {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "User is already the owner of this board",
+            )
+            .into());
+        }
+
+        // Get current owner's moderator entry if not admin
+        let current_owner_mod = if !user.has_permission(AdminPerms::Users) {
+            Some(BoardModerator::get_by_user_id_for_board(pool, user.id, board_id, true).await?)
+        } else {
+            None
+        };
+
+        // Update the new owner to rank 0 and give full permissions
+        use tinyboards_db::schema::board_mods;
+        let conn = &mut get_conn(pool).await?;
+
+        diesel::update(board_mods::table.find(new_owner_mod.id))
+            .set((
+                board_mods::rank.eq(0),
+                board_mods::permissions.eq(ModPerms::Full.as_i32()),
+            ))
+            .execute(conn)
+            .await?;
+
+        // If current user is not admin, update their rank to 1
+        if let Some(current_mod) = current_owner_mod {
+            diesel::update(board_mods::table.find(current_mod.id))
+                .set(board_mods::rank.eq(1))
+                .execute(conn)
+                .await?;
+        }
+
+        let new_owner_user = DbUser::read(pool, new_owner_id).await?;
+
+        Ok(TransferOwnershipResponse {
+            success: true,
+            message: format!("Board ownership has been transferred to {}", new_owner_user.name),
+        })
     }
 }

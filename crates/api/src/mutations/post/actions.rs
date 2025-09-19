@@ -14,6 +14,7 @@ use tinyboards_db::models::post::post_saved::{PostSaved, PostSavedForm};
 use tinyboards_db::models::post::post_votes::PostVote as DbPostVote;
 use tinyboards_db::models::post::post_votes::PostVoteForm;
 use tinyboards_db::models::post::posts::{Post as DbPost, PostForm};
+use tinyboards_db::models::post::post_hidden::{PostHidden, PostHiddenForm};
 use tinyboards_db::traits::{Crud, Saveable, Voteable};
 use tinyboards_utils::TinyBoardsError;
 
@@ -183,6 +184,76 @@ impl PostActions {
         
         let res = DbPost::get_with_counts(pool, post_id, false).await?;
         Ok(Post::from(res))
+    }
+
+    /// Delete a post (creator/moderator/admin only)
+    pub async fn delete_post(
+        &self,
+        ctx: &Context<'_>,
+        post_id: i32,
+        deleted: bool,
+    ) -> Result<Post> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        let post = DbPost::read(pool, post_id).await?;
+
+        // Check permissions: creator can delete their own post, or moderator/admin
+        let can_delete = post.creator_id == user.id ||
+            user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content) ||
+            match BoardModerator::get_by_user_id_for_board(pool, user.id, post.board_id, true).await {
+                Ok(moderator) => moderator.has_permission(ModPerms::Content),
+                Err(_) => false,
+            };
+
+        if !can_delete {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "You don't have permission to delete this post",
+            )
+            .into());
+        }
+
+        // Update the post's deleted status
+        DbPost::update_deleted(pool, post_id, deleted).await?;
+
+        let res = DbPost::get_with_counts(pool, post_id, false).await?;
+        Ok(Post::from(res))
+    }
+
+    /// Hide or unhide a post (user action)
+    pub async fn hide_post(
+        &self,
+        ctx: &Context<'_>,
+        post_id: i32,
+        hidden: bool,
+    ) -> Result<bool> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        let post = DbPost::read(pool, post_id).await?;
+
+        if post.is_deleted || post.is_removed {
+            return Err(TinyBoardsError::from_message(
+                404,
+                "That post has been deleted or removed.",
+            )
+            .into());
+        }
+
+        // Hide/unhide post for this user
+        let form = PostHiddenForm {
+            post_id,
+            user_id: user.id,
+        };
+
+        if hidden {
+            PostHidden::hide(pool, &form).await?;
+        } else {
+            PostHidden::unhide(pool, &form).await?;
+        }
+
+        Ok(hidden)
     }
 
     // Note: Post reporting is implemented in mutations/reports.rs

@@ -178,4 +178,44 @@ impl QueryBoardManagement {
 
         Ok(banned_users)
     }
+
+    /// Get list of boards that the current user moderates
+    pub async fn get_moderated_boards(
+        &self,
+        ctx: &Context<'_>,
+        page: Option<i32>,
+        limit: Option<i32>,
+    ) -> Result<Vec<GqlBoard>> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
+
+        let page = page.unwrap_or(1);
+        let limit = limit.unwrap_or(25).min(100); // Cap at 100
+        let offset = (page - 1) * limit;
+
+        // Get boards where the user is a moderator
+        let all_moderator_entries = BoardModerator::for_user(pool, user.id).await?;
+
+        // Apply pagination manually since the DB method doesn't support it
+        let total_entries = all_moderator_entries.len();
+        let start_idx = (offset as usize).min(total_entries);
+        let end_idx = ((offset + limit) as usize).min(total_entries);
+        let moderator_entries = all_moderator_entries.into_iter().skip(start_idx).take(end_idx - start_idx).collect::<Vec<_>>();
+
+        let board_ids: Vec<i32> = moderator_entries.iter().map(|m| m.board_id).collect();
+
+        if board_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // Get the actual board data with counts
+        let boards_with_counts = Board::get_with_counts_for_ids(pool, board_ids).await?;
+
+        let result = boards_with_counts
+            .into_iter()
+            .map(GqlBoard::from)
+            .collect();
+
+        Ok(result)
+    }
 }

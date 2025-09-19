@@ -9,6 +9,7 @@ use crate::DbPool;
 use crate::LoggedInUser;
 use async_graphql::*;
 use tinyboards_db::models::board::boards::Board as DbBoard;
+use tinyboards_db::models::board::board_mods::{BoardModerator, ModPerms};
 use tinyboards_db::models::comment::comment_saved::{CommentSaved, CommentSavedForm};
 use tinyboards_db::models::comment::comment_votes::CommentVote as DbCommentVote;
 use tinyboards_db::models::comment::comment_votes::CommentVoteForm;
@@ -119,6 +120,41 @@ impl CommentActions {
         } else {
             CommentSaved::unsave(pool, &form).await?;
         }
+
+        let res = DbComment::get_with_counts(pool, comment_id).await?;
+        Ok(Comment::from(res))
+    }
+
+    /// Delete a comment (creator/moderator/admin only)
+    pub async fn delete_comment(
+        &self,
+        ctx: &Context<'_>,
+        comment_id: i32,
+        deleted: bool,
+    ) -> Result<Comment> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        let comment = DbComment::read(pool, comment_id).await?;
+
+        // Check permissions: creator can delete their own comment, or moderator/admin
+        let can_delete = comment.creator_id == user.id ||
+            user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content) ||
+            match BoardModerator::get_by_user_id_for_board(pool, user.id, comment.board_id, true).await {
+                Ok(moderator) => moderator.has_permission(ModPerms::Content),
+                Err(_) => false,
+            };
+
+        if !can_delete {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "You don't have permission to delete this comment",
+            )
+            .into());
+        }
+
+        // Update the comment's deleted status
+        DbComment::update_deleted(pool, comment_id, deleted).await?;
 
         let res = DbComment::get_with_counts(pool, comment_id).await?;
         Ok(Comment::from(res))

@@ -16,6 +16,12 @@ use crate::{
 #[derive(Default)]
 pub struct QueryBannedUsers;
 
+#[derive(SimpleObject)]
+pub struct BannedUsersResponse {
+    pub persons: Vec<GqlUser>,
+    pub total_count: i32,
+}
+
 #[Object]
 impl QueryBannedUsers {
     /// List banned users (admin only)
@@ -24,7 +30,7 @@ impl QueryBannedUsers {
         ctx: &Context<'_>,
         page: Option<i32>,
         limit: Option<i32>,
-    ) -> Result<Vec<GqlUser>> {
+    ) -> Result<BannedUsersResponse> {
         let pool = ctx.data::<DbPool>()?;
         let conn = &mut get_conn(pool).await?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
@@ -52,7 +58,7 @@ impl QueryBannedUsers {
             .load::<User>(conn)
             .await?;
 
-        let mut result = Vec::new();
+        let mut persons = Vec::new();
         for user_db in banned_users {
             // Create default aggregates for banned users
             let aggregates = UserAggregates {
@@ -64,9 +70,19 @@ impl QueryBannedUsers {
                 comment_score: 0,
             };
 
-            result.push(GqlUser::from((user_db, aggregates)));
+            persons.push(GqlUser::from((user_db, aggregates)));
         }
 
-        Ok(result)
+        // Get total count of banned users for pagination
+        let total_count = users::table
+            .filter(users::is_banned.eq(true))
+            .count()
+            .get_result::<i64>(conn)
+            .await? as i32;
+
+        Ok(BannedUsersResponse {
+            persons,
+            total_count,
+        })
     }
 }

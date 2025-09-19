@@ -8,6 +8,7 @@ use tinyboards_db::{
         board::boards::Board as DbBoard,
         user::user::{AdminPerms, User as DbUser},
         post::posts::Post as DbPost,
+        post::post_hidden::PostHidden,
     },
     utils::DbPool,
 };
@@ -125,5 +126,42 @@ impl QueryPosts {
         .await?;
 
         Ok(posts.into_iter().map(Post::from).collect::<Vec<Post>>())
+    }
+
+    /// Get user's hidden posts
+    pub async fn get_hidden_posts(
+        &self,
+        ctx: &Context<'_>,
+        page: Option<i32>,
+        limit: Option<i32>,
+    ) -> Result<Vec<Post>> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
+
+        let page = page.unwrap_or(1);
+        let limit = limit.unwrap_or(25).min(100); // Cap at 100
+
+        // Get hidden post IDs for this user
+        let hidden_post_ids = PostHidden::get_hidden_posts_for_user(
+            pool,
+            user.id,
+            Some(limit as i64),
+            Some(((page - 1) * limit) as i64)
+        ).await?;
+
+        if hidden_post_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        // Get the actual posts with their data
+        let mut posts = Vec::new();
+        for post_id in hidden_post_ids {
+            match DbPost::get_with_counts(pool, post_id, false).await {
+                Ok(post_data) => posts.push(Post::from(post_data)),
+                Err(_) => continue, // Skip if post was deleted or not found
+            }
+        }
+
+        Ok(posts)
     }
 }
