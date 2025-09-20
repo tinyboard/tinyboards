@@ -295,7 +295,7 @@ LABEL org.opencontainers.image.source="https://github.com/tinyboards/tinyboards-
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci --only=production --no-audit --no-fund && npm cache clean --force
+RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
 
 # Copy source code
 COPY . .
