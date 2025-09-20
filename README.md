@@ -48,14 +48,17 @@ Each Tinyboards server can set it's own moderation policies and be ran however t
 
 
 
-1. Download the [Docker Compose File](https://github.com/tinyboard/tinyboards/blob/master/docker/docker-compose.yml) wherever you want to setup Tinyboards
+1. Download the [Docker setup files](https://github.com/tinyboard/tinyboards/tree/master/docker) wherever you want to setup Tinyboards
 2. Make sure that you have Docker and Docker Compose installed on your distribution
 3. In the same directory as your docker compose file:
 
    1. `mkdir -p nginx/conf`
    2. Download the [NGINX Config File](https://github.com/tinyboard/tinyboards/blob/master/docker/nginx/conf/nginx.conf) and place it inside the `conf` directory you just made
    3. `mkdir -p volumes/media && mkdir -p volumes/postgres` (these are going to be needed by the docker containers)
-   4. Download the [Tinyboards Settings File](https://github.com/tinyboard/tinyboards/blob/master/docker/tinyboards.hjson) to the same directory as the docker compose file
-   5. Open the settings file in a text editor, go to the setup section and change the parameters to your liking, the admin user will be used as the system user and send notifications so keep that in mind. Also the credentials you enter here before launching Tinyboards for the first time will be the admin's login credentials as well.
+   4. Copy the appropriate environment file (`.env.dev.example` or `.env.prod.example`) to `.env` and configure your settings
+   5. Open the `.env` file in a text editor and change the parameters to your liking, including database credentials, admin user settings, and domain configuration.
    6. Make sure to also edit the `hostname` field in the settings file as well, this is mandatory if you are running Tinyboards on a VPS, but you should be able to leave it set to localhost for local testing. This should be set to the domain of your Tinyboards (example.com)
-4. After your settings are all set up to your liking all you should have to do now is just run `docker-compose up` (if you want to watch the logs) or `docker-compose up -d` to run it in the background. If you are watching the logs you can gracefully shut it down with `CTRL + C`, if you have it running in the background you can bring it down by running `docker-compose down`
+4. After your settings are configured, you can start TinyBoards using the appropriate compose file:
+   - Development: `docker-compose -f docker-compose.dev.yml up -d`
+   - Production: `docker-compose -f docker-compose.prod.yml up -d`
+   - Registry-based: `docker-compose -f docker-compose.registry.yml up -d`

@@ -1,0 +1,190 @@
+version: '3.8'
+
+# Production-ready Docker Compose using registry images
+# This configuration uses pre-built images from DockerHub
+
+# Common logging configuration
+x-logging: &prod-logging
+  logging:
+    driver: "json-file"
+    options:
+      max-size: "100m"
+      max-file: "5"
+      compress: "true"
+
+# Common restart policy
+x-restart-policy: &prod-restart
+  restart: unless-stopped
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: tinyboards_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf/:/etc/nginx/conf.d:ro
+      - ./nginx/ssl/:/etc/ssl/:ro
+      - nginx_cache:/var/cache/nginx
+      - nginx_logs:/var/log/nginx
+    networks:
+      - tinyboards
+    <<: *prod-restart
+    <<: *prod-logging
+    depends_on:
+      tinyboards:
+        condition: service_healthy
+      tinyboards-fe:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  tinyboards:
+    image: kronusdev/tinyboards-be:latest
+    container_name: tinyboards_backend
+    expose:
+      - "8536"
+    env_file:
+      - .env
+    volumes:
+      - media_uploads:/opt/tinyboards/media
+      - backend_logs:/var/log/tinyboards
+    networks:
+      - tinyboards
+    <<: *prod-restart
+    <<: *prod-logging
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8536/api/v1/site || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  tinyboards-fe:
+    image: kronusdev/tinyboards-fe:latest
+    container_name: tinyboards_frontend
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NITRO_PORT=3000
+      - NITRO_HOST=0.0.0.0
+      - NUXT_PUBLIC_API_BASE=http://tinyboards:8536
+    volumes:
+      - frontend_logs:/app/logs
+    networks:
+      - tinyboards
+    <<: *prod-restart
+    <<: *prod-logging
+    depends_on:
+      tinyboards:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: tinyboards_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tinyboards}
+      POSTGRES_USER: ${POSTGRES_USER:-tinyboards}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - postgres_logs:/var/log/postgresql
+    networks:
+      - tinyboards
+    <<: *prod-restart
+    <<: *prod-logging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tinyboards} -d ${POSTGRES_DB:-tinyboards}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    # Production PostgreSQL configuration
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=768MB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=8
+      -c max_parallel_workers_per_gather=4
+      -c max_parallel_workers=8
+      -c max_parallel_maintenance_workers=4
+
+  redis:
+    image: redis:7-alpine
+    container_name: tinyboards_redis
+    volumes:
+      - redis_data:/data
+      - redis_logs:/var/log/redis
+    networks:
+      - tinyboards
+    <<: *prod-restart
+    <<: *prod-logging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+    # Production Redis configuration
+    command: >
+      redis-server
+      --appendonly yes
+      --appendfsync everysec
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+
+networks:
+  tinyboards:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  media_uploads:
+    driver: local
+  nginx_cache:
+    driver: local
+  # Log volumes
+  backend_logs:
+    driver: local
+  frontend_logs:
+    driver: local
+  postgres_logs:
+    driver: local
+  redis_logs:
+    driver: local
+  nginx_logs:
+    driver: local

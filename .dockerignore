@@ -1,3 +1,108 @@
-target
-docker
+# Build artifacts and target directories
+target/
+**/target/
+**/.cargo/
+.cargo/
+
+# Docker-related files (avoid recursive copying)
+docker/
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Development and tooling files
+.git/
+.gitignore
+.github/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Shell scripts and executables (security)
 *.sh
+*.bat
+*.exe
+*.cmd
+
+# Logs and temporary files
+*.log
+logs/
+tmp/
+temp/
+.tmp/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+*.pid
+*.lock
+
+# Documentation and non-essential files
+README.md
+CHANGELOG.md
+LICENSE*
+docs/
+*.md
+
+# Test files and coverage reports
+tests/
+test/
+coverage/
+*.test
+*_test.rs
+
+# Environment and configuration files that shouldn't be in image
+.env
+.env.*
+!.env.example
+config.toml
+*.local
+.envrc
+
+# Media uploads and user data (should be volumes)
+media/
+uploads/
+volumes/
+
+# Frontend-specific files (when building backend only)
+node_modules/
+*.json
+!Cargo.toml
+!Cargo.lock
+!package.json
+
+# Database-related files
+*.sql
+*.db
+*.sqlite
+migrations/*.sql
+!migrations/*/up.sql
+!migrations/*/down.sql
+
+# Rust-specific temporary files
+**/*.rs.bk
+.rustfmt_cache
+
+# IDE and editor files
+*.iml
+.project
+.classpath
+.settings/
+.buildpath
+
+# Backup and archive files
+*.bak
+*.backup
+*.tar.gz
+*.zip
+*.rar
+
+# Security and sensitive files
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+secrets/

@@ -1,20 +1,19 @@
-# Multi-stage Dockerfile optimized for production
-# Features: Minimal image size, security hardening, fast startup, efficient caching
+# Multi-stage Dockerfile optimized for development
+# Features: Fast rebuilds, dependency caching, security best practices
 
 ARG RUST_VERSION=1.82
 ARG DEBIAN_VERSION=bookworm
 
-# Build stage with dependency caching
+# Build stage with aggressive caching
 FROM rust:${RUST_VERSION}-slim-${DEBIAN_VERSION} as builder
 
-# Install build dependencies in a single layer
+# Install system dependencies in a single layer
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     libpq-dev \
     ca-certificates \
-    clang \
-    lld \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -22,13 +21,14 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd --gid 10001 builder && \
     useradd --uid 10001 --gid builder --create-home builder
 
+# Setup Rust environment for faster builds
 USER builder
 WORKDIR /home/builder/build
 
-# Configure cargo for optimized builds
-RUN mkdir -p .cargo && echo '[net]\ngit-fetch-with-cli = true\n[profile.release]\nopt-level = 3\nlto = true\ncodegen-units = 1\npanic = "abort"\nstrip = true\n[target.x86_64-unknown-linux-gnu]\nlinker = "clang"\nrustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-cpu=native"]' > .cargo/config.toml
+# Configure cargo for better caching and performance
+RUN mkdir -p .cargo && echo '[net]\ngit-fetch-with-cli = true\n[build]\nincremental = true\n[target.x86_64-unknown-linux-gnu]\nlinker = "clang"\nrustflags = ["-C", "link-arg=-fuse-ld=lld"]' > .cargo/config.toml
 
-# Copy dependency manifests for optimal layer caching
+# Copy dependency manifests first for optimal caching
 COPY --chown=builder:builder Cargo.toml Cargo.lock ./
 COPY --chown=builder:builder crates/utils/Cargo.toml ./crates/utils/
 COPY --chown=builder:builder crates/db/Cargo.toml ./crates/db/
@@ -42,7 +42,7 @@ RUN cargo --version && \
         cargo generate-lockfile; \
     fi
 
-# Create dummy source files to build dependencies
+# Create dummy source files to cache dependencies
 RUN mkdir -p src crates/utils/src crates/db/src crates/api/src && \
     echo "fn main() {}" > src/main.rs && \
     echo "pub fn dummy() {}" > src/lib.rs && \
@@ -50,21 +50,24 @@ RUN mkdir -p src crates/utils/src crates/db/src crates/api/src && \
     echo "pub fn dummy() {}" > crates/db/src/lib.rs && \
     echo "pub fn dummy() {}" > crates/api/src/lib.rs
 
-# Build dependencies (cached until Cargo.toml changes)
+# Build dependencies (this layer gets cached until Cargo.toml changes)
 RUN cargo build --release
 
-# Remove dummy artifacts
+# Remove dummy files and compiled artifacts
 RUN rm -rf src/ crates/ target/release/deps/tinyboards_server* target/release/tinyboards_server*
 
-# Copy actual source code
+# Copy real source code
 COPY --chown=builder:builder src ./src
 COPY --chown=builder:builder crates ./crates
 COPY --chown=builder:builder migrations ./migrations
 COPY --chown=builder:builder config ./config
 COPY --chown=builder:builder diesel.toml ./
 
-# Build the optimized binary
+# Build the actual application
 RUN cargo build --release
+
+# Strip binary to reduce size
+RUN strip target/release/tinyboards_server
 
 # Runtime stage with minimal dependencies
 FROM debian:${DEBIAN_VERSION}-slim as runtime
@@ -79,7 +82,7 @@ RUN apt-get update && apt-get install -y \
     && apt-get autoremove -y \
     && apt-get clean
 
-# Create application user with no shell for security
+# Create application user
 RUN groupadd --gid 10001 app && \
     useradd --uid 10001 --gid app --create-home app --shell /sbin/nologin
 
@@ -91,19 +94,19 @@ RUN mkdir -p /app/media /config && \
 USER app
 WORKDIR /app
 
-# Copy the optimized binary and configuration
+# Copy binary and configuration from builder
 COPY --from=builder --chown=app:app /home/builder/build/target/release/tinyboards_server ./tinyboards
 COPY --from=builder --chown=app:app /home/builder/build/config/defaults.hjson /config/defaults.hjson
 
-# Apply production configuration
+# Apply development-specific configuration
 RUN sed -i 's/unset/localhost/g' /config/defaults.hjson
 
-# Health check
+# Health check for development monitoring
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8536/ || exit 1
 
 # Expose port
 EXPOSE 8536
 
-# Use exec form with proper signal handling
-ENTRYPOINT ["./tinyboards"]
+# Use exec form for proper signal handling
+CMD ["./tinyboards"]
