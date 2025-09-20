@@ -2,7 +2,7 @@
 # Features: Minimal image size, security hardening, fast startup, efficient dependency caching
 
 ARG RUST_VERSION=1.65
-ARG DEBIAN_VERSION=bookworm
+ARG DEBIAN_VERSION=bullseye
 
 # Chef stage - installs cargo-chef for dependency caching
 FROM rust:${RUST_VERSION}-slim-${DEBIAN_VERSION} as chef
