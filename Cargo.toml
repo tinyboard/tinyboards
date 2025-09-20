@@ -103,6 +103,7 @@ async-graphql = { version = "=7.0.7", features = ["dataloader"] }
 async-graphql-actix-web = "=7.0.7"
 async-graphql-value = "=7.0.7"
 async-graphql-parser = "=7.0.7"
+async-graphql-derive = "=7.0.7"
 
 [dependencies]
 tinyboards_api = { workspace = true }
