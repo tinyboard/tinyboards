@@ -73,7 +73,7 @@ FROM debian:${DEBIAN_VERSION}-slim as runtime
 # Install only runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    libssl3 \
+    libssl1.1 \
     libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
