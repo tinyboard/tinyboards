@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile optimized for development with cargo-chef
 # Features: Fast rebuilds, dependency caching, security best practices, development tools
 
-ARG RUST_VERSION=1.78
+ARG RUST_VERSION=1.82
 ARG DEBIAN_VERSION=bookworm
 
 # Chef stage - installs cargo-chef for dependency caching
