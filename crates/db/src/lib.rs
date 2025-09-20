@@ -82,6 +82,8 @@ pub enum SortType {
     MostComments,
     #[strum(ascii_case_insensitive)]
     NewComments,
+    #[strum(ascii_case_insensitive)]
+    Controversial,
 }
 
 #[derive(EnumString, Display, Debug, Serialize, Deserialize, Clone, Copy)]

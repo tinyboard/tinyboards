@@ -591,6 +591,9 @@ impl Post {
                 .filter(post_aggregates::creation_date.gt(now - 1.days()))
                 .then_order_by(post_aggregates::score.desc())
                 .then_order_by(post_aggregates::creation_date.desc()),
+            SortType::Controversial => query
+                .then_order_by(post_aggregates::controversy_rank.desc())
+                .then_order_by(post_aggregates::creation_date.desc()),
         };
 
         let (limit, offset) = limit_and_offset(page, limit)?;

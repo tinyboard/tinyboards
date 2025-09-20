@@ -227,6 +227,8 @@ pub enum SortType {
     MostComments,
     #[graphql(name = "newComments")]
     NewComments,
+    #[graphql(name = "controversial")]
+    Controversial,
 }
 
 #[derive(Enum, Copy, Clone, Eq, PartialEq, Debug)]

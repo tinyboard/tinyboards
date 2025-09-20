@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile optimized for production with cargo-chef
 # Features: Minimal image size, security hardening, fast startup, efficient dependency caching
 
-ARG RUST_VERSION=1.83
+ARG RUST_VERSION=1.85
 ARG DEBIAN_VERSION=bookworm
 
 # Chef stage - installs cargo-chef for dependency caching
@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     lld \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
+    && rustup update \
     && cargo install cargo-chef
 
 # Create non-root user for building
@@ -42,7 +43,8 @@ FROM chef AS builder
 # Set up cargo home directory for builder user
 ENV CARGO_HOME=/home/builder/.cargo
 RUN mkdir -p /home/builder/.cargo && \
-    chown -R builder:builder /home/builder/.cargo
+    chown -R builder:builder /home/builder/.cargo && \
+    rustup update
 
 # Configure cargo for optimized production builds
 RUN mkdir -p .cargo && \

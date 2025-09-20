@@ -5,7 +5,7 @@ target/
 .cargo/
 
 # Docker-related files (avoid recursive copying)
-docker/volumes/
+docker/volumes*
 docker/postgres/
 !docker/tinyboards.hjson
 Dockerfile*

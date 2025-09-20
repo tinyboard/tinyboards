@@ -172,6 +172,7 @@ pub fn post_to_comment_sort_type(sort: SortType) -> CommentSortType {
         | SortType::TopWeek
         | SortType::TopMonth
         | SortType::TopYear => CommentSortType::Top,
+        SortType::Controversial => CommentSortType::Top,
     }
 }
 

@@ -21,11 +21,25 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
 
     // On startup, calculate the activity stats
     active_counts(&mut conn1);
+
+    // On startup, update post and comment rankings
+    update_post_rankings(&mut conn1);
+    update_comment_rankings(&mut conn1);
     
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
         active_counts(&mut conn1);
         reindex_aggregates_tables(&mut conn1, true);
+    });
+
+    let mut conn3 = PgConnection::establish(&db_url)
+        .expect("could not establish connection");
+
+    scheduler
+    .every(TimeUnits::minutes(10))
+    .run(move || {
+        update_post_rankings(&mut conn3);
+        update_comment_rankings(&mut conn3);
     });
 
     let mut conn2 = PgConnection::establish(&db_url)
@@ -108,4 +122,63 @@ fn active_counts(conn: &mut PgConnection) {
         }
     }
     info!("Done.")
+}
+
+/// Update hot_rank and controversy_rank for posts every 10 minutes
+fn update_post_rankings(conn: &mut PgConnection) {
+    info!("Updating post rankings...");
+
+    // Update hot_rank based on score and creation date
+    let update_hot_rank_stmt =
+        "UPDATE post_aggregates SET hot_rank = hot_rank(score, creation_date)";
+
+    // Update hot_rank_active based on score and newest comment time
+    let update_hot_rank_active_stmt =
+        "UPDATE post_aggregates SET hot_rank_active = hot_rank(score, newest_comment_time)";
+
+    // Update controversy_rank based on upvotes, downvotes, and creation date
+    let update_controversy_rank_stmt =
+        "UPDATE post_aggregates SET controversy_rank = controversy_rank(upvotes, downvotes, creation_date)";
+
+    match sql_query(update_hot_rank_stmt).execute(conn) {
+        Ok(_) => info!("Updated post hot_rank"),
+        Err(e) => error!("Failed to update post hot_rank: {}", e)
+    }
+
+    match sql_query(update_hot_rank_active_stmt).execute(conn) {
+        Ok(_) => info!("Updated post hot_rank_active"),
+        Err(e) => error!("Failed to update post hot_rank_active: {}", e)
+    }
+
+    match sql_query(update_controversy_rank_stmt).execute(conn) {
+        Ok(_) => info!("Updated post controversy_rank"),
+        Err(e) => error!("Failed to update post controversy_rank: {}", e)
+    }
+
+    info!("Done updating post rankings.");
+}
+
+/// Update hot_rank and controversy_rank for comments every 10 minutes
+fn update_comment_rankings(conn: &mut PgConnection) {
+    info!("Updating comment rankings...");
+
+    // Update comment hot_rank based on score and creation date
+    let update_hot_rank_stmt =
+        "UPDATE comment_aggregates SET hot_rank = hot_rank(score, creation_date)";
+
+    // Update comment controversy_rank based on upvotes, downvotes, and creation date
+    let update_controversy_rank_stmt =
+        "UPDATE comment_aggregates SET controversy_rank = controversy_rank(upvotes, downvotes, creation_date)";
+
+    match sql_query(update_hot_rank_stmt).execute(conn) {
+        Ok(_) => info!("Updated comment hot_rank"),
+        Err(e) => error!("Failed to update comment hot_rank: {}", e)
+    }
+
+    match sql_query(update_controversy_rank_stmt).execute(conn) {
+        Ok(_) => info!("Updated comment controversy_rank"),
+        Err(e) => error!("Failed to update comment controversy_rank: {}", e)
+    }
+
+    info!("Done updating comment rankings.");
 }
