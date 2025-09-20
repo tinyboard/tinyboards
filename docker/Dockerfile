@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile optimized for production with cargo-chef
 # Features: Minimal image size, security hardening, fast startup, efficient dependency caching
 
-ARG RUST_VERSION=1.70
+ARG RUST_VERSION=1.75
 ARG DEBIAN_VERSION=bookworm
 
 # Chef stage - installs cargo-chef for dependency caching
@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rustup update \
-    && cargo install cargo-chef --version 0.1.62
+    && cargo install cargo-chef
 
 # No user setup needed - will build as root
 
