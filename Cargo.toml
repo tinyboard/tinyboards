@@ -99,8 +99,8 @@ bytes = "1.4.0"
 futures-core = { version = "0.3.27", default-features = false }
 pin-project-lite = "0.2.9"
 serde_with = "3.0.0"
-async-graphql = { version = "7.0.7", features = ["dataloader"] }
-async-graphql-actix-web = "7.0.7"
+async-graphql = { version = "=7.0.7", features = ["dataloader"] }
+async-graphql-actix-web = "=7.0.7"
 
 [dependencies]
 tinyboards_api = { workspace = true }

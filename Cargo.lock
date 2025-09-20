@@ -430,9 +430,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql"
-version = "7.0.17"
+version = "7.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "036618f842229ba0b89652ffe425f96c7c16a49f7e3cb23b56fca7f61fd74980"
+checksum = "2b76aba2f176af685c2229633881a3adeae51f87ae1811781e73910b7001c93e"
 dependencies = [
  "async-graphql-derive",
  "async-graphql-parser",
@@ -453,6 +453,7 @@ dependencies = [
  "mime",
  "multer",
  "num-traits",
+ "once_cell",
  "pin-project-lite",
  "regex",
  "serde",
@@ -465,9 +466,9 @@ dependencies = [
 
 [[package]]
 name = "async-graphql-actix-web"
-version = "7.0.17"
+version = "7.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7a6848c3effbd36ea8390db3d1f0b7c79fbedcb23c2390fb79c1d1774491c4c"
+checksum = "e5e18b994e3c34fcfd800847cf059dd9a9583f924ae640a6b0299886852d79ce"
 dependencies = [
  "actix",
  "actix-http",
