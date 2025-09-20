@@ -108,6 +108,7 @@ clap_lex = "=0.7.0"
 clap = "=4.4.0"
 clap_builder = "=4.4.0"
 clap_derive = "=4.4.0"
+cargo-chef = "=0.1.62"
 
 [dependencies]
 tinyboards_api = { workspace = true }
