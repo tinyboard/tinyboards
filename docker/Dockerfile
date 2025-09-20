@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile optimized for production with cargo-chef
 # Features: Minimal image size, security hardening, fast startup, efficient dependency caching
 
-ARG RUST_VERSION=1.85
+ARG RUST_VERSION=1.83
 ARG DEBIAN_VERSION=bookworm
 
 # Chef stage - installs cargo-chef for dependency caching
@@ -20,31 +20,19 @@ RUN apt-get update && apt-get install -y \
     && rustup update \
     && cargo install cargo-chef
 
-# Create non-root user for building
-RUN groupadd --gid 10001 builder && \
-    useradd --uid 10001 --gid builder --create-home builder
-
-# Set up cargo home directory for builder user
-ENV CARGO_HOME=/home/builder/.cargo
-RUN mkdir -p /home/builder/.cargo && \
-    chown -R builder:builder /home/builder/.cargo
-
-USER builder
-WORKDIR /home/builder/build
+# No user setup needed - will build as root
 
 # Planner stage - generates recipe.json for dependency caching
 FROM chef AS planner
-COPY --chown=builder:builder . .
+WORKDIR /tmp/build
+COPY . .
 RUN cargo chef prepare --recipe-path recipe.json
 
 # Builder stage - builds dependencies and application
 FROM chef AS builder
 
-# Set up cargo home directory for builder user
-ENV CARGO_HOME=/home/builder/.cargo
-RUN mkdir -p /home/builder/.cargo && \
-    chown -R builder:builder /home/builder/.cargo && \
-    rustup update
+# Stay as root for building (cargo/rustup available system-wide)
+WORKDIR /tmp/build
 
 # Configure cargo for optimized production builds
 RUN mkdir -p .cargo && \
@@ -63,11 +51,11 @@ RUN mkdir -p .cargo && \
     echo 'rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-cpu=native"]' >> .cargo/config.toml
 
 # Build dependencies (this layer is cached unless dependencies change)
-COPY --from=planner --chown=builder:builder /home/builder/build/recipe.json recipe.json
+COPY --from=planner /tmp/build/recipe.json recipe.json
 RUN cargo chef cook --release --recipe-path recipe.json
 
 # Copy source code and build application
-COPY --chown=builder:builder . .
+COPY . .
 
 # Handle potential Cargo.lock version mismatch
 RUN if ! cargo tree > /dev/null 2>&1; then \
@@ -99,8 +87,8 @@ RUN mkdir -p /opt/tinyboards/{config,media} && \
     chown -R tinyboards:tinyboards /opt/tinyboards
 
 # Copy binary and configuration
-COPY --from=builder --chown=tinyboards:tinyboards /home/builder/build/target/release/tinyboards_server /usr/local/bin/
-COPY --from=builder --chown=tinyboards:tinyboards /home/builder/build/config /opt/tinyboards/config/
+COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/target/release/tinyboards_server /usr/local/bin/
+COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/config /opt/tinyboards/config/
 
 # Set up runtime environment
 USER tinyboards
