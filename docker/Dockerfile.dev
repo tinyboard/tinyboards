@@ -1,8 +1,8 @@
 # Multi-stage Dockerfile optimized for development with cargo-chef
 # Features: Fast rebuilds, dependency caching, security best practices, development tools
 
-ARG RUST_VERSION=1.66
-ARG DEBIAN_VERSION=bullseye
+ARG RUST_VERSION=1.70
+ARG DEBIAN_VERSION=bookworm
 
 # Chef stage - installs cargo-chef for dependency caching
 FROM rust:${RUST_VERSION}-slim-${DEBIAN_VERSION} as chef
@@ -76,7 +76,7 @@ FROM debian:${DEBIAN_VERSION}-slim as runtime
 # Install runtime dependencies and development tools
 RUN apt-get update && apt-get install -y \
     ca-certificates \
-    libssl1.1 \
+    libssl3 \
     libpq5 \
     curl \
     netcat-openbsd \
