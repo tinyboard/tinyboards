@@ -21,11 +21,16 @@ pub type TinyBoardsResult<T> = Result<T, TinyBoardsError>;
 impl TinyBoardsError {
     /// Create a TinyBoardsError from a message, including stack trace
     pub fn from_message(error_code: u16, message: &str) -> Self {
+        let context = SpanTrace::capture();
+        eprintln!(
+            "\x1b[31mTinyboards Error:\x1b[0m {}\n\nContext:\n{:#?}",
+            message, context
+        );
         let inner = anyhow::anyhow!("{}", message);
         TinyBoardsError {
             message: Some(message.into()),
             inner,
-            context: SpanTrace::capture(),
+            context,
             error_code,
         }
     }
@@ -33,12 +38,17 @@ impl TinyBoardsError {
     /// Create a TinyBoardsError from a error and a message, including stack trace
     pub fn from_error_message<E>(error: E, error_code: u16, message: &str) -> Self
     where
-        E: Into<anyhow::Error>,
+        E: Into<anyhow::Error> + std::fmt::Debug,
     {
+        let context = SpanTrace::capture();
+        eprintln!(
+            "\x1b[31mTinyboards Error:\x1b[0m {}\nDetails:\n\n{:#?}\n \n Context:\n{:#?}",
+            &message, &error, &context
+        );
         TinyBoardsError {
             message: Some(message.into()),
             inner: error.into(),
-            context: SpanTrace::capture(),
+            context,
             error_code,
         }
     }

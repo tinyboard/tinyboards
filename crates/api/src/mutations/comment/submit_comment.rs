@@ -12,14 +12,14 @@ use tinyboards_db::models::comment::comments::CommentForm;
 use tinyboards_db::models::user::user::AdminPerms;
 //use tinyboards_db::models::user::person_mentions::PersonMention as DbPersonMention;
 //use tinyboards_db::models::user::person_mentions::PersonMentionForm;
+use crate::utils::emoji::process_content_with_emojis;
 use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
+use tinyboards_utils::content_filter::ContentFilter;
 use tinyboards_utils::parser::parse_markdown_opt;
 use tinyboards_utils::utils::custom_body_parsing;
-use tinyboards_utils::content_filter::ContentFilter;
 use tinyboards_utils::TinyBoardsError;
-use crate::utils::emoji::process_content_with_emojis;
 
 #[derive(Default)]
 pub struct SubmitComment;
@@ -86,7 +86,8 @@ impl SubmitComment {
         }
 
         if parent_board.is_banned {
-            let reason = parent_board.public_ban_reason
+            let reason = parent_board
+                .public_ban_reason
                 .as_deref()
                 .unwrap_or("This board has been banned");
             return Err(TinyBoardsError::from_message(403, reason).into());
@@ -157,14 +158,19 @@ impl SubmitComment {
 
         // parse body with emoji support if enabled
         let body_html = if site_config.emoji_enabled {
-            let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
-            Some(process_content_with_emojis(
-                &body,
-                pool,
-                Some(parent_board.id),
-                settings,
-                emoji_limit,
-            ).await?)
+            let emoji_limit = site_config
+                .max_emojis_per_comment
+                .map(|limit| limit as usize);
+            Some(
+                process_content_with_emojis(
+                    &body,
+                    pool,
+                    Some(parent_board.id),
+                    settings,
+                    emoji_limit,
+                )
+                .await?,
+            )
         } else {
             // Emojis disabled, use regular markdown processing
             let mut body_html = parse_markdown_opt(&body);
@@ -189,18 +195,12 @@ impl SubmitComment {
 
         let new_comment = DbComment::submit(pool, new_comment).await?;
 
-        let inserted_comment_id = new_comment.id;
-
-        let update_form = CommentForm::default();
-
-        let updated_comment = DbComment::update(pool, inserted_comment_id, &update_form).await?;
-
         // auto upvote own comment
         let comment_vote = CommentVoteForm {
             user_id: v.id,
-            comment_id: updated_comment.id,
+            comment_id: new_comment.id,
             score: 1,
-            post_id: updated_comment.post_id,
+            post_id: new_comment.post_id,
         };
 
         DbCommentVote::vote(pool, &comment_vote).await?;
@@ -236,7 +236,7 @@ impl SubmitComment {
             }
         }*/
 
-        let comment = DbComment::get_with_counts(pool, updated_comment.id).await?;
+        let comment = DbComment::get_with_counts(pool, new_comment.id).await?;
         Ok(Comment::from(comment))
     }
 }

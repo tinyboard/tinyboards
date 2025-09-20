@@ -1,5 +1,6 @@
 use crate::helpers::files::upload::upload_file;
 use crate::structs::post::Post;
+use crate::utils::emoji::process_content_with_emojis;
 use crate::{DbPool, LoggedInUser, Settings};
 use async_graphql::*;
 use tinyboards_db::models::board::board_mods::ModPerms;
@@ -13,8 +14,10 @@ use tinyboards_db::models::{
 };
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
-use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, content_filter::ContentFilter, TinyBoardsError};
-use crate::utils::emoji::process_content_with_emojis;
+use tinyboards_utils::{
+    content_filter::ContentFilter, parser::parse_markdown_opt, utils::custom_body_parsing,
+    TinyBoardsError,
+};
 use url::Url;
 
 #[derive(Default)]
@@ -56,7 +59,8 @@ impl SubmitPost {
         }
 
         if board.is_banned {
-            let reason = board.public_ban_reason
+            let reason = board
+                .public_ban_reason
                 .as_deref()
                 .unwrap_or("This board has been banned");
             return Err(TinyBoardsError::from_message(403, reason).into());
@@ -102,7 +106,8 @@ impl SubmitPost {
                         Some(board.id),
                         settings,
                         emoji_limit,
-                    ).await?;
+                    )
+                    .await?;
 
                     Some(processed_html)
                 } else {
@@ -140,10 +145,17 @@ impl SubmitPost {
         )?;
 
         // Check NSFW tagging requirement
-        if site_config.enable_nsfw_tagging.unwrap_or(true) && site_config.enable_nsfw && is_nsfw.unwrap_or(false) {
+        if site_config.enable_nsfw_tagging.unwrap_or(true)
+            && site_config.enable_nsfw
+            && is_nsfw.unwrap_or(false)
+        {
             // NSFW content is allowed and user tagged it as NSFW - this is fine
         } else if !site_config.enable_nsfw && is_nsfw.unwrap_or(false) {
-            return Err(TinyBoardsError::from_message(403, "NSFW content is not allowed on this site").into());
+            return Err(TinyBoardsError::from_message(
+                403,
+                "NSFW content is not allowed on this site",
+            )
+            .into());
         }
 
         //let data_url = data.url.as_ref().map(|url| url.inner());
@@ -175,33 +187,21 @@ impl SubmitPost {
 
         let published_post = DbPost::submit(pool, post_form).await?;
 
-
         // handle file upload
         let file_url = match file {
             Some(file) => Some(upload_file(file, None, v.id, None, ctx).await?),
             None => None,
         };
 
-        // Validate image host if image embed restrictions are enabled
-        if let Some(ref image_url) = file_url {
-            if !ContentFilter::is_image_host_approved(
-                &site_config.approved_image_hosts,
-                &site_config.image_embed_hosts_only,
-                &image_url.to_string(),
-            )? {
-                return Err(TinyBoardsError::from_message(
-                    403,
-                    "Image uploads from this host are not allowed"
-                ).into());
-            }
-        }
-
-        // Also check URL image links if it's a link post with an image
+        // Check URL image links if it's a link post with an image
         if let Some(ref url_str) = link {
             let url_string = url_str.to_string();
-            if url_string.ends_with(".jpg") || url_string.ends_with(".jpeg") || 
-               url_string.ends_with(".png") || url_string.ends_with(".gif") || 
-               url_string.ends_with(".webp") {
+            if url_string.ends_with(".jpg")
+                || url_string.ends_with(".jpeg")
+                || url_string.ends_with(".png")
+                || url_string.ends_with(".gif")
+                || url_string.ends_with(".webp")
+            {
                 if !ContentFilter::is_image_host_approved(
                     &site_config.approved_image_hosts,
                     &site_config.image_embed_hosts_only,
@@ -209,35 +209,44 @@ impl SubmitPost {
                 )? {
                     return Err(TinyBoardsError::from_message(
                         403,
-                        "Image links from this host are not allowed"
-                    ).into());
+                        "Image links from this host are not allowed",
+                    )
+                    .into());
                 }
             }
         }
 
-        // do not override url unless image is uplaoded
-        let update_form = if file_url.is_some() {
-            PostForm {
+        // If image was uploaded, update post with image URL
+        if file_url.is_some() {
+            let post_update_form = PostForm {
                 url: file_url.clone().map(|url| url.into()),
                 image: file_url.map(|url| url.into()),
                 ..PostForm::default()
-            }
-        } else {
-            PostForm::default()
-        };
+            };
 
-        let updated_post = DbPost::update(pool, published_post.id.clone(), &update_form).await?;
+            DbPost::update(pool, published_post.id.clone(), &post_update_form)
+                .await
+                .map_err(|e| {
+                    TinyBoardsError::from_error_message(
+                        e,
+                        500,
+                        "Failed to update post with file URL",
+                    )
+                })?;
+        }
 
         // auto upvote own post
         let post_vote = PostVoteForm {
-            post_id: updated_post.id,
+            post_id: published_post.id,
             user_id: v.id,
             score: 1,
         };
 
         PostVote::vote(pool, &post_vote).await?;
 
-        let post_with_counts = DbPost::get_with_counts(pool, published_post.id, false).await?;
+        let post_with_counts = DbPost::get_with_counts(pool, published_post.id, false)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to fetch post"))?;
 
         Ok(Post::from(post_with_counts))
     }
