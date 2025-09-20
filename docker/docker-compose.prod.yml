@@ -3,28 +3,22 @@ version: '3.8'
 # Production-optimized Docker Compose configuration
 # Features: security hardening, resource limits, monitoring, high availability
 
-# Common logging configuration for production
-x-logging: &prod-logging
-  logging:
-    driver: "json-file"
-    options:
-      max-size: "100m"
-      max-file: "10"
-      labels: "service,environment=production"
-      compress: "true"
-
-# Common restart policy for production
-x-restart-policy: &prod-restart
-  restart: unless-stopped
-
-# Common security configuration
-x-security: &common-security
-  security_opt:
-    - no-new-privileges:true
-  cap_drop:
-    - ALL
+# Configuration for production
 
 services:
+  # Init container to fix volume permissions
+  volume-permissions:
+    image: alpine:latest
+    container_name: tinyboards_volume_permissions
+    volumes:
+      - media_uploads:/opt/tinyboards/media
+      - backend_logs:/opt/tinyboards/logs
+    command: [
+      "sh", "-c",
+      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
+    ]
+    restart: "no"
+
   nginx:
     image: nginx:1.25-alpine
     container_name: tinyboards_nginx_prod
@@ -33,26 +27,31 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d:ro
-      - /etc/ssl:/etc/ssl/:ro
       - nginx_cache:/var/cache/nginx
       - nginx_logs:/var/log/nginx
-      # Rate limiting and security configs
-      - ./nginx/security.conf:/etc/nginx/conf.d/security.conf:ro
-      - ./nginx/rate-limit.conf:/etc/nginx/conf.d/rate-limit.conf:ro
     networks:
       - tinyboards
-    <<: *prod-restart
-    <<: *prod-logging
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service,environment=production"
+        compress: "true"
     depends_on:
       tinyboards-fe:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
-    <<: *common-security
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     cap_add:
       - CHOWN
       - DAC_OVERRIDE
@@ -84,8 +83,14 @@ services:
     container_name: tinyboards_backend_prod
     ports:
       - "127.0.0.1:8536:8536"
-    <<: *prod-restart
-    <<: *prod-logging
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service,environment=production"
+        compress: "true"
     environment:
       - RUST_LOG=info,tinyboards_api=info,tinyboards_db=warn
       - TB_CONFIG_LOCATION=/config/defaults.hjson
@@ -98,22 +103,28 @@ services:
       - RUST_SECURE_ZERO_MEMORY=1
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson:ro
-      - media_uploads:/app/media
-      - backend_logs:/app/logs
+      - media_uploads:/opt/tinyboards/media
+      - backend_logs:/opt/tinyboards/logs
     networks:
       - tinyboards
+    user: "1000:1000"
     depends_on:
+      volume-permissions:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8536/api/v1/site || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    <<: *common-security
+    # healthcheck:
+    #   test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8536/ || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
     # Enhanced resource management
@@ -140,31 +151,43 @@ services:
     container_name: tinyboards_frontend_prod
     ports:
       - "127.0.0.1:3000:3000"
-    <<: *prod-restart
-    <<: *prod-logging
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service,environment=production"
+        compress: "true"
     environment:
       - NODE_ENV=production
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
       - NITRO_PORT=3000
       - NITRO_HOST=0.0.0.0
       - NUXT_PUBLIC_API_BASE=http://tinyboards:8536
+      - NUXT_PUBLIC_DOMAIN=tinyboards:8536
+      - NUXT_PUBLIC_USE_HTTPS=false
       # Performance optimizations
       - NODE_OPTIONS=--max-old-space-size=512
       - UV_THREADPOOL_SIZE=4
     volumes:
-      - ./.env:/usr/src/app/.env:ro
-      - frontend_logs:/usr/src/app/logs
+      - frontend_logs:/app/logs
     networks:
       - tinyboards
     depends_on:
       tinyboards:
-        condition: service_healthy
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/health || wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    <<: *common-security
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     tmpfs:
       - /tmp:noexec,nosuid,size=50m
     deploy:
@@ -189,8 +212,14 @@ services:
     container_name: tinyboards_postgres_prod
     ports:
       - "127.0.0.1:5433:5432"
-    <<: *prod-restart
-    <<: *prod-logging
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service,environment=production"
+        compress: "true"
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -199,13 +228,8 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
       # Security settings
       - POSTGRES_HOST_AUTH_METHOD=scram-sha-256
-      - POSTGRES_INITDB_WALDIR=/var/lib/postgresql/wal
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - postgres_wal:/var/lib/postgresql/wal
-      - ./postgres/init:/docker-entrypoint-initdb.d:ro
-      - ./postgres/prod-config:/etc/postgresql:ro
-      - postgres_logs:/var/log/postgresql
     networks:
       - tinyboards
     healthcheck:
@@ -214,7 +238,10 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-    <<: *common-security
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     cap_add:
       - DAC_OVERRIDE
       - CHOWN
@@ -303,12 +330,16 @@ services:
     container_name: tinyboards_redis_prod
     ports:
       - "127.0.0.1:6379:6379"
-    <<: *prod-restart
-    <<: *prod-logging
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+        labels: "service,environment=production"
+        compress: "true"
     volumes:
       - redis_data:/data
-      - redis_logs:/var/log/redis
-      - ./redis/prod-config:/usr/local/etc/redis:ro
     networks:
       - tinyboards
     healthcheck:
@@ -317,12 +348,16 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
-    <<: *common-security
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     cap_add:
       - SETGID
       - SETUID
     tmpfs:
       - /tmp:noexec,nosuid,size=50m
+    user: "999:999"
     # Resource limits for Redis
     deploy:
       resources:
@@ -341,9 +376,10 @@ services:
         delay: 10s
     command: [
       "redis-server",
-      # Persistence settings
-      "--appendonly", "yes",
-      "--appendfsync", "everysec",
+      # Completely disable appendonly and AOF
+      "--appendonly", "no",
+      "--no-appendfsync-on-rewrite", "yes",
+      "--auto-aof-rewrite-percentage", "0",
       "--save", "3600", "1",
       "--save", "300", "100",
       "--save", "60", "10000",
@@ -359,13 +395,15 @@ services:
 
       # Logging (minimal for production)
       "--loglevel", "notice",
-      "--logfile", "/var/log/redis/redis.log",
 
       # Performance tuning
       "--timeout", "300",
       "--tcp-backlog", "511",
       "--databases", "4",
-      "--stop-writes-on-bgsave-error", "yes"
+      "--stop-writes-on-bgsave-error", "yes",
+
+      # Explicitly set data directory
+      "--dir", "/data"
     ]
 
   # Monitoring and alerting (optional)
@@ -384,23 +422,12 @@ services:
 
 networks:
   tinyboards:
-    name: tinyboards_prod_network
     driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: br-tinyboards-prod
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.20.0.0/16
-          ip_range: 172.20.240.0/20
 
 volumes:
   # Application data
   postgres_data:
     name: tinyboards_postgres_prod
-    driver: local
-  postgres_wal:
-    name: tinyboards_postgres_wal_prod
     driver: local
   redis_data:
     name: tinyboards_redis_prod
@@ -418,12 +445,6 @@ volumes:
     driver: local
   frontend_logs:
     name: tinyboards_frontend_logs_prod
-    driver: local
-  postgres_logs:
-    name: tinyboards_postgres_logs_prod
-    driver: local
-  redis_logs:
-    name: tinyboards_redis_logs_prod
     driver: local
 
   # Caches

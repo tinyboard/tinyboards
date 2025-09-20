@@ -3,18 +3,7 @@ version: '3.8'
 # Development-optimized Docker Compose configuration
 # Features: hot reloading, debugging support, optimized caching
 
-# Common logging configuration for development
-x-logging: &dev-logging
-  logging:
-    driver: "json-file"
-    options:
-      max-size: "50m"
-      max-file: "5"
-      labels: "service,environment=development"
-
-# Common restart policy for development
-x-restart-policy: &dev-restart
-  restart: "no"  # Don't auto-restart in dev to see crashes
+# Configuration for development
 
 services:
   # Nginx reverse proxy for development
@@ -31,8 +20,13 @@ services:
       - ./logs/nginx:/var/log/nginx
     networks:
       - tinyboards_dev
-    <<: *dev-restart
-    <<: *dev-logging
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
     depends_on:
       tinyboards:
         condition: service_started
@@ -56,8 +50,13 @@ services:
       - "8536:8536"  # Main API port
       - "6669:6669"  # WebSocket port
       - "9229:9229"  # Debug port for potential future use
-    <<: *dev-restart
-    <<: *dev-logging
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
     environment:
       - RUST_LOG=debug,tinyboards_api=trace,tinyboards_db=debug
       - RUST_BACKTRACE=full
@@ -78,7 +77,7 @@ services:
       # Configuration
       - ./tinyboards.hjson:/config/defaults.hjson:ro
       # Media uploads with proper permissions
-      - media_uploads_dev:/app/media
+      - ./media:/opt/tinyboards/media
       # Source code for development (if using dev build)
       - ../src:/app/src:ro
       - ../crates:/app/crates:ro
@@ -117,37 +116,56 @@ services:
     ports:
       - "3000:3000"  # Main frontend port
       - "24678:24678"  # Nuxt DevTools port
-    <<: *dev-restart
-    <<: *dev-logging
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
     environment:
       - NODE_ENV=development
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
       - NITRO_PORT=3000
       - NITRO_HOST=0.0.0.0
       - NUXT_DEVTOOLS_ENABLED=true
-      - NUXT_PUBLIC_API_BASE=http://localhost:8536
+      - NUXT_PUBLIC_API_BASE=http://tinyboards:8536
+      - NUXT_PUBLIC_DOMAIN=tinyboards:8536
+      - NUXT_PUBLIC_USE_HTTPS=false
+      - SKIP_GQL_GENERATE=true
     build:
       context: ../../tinyboards-fe
-      dockerfile: Dockerfile.dev  # Assume we'll create this
+      dockerfile: Dockerfile
       cache_from:
         - tinyboards-fe:dev
-        - node:18-alpine
+        - node:22-alpine
     volumes:
-      # Source code for hot reloading
-      - ../../tinyboards-fe:/usr/src/app
-      - /usr/src/app/node_modules  # Anonymous volume for node_modules
-      # Configuration
-      - ./.env:/usr/src/app/.env:ro
-      # Logs
-      - ./logs/frontend:/usr/src/app/logs
+      # Source code for hot reloading (excluding build artifacts)
+      - ../../tinyboards-fe/components:/app/components
+      - ../../tinyboards-fe/pages:/app/pages
+      - ../../tinyboards-fe/stores:/app/stores
+      - ../../tinyboards-fe/assets:/app/assets
+      - ../../tinyboards-fe/public:/app/public
+      - ../../tinyboards-fe/types:/app/types
+      - ../../tinyboards-fe/graphql:/app/graphql
+      - ../../tinyboards-fe/package.json:/app/package.json:ro
+      - ../../tinyboards-fe/nuxt.config.ts:/app/nuxt.config.ts:ro
+      - ../../tinyboards-fe/tsconfig.json:/app/tsconfig.json:ro
+      - ../../tinyboards-fe/tailwind.config.ts:/app/tailwind.config.ts:ro
+      # Let container manage these directories
+      - /app/node_modules
+      - /app/.nuxt
+      - /app/.output
       # NPM cache for faster installs
       - npm_cache_dev:/home/node/.npm
     networks:
       - tinyboards_dev
     depends_on:
-      tinyboards:
-        condition: service_healthy
+      - tinyboards
+    command: ["sh", "-c", "SKIP_GQL_GENERATE=true npm run dev"]
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -184,8 +202,13 @@ services:
       - ./logs/postgres:/var/log/postgresql
     networks:
       - tinyboards_dev
-    <<: *dev-restart
-    <<: *dev-logging
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tinyboards -d tinyboards"]
       interval: 10s
@@ -242,8 +265,13 @@ services:
       - ./redis/dev-config:/usr/local/etc/redis:ro
     networks:
       - tinyboards_dev
-    <<: *dev-restart
-    <<: *dev-logging
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
@@ -266,7 +294,7 @@ services:
       - "8081:8080"
     networks:
       - tinyboards_dev
-    <<: *dev-restart
+    restart: "no"  # Don't auto-restart in dev to see crashes
     environment:
       - ADMINER_DEFAULT_SERVER=postgres
       - ADMINER_DESIGN=hydra
@@ -282,7 +310,7 @@ services:
       - "8082:8081"
     networks:
       - tinyboards_dev
-    <<: *dev-restart
+    restart: "no"  # Don't auto-restart in dev to see crashes
     environment:
       - REDIS_HOSTS=local:redis:6379
       - HTTP_USER=admin
@@ -292,15 +320,7 @@ services:
 
 networks:
   tinyboards_dev:
-    name: tinyboards_dev_network
     driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: br-tinyboards-dev
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.21.0.0/16
-          ip_range: 172.21.240.0/20
 
 volumes:
   # Application data

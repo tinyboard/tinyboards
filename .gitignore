@@ -10,3 +10,5 @@ app/media/*
 .claude/*
 CLAUDE.md
 media/*
+docker/media/*
+docker/logs/*

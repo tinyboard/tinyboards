@@ -4,7 +4,7 @@
     # Username to connect to postgres
     user: "tinyboards"
     # Password to connect to postgres
-    password: "tinyboards"
+    password: "tinyboards_prod_secure_2024"
     # Host where postgres is running
     host: "postgres"
     # Port where postgres can be accessed
@@ -49,7 +49,7 @@
   # Parameters to configure how media uploads are stored on the instance
   media: {
     # media file path to which uploads will be stored and served from
-    media_path: "/app/media"
+    media_path: "/opt/tinyboards/media"
   }
   # Email sending configuration. All options except login/password are mandatory
   email: {
