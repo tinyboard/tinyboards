@@ -28,7 +28,7 @@ FRONTEND_REPO="${DOCKERHUB_USERNAME}/tinyboards-fe"
 # Build configuration
 DEFAULT_VERSION="latest"
 PLATFORMS="linux/amd64,linux/arm64"
-DOCKERFILE_BACKEND="$DOCKER_DIR/Dockerfile"
+DOCKERFILE_BACKEND="docker/Dockerfile"
 DOCKERFILE_FRONTEND="$FRONTEND_ROOT/docker/Dockerfile"
 
 # CI/CD detection
@@ -408,19 +408,20 @@ build_backend() {
         cmd_array+=("--load")
     fi
 
-    # Add build context
-    cmd_array+=(".")
+    # Add build context using git archive to avoid volume permission issues
+    cmd_array+=("-")
 
     # Execute or show command
     if [[ "$dry_run" == "true" ]]; then
         log_info "Backend build command (dry run):"
         printf '%q ' "${cmd_array[@]}"
-        echo
+        echo " < <(git archive --format=tar HEAD)"
     else
         log_info "Executing backend build..."
-        log_info "Build command: ${cmd_array[*]}"
+        log_info "Build command: ${cmd_array[*]} < <(git archive --format=tar HEAD)"
 
-        if "${cmd_array[@]}"; then
+        # Use git archive to create clean build context without volume directories
+        if git archive --format=tar HEAD | "${cmd_array[@]}"; then
             log_success "Backend build completed"
         else
             log_error "Backend build failed"
