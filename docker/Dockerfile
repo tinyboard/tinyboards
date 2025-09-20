@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile optimized for production with cargo-chef
 # Features: Minimal image size, security hardening, fast startup, efficient dependency caching
 
-ARG RUST_VERSION=1.65
+ARG RUST_VERSION=1.66
 ARG DEBIAN_VERSION=bullseye
 
 # Chef stage - installs cargo-chef for dependency caching
