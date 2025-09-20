@@ -5,7 +5,9 @@ target/
 .cargo/
 
 # Docker-related files (avoid recursive copying)
-docker/
+docker/volumes/
+docker/postgres/
+!docker/tinyboards.hjson
 Dockerfile*
 docker-compose*.yml
 .dockerignore
@@ -105,4 +107,5 @@ migrations/*.sql
 *.crt
 *.p12
 *.pfx
-secrets/
+secrets/docker/
+volumes/
