@@ -456,19 +456,14 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
       - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
       - PGPASSWORD=${POSTGRES_PASSWORD}
-    command: |
+    command: >
       sh -c '
       while true; do
-        echo "Starting backup at $(date)"
-        pg_dump -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | \
-          gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
-
-        # Keep only last 30 days of backups
-        find /backups -name "*.sql.gz" -mtime +30 -delete
-
-        echo "Backup completed at $(date)"
-        # Wait 24 hours before next backup
-        sleep 86400
+        echo "Starting backup at $$(date)";
+        pg_dump -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | gzip > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql.gz;
+        find /backups -name "*.sql.gz" -mtime +30 -delete;
+        echo "Backup completed at $$(date)";
+        sleep 86400;
       done
       '
     restart: unless-stopped
