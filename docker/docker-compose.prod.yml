@@ -72,7 +72,7 @@ services:
         compress: "true"
     depends_on:
       tinyboards-fe:
-        condition: service_healthy
+        condition: service_started
       volume-permissions:
         condition: service_completed_successfully
     healthcheck:
