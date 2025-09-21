@@ -15,10 +15,10 @@ services:
     container_name: tinyboards_env_validator
     command: |
       sh -c '
-      if [ -z "$$POSTGRES_PASSWORD" ]; then echo "POSTGRES_PASSWORD not set"; exit 1; fi
-      if [ -z "$$JWT_SECRET" ]; then echo "JWT_SECRET not set"; exit 1; fi
-      if [ -z "$$REDIS_PASSWORD" ]; then echo "REDIS_PASSWORD not set"; exit 1; fi
-      if [ -z "$$DOMAIN" ]; then echo "DOMAIN not set"; exit 1; fi
+      if [ -z "$POSTGRES_PASSWORD" ]; then echo "POSTGRES_PASSWORD not set"; exit 1; fi
+      if [ -z "$JWT_SECRET" ]; then echo "JWT_SECRET not set"; exit 1; fi
+      if [ -z "$REDIS_PASSWORD" ]; then echo "REDIS_PASSWORD not set"; exit 1; fi
+      if [ -z "$DOMAIN" ]; then echo "DOMAIN not set"; exit 1; fi
       echo "Environment validation passed"
       '
     environment:
@@ -319,7 +319,7 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping || exit 1"]
+      test: ["CMD-SHELL", "redis-cli -a $REDIS_PASSWORD ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -337,7 +337,7 @@ services:
     # Resource limits removed for VPS compatibility
     command: [
       "sh", "-c",
-      "redis-server --requirepass $$REDIS_PASSWORD --appendonly no --no-appendfsync-on-rewrite yes --auto-aof-rewrite-percentage 0 --save 3600 1 --save 300 100 --save 60 10000 --maxmemory 384mb --maxmemory-policy allkeys-lru --maxmemory-samples 10 --protected-mode yes --tcp-keepalive 300 --loglevel notice --timeout 300 --tcp-backlog 511 --databases 4 --stop-writes-on-bgsave-error yes --dir /data"
+      "redis-server --requirepass $REDIS_PASSWORD --appendonly no --no-appendfsync-on-rewrite yes --auto-aof-rewrite-percentage 0 --save 3600 1 --save 300 100 --save 60 10000 --maxmemory 384mb --maxmemory-policy allkeys-lru --maxmemory-samples 10 --protected-mode yes --tcp-keepalive 300 --loglevel notice --timeout 300 --tcp-backlog 511 --databases 4 --stop-writes-on-bgsave-error yes --dir /data"
     ]
 
   # SSL Certificate Management with Let's Encrypt
@@ -352,10 +352,10 @@ services:
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
     command: |
       sh -c '
-      if [ ! -f /etc/letsencrypt/live/$$DOMAIN/fullchain.pem ]; then
+      if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
         certbot certonly --webroot --webroot-path=/var/www/certbot \
-          --email $$LETSENCRYPT_EMAIL --agree-tos --no-eff-email \
-          -d $$DOMAIN
+          --email $LETSENCRYPT_EMAIL --agree-tos --no-eff-email \
+          -d $DOMAIN
       fi
       # Renewal check
       while true; do
@@ -384,10 +384,10 @@ services:
       - -c
       - |
         while true; do
-          echo "Starting backup at $$(date)"
-          pg_dump -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | gzip > /backups/backup_$$(date +%Y%m%d_%H%M%S).sql.gz
+          echo "Starting backup at $(date)"
+          pg_dump -h postgres -U $POSTGRES_USER $POSTGRES_DB | gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
           find /backups -name "*.sql.gz" -mtime +30 -delete
-          echo "Backup completed at $$(date)"
+          echo "Backup completed at $(date)"
           sleep 86400
         done
     restart: unless-stopped
