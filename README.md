@@ -362,13 +362,55 @@ nano tinyboards.hjson
 - **Email settings**: Configure if you want password reset and notification emails
 
 **SSL Certificate Setup:**
-The deployment includes automatic SSL certificate generation via Let's Encrypt. Make sure:
-- Your domain is pointing to your server's IP address
-- Ports 80 and 443 are open in your firewall
-- The nginx configuration has been updated with your domain (the sed command above)
-- The `DOMAIN` and `LETSENCRYPT_EMAIL` variables are set in your .env file
+SSL certificates are handled separately from the Docker deployment for better reliability. The nginx configuration automatically detects when certificates are available and switches to HTTPS mode.
 
-The first deployment will automatically request and configure SSL certificates for your domain.
+1. **Install Certbot on your server:**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt update
+   sudo apt install certbot
+
+   # CentOS/RHEL
+   sudo yum install certbot
+   ```
+
+2. **Create webroot directory:**
+   ```bash
+   sudo mkdir -p /var/www/certbot
+   sudo chown www-data:www-data /var/www/certbot  # Ubuntu
+   # OR
+   sudo chown nginx:nginx /var/www/certbot        # CentOS
+   ```
+
+3. **Start Docker services (initially HTTP-only):**
+   ```bash
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+   Your site will be accessible at `http://your-domain.com` initially.
+
+4. **Generate SSL certificates:**
+   ```bash
+   sudo certbot certonly --webroot \
+     --webroot-path=/var/www/certbot \
+     --email admin@your-domain.com \
+     --agree-tos --no-eff-email \
+     -d your-domain.com
+   ```
+
+5. **Restart nginx to enable HTTPS:**
+   ```bash
+   docker-compose -f docker-compose.prod.yml restart nginx
+   ```
+   Your site will now automatically redirect HTTP traffic to HTTPS.
+
+6. **Set up automatic renewal:**
+   ```bash
+   # Add to crontab
+   sudo crontab -e
+
+   # Add this line for daily renewal checks
+   0 3 * * * certbot renew --quiet && docker-compose -f /path/to/your/docker-compose.prod.yml restart nginx
+   ```
 
 #### 4. Deploy
 ```bash

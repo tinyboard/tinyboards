@@ -28,31 +28,17 @@ services:
       - DOMAIN=${DOMAIN}
     restart: "no"
 
-  # Init container to fix volume permissions and create dummy SSL certs
+  # Init container to fix volume permissions
   volume-permissions:
     image: alpine:latest
     container_name: tinyboards_volume_permissions
     volumes:
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
-      - certbot_conf:/etc/letsencrypt
-    command: |
-      sh -c '
-      chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs &&
-      chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs &&
-      if [ ! -f /etc/letsencrypt/live/$$DOMAIN/fullchain.pem ]; then
-        echo "Creating dummy SSL certificates for initial nginx startup..."
-        mkdir -p /etc/letsencrypt/live/$$DOMAIN
-        apk add --no-cache openssl
-        openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-          -keyout /etc/letsencrypt/live/$$DOMAIN/privkey.pem \
-          -out /etc/letsencrypt/live/$$DOMAIN/fullchain.pem \
-          -subj "/CN=$$DOMAIN"
-        echo "Dummy certificates created. Certbot will replace these with real ones."
-      fi
-      '
-    environment:
-      - DOMAIN=${DOMAIN}
+    command: [
+      "sh", "-c",
+      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
+    ]
     restart: "no"
     depends_on:
       env-validator:
@@ -67,11 +53,10 @@ services:
       - "443:443"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d:ro
-      - ./ssl/:/etc/ssl/certs/:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/certbot:/var/www/certbot:ro
       - nginx_cache:/var/cache/nginx
       - nginx_logs:/var/log/nginx
-      - certbot_conf:/etc/letsencrypt:ro
-      - certbot_www:/var/www/certbot:ro
     networks:
       - frontend
       - backend
@@ -353,68 +338,6 @@ services:
       "redis-server --requirepass $REDIS_PASSWORD --appendonly no --no-appendfsync-on-rewrite yes --auto-aof-rewrite-percentage 0 --save 3600 1 --save 300 100 --save 60 10000 --maxmemory 384mb --maxmemory-policy allkeys-lru --maxmemory-samples 10 --protected-mode yes --tcp-keepalive 300 --loglevel notice --timeout 300 --tcp-backlog 511 --databases 4 --stop-writes-on-bgsave-error yes --dir /data"
     ]
 
-  # SSL Certificate Management with Let's Encrypt
-  certbot:
-    image: certbot/certbot:latest
-    container_name: tinyboards_certbot_prod
-    volumes:
-      - certbot_conf:/etc/letsencrypt
-      - certbot_www:/var/www/certbot
-    environment:
-      - DOMAIN=${DOMAIN}
-      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-    command: |
-      sh -c '
-      # Wait for nginx to be ready
-      echo "Waiting for nginx to start..."
-      sleep 30
-
-      # Check if we have dummy certificates
-      DUMMY_CERT=""
-      if [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
-        if openssl x509 -in /etc/letsencrypt/live/$DOMAIN/fullchain.pem -text -noout | grep -q "CN=$DOMAIN.*Issuer.*CN=$DOMAIN"; then
-          echo "Found dummy certificate, will replace with real one"
-          DUMMY_CERT="yes"
-        else
-          echo "Real certificate already exists"
-        fi
-      fi
-
-      # Attempt certificate generation with retries
-      for i in 1 2 3 4 5; do
-        if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ] || [ "$DUMMY_CERT" = "yes" ]; then
-          echo "Attempting to generate certificate (attempt $i)..."
-          if certbot certonly --webroot --webroot-path=/var/www/certbot \
-            --email $LETSENCRYPT_EMAIL --agree-tos --no-eff-email \
-            --non-interactive --force-renewal \
-            -d $DOMAIN; then
-            echo "Certificate generated successfully!"
-            echo "Sending reload signal to nginx..."
-            # Signal nginx to reload (this will pick up the new certificates)
-            docker kill --signal=HUP tinyboards_nginx_prod 2>/dev/null || true
-            break
-          else
-            echo "Certificate generation failed, retrying in 60 seconds..."
-            sleep 60
-          fi
-        else
-          echo "Certificate already exists"
-          break
-        fi
-      done
-
-      # Renewal check loop
-      while true; do
-        echo "Sleeping for 12 hours before next renewal check..."
-        sleep 12h
-        echo "Checking for certificate renewal..."
-        certbot renew --quiet
-      done
-      '
-    restart: unless-stopped
-    depends_on:
-      tinyboards-fe:
-        condition: service_started
 
 
   # Monitoring and alerting (optional)
@@ -483,13 +406,6 @@ volumes:
     name: tinyboards_nginx_cache_prod
     driver: local
 
-  # SSL certificates
-  certbot_conf:
-    name: tinyboards_certbot_conf_prod
-    driver: local
-  certbot_www:
-    name: tinyboards_certbot_www_prod
-    driver: local
 
 
   # Monitoring (if enabled)
