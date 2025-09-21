@@ -120,13 +120,13 @@ services:
       # Security
       - RUST_SECURE_ZERO_MEMORY=${RUST_SECURE_ZERO_MEMORY:-0}
     volumes:
-      - ./tinyboards.hjson:/opt/tinyboards/config/defaults.hjson:ro
+      - ./tinyboards.hjson:/opt/tinyboards/config/defaults.hjson:rw
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
     networks:
       - backend
       - database
-    user: "1000:1000"
+    user: "10001:10001"
     depends_on:
       volume-permissions:
         condition: service_completed_successfully
