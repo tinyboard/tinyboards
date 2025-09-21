@@ -36,20 +36,21 @@ services:
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
       - certbot_conf:/etc/letsencrypt
-    command: [
-      "sh", "-c",
-      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs &&
-       if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
-         echo 'Creating dummy SSL certificates for initial nginx startup...'
-         mkdir -p /etc/letsencrypt/live/$DOMAIN
-         apk add --no-cache openssl
-         openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
-           -keyout /etc/letsencrypt/live/$DOMAIN/privkey.pem \
-           -out /etc/letsencrypt/live/$DOMAIN/fullchain.pem \
-           -subj '/CN=$DOMAIN'
-         echo 'Dummy certificates created. Certbot will replace these with real ones.'
-       fi"
-    ]
+    command: |
+      sh -c '
+      chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs &&
+      chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs &&
+      if [ ! -f /etc/letsencrypt/live/$$DOMAIN/fullchain.pem ]; then
+        echo "Creating dummy SSL certificates for initial nginx startup..."
+        mkdir -p /etc/letsencrypt/live/$$DOMAIN
+        apk add --no-cache openssl
+        openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+          -keyout /etc/letsencrypt/live/$$DOMAIN/privkey.pem \
+          -out /etc/letsencrypt/live/$$DOMAIN/fullchain.pem \
+          -subj "/CN=$$DOMAIN"
+        echo "Dummy certificates created. Certbot will replace these with real ones."
+      fi
+      '
     environment:
       - DOMAIN=${DOMAIN}
     restart: "no"
