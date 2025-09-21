@@ -60,9 +60,9 @@ WORKDIR /opt/tinyboards
 # Expose port
 EXPOSE 8536
 
-# Health check
+# Health check - try root endpoint instead of specific API
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8536/api/v1/site || exit 1
+    CMD curl -f http://localhost:8536/ || exit 1
 
 # Start the application
 CMD ["tinyboards_server"]
