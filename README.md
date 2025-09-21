@@ -216,16 +216,51 @@ mkdir -p nginx/conf volumes/media volumes/postgres
 wget -O nginx/conf/nginx.conf https://raw.githubusercontent.com/tinyboard/tinyboards/master/docker/nginx/conf/nginx.conf
 ```
 
-#### 2. Configure Environment
-Set your database password as an environment variable:
+#### 2. Configure Environment Variables
+Create a `.env` file with your production settings:
 ```bash
-export POSTGRES_PASSWORD=your_secure_password_here
+# Create .env file
+nano .env
 ```
+
+Add the following required environment variables:
+```env
+# Database Configuration (REQUIRED)
+POSTGRES_PASSWORD=your_very_secure_database_password_here
+POSTGRES_USER=tinyboards
+POSTGRES_DB=tinyboards
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+
+# Security Configuration (REQUIRED)
+JWT_SECRET=your_super_secret_jwt_key_min_32_chars_long_random_string
+REDIS_PASSWORD=your_secure_redis_password_here
+
+# Domain Configuration (REQUIRED for production)
+DOMAIN=your-domain.com
+LETSENCRYPT_EMAIL=admin@your-domain.com
+
+# Optional Configuration
+NODE_ENV=production
+RUST_LOG=info
+NUXT_PUBLIC_USE_HTTPS=true
+NUXT_PUBLIC_DOMAIN=your-domain.com
+
+# Container Images (optional - uses latest by default)
+TINYBOARDS_IMAGE=kronusdev/tinyboards-be:latest
+TINYBOARDS_FE_IMAGE=kronusdev/tinyboards-fe:latest
+```
+
+**Important Security Notes:**
+- Use strong, unique passwords for `POSTGRES_PASSWORD` and `REDIS_PASSWORD`
+- Generate a random JWT secret with at least 32 characters
+- Replace `your-domain.com` with your actual domain name
+- Keep your `.env` file secure and never commit it to version control
 
 #### 3. Deploy
 ```bash
 # Start production services
-POSTGRES_PASSWORD=your_secure_password_here docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 #### 5. Verify Deployment
