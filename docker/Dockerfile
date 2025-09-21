@@ -62,7 +62,7 @@ EXPOSE 8536
 
 # Health check - try root endpoint instead of specific API
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8536/ || exit 1
+    CMD curl -s http://127.0.0.1:8536 -o /dev/null || exit 1
 
 # Start the application
 CMD ["tinyboards_server"]
