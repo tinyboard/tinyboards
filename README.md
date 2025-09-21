@@ -135,62 +135,97 @@ cargo run
 
 
 
-## Docker Deployment
+## Production Docker Deployment
 
 ### Prerequisites
-- Docker and Docker Compose installed
-- Basic understanding of Docker concepts
+- VPS or server (Ubuntu 20.04+ recommended)
+- Domain name pointed to your server (optional but recommended)
 
-### Quick Docker Setup
+#### Installing Docker Prerequisites
+
+**Ubuntu/Debian:**
+```bash
+# Update package index
+sudo apt update
+
+# Install required packages
+sudo apt install apt-transport-https ca-certificates curl gnupg lsb-release
+
+# Add Docker's official GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# Add Docker repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Install Docker Engine
+sudo apt update
+sudo apt install docker-ce docker-ce-cli containerd.io
+
+# Install Docker Compose (standalone)
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Add your user to docker group (optional, to run docker without sudo)
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Verify installation
+docker --version
+docker-compose --version
+```
+
+**CentOS/RHEL/Rocky Linux:**
+```bash
+# Install required packages
+sudo yum install -y yum-utils
+
+# Add Docker repository
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+
+# Install Docker Engine
+sudo yum install docker-ce docker-ce-cli containerd.io
+
+# Install Docker Compose (standalone)
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Start and enable Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add your user to docker group (optional)
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Verify installation
+docker --version
+docker-compose --version
+```
+
+### Docker Setup
 
 #### 1. Download Docker Files
 ```bash
-# Download the docker setup files
-wget -r --no-parent https://github.com/tinyboard/tinyboards/tree/master/docker
-# Or clone the repository and navigate to docker/
-```
+# Download the production docker-compose file
+wget https://raw.githubusercontent.com/tinyboard/tinyboards/master/docker/docker-compose.prod.yml
 
-#### 2. Prepare Environment
-```bash
 # Create required directories
 mkdir -p nginx/conf volumes/media volumes/postgres
 
 # Download NGINX configuration
 wget -O nginx/conf/nginx.conf https://raw.githubusercontent.com/tinyboard/tinyboards/master/docker/nginx/conf/nginx.conf
-
-# Copy environment template
-cp .env.dev.example .env  # for development
-# OR
-cp .env.prod.example .env  # for production
 ```
 
-#### 3. Configure Environment
-Edit `.env` file with your settings:
+#### 2. Configure Environment
+Set your database password as an environment variable:
 ```bash
-# Database configuration
-POSTGRES_USER=tinyboards
-POSTGRES_PASSWORD=secure_password_here
-POSTGRES_DB=tinyboards
-
-# Admin user
-ADMIN_USERNAME=admin
-ADMIN_EMAIL=admin@example.com
-ADMIN_PASSWORD=secure_admin_password
-
-# Domain configuration (IMPORTANT for production)
-HOSTNAME=your-domain.com  # or localhost for testing
+export POSTGRES_PASSWORD=your_secure_password_here
 ```
 
-#### 4. Deploy
+#### 3. Deploy
 ```bash
-# Development
-docker-compose -f docker-compose.dev.yml up -d
-
-# Production
-docker-compose -f docker-compose.prod.yml up -d
-
-# Registry-based
-docker-compose -f docker-compose.registry.yml up -d
+# Start production services
+POSTGRES_PASSWORD=your_secure_password_here docker-compose -f docker-compose.prod.yml up -d
 ```
 
 #### 5. Verify Deployment

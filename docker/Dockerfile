@@ -15,12 +15,13 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     clang \
     lld \
+    musl-tools \
+    musl-dev \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rustup update \
+    && rustup target add x86_64-unknown-linux-musl \
     && cargo install cargo-chef
-
-# No user setup needed - will build as root
 
 # Planner stage - generates recipe.json for dependency caching
 FROM chef AS planner
@@ -40,19 +41,20 @@ RUN mkdir -p .cargo && \
     echo 'git-fetch-with-cli = true' >> .cargo/config.toml && \
     echo '' >> .cargo/config.toml && \
     echo '[profile.release]' >> .cargo/config.toml && \
-    echo 'opt-level = 3' >> .cargo/config.toml && \
-    echo 'lto = true' >> .cargo/config.toml && \
-    echo 'codegen-units = 1' >> .cargo/config.toml && \
-    echo 'panic = "abort"' >> .cargo/config.toml && \
-    echo 'strip = true' >> .cargo/config.toml && \
+    echo 'opt-level = 1' >> .cargo/config.toml && \
+    echo 'lto = false' >> .cargo/config.toml && \
+    echo 'codegen-units = 256' >> .cargo/config.toml && \
+    echo 'panic = "unwind"' >> .cargo/config.toml && \
+    echo 'debug = false' >> .cargo/config.toml && \
+    echo 'rpath = false' >> .cargo/config.toml && \
     echo '' >> .cargo/config.toml && \
-    echo '[target.x86_64-unknown-linux-gnu]' >> .cargo/config.toml && \
+    echo '[target.x86_64-unknown-linux-musl]' >> .cargo/config.toml && \
     echo 'linker = "clang"' >> .cargo/config.toml && \
-    echo 'rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-cpu=x86-64"]' >> .cargo/config.toml
+    echo 'rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-cpu=x86-64-v1"]' >> .cargo/config.toml
 
 # Build dependencies (this layer is cached unless dependencies change)
 COPY --from=planner /tmp/build/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
 
 # Copy source code and build application
 COPY . .
@@ -65,10 +67,10 @@ RUN if ! cargo tree > /dev/null 2>&1; then \
     fi
 
 # Build the optimized binary
-RUN cargo build --release
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
-# Runtime stage with minimal dependencies
-FROM debian:${DEBIAN_VERSION}-slim as runtime
+# Runtime stage with minimal dependencies - use newer Debian for glibc compatibility
+FROM debian:bookworm-slim as runtime
 
 # Install only runtime dependencies
 RUN apt-get update && apt-get install -y \
@@ -87,7 +89,7 @@ RUN mkdir -p /opt/tinyboards/{config,media} && \
     chown -R tinyboards:tinyboards /opt/tinyboards
 
 # Copy binary and configuration
-COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/target/release/tinyboards_server /usr/local/bin/
+COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/target/x86_64-unknown-linux-musl/release/tinyboards_server /usr/local/bin/
 COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/config /opt/tinyboards/config/
 
 # Set up runtime environment
