@@ -95,21 +95,8 @@ services:
       - NGINX_WORKER_PROCESSES=auto
       - NGINX_WORKER_CONNECTIONS=1024
     # Resource limits for nginx
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-          cpus: '0.3'
-        reservations:
-          memory: 64M
-          cpus: '0.25'
-      update_config:
-        parallelism: 1
-        failure_action: rollback
-        delay: 10s
-      rollback_config:
-        parallelism: 1
-        delay: 10s
+    mem_limit: 128M
+    cpus: 0.3
 
   # TinyBoards Backend Service (no exposed ports for security)
   tinyboards:
@@ -164,23 +151,8 @@ services:
     tmpfs:
       - /tmp:noexec,nosuid,size=100m
     # Enhanced resource management
-    deploy:
-      resources:
-        limits:
-          memory: ${BACKEND_MEMORY_LIMIT:-2G}
-          cpus: '${BACKEND_CPU_LIMIT:-1.5}'
-        reservations:
-          memory: 1G
-          cpus: '0.6'
-      update_config:
-        parallelism: 1
-        failure_action: rollback
-        delay: 30s
-        monitor: 60s
-      rollback_config:
-        parallelism: 1
-        delay: 10s
-        monitor: 60s
+    mem_limit: ${BACKEND_MEMORY_LIMIT:-2G}
+    cpus: ${BACKEND_CPU_LIMIT:-0.6}
 
   # TinyBoards Frontend Service (no exposed ports for security)
   tinyboards-fe:
@@ -227,22 +199,8 @@ services:
       - ALL
     tmpfs:
       - /tmp:noexec,nosuid,size=50m
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-      update_config:
-        parallelism: 1
-        failure_action: rollback
-        delay: 30s
-        monitor: 60s
-      rollback_config:
-        parallelism: 1
-        delay: 10s
+    mem_limit: ${FRONTEND_MEMORY_LIMIT:-512M}
+    cpus: ${FRONTEND_CPU_LIMIT:-0.25}
 
   # PostgreSQL Database (internal access only)
   postgres:
@@ -288,22 +246,8 @@ services:
       - /tmp:noexec,nosuid,size=200m
       - /var/run/postgresql:noexec,nosuid,size=100m
     # Enhanced resource management for production
-    deploy:
-      resources:
-        limits:
-          memory: ${POSTGRES_MEMORY_LIMIT:-4G}
-          cpus: '${POSTGRES_CPU_LIMIT:-1.2}'
-        reservations:
-          memory: 2G
-          cpus: '0.8'
-      update_config:
-        parallelism: 1
-        failure_action: rollback
-        delay: 60s
-        monitor: 120s
-      rollback_config:
-        parallelism: 1
-        delay: 30s
+    mem_limit: ${POSTGRES_MEMORY_LIMIT:-4G}
+    cpus: ${POSTGRES_CPU_LIMIT:-0.7}
     # Production-optimized PostgreSQL configuration
     command: [
       "postgres",
@@ -397,21 +341,8 @@ services:
       - /tmp:noexec,nosuid,size=50m
     user: "999:999"
     # Resource limits for Redis
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.3'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-      update_config:
-        parallelism: 1
-        failure_action: rollback
-        delay: 30s
-      rollback_config:
-        parallelism: 1
-        delay: 10s
+    mem_limit: 512M
+    cpus: 0.25
     command: [
       "sh", "-c",
       "redis-server --requirepass $$REDIS_PASSWORD --appendonly no --no-appendfsync-on-rewrite yes --auto-aof-rewrite-percentage 0 --save 3600 1 --save 300 100 --save 60 10000 --maxmemory 384mb --maxmemory-policy allkeys-lru --maxmemory-samples 10 --protected-mode yes --tcp-keepalive 300 --loglevel notice --timeout 300 --tcp-backlog 511 --databases 4 --stop-writes-on-bgsave-error yes --dir /data"
@@ -471,14 +402,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: '0.2'
-        reservations:
-          memory: 128M
-          cpus: '0.1'
+    mem_limit: 256M
+    cpus: 0.15
 
   # Monitoring and alerting (optional)
   # prometheus:
