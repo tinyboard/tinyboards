@@ -254,37 +254,6 @@ services:
           memory: 512M
           cpus: '0.5'
 
-  # Redis for caching and sessions (development)
-  redis:
-    image: redis:7-alpine
-    container_name: tinyboards_redis_dev
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data_dev:/data
-      - ./redis/dev-config:/usr/local/etc/redis:ro
-    networks:
-      - tinyboards_dev
-    restart: "no"  # Don't auto-restart in dev to see crashes
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "5"
-        labels: "service,environment=development"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    command: [
-      "redis-server",
-      "--appendonly", "yes",
-      "--maxmemory", "256mb",
-      "--maxmemory-policy", "allkeys-lru",
-      "--save", "60", "1",  # More frequent saves in development
-      "--loglevel", "verbose"  # More verbose logging for development
-    ]
 
   # Development tools and utilities
   adminer:
@@ -302,21 +271,6 @@ services:
       postgres:
         condition: service_healthy
 
-  # Redis Commander for Redis management
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: tinyboards_redis_commander_dev
-    ports:
-      - "8082:8081"
-    networks:
-      - tinyboards_dev
-    restart: "no"  # Don't auto-restart in dev to see crashes
-    environment:
-      - REDIS_HOSTS=local:redis:6379
-      - HTTP_USER=admin
-      - HTTP_PASSWORD=admin
-    depends_on:
-      - redis
 
 networks:
   tinyboards_dev:
@@ -329,9 +283,6 @@ volumes:
     driver: local
   postgres_data_dev:
     name: tinyboards_postgres_dev
-    driver: local
-  redis_data_dev:
-    name: tinyboards_redis_dev
     driver: local
 
   # Build caches for faster development

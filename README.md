@@ -237,7 +237,6 @@ POSTGRES_PORT=5432
 
 # Security Configuration (REQUIRED)
 JWT_SECRET=your_super_secret_jwt_key_min_32_chars_long_random_string
-REDIS_PASSWORD=your_secure_redis_password_here
 
 # Domain Configuration (REQUIRED for production)
 DOMAIN=your-domain.com
@@ -249,13 +248,17 @@ RUST_LOG=info
 NUXT_PUBLIC_USE_HTTPS=true
 NUXT_PUBLIC_DOMAIN=your-domain.com
 
+# Resource Optimization for VPS (adjust based on your server specs)
+TOKIO_WORKER_THREADS=2
+TOKIO_BLOCKING_THREADS=2
+
 # Container Images (optional - uses latest by default)
 TINYBOARDS_IMAGE=kronusdev/tinyboards-be:latest
 TINYBOARDS_FE_IMAGE=kronusdev/tinyboards-fe:latest
 ```
 
 **Important Security Notes:**
-- Use strong, unique passwords for `POSTGRES_PASSWORD` and `REDIS_PASSWORD`
+- Use a strong, unique password for `POSTGRES_PASSWORD`
 - Generate a random JWT secret with at least 32 characters
 - Replace `your-domain.com` with your actual domain name
 - Keep your `.env` file secure and never commit it to version control
