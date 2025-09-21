@@ -28,17 +28,30 @@ services:
       - DOMAIN=${DOMAIN}
     restart: "no"
 
-  # Init container to fix volume permissions
+  # Init container to fix volume permissions and create dummy SSL certs
   volume-permissions:
     image: alpine:latest
     container_name: tinyboards_volume_permissions
     volumes:
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
+      - certbot_conf:/etc/letsencrypt
     command: [
       "sh", "-c",
-      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
+      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs &&
+       if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+         echo 'Creating dummy SSL certificates for initial nginx startup...'
+         mkdir -p /etc/letsencrypt/live/$DOMAIN
+         apk add --no-cache openssl
+         openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
+           -keyout /etc/letsencrypt/live/$DOMAIN/privkey.pem \
+           -out /etc/letsencrypt/live/$DOMAIN/fullchain.pem \
+           -subj '/CN=$DOMAIN'
+         echo 'Dummy certificates created. Certbot will replace these with real ones.'
+       fi"
     ]
+    environment:
+      - DOMAIN=${DOMAIN}
     restart: "no"
     depends_on:
       env-validator:
@@ -351,20 +364,56 @@ services:
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
     command: |
       sh -c '
-      if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
-        certbot certonly --webroot --webroot-path=/var/www/certbot \
-          --email $LETSENCRYPT_EMAIL --agree-tos --no-eff-email \
-          -d $DOMAIN
+      # Wait for nginx to be ready
+      echo "Waiting for nginx to start..."
+      sleep 30
+
+      # Check if we have dummy certificates
+      DUMMY_CERT=""
+      if [ -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ]; then
+        if openssl x509 -in /etc/letsencrypt/live/$DOMAIN/fullchain.pem -text -noout | grep -q "CN=$DOMAIN.*Issuer.*CN=$DOMAIN"; then
+          echo "Found dummy certificate, will replace with real one"
+          DUMMY_CERT="yes"
+        else
+          echo "Real certificate already exists"
+        fi
       fi
-      # Renewal check
+
+      # Attempt certificate generation with retries
+      for i in 1 2 3 4 5; do
+        if [ ! -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem ] || [ "$DUMMY_CERT" = "yes" ]; then
+          echo "Attempting to generate certificate (attempt $i)..."
+          if certbot certonly --webroot --webroot-path=/var/www/certbot \
+            --email $LETSENCRYPT_EMAIL --agree-tos --no-eff-email \
+            --non-interactive --force-renewal \
+            -d $DOMAIN; then
+            echo "Certificate generated successfully!"
+            echo "Sending reload signal to nginx..."
+            # Signal nginx to reload (this will pick up the new certificates)
+            docker kill --signal=HUP tinyboards_nginx_prod 2>/dev/null || true
+            break
+          else
+            echo "Certificate generation failed, retrying in 60 seconds..."
+            sleep 60
+          fi
+        else
+          echo "Certificate already exists"
+          break
+        fi
+      done
+
+      # Renewal check loop
       while true; do
+        echo "Sleeping for 12 hours before next renewal check..."
         sleep 12h
-        certbot renew
+        echo "Checking for certificate renewal..."
+        certbot renew --quiet
       done
       '
     restart: unless-stopped
     depends_on:
-      - nginx
+      tinyboards-fe:
+        condition: service_started
 
 
   # Monitoring and alerting (optional)
