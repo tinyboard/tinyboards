@@ -210,7 +210,7 @@ docker-compose --version
 wget https://raw.githubusercontent.com/tinyboard/tinyboards/master/docker/docker-compose.prod.yml
 
 # Create required directories
-mkdir -p nginx/conf volumes/media volumes/postgres
+mkdir -p nginx/conf
 
 # Download NGINX configuration
 wget -O nginx/conf/nginx.conf https://raw.githubusercontent.com/tinyboard/tinyboards/master/docker/nginx/conf/nginx.conf
