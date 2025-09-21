@@ -168,10 +168,10 @@ services:
       resources:
         limits:
           memory: ${BACKEND_MEMORY_LIMIT:-2G}
-          cpus: '${BACKEND_CPU_LIMIT:-2.0}'
+          cpus: '${BACKEND_CPU_LIMIT:-1.5}'
         reservations:
           memory: 1G
-          cpus: '1.0'
+          cpus: '0.6'
       update_config:
         parallelism: 1
         failure_action: rollback
@@ -291,11 +291,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 4G
-          cpus: '3.0'
+          memory: ${POSTGRES_MEMORY_LIMIT:-4G}
+          cpus: '${POSTGRES_CPU_LIMIT:-1.2}'
         reservations:
           memory: 2G
-          cpus: '1.5'
+          cpus: '0.8'
       update_config:
         parallelism: 1
         failure_action: rollback
