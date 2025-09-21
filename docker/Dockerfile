@@ -1,112 +1,68 @@
-# Multi-stage Dockerfile optimized for production with cargo-chef
-# Features: Minimal image size, security hardening, fast startup, efficient dependency caching
-
+# Simplified Dockerfile without cargo-chef for debugging
 ARG RUST_VERSION=1.82
 ARG DEBIAN_VERSION=bookworm
+ARG CACHE_BUST_SIMPLE=1
 
-# Chef stage - installs cargo-chef for dependency caching
-FROM rust:${RUST_VERSION}-slim-${DEBIAN_VERSION} as chef
+# Builder stage
+FROM rust:${RUST_VERSION}-slim-${DEBIAN_VERSION} as builder
+ARG CACHE_BUST_SIMPLE=1
 
-# Install build dependencies and cargo-chef
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     libpq-dev \
     ca-certificates \
-    clang \
-    lld \
-    musl-tools \
-    musl-dev \
     && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean \
-    && rustup update \
-    && rustup target add x86_64-unknown-linux-musl \
-    && cargo install cargo-chef
+    && apt-get clean
 
-# Planner stage - generates recipe.json for dependency caching
-FROM chef AS planner
-WORKDIR /tmp/build
-COPY . .
-RUN cargo chef prepare --recipe-path recipe.json
-
-# Builder stage - builds dependencies and application
-FROM chef AS builder
-
-# Stay as root for building (cargo/rustup available system-wide)
 WORKDIR /tmp/build
 
-# Configure cargo for optimized production builds
-RUN mkdir -p .cargo && \
-    echo '[net]' > .cargo/config.toml && \
-    echo 'git-fetch-with-cli = true' >> .cargo/config.toml && \
-    echo '' >> .cargo/config.toml && \
-    echo '[profile.release]' >> .cargo/config.toml && \
-    echo 'opt-level = 1' >> .cargo/config.toml && \
-    echo 'lto = false' >> .cargo/config.toml && \
-    echo 'codegen-units = 256' >> .cargo/config.toml && \
-    echo 'panic = "unwind"' >> .cargo/config.toml && \
-    echo 'debug = false' >> .cargo/config.toml && \
-    echo 'rpath = false' >> .cargo/config.toml && \
-    echo '' >> .cargo/config.toml && \
-    echo '[target.x86_64-unknown-linux-musl]' >> .cargo/config.toml && \
-    echo 'linker = "clang"' >> .cargo/config.toml && \
-    echo 'rustflags = ["-C", "link-arg=-fuse-ld=lld", "-C", "target-cpu=x86-64-v1"]' >> .cargo/config.toml
-
-# Build dependencies (this layer is cached unless dependencies change)
-COPY --from=planner /tmp/build/recipe.json recipe.json
-RUN cargo chef cook --release --target x86_64-unknown-linux-musl --recipe-path recipe.json
-
-# Copy source code and build application
+# Copy source code
 COPY . .
 
-# Handle potential Cargo.lock version mismatch
-RUN if ! cargo tree > /dev/null 2>&1; then \
-        echo "Regenerating Cargo.lock due to version mismatch..." && \
-        rm -f Cargo.lock && \
-        cargo generate-lockfile; \
-    fi
+# Remove any existing cargo config
+RUN rm -rf .cargo
 
-# Build the optimized binary
-RUN cargo build --release --target x86_64-unknown-linux-musl
+# Cache bust to force rebuild
+RUN echo "Building with cache bust: $CACHE_BUST_SIMPLE"
 
-# Runtime stage with minimal dependencies - use newer Debian for glibc compatibility
+# Build the application
+RUN cargo build --release
+
+# Runtime stage
 FROM debian:bookworm-slim as runtime
 
-# Install only runtime dependencies
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
     libpq5 \
+    curl \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
-# Create non-root user for runtime
+# Create non-root user
 RUN groupadd --gid 10001 tinyboards && \
     useradd --uid 10001 --gid tinyboards --create-home --shell /sbin/nologin tinyboards
 
-# Create application directory and set ownership
-RUN mkdir -p /opt/tinyboards/{config,media} && \
+# Create application directory
+RUN mkdir -p /opt/tinyboards/config /opt/tinyboards/media && \
     chown -R tinyboards:tinyboards /opt/tinyboards
 
-# Copy binary only (config will be mounted at runtime)
-COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/target/x86_64-unknown-linux-musl/release/tinyboards_server /usr/local/bin/
+# Copy binary
+COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/target/release/tinyboards_server /usr/local/bin/
 
 # Set up runtime environment
 USER tinyboards
 WORKDIR /opt/tinyboards
 
-# Expose application port
+# Expose port
 EXPOSE 8536
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:8536/api/v1/site || exit 1
-
-# Labels for metadata
-LABEL org.opencontainers.image.title="TinyBoards Backend"
-LABEL org.opencontainers.image.description="Backend server for TinyBoards social platform"
-LABEL org.opencontainers.image.vendor="TinyBoards"
-LABEL org.opencontainers.image.source="https://github.com/tinyboards/tinyboards"
 
 # Start the application
 CMD ["tinyboards_server"]
