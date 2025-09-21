@@ -214,6 +214,9 @@ mkdir -p nginx/conf volumes/media volumes/postgres
 
 # Download NGINX configuration
 wget -O nginx/conf/nginx.conf https://raw.githubusercontent.com/tinyboard/tinyboards/master/docker/nginx/conf/nginx.conf
+
+# Configure NGINX for your domain
+sed -i 's/DOMAIN_PLACEHOLDER/your-domain.com/g' nginx/conf/nginx.conf
 ```
 
 #### 2. Configure Environment Variables
@@ -357,6 +360,15 @@ nano tinyboards.hjson
 - **Environment**: Change from "dev" to "prod" for production
 - **CORS origins**: Update to include your actual domain with HTTPS
 - **Email settings**: Configure if you want password reset and notification emails
+
+**SSL Certificate Setup:**
+The deployment includes automatic SSL certificate generation via Let's Encrypt. Make sure:
+- Your domain is pointing to your server's IP address
+- Ports 80 and 443 are open in your firewall
+- The nginx configuration has been updated with your domain (the sed command above)
+- The `DOMAIN` and `LETSENCRYPT_EMAIL` variables are set in your .env file
+
+The first deployment will automatically request and configure SSL certificates for your domain.
 
 #### 4. Deploy
 ```bash
