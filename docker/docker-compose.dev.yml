@@ -61,7 +61,7 @@ services:
       - RUST_LOG=debug,tinyboards_api=trace,tinyboards_db=debug
       - RUST_BACKTRACE=full
       - DATABASE_URL=postgresql://tinyboards:tinyboards@postgres:5432/tinyboards
-      - TB_CONFIG_LOCATION=/config/defaults.hjson
+      - TB_CONFIG_LOCATION=/opt/tinyboards/config/defaults.hjson
       - ENVIRONMENT=development
       # Development-specific settings
       - CARGO_INCREMENTAL=1
@@ -75,7 +75,7 @@ services:
         - rust:1.75-slim-bookworm
     volumes:
       # Configuration
-      - ./tinyboards.hjson:/config/defaults.hjson:ro
+      - ./tinyboards.hjson:/opt/tinyboards/config/defaults.hjson:ro
       # Media uploads with proper permissions
       - ./media:/opt/tinyboards/media
       # Source code for development (if using dev build)
