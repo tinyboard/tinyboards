@@ -249,8 +249,9 @@ NUXT_PUBLIC_USE_HTTPS=true
 NUXT_PUBLIC_DOMAIN=your-domain.com
 
 # Resource Optimization for VPS (adjust based on your server specs)
-TOKIO_WORKER_THREADS=2
-TOKIO_BLOCKING_THREADS=2
+TOKIO_WORKER_THREADS=1
+TOKIO_BLOCKING_THREADS=1
+RUST_MIN_STACK=2097152
 
 # Container Images (optional - uses latest by default)
 TINYBOARDS_IMAGE=kronusdev/tinyboards-be:latest

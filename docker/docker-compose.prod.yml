@@ -106,16 +106,19 @@ services:
         labels: "service,environment=production"
         compress: "true"
     environment:
-      - RUST_LOG=${RUST_LOG:-info,tinyboards_api=info,tinyboards_db=warn}
+      - RUST_LOG=${RUST_LOG:-warn,tinyboards_api=info,tinyboards_db=warn}
       - TB_CONFIG_LOCATION=/config/defaults.hjson
       - RUST_BACKTRACE=${RUST_BACKTRACE:-1}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-tinyboards}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-tinyboards}
       - JWT_SECRET=${JWT_SECRET}
       # Performance tuning for VPS
-      - TOKIO_WORKER_THREADS=${TOKIO_WORKER_THREADS:-2}
-      - TOKIO_BLOCKING_THREADS=${TOKIO_BLOCKING_THREADS:-2}
+      - TOKIO_WORKER_THREADS=${TOKIO_WORKER_THREADS:-1}
+      - TOKIO_BLOCKING_THREADS=${TOKIO_BLOCKING_THREADS:-1}
+      # Memory optimization
+      - RUST_MIN_STACK=${RUST_MIN_STACK:-2097152}
+      - MALLOC_ARENA_MAX=2
       # Security
-      - RUST_SECURE_ZERO_MEMORY=${RUST_SECURE_ZERO_MEMORY:-1}
+      - RUST_SECURE_ZERO_MEMORY=${RUST_SECURE_ZERO_MEMORY:-0}
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson:ro
       - media_uploads:/opt/tinyboards/media
@@ -141,8 +144,11 @@ services:
     cap_drop:
       - ALL
     tmpfs:
-      - /tmp:noexec,nosuid,size=100m
-    # Resource limits removed for VPS compatibility
+      - /tmp:noexec,nosuid,size=50m
+    # Resource limits for stability
+    mem_limit: 512m
+    memswap_limit: 512m
+    oom_kill_disable: false
 
   # TinyBoards Frontend Service (no exposed ports for security)
   tinyboards-fe:
@@ -242,12 +248,12 @@ services:
       "-c", "max_connections=100",
       "-c", "superuser_reserved_connections=3",
 
-      # Memory settings optimized for VPS (2GB RAM or less)
-      "-c", "shared_buffers=256MB",
-      "-c", "effective_cache_size=1GB",
-      "-c", "work_mem=8MB",
-      "-c", "maintenance_work_mem=128MB",
-      "-c", "autovacuum_work_mem=64MB",
+      # Memory settings optimized for low-memory VPS
+      "-c", "shared_buffers=128MB",
+      "-c", "effective_cache_size=512MB",
+      "-c", "work_mem=4MB",
+      "-c", "maintenance_work_mem=64MB",
+      "-c", "autovacuum_work_mem=32MB",
 
       # WAL and checkpoint settings
       "-c", "wal_buffers=32MB",
