@@ -88,9 +88,8 @@ RUN groupadd --gid 10001 tinyboards && \
 RUN mkdir -p /opt/tinyboards/{config,media} && \
     chown -R tinyboards:tinyboards /opt/tinyboards
 
-# Copy binary and configuration
+# Copy binary only (config will be mounted at runtime)
 COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/target/x86_64-unknown-linux-musl/release/tinyboards_server /usr/local/bin/
-COPY --from=builder --chown=tinyboards:tinyboards /tmp/build/config /opt/tinyboards/config/
 
 # Set up runtime environment
 USER tinyboards
