@@ -35,7 +35,7 @@ services:
       - backend_logs:/opt/tinyboards/logs
     command: [
       "sh", "-c",
-      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
+      "chown -R 10001:10001 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
     ]
     restart: "no"
     depends_on:
