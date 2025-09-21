@@ -2,40 +2,29 @@ version: '3.8'
 
 # Production-optimized Docker Compose configuration
 # Features: security hardening, resource limits, monitoring, high availability
-# SECURITY: Uses Docker secrets for sensitive data
+# CONFIGURATION: Uses .env file for environment variables
 # MONITORING: Integrated observability stack
 # BACKUP: Automated database backups
 
 # Configuration for production
-
-# Docker secrets for sensitive configuration
-secrets:
-  postgres_password:
-    external: true
-    name: tinyboards_postgres_password
-  redis_password:
-    external: true
-    name: tinyboards_redis_password
-  jwt_secret:
-    external: true
-    name: tinyboards_jwt_secret
 
 services:
   # Environment validation container
   env-validator:
     image: alpine:latest
     container_name: tinyboards_env_validator
-    secrets:
-      - postgres_password
-      - jwt_secret
     command: |
       sh -c '
-      if [ ! -f /run/secrets/postgres_password ]; then echo "POSTGRES_PASSWORD secret not found"; exit 1; fi
-      if [ ! -f /run/secrets/jwt_secret ]; then echo "JWT_SECRET secret not found"; exit 1; fi
-      if [ -z "$$DOMAIN" ]; then echo "DOMAIN environment variable not set"; exit 1; fi
+      if [ -z "$$POSTGRES_PASSWORD" ]; then echo "POSTGRES_PASSWORD not set"; exit 1; fi
+      if [ -z "$$JWT_SECRET" ]; then echo "JWT_SECRET not set"; exit 1; fi
+      if [ -z "$$REDIS_PASSWORD" ]; then echo "REDIS_PASSWORD not set"; exit 1; fi
+      if [ -z "$$DOMAIN" ]; then echo "DOMAIN not set"; exit 1; fi
       echo "Environment validation passed"
       '
     environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - DOMAIN=${DOMAIN}
     restart: "no"
 
@@ -124,7 +113,7 @@ services:
 
   # TinyBoards Backend Service (no exposed ports for security)
   tinyboards:
-    image: kronusdev/tinyboards-be:latest
+    image: ${TINYBOARDS_IMAGE:-kronusdev/tinyboards-be:latest}
     container_name: tinyboards_backend_prod
     # Removed port exposure for security - access via nginx only
     restart: unless-stopped
@@ -136,19 +125,17 @@ services:
         labels: "service,environment=production"
         compress: "true"
     environment:
-      - RUST_LOG=info,tinyboards_api=info,tinyboards_db=warn
+      - RUST_LOG=${RUST_LOG:-info,tinyboards_api=info,tinyboards_db=warn}
       - TB_CONFIG_LOCATION=/config/defaults.hjson
-      - RUST_BACKTRACE=1
-      - DATABASE_URL=postgresql://tinyboards@postgres:5432/tinyboards
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
-      - JWT_SECRET_FILE=/run/secrets/jwt_secret
-      - REDIS_URL=redis://:@redis:6379/0
-      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
+      - RUST_BACKTRACE=${RUST_BACKTRACE:-1}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-tinyboards}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-tinyboards}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}
       # Performance tuning
-      - TOKIO_WORKER_THREADS=4
-      - TOKIO_BLOCKING_THREADS=4
+      - TOKIO_WORKER_THREADS=${TOKIO_WORKER_THREADS:-4}
+      - TOKIO_BLOCKING_THREADS=${TOKIO_BLOCKING_THREADS:-4}
       # Security
-      - RUST_SECURE_ZERO_MEMORY=1
+      - RUST_SECURE_ZERO_MEMORY=${RUST_SECURE_ZERO_MEMORY:-1}
     volumes:
       - ./tinyboards.hjson:/config/defaults.hjson:ro
       - media_uploads:/opt/tinyboards/media
@@ -156,10 +143,6 @@ services:
     networks:
       - backend
       - database
-    secrets:
-      - postgres_password
-      - jwt_secret
-      - redis_password
     user: "1000:1000"
     depends_on:
       volume-permissions:
@@ -184,8 +167,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: '2.0'
+          memory: ${BACKEND_MEMORY_LIMIT:-2G}
+          cpus: '${BACKEND_CPU_LIMIT:-2.0}'
         reservations:
           memory: 1G
           cpus: '1.0'
@@ -201,7 +184,7 @@ services:
 
   # TinyBoards Frontend Service (no exposed ports for security)
   tinyboards-fe:
-    image: kronusdev/tinyboards-fe:latest
+    image: ${TINYBOARDS_FE_IMAGE:-kronusdev/tinyboards-fe:latest}
     container_name: tinyboards_frontend_prod
     # Removed port exposure for security - access via nginx only
     restart: unless-stopped
@@ -213,17 +196,17 @@ services:
         labels: "service,environment=production"
         compress: "true"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
       - NUXT_HOST=0.0.0.0
       - NUXT_PORT=3000
       - NITRO_PORT=3000
       - NITRO_HOST=0.0.0.0
-      - NUXT_PUBLIC_API_BASE=http://tinyboards:8536
-      - NUXT_PUBLIC_DOMAIN=tinyboards:8536
-      - NUXT_PUBLIC_USE_HTTPS=false
+      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://tinyboards:8536}
+      - NUXT_PUBLIC_DOMAIN=${NUXT_PUBLIC_DOMAIN:-localhost}
+      - NUXT_PUBLIC_USE_HTTPS=${NUXT_PUBLIC_USE_HTTPS:-false}
       # Performance optimizations
-      - NODE_OPTIONS=--max-old-space-size=512
-      - UV_THREADPOOL_SIZE=4
+      - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
+      - UV_THREADPOOL_SIZE=${UV_THREADPOOL_SIZE:-4}
     volumes:
       - frontend_logs:/app/logs
     networks:
@@ -276,7 +259,7 @@ services:
         compress: "true"
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
-      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
       - POSTGRES_INITDB_ARGS=--encoding=UTF8 --lc-collate=C --lc-ctype=C
       - PGDATA=/var/lib/postgresql/data/pgdata
@@ -286,8 +269,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - database
-    secrets:
-      - postgres_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tinyboards} -d ${POSTGRES_DB:-tinyboards}"]
       interval: 30s
@@ -397,10 +378,10 @@ services:
       - redis_data:/data
     networks:
       - backend
-    secrets:
-      - redis_password
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -432,37 +413,8 @@ services:
         parallelism: 1
         delay: 10s
     command: [
-      "redis-server",
-      # Security: require authentication
-      "--requirepass-file", "/run/secrets/redis_password",
-      # Completely disable appendonly and AOF
-      "--appendonly", "no",
-      "--no-appendfsync-on-rewrite", "yes",
-      "--auto-aof-rewrite-percentage", "0",
-      "--save", "3600", "1",
-      "--save", "300", "100",
-      "--save", "60", "10000",
-
-      # Memory and performance
-      "--maxmemory", "384mb",
-      "--maxmemory-policy", "allkeys-lru",
-      "--maxmemory-samples", "10",
-
-      # Security
-      "--protected-mode", "yes",
-      "--tcp-keepalive", "300",
-
-      # Logging (minimal for production)
-      "--loglevel", "notice",
-
-      # Performance tuning
-      "--timeout", "300",
-      "--tcp-backlog", "511",
-      "--databases", "4",
-      "--stop-writes-on-bgsave-error", "yes",
-
-      # Explicitly set data directory
-      "--dir", "/data"
+      "sh", "-c",
+      "redis-server --requirepass $$REDIS_PASSWORD --appendonly no --no-appendfsync-on-rewrite yes --auto-aof-rewrite-percentage 0 --save 3600 1 --save 300 100 --save 60 10000 --maxmemory 384mb --maxmemory-policy allkeys-lru --maxmemory-samples 10 --protected-mode yes --tcp-keepalive 300 --loglevel notice --timeout 300 --tcp-backlog 511 --databases 4 --stop-writes-on-bgsave-error yes --dir /data"
     ]
 
   # SSL Certificate Management with Let's Encrypt
@@ -500,18 +452,15 @@ services:
       - backup_data:/backups
     networks:
       - database
-    secrets:
-      - postgres_password
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
       - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
-      - PGPASSWORD_FILE=/run/secrets/postgres_password
+      - PGPASSWORD=${POSTGRES_PASSWORD}
     command: |
       sh -c '
       while true; do
         echo "Starting backup at $(date)"
-        PGPASSWORD=$(cat /run/secrets/postgres_password) pg_dump \
-          -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | \
+        pg_dump -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | \
           gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
 
         # Keep only last 30 days of backups

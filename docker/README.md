@@ -83,9 +83,6 @@ docker compose -f docker-compose.dev.yml up -d
 
 # Production environment
 docker compose -f docker-compose.prod.yml up -d
-
-# Registry-based deployment
-docker compose -f docker-compose.registry.yml up -d
 ```
 
 ### 4. Access Application
@@ -933,7 +930,7 @@ cat > /etc/logrotate.d/docker-tinyboards << EOF
 EOF
 ```
 
-## 🐳 DockerHub Registry and CI/CD
+## 🐳 DockerHub Publishing and CI/CD
 
 ### Building and Pushing Images
 
@@ -1063,11 +1060,9 @@ DOCKER_BUILDKIT=1                     # Enable BuildKit
 
 ### Using Published Images
 
-#### Docker Compose with Registry Images
+#### Docker Compose with Published Images
 ```yaml
-# docker-compose.registry.yml
-version: '3.8'
-
+# Use published images in production
 services:
   tinyboards:
     image: kronusdev/tinyboards-be:latest
@@ -1093,7 +1088,7 @@ docker pull kronusdev/tinyboards-be:develop
 docker pull kronusdev/tinyboards-fe:develop
 ```
 
-#### Production Deployment with Registry Images
+#### Production Deployment with Published Images
 ```bash
 # Update production environment to use specific version
 sed -i 's/tinyboards-be:.*/tinyboards-be:1.2.3/' docker-compose.prod.yml
@@ -1111,7 +1106,7 @@ docker compose -f docker-compose.prod.yml up -d
 - **Vulnerability scanning**: Automated security scans with Trivy
 - **Layer optimization**: Multi-stage builds for minimal production images
 
-#### Registry Security
+#### DockerHub Security
 ```bash
 # Enable Docker Content Trust
 export DOCKER_CONTENT_TRUST=1
@@ -1132,7 +1127,7 @@ docker trust inspect kronusdev/tinyboards-be:1.2.3
 # Configure token for read/write access only to required repos
 ```
 
-### Troubleshooting Registry Issues
+### Troubleshooting Publishing Issues
 
 #### Build Problems
 ```bash
