@@ -168,9 +168,9 @@ services:
       - NUXT_PORT=3000
       - NITRO_PORT=3000
       - NITRO_HOST=0.0.0.0
-      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-http://tinyboards:8536}
-      - NUXT_PUBLIC_DOMAIN=${NUXT_PUBLIC_DOMAIN:-localhost}
-      - NUXT_PUBLIC_USE_HTTPS=${NUXT_PUBLIC_USE_HTTPS:-false}
+      - NUXT_PUBLIC_API_BASE=${NUXT_PUBLIC_API_BASE:-https://${DOMAIN}}
+      - NUXT_PUBLIC_DOMAIN=${NUXT_PUBLIC_DOMAIN:-${DOMAIN}}
+      - NUXT_PUBLIC_USE_HTTPS=${NUXT_PUBLIC_USE_HTTPS:-true}
       - SKIP_GQL_GENERATE=false
       # Performance optimizations
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
