@@ -2,10 +2,43 @@ version: '3.8'
 
 # Production-optimized Docker Compose configuration
 # Features: security hardening, resource limits, monitoring, high availability
+# SECURITY: Uses Docker secrets for sensitive data
+# MONITORING: Integrated observability stack
+# BACKUP: Automated database backups
 
 # Configuration for production
 
+# Docker secrets for sensitive configuration
+secrets:
+  postgres_password:
+    external: true
+    name: tinyboards_postgres_password
+  redis_password:
+    external: true
+    name: tinyboards_redis_password
+  jwt_secret:
+    external: true
+    name: tinyboards_jwt_secret
+
 services:
+  # Environment validation container
+  env-validator:
+    image: alpine:latest
+    container_name: tinyboards_env_validator
+    secrets:
+      - postgres_password
+      - jwt_secret
+    command: |
+      sh -c '
+      if [ ! -f /run/secrets/postgres_password ]; then echo "POSTGRES_PASSWORD secret not found"; exit 1; fi
+      if [ ! -f /run/secrets/jwt_secret ]; then echo "JWT_SECRET secret not found"; exit 1; fi
+      if [ -z "$$DOMAIN" ]; then echo "DOMAIN environment variable not set"; exit 1; fi
+      echo "Environment validation passed"
+      '
+    environment:
+      - DOMAIN=${DOMAIN}
+    restart: "no"
+
   # Init container to fix volume permissions
   volume-permissions:
     image: alpine:latest
@@ -13,24 +46,33 @@ services:
     volumes:
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
+      - backup_data:/opt/tinyboards/backups
     command: [
       "sh", "-c",
-      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
+      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs /opt/tinyboards/backups && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs /opt/tinyboards/backups"
     ]
     restart: "no"
+    depends_on:
+      env-validator:
+        condition: service_completed_successfully
 
+  # Nginx reverse proxy with SSL support
   nginx:
-    image: nginx:1.25-alpine
+    image: nginx:1.25.2-alpine
     container_name: tinyboards_nginx_prod
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d:ro
+      - ./ssl/:/etc/ssl/certs/:ro
       - nginx_cache:/var/cache/nginx
       - nginx_logs:/var/log/nginx
+      - certbot_conf:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
     networks:
-      - tinyboards
+      - frontend
+      - backend
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -41,7 +83,9 @@ services:
         compress: "true"
     depends_on:
       tinyboards-fe:
-        condition: service_started
+        condition: service_healthy
+      volume-permissions:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "nginx", "-t"]
       interval: 30s
@@ -78,11 +122,11 @@ services:
         parallelism: 1
         delay: 10s
 
+  # TinyBoards Backend Service (no exposed ports for security)
   tinyboards:
     image: kronusdev/tinyboards-be:latest
     container_name: tinyboards_backend_prod
-    ports:
-      - "127.0.0.1:8536:8536"
+    # Removed port exposure for security - access via nginx only
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -95,7 +139,11 @@ services:
       - RUST_LOG=info,tinyboards_api=info,tinyboards_db=warn
       - TB_CONFIG_LOCATION=/config/defaults.hjson
       - RUST_BACKTRACE=1
-      - DATABASE_URL=postgresql://tinyboards:${POSTGRES_PASSWORD}@postgres:5432/tinyboards
+      - DATABASE_URL=postgresql://tinyboards@postgres:5432/tinyboards
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+      - JWT_SECRET_FILE=/run/secrets/jwt_secret
+      - REDIS_URL=redis://:@redis:6379/0
+      - REDIS_PASSWORD_FILE=/run/secrets/redis_password
       # Performance tuning
       - TOKIO_WORKER_THREADS=4
       - TOKIO_BLOCKING_THREADS=4
@@ -106,7 +154,12 @@ services:
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
     networks:
-      - tinyboards
+      - backend
+      - database
+    secrets:
+      - postgres_password
+      - jwt_secret
+      - redis_password
     user: "1000:1000"
     depends_on:
       volume-permissions:
@@ -115,12 +168,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    # healthcheck:
-    #   test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8536/ || exit 1"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 30s
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8536/api/v2/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -131,11 +184,11 @@ services:
     deploy:
       resources:
         limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
           memory: 1G
           cpus: '1.0'
-        reservations:
-          memory: 512M
-          cpus: '0.5'
       update_config:
         parallelism: 1
         failure_action: rollback
@@ -146,11 +199,11 @@ services:
         delay: 10s
         monitor: 60s
 
+  # TinyBoards Frontend Service (no exposed ports for security)
   tinyboards-fe:
     image: kronusdev/tinyboards-fe:latest
     container_name: tinyboards_frontend_prod
-    ports:
-      - "127.0.0.1:3000:3000"
+    # Removed port exposure for security - access via nginx only
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -174,10 +227,11 @@ services:
     volumes:
       - frontend_logs:/app/logs
     networks:
-      - tinyboards
+      - frontend
+      - backend
     depends_on:
       tinyboards:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/health || wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
       interval: 30s
@@ -207,11 +261,11 @@ services:
         parallelism: 1
         delay: 10s
 
+  # PostgreSQL Database (internal access only)
   postgres:
-    image: postgres:15-alpine
+    image: postgres:15.4-alpine
     container_name: tinyboards_postgres_prod
-    ports:
-      - "127.0.0.1:5433:5432"
+    # Removed port exposure for security - internal access only
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -222,7 +276,7 @@ services:
         compress: "true"
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
       - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
       - POSTGRES_INITDB_ARGS=--encoding=UTF8 --lc-collate=C --lc-ctype=C
       - PGDATA=/var/lib/postgresql/data/pgdata
@@ -231,7 +285,9 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - tinyboards
+      - database
+    secrets:
+      - postgres_password
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tinyboards} -d ${POSTGRES_DB:-tinyboards}"]
       interval: 30s
@@ -254,11 +310,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
-          cpus: '2.0'
+          memory: 4G
+          cpus: '3.0'
         reservations:
-          memory: 1G
-          cpus: '1.0'
+          memory: 2G
+          cpus: '1.5'
       update_config:
         parallelism: 1
         failure_action: rollback
@@ -274,11 +330,11 @@ services:
       "-c", "max_connections=100",
       "-c", "superuser_reserved_connections=3",
 
-      # Memory settings optimized for 2GB container
-      "-c", "shared_buffers=512MB",
-      "-c", "effective_cache_size=1536MB",
-      "-c", "work_mem=8MB",
-      "-c", "maintenance_work_mem=128MB",
+      # Memory settings optimized for 4GB container
+      "-c", "shared_buffers=1GB",
+      "-c", "effective_cache_size=3GB",
+      "-c", "work_mem=16MB",
+      "-c", "maintenance_work_mem=256MB",
       "-c", "autovacuum_work_mem=128MB",
 
       # WAL and checkpoint settings
@@ -324,12 +380,11 @@ services:
       "-c", "autovacuum_analyze_scale_factor=0.05"
     ]
 
-  # Redis for caching and sessions (production-optimized)
+  # Redis for caching and sessions (secured with authentication)
   redis:
-    image: redis:7-alpine
+    image: redis:7.2.0-alpine
     container_name: tinyboards_redis_prod
-    ports:
-      - "127.0.0.1:6379:6379"
+    # Removed port exposure for security - internal access only
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -341,7 +396,9 @@ services:
     volumes:
       - redis_data:/data
     networks:
-      - tinyboards
+      - backend
+    secrets:
+      - redis_password
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s
@@ -376,6 +433,8 @@ services:
         delay: 10s
     command: [
       "redis-server",
+      # Security: require authentication
+      "--requirepass-file", "/run/secrets/redis_password",
       # Completely disable appendonly and AOF
       "--appendonly", "no",
       "--no-appendfsync-on-rewrite", "yes",
@@ -406,6 +465,76 @@ services:
       "--dir", "/data"
     ]
 
+  # SSL Certificate Management with Let's Encrypt
+  certbot:
+    image: certbot/certbot:latest
+    container_name: tinyboards_certbot_prod
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    environment:
+      - DOMAIN=${DOMAIN}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    command: |
+      sh -c '
+      if [ ! -f /etc/letsencrypt/live/$$DOMAIN/fullchain.pem ]; then
+        certbot certonly --webroot --webroot-path=/var/www/certbot \
+          --email $$LETSENCRYPT_EMAIL --agree-tos --no-eff-email \
+          -d $$DOMAIN
+      fi
+      # Renewal check
+      while true; do
+        sleep 12h
+        certbot renew
+      done
+      '
+    restart: unless-stopped
+    depends_on:
+      - nginx
+
+  # Database Backup Service
+  backup:
+    image: postgres:15.4-alpine
+    container_name: tinyboards_backup_prod
+    volumes:
+      - backup_data:/backups
+    networks:
+      - database
+    secrets:
+      - postgres_password
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
+      - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
+      - PGPASSWORD_FILE=/run/secrets/postgres_password
+    command: |
+      sh -c '
+      while true; do
+        echo "Starting backup at $(date)"
+        PGPASSWORD=$(cat /run/secrets/postgres_password) pg_dump \
+          -h postgres -U $$POSTGRES_USER $$POSTGRES_DB | \
+          gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz
+
+        # Keep only last 30 days of backups
+        find /backups -name "*.sql.gz" -mtime +30 -delete
+
+        echo "Backup completed at $(date)"
+        # Wait 24 hours before next backup
+        sleep 86400
+      done
+      '
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+        reservations:
+          memory: 128M
+          cpus: '0.1'
+
   # Monitoring and alerting (optional)
   # prometheus:
   #   image: prom/prometheus:latest
@@ -421,8 +550,28 @@ services:
   #   <<: *common-security
 
 networks:
-  tinyboards:
+  # Frontend network for nginx and frontend service
+  frontend:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
+  # Backend network for application services
+  backend:
+    driver: bridge
+    internal: false
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
+
+  # Database network (internal only)
+  database:
+    driver: bridge
+    internal: true
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
 
 volumes:
   # Application data
@@ -450,6 +599,19 @@ volumes:
   # Caches
   nginx_cache:
     name: tinyboards_nginx_cache_prod
+    driver: local
+
+  # SSL certificates
+  certbot_conf:
+    name: tinyboards_certbot_conf_prod
+    driver: local
+  certbot_www:
+    name: tinyboards_certbot_www_prod
+    driver: local
+
+  # Backups
+  backup_data:
+    name: tinyboards_backup_prod
     driver: local
 
   # Monitoring (if enabled)
