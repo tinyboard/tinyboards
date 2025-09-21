@@ -257,7 +257,108 @@ TINYBOARDS_FE_IMAGE=kronusdev/tinyboards-fe:latest
 - Replace `your-domain.com` with your actual domain name
 - Keep your `.env` file secure and never commit it to version control
 
-#### 3. Deploy
+#### 3. Configure TinyBoards Backend Settings
+Create a `tinyboards.hjson` configuration file for the backend:
+```bash
+# Download the default configuration template
+wget -O tinyboards.hjson https://raw.githubusercontent.com/tinyboard/tinyboards/master/config/defaults.hjson
+```
+
+Edit the configuration file for production:
+```bash
+nano tinyboards.hjson
+```
+
+**Key settings to modify for production:**
+
+```hjson
+{
+  # Database settings (should match your .env file)
+  database: {
+    user: "tinyboards"
+    password: "your_very_secure_database_password_here"  # Same as POSTGRES_PASSWORD in .env
+    host: "postgres"  # Docker service name
+    port: 5432
+    database: "tinyboards"
+    pool_size: 10  # Increase for production load
+  }
+
+  # Rate limiting (adjust based on your needs)
+  rate_limit: {
+    message: 180        # Messages per minute
+    post: 6            # Posts per 10 minutes
+    register: 3        # Registrations per hour
+    image: 6           # Image uploads per hour
+    comment: 6         # Comments per 10 minutes
+    search: 60         # Searches per 10 minutes
+  }
+
+  # Media uploads
+  media: {
+    media_path: "media"
+    max_file_size_mb: 50  # Adjust based on your VPS storage
+  }
+
+  # Email configuration (optional but recommended)
+  email: {
+    smtp_server: "your-smtp-server.com:587"
+    smtp_login: "your-email@domain.com"
+    smtp_password: "your-email-password"
+    smtp_from_address: "noreply@your-domain.com"
+    tls_type: "starttls"
+  }
+
+  # Initial admin setup (only used on first start)
+  setup: {
+    admin_username: "admin"
+    admin_password: "your_secure_admin_password_here"  # Change this!
+    site_name: "Your TinyBoards Site"
+    admin_email: "admin@your-domain.com"
+    default_board_name: "general"
+    default_board_description: "General discussion and community topics"
+  }
+
+  # Server configuration
+  hostname: "your-domain.com"  # Your actual domain
+  bind: "0.0.0.0"
+  port: 8536
+  tls_enabled: true  # Set to true for HTTPS
+  environment: "prod"  # Change from "dev" to "prod"
+
+  # Security
+  salt_suffix: "your_random_salt_here"  # Generate a random string
+
+  # CORS settings for your domain
+  cors: {
+    allowed_origins: [
+      "https://your-domain.com",
+      "https://www.your-domain.com"
+    ]
+    allow_credentials: true
+    max_age: 3600
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    allowed_headers: [
+      "Content-Type",
+      "Authorization",
+      "Accept",
+      "Origin",
+      "X-Requested-With"
+    ]
+  }
+}
+```
+
+**Important Configuration Notes:**
+- **Database password**: Must match `POSTGRES_PASSWORD` in your `.env` file
+- **Hostname**: Set to your actual domain name
+- **Admin password**: Change the default admin password to something secure
+- **Salt suffix**: Generate a random string for password security
+- **TLS enabled**: Set to `true` for HTTPS production deployment
+- **Environment**: Change from "dev" to "prod" for production
+- **CORS origins**: Update to include your actual domain with HTTPS
+- **Email settings**: Configure if you want password reset and notification emails
+
+#### 4. Deploy
 ```bash
 # Start production services
 docker-compose -f docker-compose.prod.yml up -d
