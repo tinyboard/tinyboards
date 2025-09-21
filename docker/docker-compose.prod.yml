@@ -35,10 +35,9 @@ services:
     volumes:
       - media_uploads:/opt/tinyboards/media
       - backend_logs:/opt/tinyboards/logs
-      - backup_data:/opt/tinyboards/backups
     command: [
       "sh", "-c",
-      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs /opt/tinyboards/backups && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs /opt/tinyboards/backups"
+      "chown -R 1000:1000 /opt/tinyboards/media /opt/tinyboards/logs && chmod -R 755 /opt/tinyboards/media /opt/tinyboards/logs"
     ]
     restart: "no"
     depends_on:
@@ -367,24 +366,6 @@ services:
     depends_on:
       - nginx
 
-  # Database Backup Service
-  backup:
-    image: postgres:15.4-alpine
-    container_name: tinyboards_backup_prod
-    volumes:
-      - backup_data:/backups
-    networks:
-      - database
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-tinyboards}
-      - POSTGRES_DB=${POSTGRES_DB:-tinyboards}
-      - PGPASSWORD=${POSTGRES_PASSWORD}
-    command: ["sh", "-c", "while true; do echo 'Starting backup at '$(date); pg_dump -h postgres -U $POSTGRES_USER $POSTGRES_DB | gzip > /backups/backup_$(date +%Y%m%d_%H%M%S).sql.gz; find /backups -name '*.sql.gz' -mtime +30 -delete; echo 'Backup completed at '$(date); sleep 86400; done"]
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    # Resource limits removed for VPS compatibility
 
   # Monitoring and alerting (optional)
   # prometheus:
@@ -460,10 +441,6 @@ volumes:
     name: tinyboards_certbot_www_prod
     driver: local
 
-  # Backups
-  backup_data:
-    name: tinyboards_backup_prod
-    driver: local
 
   # Monitoring (if enabled)
   # prometheus_data:
