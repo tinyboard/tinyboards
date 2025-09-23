@@ -172,10 +172,12 @@ services:
       - NUXT_PUBLIC_DOMAIN=${DOMAIN}
       - NUXT_PUBLIC_USE_HTTPS=true
       - NUXT_INTERNAL_BACKEND_URL=http://tinyboards:8536
-      # GraphQL client configuration for server-side requests
-      - GQL_HOST=http://tinyboards:8536/api/v2/graphql
-      # Client-side GraphQL endpoint (external domain)
-      - NUXT_PUBLIC_GQL_HOST=https://${DOMAIN}/api/v2/graphql
+      # GraphQL client configuration
+      # Note: nuxt-graphql-client uses GQL_HOST for both client and server
+      # We need to use the external endpoint for both, and handle server-side differently
+      - GQL_HOST=https://${DOMAIN}/api/v2/graphql
+      # Internal backend URL for server-side requests (if needed separately)
+      - NUXT_INTERNAL_GQL_HOST=http://tinyboards:8536/api/v2/graphql
       # Performance optimizations
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
       - UV_THREADPOOL_SIZE=${UV_THREADPOOL_SIZE:-4}
