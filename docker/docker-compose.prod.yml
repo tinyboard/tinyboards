@@ -133,7 +133,7 @@ services:
         condition: service_healthy
     # Enable health check for better startup coordination
     healthcheck:
-      test: ["CMD-SHELL", "curl -s --connect-timeout 3 http://127.0.0.1:8536 > /dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "curl -s --connect-timeout 3 --fail http://127.0.0.1:8536/media/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6
@@ -171,7 +171,7 @@ services:
       - NUXT_PUBLIC_API_BASE=https://${DOMAIN}
       - NUXT_PUBLIC_DOMAIN=${NUXT_PUBLIC_DOMAIN}
       - NUXT_PUBLIC_USE_HTTPS=true
-      - SKIP_GQL_GENERATE=false
+      - NUXT_INTERNAL_BACKEND_URL=http://tinyboards:8536
       # Performance optimizations
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
       - UV_THREADPOOL_SIZE=${UV_THREADPOOL_SIZE:-4}

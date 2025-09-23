@@ -133,7 +133,6 @@ services:
       - NUXT_PUBLIC_API_BASE=http://tinyboards:8536
       - NUXT_PUBLIC_DOMAIN=tinyboards:8536
       - NUXT_PUBLIC_USE_HTTPS=false
-      - SKIP_GQL_GENERATE=true
     build:
       context: ../../tinyboards-fe
       dockerfile: Dockerfile
@@ -163,7 +162,7 @@ services:
       - tinyboards_dev
     depends_on:
       - tinyboards
-    command: ["sh", "-c", "SKIP_GQL_GENERATE=true npm run dev"]
+    command: ["npm", "run", "dev"]
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
       interval: 30s
