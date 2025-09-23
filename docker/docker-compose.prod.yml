@@ -169,11 +169,13 @@ services:
       - NITRO_PORT=3000
       - NITRO_HOST=0.0.0.0
       - NUXT_PUBLIC_API_BASE=https://${DOMAIN}
-      - NUXT_PUBLIC_DOMAIN=${NUXT_PUBLIC_DOMAIN}
+      - NUXT_PUBLIC_DOMAIN=${DOMAIN}
       - NUXT_PUBLIC_USE_HTTPS=true
       - NUXT_INTERNAL_BACKEND_URL=http://tinyboards:8536
       # GraphQL client configuration for server-side requests
       - GQL_HOST=http://tinyboards:8536/api/v2/graphql
+      # Client-side GraphQL endpoint (external domain)
+      - NUXT_PUBLIC_GQL_HOST=https://${DOMAIN}/api/v2/graphql
       # Performance optimizations
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
       - UV_THREADPOOL_SIZE=${UV_THREADPOOL_SIZE:-4}
