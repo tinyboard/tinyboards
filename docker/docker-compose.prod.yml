@@ -172,6 +172,8 @@ services:
       - NUXT_PUBLIC_DOMAIN=${NUXT_PUBLIC_DOMAIN}
       - NUXT_PUBLIC_USE_HTTPS=true
       - NUXT_INTERNAL_BACKEND_URL=http://tinyboards:8536
+      # GraphQL client configuration for server-side requests
+      - GQL_HOST=http://tinyboards:8536/api/v2/graphql
       # Performance optimizations
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
       - UV_THREADPOOL_SIZE=${UV_THREADPOOL_SIZE:-4}
