@@ -155,6 +155,11 @@ services:
     container_name: tinyboards_frontend_prod
     # Removed port exposure for security - access via nginx only
     restart: unless-stopped
+    # Build args if building locally (not applicable when using pre-built image)
+    # build:
+    #   args:
+    #     - NUXT_PUBLIC_DOMAIN=${DOMAIN}
+    #     - NUXT_PUBLIC_USE_HTTPS=true
     logging:
       driver: "json-file"
       options:
@@ -172,11 +177,10 @@ services:
       - NUXT_PUBLIC_DOMAIN=${DOMAIN}
       - NUXT_PUBLIC_USE_HTTPS=true
       - NUXT_INTERNAL_BACKEND_URL=http://tinyboards:8536
-      # GraphQL client configuration
-      # Note: nuxt-graphql-client uses GQL_HOST for both client and server
-      # We need to use the external endpoint for both, and handle server-side differently
+      # GraphQL client configuration - make sure client has access to external endpoint
       - GQL_HOST=https://${DOMAIN}/api/v2/graphql
-      # Internal backend URL for server-side requests (if needed separately)
+      - NUXT_PUBLIC_GQL_HOST=https://${DOMAIN}/api/v2/graphql
+      # Internal backend URL for server-side requests
       - NUXT_INTERNAL_GQL_HOST=http://tinyboards:8536/api/v2/graphql
       # Performance optimizations
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=1024}
