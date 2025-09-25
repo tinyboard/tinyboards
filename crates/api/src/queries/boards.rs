@@ -57,7 +57,7 @@ impl QueryBoards {
         let listing_type = listing_type.unwrap_or(ListingType::Local);
         let limit = Some(std::cmp::min(limit.unwrap_or(25), 25));
         let search_title_and_desc = search_title_and_desc.unwrap_or(false);
-        let person_id_join = match v_opt {
+        let user_id_join = match v_opt {
             Some(v) => v.id,
             None => -1,
         };
@@ -68,7 +68,7 @@ impl QueryBoards {
 
         let resp = DbBoard::list_with_counts(
             pool,
-            person_id_join,
+            user_id_join,
             limit,
             page,
             sort.into(),

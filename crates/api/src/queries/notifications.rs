@@ -17,7 +17,7 @@ use std::collections::HashMap;
 
 
 use crate::{
-    structs::{comment::Comment as GqlComment, user::User as GqlPerson, post::Post as GqlPost},
+    structs::{comment::Comment as GqlComment, user::User as GqlUser, post::Post as GqlPost},
     LoggedInUser,
 };
 
@@ -32,7 +32,7 @@ pub struct Notification {
     pub created: String,
     pub comment: Option<GqlComment>,
     pub post: Option<GqlPost>,
-    pub person: Option<GqlPerson>,
+    pub user: Option<GqlUser>,
 }
 
 #[derive(SimpleObject)]
@@ -101,7 +101,7 @@ impl QueryNotifications {
 
         let mut result = Vec::new();
         for notification in db_notifications {
-            // Load related comment/post/person if needed
+            // Load related comment/post/user if needed
             let comment = if let Some(comment_id) = notification.comment_id {
                 match Comment::get_with_counts(pool, comment_id).await {
                     Ok(comment) => Some(GqlComment::from(comment)),
@@ -120,8 +120,8 @@ impl QueryNotifications {
                 None
             };
 
-            // For now, we'll leave person as None since we don't have a direct person reference in notifications
-            let person = None;
+            // For now, we'll leave user as None since we don't have a direct user reference in notifications
+            let user = None;
 
             result.push(Notification {
                 id: notification.id,
@@ -130,7 +130,7 @@ impl QueryNotifications {
                 created: notification.created.to_string(),
                 comment,
                 post,
-                person,
+                user,
             });
         }
 

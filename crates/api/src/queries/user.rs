@@ -37,10 +37,6 @@ impl QueryUser {
         Ok(User::from(db_user))
     }
 
-    /// Alias for `user`.
-    pub async fn person(&self, context: &Context<'_>, name: String) -> Result<User> {
-        self.user(context, name).await
-    }
 
     pub async fn list_users(
         &self,

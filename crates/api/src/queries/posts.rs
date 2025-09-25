@@ -75,7 +75,7 @@ impl QueryPosts {
         _user_id: Option<i32>,
         #[graphql(desc = "If specified, only posts in the given board will be loaded.")]
         board_id: Option<i32>,
-        person_name: Option<String>,
+        user_name: Option<String>,
         board_name: Option<String>,
         #[graphql(desc = "Whether to only show saved posts.")] saved_only: Option<bool>,
         #[graphql(desc = "Page.")] page: Option<i64>,
@@ -93,7 +93,7 @@ impl QueryPosts {
             None => -1,
         };
 
-        let user_id = match person_name {
+        let user_id = match user_name {
             Some(name) => DbUser::get_by_name(pool, name)
                 .await
                 .map(|u| Some(u.id))

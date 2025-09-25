@@ -18,7 +18,7 @@ pub struct QueryBannedUsers;
 
 #[derive(SimpleObject)]
 pub struct BannedUsersResponse {
-    pub persons: Vec<GqlUser>,
+    pub users: Vec<GqlUser>,
     pub total_count: i32,
 }
 
@@ -58,7 +58,7 @@ impl QueryBannedUsers {
             .load::<User>(conn)
             .await?;
 
-        let mut persons = Vec::new();
+        let mut users = Vec::new();
         for user_db in banned_users {
             // Create default aggregates for banned users
             let aggregates = UserAggregates {
@@ -70,7 +70,7 @@ impl QueryBannedUsers {
                 comment_score: 0,
             };
 
-            persons.push(GqlUser::from((user_db, aggregates)));
+            users.push(GqlUser::from((user_db, aggregates)));
         }
 
         // Get total count of banned users for pagination
@@ -81,7 +81,7 @@ impl QueryBannedUsers {
             .await? as i32;
 
         Ok(BannedUsersResponse {
-            persons,
+            users,
             total_count,
         })
     }
