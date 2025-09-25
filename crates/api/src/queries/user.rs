@@ -34,7 +34,20 @@ impl QueryUser {
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 404, "User not found."))?;
 
-        Ok(User::from(db_user))
+        // Fetch user aggregates for proper stats
+        use tinyboards_db::aggregates::structs::UserAggregates;
+        let user_aggregates = UserAggregates::read(pool, db_user.id)
+            .await
+            .unwrap_or_else(|_| UserAggregates {
+                id: 0,
+                user_id: db_user.id,
+                post_count: 0,
+                post_score: 0,
+                comment_count: 0,
+                comment_score: 0,
+            });
+
+        Ok(User::from((db_user, user_aggregates)))
     }
 
 
