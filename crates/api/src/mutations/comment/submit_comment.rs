@@ -39,6 +39,14 @@ impl SubmitComment {
         let pool = ctx.data::<DbPool>()?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
+        // Input validation
+        if body.trim().is_empty() {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Comment body cannot be empty.",
+            ).into());
+        }
+
         // Load site configuration for content filtering
         let site_config = tinyboards_db::models::site::site::Site::read(pool).await?;
 
@@ -52,11 +60,20 @@ impl SubmitComment {
             &body,
         )?;
 
-        // either a post id or a parent comment id must be provided
-        if reply_to_post_id.is_none() && reply_to_comment_id.is_none() {
+        // For top-level comments: require post_id, reply_to_comment_id should be None
+        // For comment replies: require reply_to_comment_id, post_id will be derived from parent comment
+        if reply_to_comment_id.is_some() && reply_to_post_id.is_some() {
             return Err(TinyBoardsError::from_message(
                 400,
-                "You must provide either a post or comment id to reply to.",
+                "Cannot specify both post_id and comment_id. For replies, only specify comment_id.",
+            )
+            .into());
+        }
+
+        if reply_to_comment_id.is_none() && reply_to_post_id.is_none() {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Must provide either post_id (for top-level comment) or comment_id (for reply).",
             )
             .into());
         }
@@ -69,8 +86,20 @@ impl SubmitComment {
 
         // validate parent post id and load parent post
         let parent_post = match parent_comment {
-            Some(ref parent_comment) => DbPost::read(pool, parent_comment.post_id),
-            None => DbPost::read(pool, reply_to_post_id.unwrap()), // safe unwrap because of is_none check above
+            Some(ref parent_comment) => {
+                // For replies, get the post from the parent comment
+                DbPost::read(pool, parent_comment.post_id)
+            },
+            None => {
+                // For top-level comments, use the provided post_id
+                match reply_to_post_id {
+                    Some(post_id) => DbPost::read(pool, post_id),
+                    None => return Err(TinyBoardsError::from_message(
+                        400,
+                        "Post ID is required for top-level comments.",
+                    ).into()),
+                }
+            }
         }
         .await?;
 
