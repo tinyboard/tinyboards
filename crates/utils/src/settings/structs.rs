@@ -152,9 +152,24 @@ pub struct MediaConfig {
   /// media file path to which uploads will be stored and served from
   #[default("/app/tinyboards/media")]
   pub media_path: String,
-  /// maximum file size in megabytes for uploads
+  /// maximum file size in megabytes for uploads (general default)
   #[default(50)]
   pub max_file_size_mb: u32,
+  /// maximum file size in megabytes for user avatars
+  #[default(2)]
+  pub max_avatar_size_mb: u32,
+  /// maximum file size in megabytes for user banners and profile backgrounds
+  #[default(5)]
+  pub max_banner_size_mb: u32,
+  /// maximum file size in megabytes for board icons
+  #[default(5)]
+  pub max_board_icon_size_mb: u32,
+  /// maximum file size in megabytes for board banners
+  #[default(10)]
+  pub max_board_banner_size_mb: u32,
+  /// maximum file size in megabytes for site icons
+  #[default(1)]
+  pub max_site_icon_size_mb: u32,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]

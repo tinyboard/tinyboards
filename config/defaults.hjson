@@ -50,8 +50,18 @@
   media: {
     # media file path to which uploads will be stored and served from
     media_path: "media"
-    # maximum file size in megabytes for uploads
+    # maximum file size in megabytes for uploads (general default)
     max_file_size_mb: 50
+    # maximum file size in megabytes for user avatars
+    max_avatar_size_mb: 2
+    # maximum file size in megabytes for user banners and profile backgrounds
+    max_banner_size_mb: 5
+    # maximum file size in megabytes for board icons
+    max_board_icon_size_mb: 5
+    # maximum file size in megabytes for board banners
+    max_board_banner_size_mb: 10
+    # maximum file size in megabytes for site icons
+    max_site_icon_size_mb: 1
   }
   # Email sending configuration. All options except login/password are mandatory
   email: {

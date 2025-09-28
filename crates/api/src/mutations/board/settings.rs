@@ -1,4 +1,4 @@
-use crate::{LoggedInUser, structs::boards::Board};
+use crate::{LoggedInUser, structs::boards::Board, helpers::files::upload::upload_file, Settings};
 use async_graphql::*;
 use tinyboards_db::{
     models::board::{
@@ -43,6 +43,8 @@ impl UpdateBoardSettings {
         &self,
         ctx: &Context<'_>,
         input: UpdateBoardSettingsInput,
+        icon_file: Option<Upload>,
+        banner_file: Option<Upload>,
     ) -> Result<UpdateBoardSettingsResponse> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
@@ -65,20 +67,33 @@ impl UpdateBoardSettings {
             return Err(TinyBoardsError::from_message(403, "You must be a moderator or admin to update board settings").into());
         }
 
-        // Build the update form
+        let settings = ctx.data::<Settings>()?.as_ref();
+
+        // Handle file uploads
+        let icon_url = match icon_file {
+            Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_board_icon_size_mb), ctx).await?.to_string()),
+            None => input.icon
+        };
+
+        let banner_url = match banner_file {
+            Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_board_banner_size_mb), ctx).await?.to_string()),
+            None => input.banner
+        };
+
+        // Build the update form - only include fields that were provided to avoid data loss
         let board_form = BoardForm {
             title: input.title,
-            description: Some(input.description),
+            description: input.description.map(Some), // Only update if provided
             is_nsfw: input.is_nsfw,
             primary_color: input.primary_color,
             secondary_color: input.secondary_color,
             hover_color: input.hover_color,
-            sidebar: Some(input.sidebar),
+            sidebar: input.sidebar.map(Some), // Only update if provided
             posting_restricted_to_mods: input.posting_restricted_to_mods,
             is_hidden: input.is_hidden,
             exclude_from_all: input.exclude_from_all,
-            icon: input.icon.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
-            banner: input.banner.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
+            icon: icon_url.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
+            banner: banner_url.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
             updated: Some(Some(Utc::now().naive_utc())),
             ..Default::default()
         };

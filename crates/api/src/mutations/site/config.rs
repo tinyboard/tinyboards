@@ -8,7 +8,7 @@ use tinyboards_db::{
 };
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{structs::site::LocalSite, LoggedInUser};
+use crate::{structs::site::LocalSite, LoggedInUser, helpers::files::upload::upload_file, Settings};
 
 #[derive(Default)]
 pub struct SiteConfig;
@@ -59,6 +59,7 @@ impl SiteConfig {
         &self,
         ctx: &Context<'_>,
         input: UpdateSiteConfigInput,
+        icon_file: Option<Upload>,
     ) -> Result<LocalSite> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
@@ -69,11 +70,18 @@ impl SiteConfig {
         }
 
         let _site = DbSite::read(pool).await?;
+        let settings = ctx.data::<Settings>()?.as_ref();
+
+        // Handle file upload
+        let icon_url = match icon_file {
+            Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_site_icon_size_mb), ctx).await?.to_string()),
+            None => input.icon
+        };
 
         let form = SiteForm {
             name: input.name,
             description: input.description.map(Some),
-            icon: input.icon.map(Some),
+            icon: icon_url.map(Some),
             primary_color: input.primary_color.map(Some),
             secondary_color: input.secondary_color.map(Some),
             hover_color: input.hover_color.map(Some),

@@ -137,7 +137,7 @@ impl UpdateSettings {
                     upload,
                     Some(format!("user_{}_avatar", v.id)),
                     v.id,
-                    Some(2),
+                    Some(settings.media.max_avatar_size_mb),
                     ctx,
                 )
                 .await?
@@ -152,7 +152,7 @@ impl UpdateSettings {
                     upload,
                     Some(format!("user_{}_banner", v.id)),
                     v.id,
-                    Some(5),
+                    Some(settings.media.max_banner_size_mb),
                     ctx,
                 )
                 .await?
@@ -167,7 +167,7 @@ impl UpdateSettings {
                     upload,
                     Some(format!("user_{}_bg", v.id)),
                     v.id,
-                    Some(5),
+                    Some(settings.media.max_banner_size_mb),
                     ctx,
                 )
                 .await?
