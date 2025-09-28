@@ -2,6 +2,7 @@ pub mod banned_users;
 pub mod board_management;
 pub mod board_moderators;
 pub mod boards;
+pub mod comments;
 pub mod emojis;
 pub mod invites;
 pub mod site;

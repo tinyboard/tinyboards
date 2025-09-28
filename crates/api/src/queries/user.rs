@@ -81,7 +81,7 @@ impl QueryUser {
             TinyBoardsError::from_error_message(e, 500, "Server error while fetching users.")
         })?;
 
-        Ok(users.into_iter().map(User::from).collect::<Vec<User>>())
+        Ok(users.into_iter().map(|(user, aggregates)| User::from((user, aggregates))).collect::<Vec<User>>())
     }
 
     /// Get list of followers for a user

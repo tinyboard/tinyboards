@@ -25,6 +25,9 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     // On startup, update post and comment rankings
     update_post_rankings(&mut conn1);
     update_comment_rankings(&mut conn1);
+
+    // On startup, update user aggregates
+    update_user_aggregates(&mut conn1);
     
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
@@ -40,6 +43,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     .run(move || {
         update_post_rankings(&mut conn3);
         update_comment_rankings(&mut conn3);
+        update_user_aggregates(&mut conn3);
     });
 
     let mut conn2 = PgConnection::establish(&db_url)
@@ -181,4 +185,55 @@ fn update_comment_rankings(conn: &mut PgConnection) {
     }
 
     info!("Done updating comment rankings.");
+}
+
+/// Update user aggregates (post count, comment count, scores) every hour
+fn update_user_aggregates(conn: &mut PgConnection) {
+    info!("Updating user aggregates...");
+
+    // Recalculate all user aggregates to ensure data integrity
+    let update_user_aggregates_stmt = r#"
+        INSERT INTO user_aggregates (user_id, post_count, post_score, comment_count, comment_score)
+        SELECT
+            u.id as user_id,
+            COALESCE(p.post_count, 0) as post_count,
+            COALESCE(ps.post_score, 0) as post_score,
+            COALESCE(c.comment_count, 0) as comment_count,
+            COALESCE(cs.comment_score, 0) as comment_score
+        FROM users u
+        LEFT JOIN (
+            SELECT creator_id, COUNT(*) as post_count
+            FROM posts
+            GROUP BY creator_id
+        ) p ON u.id = p.creator_id
+        LEFT JOIN (
+            SELECT posts.creator_id, SUM(post_aggregates.score) as post_score
+            FROM posts
+            JOIN post_aggregates ON posts.id = post_aggregates.post_id
+            GROUP BY posts.creator_id
+        ) ps ON u.id = ps.creator_id
+        LEFT JOIN (
+            SELECT creator_id, COUNT(*) as comment_count
+            FROM comments
+            GROUP BY creator_id
+        ) c ON u.id = c.creator_id
+        LEFT JOIN (
+            SELECT comments.creator_id, SUM(comment_aggregates.score) as comment_score
+            FROM comments
+            JOIN comment_aggregates ON comments.id = comment_aggregates.comment_id
+            GROUP BY comments.creator_id
+        ) cs ON u.id = cs.creator_id
+        ON CONFLICT (user_id) DO UPDATE SET
+            post_count = EXCLUDED.post_count,
+            post_score = EXCLUDED.post_score,
+            comment_count = EXCLUDED.comment_count,
+            comment_score = EXCLUDED.comment_score;
+    "#;
+
+    match sql_query(update_user_aggregates_stmt).execute(conn) {
+        Ok(rows_affected) => info!("Updated user aggregates for {} users", rows_affected),
+        Err(e) => error!("Failed to update user aggregates: {}", e)
+    }
+
+    info!("Done updating user aggregates.");
 }

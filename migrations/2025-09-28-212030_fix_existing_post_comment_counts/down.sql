@@ -1,0 +1,2 @@
+-- This migration fixes data integrity, so there's no specific rollback needed
+-- The trigger from the previous migration handles maintaining correct counts going forward

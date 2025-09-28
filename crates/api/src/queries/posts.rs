@@ -78,6 +78,8 @@ impl QueryPosts {
         user_name: Option<String>,
         board_name: Option<String>,
         #[graphql(desc = "Whether to only show saved posts.")] saved_only: Option<bool>,
+        #[graphql(desc = "Whether to only show removed posts (admin/mod only).")] removed_only: Option<bool>,
+        #[graphql(desc = "Whether to include removed posts (admin/mod only).")] include_removed: Option<bool>,
         #[graphql(desc = "Page.")] page: Option<i64>,
     ) -> Result<Vec<Post>> {
         let pool = ctx.data::<DbPool>()?;
@@ -92,6 +94,32 @@ impl QueryPosts {
             Some(v) => v.id,
             None => -1,
         };
+
+        // Check permissions for removed content access
+        let is_admin = match v_opt {
+            Some(v) => v.has_permission(AdminPerms::Content),
+            None => false,
+        };
+
+        let removed_only = removed_only.unwrap_or(false);
+        let include_removed = include_removed.unwrap_or(false);
+
+        // Only admins/mods can view removed content
+        if (removed_only || include_removed) && !is_admin {
+            // Check if user is a moderator for the specified board
+            if let Some(board_id) = board_id {
+                let mod_rel = DbBoardMod::get_by_user_id_for_board(pool, user_id_join, board_id, true).await;
+                let is_mod = match mod_rel {
+                    Ok(m) => m.has_permission(ModPerms::Content),
+                    Err(_) => false,
+                };
+                if !is_mod {
+                    return Err(TinyBoardsError::from_message(403, "Permission denied: cannot view removed content").into());
+                }
+            } else {
+                return Err(TinyBoardsError::from_message(403, "Permission denied: cannot view removed content").into());
+            }
+        }
 
         let user_id = match user_name {
             Some(name) => DbUser::get_by_name(pool, name)
@@ -114,9 +142,9 @@ impl QueryPosts {
             user_id_join,
             Some(limit),
             page,
-            false,
-            false,
-            false,
+            false, // show_deleted
+            include_removed || removed_only, // show_removed
+            false, // include_banned_boards
             saved_only.unwrap_or(false),
             board_id,
             user_id,
@@ -125,7 +153,16 @@ impl QueryPosts {
         )
         .await?;
 
-        Ok(posts.into_iter().map(Post::from).collect::<Vec<Post>>())
+        // Filter for removed posts if requested
+        let filtered_posts = if removed_only {
+            posts.into_iter()
+                .filter(|(post, _)| post.is_removed)
+                .collect()
+        } else {
+            posts
+        };
+
+        Ok(filtered_posts.into_iter().map(Post::from).collect::<Vec<Post>>())
     }
 
     /// Get user's hidden posts

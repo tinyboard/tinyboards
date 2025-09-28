@@ -202,20 +202,21 @@ impl User {
         page: Option<i64>,
         listing_type: UserListingType,
         search_term: Option<String>,
-    ) -> Result<Vec<Self>, Error> {
+    ) -> Result<Vec<(Self, crate::aggregates::structs::UserAggregates)>, Error> {
+        use crate::schema::{users, user_aggregates};
         let conn = &mut get_conn(pool).await?;
 
         let mut query = users::table
-            .select(users::all_columns)
+            .inner_join(user_aggregates::table.on(users::id.eq(user_aggregates::user_id)))
+            .select((users::all_columns, user_aggregates::all_columns))
             .into_boxed();
 
         query = match sort {
             UserSortType::New => query.then_order_by(users::creation_date.desc()),
             UserSortType::Old => query.then_order_by(users::creation_date.asc()),
-            // For now, we'll sort by creation date for rep/posts/comments since we don't have aggregates yet
-            UserSortType::MostRep => query.then_order_by(users::creation_date.desc()),
-            UserSortType::MostPosts => query.then_order_by(users::creation_date.desc()),
-            UserSortType::MostComments => query.then_order_by(users::creation_date.desc()),
+            UserSortType::MostRep => query.then_order_by((user_aggregates::post_score + user_aggregates::comment_score).desc()),
+            UserSortType::MostPosts => query.then_order_by(user_aggregates::post_count.desc()),
+            UserSortType::MostComments => query.then_order_by(user_aggregates::comment_count.desc()),
         };
 
         if let Some(ref search) = search_term {
@@ -236,7 +237,7 @@ impl User {
         let (limit, offset) = limit_and_offset(page, limit)?;
         query = query.limit(limit).offset(offset);
 
-        query.load::<User>(conn).await
+        query.load::<(User, crate::aggregates::structs::UserAggregates)>(conn).await
     }
 }
 
