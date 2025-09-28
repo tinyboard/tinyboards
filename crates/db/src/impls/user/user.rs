@@ -57,10 +57,22 @@ impl User {
 
     pub async fn get_users_for_ids(pool: &DbPool, ids: Vec<i32>) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
-        
+
         users::table
             .filter(users::id.eq_any(ids))
             .load::<Self>(conn)
+            .await
+    }
+
+    pub async fn get_users_with_counts_for_ids(pool: &DbPool, ids: Vec<i32>) -> Result<Vec<(Self, crate::aggregates::structs::UserAggregates)>, Error> {
+        use crate::schema::{users, user_aggregates};
+        let conn = &mut get_conn(pool).await?;
+
+        users::table
+            .inner_join(user_aggregates::table.on(users::id.eq(user_aggregates::user_id)))
+            .filter(users::id.eq_any(ids))
+            .select((users::all_columns, user_aggregates::all_columns))
+            .load::<(User, crate::aggregates::structs::UserAggregates)>(conn)
             .await
     }
 
