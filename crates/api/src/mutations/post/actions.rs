@@ -148,11 +148,19 @@ impl PostActions {
         let can_feature = match feature_type.as_str() {
             "local" => {
                 // Only admins can feature locally (site-wide)
-                user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content)
+                // System, Owner, Full, or Content level admins can feature locally
+                user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content) ||
+                user.has_permission(tinyboards_db::models::user::user::AdminPerms::Full) ||
+                user.has_permission(tinyboards_db::models::user::user::AdminPerms::Owner) ||
+                user.has_permission(tinyboards_db::models::user::user::AdminPerms::System)
             }
             "board" => {
                 // Moderators with content permissions can feature in board
-                if user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content) {
+                // Higher-level admins (Content, Full, Owner, System) can always feature
+                if user.has_permission(tinyboards_db::models::user::user::AdminPerms::Content) ||
+                   user.has_permission(tinyboards_db::models::user::user::AdminPerms::Full) ||
+                   user.has_permission(tinyboards_db::models::user::user::AdminPerms::Owner) ||
+                   user.has_permission(tinyboards_db::models::user::user::AdminPerms::System) {
                     true // Admins can always feature
                 } else {
                     // Check if user is a moderator of this board with content permissions

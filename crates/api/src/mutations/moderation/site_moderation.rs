@@ -39,6 +39,19 @@ pub struct BanUserInput {
     pub expires_days: Option<i32>, // Number of days until ban expires, None for permanent
 }
 
+#[derive(InputObject)]
+pub struct SetAdminLevelInput {
+    pub username: String,
+    pub level: i32,
+    pub reason: Option<String>,
+}
+
+#[derive(SimpleObject)]
+pub struct SetAdminLevelResponse {
+    pub success: bool,
+    pub message: String,
+}
+
 #[Object]
 impl SiteModerationMutations {
     /// Ban a user site-wide (admin only)
@@ -204,6 +217,112 @@ impl SiteModerationMutations {
         Ok(UnbanUserResponse {
             success: true,
             message: format!("User {} has been unbanned", target_user.name),
+        })
+    }
+
+    /// Set admin level for a user (high-level admin only)
+    pub async fn set_admin_level(
+        &self,
+        ctx: &Context<'_>,
+        input: SetAdminLevelInput,
+    ) -> Result<SetAdminLevelResponse> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+
+        // Check if user has permission to manage other admins
+        // Only Full, Owner, or System level admins can modify admin levels
+        if !user.has_permission(AdminPerms::Full) &&
+           !user.has_permission(AdminPerms::Owner) &&
+           !user.has_permission(AdminPerms::System) {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Full admin privileges or higher required to manage admin levels",
+            )
+            .into());
+        }
+
+        // Find target user by username
+        let target_user = User::get_by_name(pool, input.username.clone()).await
+            .map_err(|_| TinyBoardsError::from_message(404, "User not found"))?;
+
+        // Prevent self-modification (for safety)
+        if user.id == target_user.id {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "You cannot modify your own admin level",
+            )
+            .into());
+        }
+
+        // Prevent lower-level admins from modifying higher-level admins
+        if target_user.admin_level >= user.admin_level && target_user.admin_level > 0 {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Cannot modify admin level of someone with equal or higher privileges",
+            )
+            .into());
+        }
+
+        // Validate the requested admin level
+        if input.level < 0 || input.level > 8 {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Invalid admin level. Must be between 0-8",
+            )
+            .into());
+        }
+
+        // Prevent granting higher level than the requesting admin
+        if input.level >= user.admin_level && user.admin_level < 8 {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Cannot grant admin level equal to or higher than your own",
+            )
+            .into());
+        }
+
+        // Update the user's admin level
+        User::update_admin(pool, target_user.id, input.level).await?;
+
+        // Log the moderation action
+        let action_type = if input.level > target_user.admin_level {
+            "PROMOTE_ADMIN"
+        } else if input.level < target_user.admin_level {
+            "DEMOTE_ADMIN"
+        } else {
+            "UPDATE_ADMIN_LEVEL"
+        };
+
+        let metadata = serde_json::json!({
+            "target_username": target_user.name,
+            "old_level": target_user.admin_level,
+            "new_level": input.level,
+            "admin_username": user.name,
+        });
+
+        ModerationLog::log_action(
+            pool,
+            user.id,
+            action_type,
+            target_types::USER,
+            target_user.id,
+            None, // Site-wide action
+            input.reason,
+            Some(metadata),
+            None,
+        ).await?;
+
+        let message = if input.level == 0 {
+            format!("User {} has been removed as admin", target_user.name)
+        } else if target_user.admin_level == 0 {
+            format!("User {} has been promoted to admin (level {})", target_user.name, input.level)
+        } else {
+            format!("User {} admin level updated from {} to {}", target_user.name, target_user.admin_level, input.level)
+        };
+
+        Ok(SetAdminLevelResponse {
+            success: true,
+            message,
         })
     }
 }
