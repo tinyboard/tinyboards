@@ -293,6 +293,11 @@ impl ProfileManagement {
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
         let pool = ctx.data::<DbPool>()?;
 
+        // Check if user actually has an avatar to remove
+        if user.avatar.is_none() {
+            return Ok(true); // Already no avatar, nothing to do
+        }
+
         // Delete the current avatar file if it exists
         if let Some(ref avatar) = user.avatar {
             use crate::helpers::files::upload::delete_file;
@@ -300,7 +305,7 @@ impl ProfileManagement {
         }
 
         let user_form = UserForm {
-            avatar: None,
+            avatar: Some(None), // Explicitly set to None to signal a change
             ..UserForm::default()
         };
 
@@ -315,6 +320,11 @@ impl ProfileManagement {
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
         let pool = ctx.data::<DbPool>()?;
 
+        // Check if user actually has a banner to remove
+        if user.banner.is_none() {
+            return Ok(true); // Already no banner, nothing to do
+        }
+
         // Delete the current banner file if it exists
         if let Some(ref banner) = user.banner {
             use crate::helpers::files::upload::delete_file;
@@ -322,7 +332,7 @@ impl ProfileManagement {
         }
 
         let user_form = UserForm {
-            banner: None,
+            banner: Some(None), // Explicitly set to None to signal a change
             ..UserForm::default()
         };
 
@@ -358,6 +368,11 @@ impl ProfileManagement {
     pub async fn clear_bio(&self, ctx: &Context<'_>) -> Result<bool> {
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
         let pool = ctx.data::<DbPool>()?;
+
+        // Check if user actually has a bio to clear
+        if user.bio.is_none() || user.bio.as_ref().map_or(true, |b| b.trim().is_empty()) {
+            return Ok(true); // Already no bio, nothing to do
+        }
 
         let user_form = UserForm {
             bio: None,
