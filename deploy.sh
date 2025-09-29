@@ -14,10 +14,17 @@ FULL_IMAGE_NAME="$DOCKERHUB_USER/$IMAGE_NAME:$TAG"
 echo "🚀 Building and pushing TinyBoards Backend to Docker Hub..."
 echo "   Image: $FULL_IMAGE_NAME"
 
+# Generate cache bust value to ensure migrations are included
+CACHE_BUST=$(date +%s)
+echo "🔄 Cache bust value: $CACHE_BUST"
+
 # Build the image
 echo "🔨 Building Docker image..."
 echo "📋 Using Dockerfile at docker/Dockerfile"
+echo "🗃️  Forcing rebuild to include any new migrations..."
 docker build \
+    --no-cache \
+    --build-arg CACHE_BUST_SIMPLE=$CACHE_BUST \
     -f docker/Dockerfile \
     -t $IMAGE_NAME \
     -t $FULL_IMAGE_NAME .
@@ -49,5 +56,5 @@ echo "   Use docker/docker-compose.prod.yml with docker/scripts/deploy.sh"
 echo ""
 echo "🔧 Make sure to:"
 echo "   - Have PostgreSQL database running and accessible"
-echo "   - Run database migrations: diesel migration run"
+echo "   - Database migrations run automatically on container startup"
 echo "   - Mount config files if needed"
