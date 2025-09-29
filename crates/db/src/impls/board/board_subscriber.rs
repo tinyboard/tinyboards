@@ -24,13 +24,16 @@ impl BoardSubscriber {
     pub async fn subscribed_type_for_ids(
         pool: &DbPool,
         ids: Vec<i32>,
-        _for_user_id: i32,
+        for_user_id: i32,
     ) -> Result<Vec<(i32, SubscribedType)>, Error> {
         let conn = &mut get_conn(pool).await?;
         use crate::schema::{board_subscriber, boards};
 
         boards::table
-            .left_join(board_subscriber::table.on(boards::id.eq(board_subscriber::board_id)))
+            .left_join(board_subscriber::table.on(
+                boards::id.eq(board_subscriber::board_id)
+                .and(board_subscriber::user_id.eq(for_user_id))
+            ))
             .filter(boards::id.eq_any(ids))
             .select((boards::id, board_subscriber::all_columns.nullable()))
             .load::<(i32, Option<BoardSubscriber>)>(conn)
