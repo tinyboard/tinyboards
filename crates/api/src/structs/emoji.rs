@@ -43,7 +43,7 @@ pub struct CreateEmojiInput {
     pub alt_text: String,
     pub category: String,
     pub board_id: Option<i32>,
-    pub emoji_scope: Option<String>,
+    pub emoji_scope: Option<EmojiScope>,
 }
 
 #[derive(InputObject)]

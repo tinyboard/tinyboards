@@ -1,6 +1,6 @@
 use crate::{
     LoggedInUser,
-    structs::emoji::{CreateEmojiInput, EmojiObject, UpdateEmojiInput},
+    structs::emoji::{CreateEmojiInput, EmojiObject, UpdateEmojiInput, EmojiScope},
     helpers::files::emoji::{upload_emoji_file, delete_emoji_file},
     utils::emoji::reprocess_all_content_with_emojis,
 };
@@ -31,15 +31,15 @@ impl EmojiMutations {
         let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         // Determine scope and validate permissions
-        let emoji_scope = input.emoji_scope.unwrap_or_else(|| "site".to_string());
+        let emoji_scope = input.emoji_scope.unwrap_or(EmojiScope::Site);
 
-        match emoji_scope.as_str() {
-            "site" => {
+        match emoji_scope {
+            EmojiScope::Site => {
                 if !user.has_permission(AdminPerms::Emoji) {
                     return Err(TinyBoardsError::from_message(403, "Insufficient permissions to create site emojis").into());
                 }
             }
-            "board" => {
+            EmojiScope::Board => {
                 let board_id = input.board_id.ok_or_else(|| TinyBoardsError::from_message(400, "board_id is required for board emojis"))?;
 
                 // Check if user is admin or board mod with emoji permissions
@@ -60,11 +60,15 @@ impl EmojiMutations {
                     return Err(TinyBoardsError::from_message(403, "Insufficient permissions to create board emojis").into());
                 }
             }
-            _ => return Err(TinyBoardsError::from_message(400, "Invalid emoji scope. Must be 'site' or 'board'").into()),
         }
 
         // Upload the emoji file
         let upload_url = upload_emoji_file(input.image_file, input.shortcode.clone(), user.id, ctx).await?;
+
+        let emoji_scope_str = match emoji_scope {
+            EmojiScope::Site => "site".to_string(),
+            EmojiScope::Board => "board".to_string(),
+        };
 
         let emoji_form = EmojiForm {
             shortcode: Some(input.shortcode),
@@ -75,7 +79,7 @@ impl EmojiMutations {
             created_by_user_id: Some(user.id),
             is_active: Some(true),
             usage_count: Some(0),
-            emoji_scope: Some(emoji_scope),
+            emoji_scope: Some(emoji_scope_str),
             updated: Some(Utc::now().naive_utc()),
         };
 

@@ -49,7 +49,22 @@ pub async fn upload_emoji_file(
         .into());
     }
 
-    // Validate file content matches declared type
+    // Read file bytes FIRST
+    upload
+        .value(ctx)?
+        .into_read()
+        .read_to_end(&mut file_bytes)?;
+
+    // Check if we actually got file data
+    if file_bytes.is_empty() {
+        return Err(TinyBoardsError::from_message(
+            400,
+            "No file data received or file is empty",
+        )
+        .into());
+    }
+
+    // THEN validate file content matches declared type
     validate_file_content(&file_bytes, &content_type).map_err(|e| {
         TinyBoardsError::from_message(400, &e)
     })?;
@@ -61,12 +76,6 @@ pub async fn upload_emoji_file(
     // Ensure the emojis directory exists
     let emoji_dir = format!("{}/emojis", media_path);
     tokio::fs::create_dir_all(&emoji_dir).await?;
-
-    // Read file bytes
-    upload
-        .value(ctx)?
-        .into_read()
-        .read_to_end(&mut file_bytes)?;
 
     // Check file size
     let size = file_bytes.len() as i64;
@@ -146,11 +155,11 @@ fn sanitize_shortcode(shortcode: &str) -> String {
 }
 
 fn validate_emoji_dimensions(file_bytes: &[u8], _content_type: &str) -> Result<(), TinyBoardsError> {
-    // Basic size check - most emoji files should be reasonable
-    if file_bytes.len() < 100 {
+    // Basic size check - allow small emoji files but ensure they're not empty
+    if file_bytes.len() < 8 {
         return Err(TinyBoardsError::from_message(
             400,
-            "Emoji file appears to be corrupted or too small",
+            "Emoji file appears to be corrupted or empty",
         ));
     }
 
