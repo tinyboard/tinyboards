@@ -25,18 +25,33 @@ impl EmojiQueries {
         let input = input.unwrap_or_default();
         let board_id = input.board_id;
 
-        let emojis = match input.scope {
-            Some(EmojiScope::Site) => {
+        let emojis = match (&input.search, input.scope) {
+            // Handle search queries
+            (Some(search_term), Some(EmojiScope::Site)) => {
+                Emoji::search_site_emojis(pool, search_term).await?
+            }
+            (Some(search_term), Some(EmojiScope::Board)) => {
+                if let Some(board_id) = board_id {
+                    Emoji::search_board_emojis(pool, board_id, search_term).await?
+                } else {
+                    return Err(Error::new("board_id is required when scope is Board"));
+                }
+            }
+            (Some(search_term), None) => {
+                Emoji::search_all_available_emojis(pool, board_id, search_term).await?
+            }
+            // Handle regular listing without search
+            (None, Some(EmojiScope::Site)) => {
                 Emoji::list_site_emojis(pool).await?
             }
-            Some(EmojiScope::Board) => {
+            (None, Some(EmojiScope::Board)) => {
                 if let Some(board_id) = board_id {
                     Emoji::list_board_emojis(pool, board_id).await?
                 } else {
                     return Err(Error::new("board_id is required when scope is Board"));
                 }
             }
-            None => {
+            (None, None) => {
                 Emoji::list_all_available_emojis(pool, board_id).await?
             }
         };
@@ -86,6 +101,7 @@ impl Default for ListEmojisInput {
             active_only: Some(true),
             limit: Some(50),
             offset: Some(0),
+            search: None,
         }
     }
 }

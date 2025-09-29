@@ -68,4 +68,5 @@ pub struct ListEmojisInput {
     pub active_only: Option<bool>,
     pub limit: Option<i32>,
     pub offset: Option<i32>,
+    pub search: Option<String>,
 }
