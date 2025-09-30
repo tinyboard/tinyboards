@@ -50,6 +50,7 @@ pub struct Post {
     source_url: Option<String>,
     last_crawl_date: Option<String>,
     title_chunk: String,
+    creator_vote: i32,
     #[graphql(skip)]
     counts: DbPostAggregates,
     /*creator: Option<Person>,
@@ -341,6 +342,7 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             source_url: post.source_url.map(|url| url.as_str().into()),
             last_crawl_date: post.last_crawl_date.map(|date| date.to_string()),
             title_chunk: post.title_chunk,
+            creator_vote: post.creator_vote,
             counts,
             /*creator: creator.map(|c| Person::from((c, creator_counts.unwrap()))),
             is_creator_banned_from_board: creator_banned_from_board,

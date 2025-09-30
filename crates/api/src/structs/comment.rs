@@ -34,6 +34,7 @@ pub struct Comment {
     updated: Option<String>,
     board_id: i32,
     local: bool,
+    creator_vote: i32,
     replies: Option<Vec<Self>>,
     #[graphql(skip)]
     counts: DbCommentAggregates,
@@ -123,6 +124,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             updated: comment.updated.map(|u| u.to_string()),
             board_id: comment.board_id,
             local: true,
+            creator_vote: comment.creator_vote,
             counts,
             replies: None,
         }

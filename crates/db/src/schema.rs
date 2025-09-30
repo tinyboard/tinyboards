@@ -233,6 +233,7 @@ diesel::table! {
         approval_status -> Varchar,
         approved_by -> Nullable<Int4>,
         approved_at -> Nullable<Timestamp>,
+        creator_vote -> Int4,
     }
 }
 
@@ -638,6 +639,7 @@ diesel::table! {
         approval_status -> Varchar,
         approved_by -> Nullable<Int4>,
         approved_at -> Nullable<Timestamp>,
+        creator_vote -> Int4,
     }
 }
 
