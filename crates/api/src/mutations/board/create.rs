@@ -1,4 +1,4 @@
-use crate::{LoggedInUser, structs::boards::Board};
+use crate::{LoggedInUser, structs::boards::Board, helpers::files::upload::upload_file};
 use async_graphql::*;
 use tinyboards_db::{
     models::board::{
@@ -10,6 +10,7 @@ use tinyboards_db::{
     traits::{Crud, Subscribeable, Joinable},
     utils::DbPool,
 };
+use url::Url;
 use tinyboards_utils::TinyBoardsError;
 use chrono::Utc;
 
@@ -22,6 +23,8 @@ pub struct CreateBoardInput {
     pub primary_color: Option<String>,
     pub secondary_color: Option<String>,
     pub hover_color: Option<String>,
+    pub icon: Option<String>,
+    pub banner: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -39,6 +42,8 @@ impl CreateBoard {
         &self,
         ctx: &Context<'_>,
         input: CreateBoardInput,
+        icon_file: Option<Upload>,
+        banner_file: Option<Upload>,
     ) -> Result<CreateBoardResponse> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
@@ -67,6 +72,21 @@ impl CreateBoard {
             return Err(TinyBoardsError::from_message(400, "Board name already exists").into());
         }
 
+        // Handle file uploads
+        let icon_url = match icon_file {
+            Some(file) => Some(upload_file(file, None, user.id, Some(2), ctx).await?.into()),
+            None => input.icon.and_then(|url_str| {
+                Url::parse(&url_str).ok().map(|url| url.into())
+            }),
+        };
+
+        let banner_url = match banner_file {
+            Some(file) => Some(upload_file(file, None, user.id, Some(5), ctx).await?.into()),
+            None => input.banner.and_then(|url_str| {
+                Url::parse(&url_str).ok().map(|url| url.into())
+            }),
+        };
+
         let board_form = BoardForm {
             name: Some(input.name),
             title: Some(input.title),
@@ -75,6 +95,8 @@ impl CreateBoard {
             primary_color: input.primary_color.or(Some("#1976d2".to_string())),
             secondary_color: input.secondary_color.or(Some("#424242".to_string())),
             hover_color: input.hover_color.or(Some("#1565c0".to_string())),
+            icon: icon_url,
+            banner: banner_url,
             last_refreshed_date: Some(Utc::now().naive_utc()),
             ..Default::default()
         };
