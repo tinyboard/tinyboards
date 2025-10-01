@@ -28,11 +28,15 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
 
     // On startup, update user aggregates
     update_user_aggregates(&mut conn1);
-    
+
+    // On startup, update site aggregates
+    update_site_aggregates(&mut conn1);
+
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
         active_counts(&mut conn1);
         reindex_aggregates_tables(&mut conn1, true);
+        update_site_aggregates(&mut conn1);
     });
 
     let mut conn3 = PgConnection::establish(&db_url)
@@ -236,4 +240,36 @@ fn update_user_aggregates(conn: &mut PgConnection) {
     }
 
     info!("Done updating user aggregates.");
+}
+
+/// Update site aggregates (total users, posts, comments, boards, upvotes, downvotes)
+fn update_site_aggregates(conn: &mut PgConnection) {
+    info!("Updating site aggregates...");
+
+    // Recalculate site-wide statistics
+    let update_site_aggregates_stmt = r#"
+        INSERT INTO site_aggregates (site_id, users, posts, comments, boards, upvotes, downvotes)
+        SELECT
+            1 as site_id,
+            (SELECT COUNT(*) FROM users WHERE is_deleted = false AND is_banned = false) as users,
+            (SELECT COUNT(*) FROM posts WHERE is_deleted = false AND is_removed = false) as posts,
+            (SELECT COUNT(*) FROM comments WHERE is_deleted = false AND is_removed = false) as comments,
+            (SELECT COUNT(*) FROM boards WHERE is_deleted = false AND is_removed = false) as boards,
+            (SELECT COALESCE(SUM(upvotes), 0) FROM post_aggregates) + (SELECT COALESCE(SUM(upvotes), 0) FROM comment_aggregates) as upvotes,
+            (SELECT COALESCE(SUM(downvotes), 0) FROM post_aggregates) + (SELECT COALESCE(SUM(downvotes), 0) FROM comment_aggregates) as downvotes
+        ON CONFLICT (site_id) DO UPDATE SET
+            users = EXCLUDED.users,
+            posts = EXCLUDED.posts,
+            comments = EXCLUDED.comments,
+            boards = EXCLUDED.boards,
+            upvotes = EXCLUDED.upvotes,
+            downvotes = EXCLUDED.downvotes;
+    "#;
+
+    match sql_query(update_site_aggregates_stmt).execute(conn) {
+        Ok(_) => info!("Updated site aggregates"),
+        Err(e) => error!("Failed to update site aggregates: {}", e)
+    }
+
+    info!("Done updating site aggregates.");
 }

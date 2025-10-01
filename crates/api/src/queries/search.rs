@@ -1,6 +1,6 @@
 use async_graphql::*;
 use tinyboards_db::{
-    aggregates::structs::BoardAggregates,
+    aggregates::structs::{BoardAggregates, UserAggregates},
     models::{
         board::boards::Board,
         comment::comments::Comment,
@@ -176,9 +176,12 @@ impl QuerySearch {
                     .load::<User>(conn)
                     .await?;
 
-                // Convert database users to GraphQL users
+                // Convert database users to GraphQL users with actual aggregates
                 for user in user_results {
-                    users.push(GqlUser::from(user));
+                    match UserAggregates::read(pool, user.id).await {
+                        Ok(aggregates) => users.push(GqlUser::from((user, aggregates))),
+                        Err(_) => users.push(GqlUser::from(user)), // Fallback to default aggregates
+                    }
                 }
             }
             _ => {}
@@ -204,22 +207,27 @@ impl QuerySearch {
                     .load::<Board>(conn)
                     .await?;
 
-                // Convert database boards to GraphQL boards (boards need aggregates)
+                // Convert database boards to GraphQL boards with actual aggregates
                 for board in board_results {
-                    // For simplicity, create empty aggregates
-                    let aggregates = BoardAggregates {
-                        id: board.id,
-                        board_id: board.id,
-                        subscribers: 0,
-                        posts: 0, 
-                        comments: 0,
-                        creation_date: board.creation_date,
-                        users_active_day: 0,
-                        users_active_week: 0,
-                        users_active_month: 0,
-                        users_active_half_year: 0,
-                    };
-                    boards.push(GqlBoard::from((board, aggregates)));
+                    match BoardAggregates::read(pool, board.id).await {
+                        Ok(aggregates) => boards.push(GqlBoard::from((board, aggregates))),
+                        Err(_) => {
+                            // Fallback to empty aggregates if fetch fails
+                            let aggregates = BoardAggregates {
+                                id: board.id,
+                                board_id: board.id,
+                                subscribers: 0,
+                                posts: 0,
+                                comments: 0,
+                                creation_date: board.creation_date,
+                                users_active_day: 0,
+                                users_active_week: 0,
+                                users_active_month: 0,
+                                users_active_half_year: 0,
+                            };
+                            boards.push(GqlBoard::from((board, aggregates)));
+                        }
+                    }
                 }
             }
             _ => {}
