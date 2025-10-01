@@ -153,15 +153,21 @@ pub fn get_file_type_extended(content_type: &str) -> &str {
         "video/mp4" => "mp4",
         "video/webm" => "webm",
         "video/avi" => "avi",
-        "video/mov" => "mov",
-        "video/mkv" => "mkv",
+        "video/mov" | "video/quicktime" => "mov",
+        "video/mkv" | "video/x-matroska" => "mkv",
         "video/flv" => "flv",
         "video/wmv" => "wmv",
+        "video/3gpp" | "video/3gpp2" => "3gp",
+        "video/x-m4v" => "m4v",
+        "video/mpeg" => "mpeg",
+        "video/ogg" => "ogv",
         // Audio
-        "audio/mp3" => "mp3",
+        "audio/mp3" | "audio/mpeg" => "mp3",
         "audio/wav" => "wav",
         "audio/ogg" => "ogg",
         "audio/flac" => "flac",
+        "audio/aac" => "aac",
+        "audio/m4a" => "m4a",
         // Documents
         "application/pdf" => "pdf",
         "text/plain" => "txt",
@@ -185,16 +191,26 @@ pub fn is_acceptable_file_type(content_type: &str) -> bool {
         "image/png",
         "image/bmp",
         "image/svg+xml",
-        // Videos
+        // Videos - Common web and mobile formats
         "video/mp4",
         "video/webm",
         "video/avi",
         "video/mov",
+        "video/quicktime",  // iPhone/Mac videos
         "video/mkv",
+        "video/x-matroska",
+        "video/3gpp",       // Android/3G phones
+        "video/3gpp2",      // Android/3G phones
+        "video/x-m4v",      // Apple M4V
+        "video/mpeg",       // MPEG videos
+        "video/ogg",        // Ogg video
         // Audio
         "audio/mp3",
+        "audio/mpeg",
         "audio/wav",
         "audio/ogg",
+        "audio/aac",
+        "audio/m4a",
         // Documents
         "application/pdf",
         "text/plain",
@@ -325,17 +341,33 @@ pub fn detect_file_type_from_bytes(bytes: &[u8]) -> Option<&'static str> {
         Some("image/gif")
     } else if bytes.starts_with(&[0x52, 0x49, 0x46, 0x46]) && bytes.len() > 11 && &bytes[8..12] == b"WEBP" {
         Some("image/webp")
-    } else if bytes.starts_with(&[0x00, 0x00, 0x00]) && bytes.len() > 7 {
-        // MP4 files have various ftypXXXX signatures
-        if &bytes[4..8] == b"ftyp" {
-            Some("video/mp4")
+    } else if bytes.starts_with(&[0x52, 0x49, 0x46, 0x46]) && bytes.len() > 11 && &bytes[8..12] == b"AVI " {
+        Some("video/avi")
+    } else if bytes.starts_with(&[0x00, 0x00, 0x00]) && bytes.len() > 11 {
+        // Check for ftyp signature at offset 4 (MP4, M4V, MOV, 3GP)
+        if bytes.len() > 11 && &bytes[4..8] == b"ftyp" {
+            // Check specific ftyp brand to identify video type
+            if bytes.len() > 11 {
+                let brand = &bytes[8..12];
+                match brand {
+                    b"qt  " | b"mov " => Some("video/quicktime"),
+                    b"3gp" | b"3g2" => Some("video/3gpp"),
+                    b"M4V " | b"m4v " => Some("video/x-m4v"),
+                    _ => Some("video/mp4"), // Default to MP4 for other ftyp brands
+                }
+            } else {
+                Some("video/mp4")
+            }
         } else {
             None
         }
     } else if bytes.starts_with(&[0x1A, 0x45, 0xDF, 0xA3]) {
         Some("video/webm") // Also MKV
-    } else if bytes.starts_with(&[0x41, 0x56, 0x49, 0x20]) {
-        Some("video/avi")
+    } else if bytes.starts_with(&[0x00, 0x00, 0x01, 0xBA]) || bytes.starts_with(&[0x00, 0x00, 0x01, 0xB3]) {
+        Some("video/mpeg")
+    } else if bytes.starts_with(&[0x4F, 0x67, 0x67, 0x53]) {
+        // Ogg container (could be audio or video, we'll allow it)
+        Some("video/ogg")
     } else if bytes.starts_with(&[0x25, 0x50, 0x44, 0x46]) {
         Some("application/pdf")
     } else if bytes.starts_with(&[0x50, 0x4B, 0x03, 0x04]) || bytes.starts_with(&[0x50, 0x4B, 0x05, 0x06]) {
