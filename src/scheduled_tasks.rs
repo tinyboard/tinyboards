@@ -26,17 +26,25 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     update_post_rankings(&mut conn1);
     update_comment_rankings(&mut conn1);
 
-    // On startup, update user aggregates
+    // On startup, initialize post aggregates (triggers will handle real-time updates)
+    update_post_aggregates(&mut conn1);
+
+    // On startup, initialize comment aggregates (triggers will handle real-time updates)
+    update_comment_aggregates(&mut conn1);
+
+    // On startup, initialize user aggregates (triggers will handle real-time updates)
     update_user_aggregates(&mut conn1);
 
-    // On startup, update site aggregates
+    // On startup, initialize board aggregates (triggers will handle real-time updates)
+    update_board_aggregates(&mut conn1);
+
+    // On startup, initialize site aggregates (triggers will handle real-time updates)
     update_site_aggregates(&mut conn1);
 
     scheduler
     .every(TimeUnits::hour(1)).run(move || {
         active_counts(&mut conn1);
         reindex_aggregates_tables(&mut conn1, true);
-        update_site_aggregates(&mut conn1);
     });
 
     let mut conn3 = PgConnection::establish(&db_url)
@@ -47,7 +55,6 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     .run(move || {
         update_post_rankings(&mut conn3);
         update_comment_rankings(&mut conn3);
-        update_user_aggregates(&mut conn3);
     });
 
     let mut conn2 = PgConnection::establish(&db_url)
@@ -264,4 +271,92 @@ fn update_site_aggregates(conn: &mut PgConnection) {
     }
 
     info!("Done updating site aggregates.");
+}
+
+/// Update board aggregates (subscriber count, post count, comment count) every hour
+fn update_board_aggregates(conn: &mut PgConnection) {
+    info!("Updating board aggregates...");
+
+    // Recalculate board statistics
+    let update_board_aggregates_stmt = r#"
+        INSERT INTO board_aggregates (board_id, subscribers, posts, comments, creation_date)
+        SELECT
+            b.id as board_id,
+            COALESCE(s.subscriber_count, 0) as subscribers,
+            COALESCE(p.post_count, 0) as posts,
+            COALESCE(c.comment_count, 0) as comments,
+            b.creation_date
+        FROM boards b
+        LEFT JOIN (
+            SELECT board_id, COUNT(*) as subscriber_count
+            FROM board_subscriber
+            GROUP BY board_id
+        ) s ON b.id = s.board_id
+        LEFT JOIN (
+            SELECT board_id, COUNT(*) as post_count
+            FROM posts
+            WHERE is_deleted = false AND is_removed = false
+            GROUP BY board_id
+        ) p ON b.id = p.board_id
+        LEFT JOIN (
+            SELECT posts.board_id, COUNT(comments.id) as comment_count
+            FROM comments
+            JOIN posts ON comments.post_id = posts.id
+            WHERE comments.is_deleted = false AND comments.is_removed = false
+            GROUP BY posts.board_id
+        ) c ON b.id = c.board_id
+        ON CONFLICT (board_id) DO UPDATE SET
+            subscribers = EXCLUDED.subscribers,
+            posts = EXCLUDED.posts,
+            comments = EXCLUDED.comments;
+    "#;
+
+    match sql_query(update_board_aggregates_stmt).execute(conn) {
+        Ok(rows_affected) => info!("Updated board aggregates for {} boards", rows_affected),
+        Err(e) => error!("Failed to update board aggregates: {}", e)
+    }
+
+    info!("Done updating board aggregates.");
+}
+
+/// Update post aggregates (comment counts) on startup
+fn update_post_aggregates(conn: &mut PgConnection) {
+    info!("Updating post aggregates...");
+
+    let update_post_aggregates_stmt = r#"
+        UPDATE post_aggregates pa
+        SET comments = COALESCE((
+            SELECT COUNT(*)
+            FROM comments c
+            WHERE c.post_id = pa.post_id AND c.is_deleted = false AND c.is_removed = false
+        ), 0)
+    "#;
+
+    match sql_query(update_post_aggregates_stmt).execute(conn) {
+        Ok(_) => info!("Updated post aggregates"),
+        Err(e) => error!("Failed to update post aggregates: {}", e)
+    }
+
+    info!("Done updating post aggregates.");
+}
+
+/// Update comment aggregates (child counts) on startup
+fn update_comment_aggregates(conn: &mut PgConnection) {
+    info!("Updating comment aggregates...");
+
+    let update_comment_aggregates_stmt = r#"
+        UPDATE comment_aggregates ca
+        SET child_count = COALESCE((
+            SELECT COUNT(*)::int
+            FROM comments c
+            WHERE c.parent_id = ca.comment_id AND c.is_deleted = false AND c.is_removed = false
+        ), 0)
+    "#;
+
+    match sql_query(update_comment_aggregates_stmt).execute(conn) {
+        Ok(_) => info!("Updated comment aggregates"),
+        Err(e) => error!("Failed to update comment aggregates: {}", e)
+    }
+
+    info!("Done updating comment aggregates.");
 }
