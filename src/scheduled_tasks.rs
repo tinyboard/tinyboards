@@ -248,22 +248,14 @@ fn update_site_aggregates(conn: &mut PgConnection) {
 
     // Recalculate site-wide statistics
     let update_site_aggregates_stmt = r#"
-        INSERT INTO site_aggregates (site_id, users, posts, comments, boards, upvotes, downvotes)
-        SELECT
-            1 as site_id,
-            (SELECT COUNT(*) FROM users WHERE is_deleted = false AND is_banned = false) as users,
-            (SELECT COUNT(*) FROM posts WHERE is_deleted = false AND is_removed = false) as posts,
-            (SELECT COUNT(*) FROM comments WHERE is_deleted = false AND is_removed = false) as comments,
-            (SELECT COUNT(*) FROM boards WHERE is_deleted = false AND is_removed = false) as boards,
-            (SELECT COALESCE(SUM(upvotes), 0) FROM post_aggregates) + (SELECT COALESCE(SUM(upvotes), 0) FROM comment_aggregates) as upvotes,
-            (SELECT COALESCE(SUM(downvotes), 0) FROM post_aggregates) + (SELECT COALESCE(SUM(downvotes), 0) FROM comment_aggregates) as downvotes
-        ON CONFLICT (site_id) DO UPDATE SET
-            users = EXCLUDED.users,
-            posts = EXCLUDED.posts,
-            comments = EXCLUDED.comments,
-            boards = EXCLUDED.boards,
-            upvotes = EXCLUDED.upvotes,
-            downvotes = EXCLUDED.downvotes;
+        UPDATE site_aggregates SET
+            users = (SELECT COUNT(*) FROM users WHERE is_deleted = false AND is_banned = false),
+            posts = (SELECT COUNT(*) FROM posts WHERE is_deleted = false AND is_removed = false),
+            comments = (SELECT COUNT(*) FROM comments WHERE is_deleted = false AND is_removed = false),
+            boards = (SELECT COUNT(*) FROM boards WHERE is_deleted = false AND is_removed = false),
+            upvotes = (SELECT COALESCE(SUM(upvotes), 0) FROM post_aggregates) + (SELECT COALESCE(SUM(upvotes), 0) FROM comment_aggregates),
+            downvotes = (SELECT COALESCE(SUM(downvotes), 0) FROM post_aggregates) + (SELECT COALESCE(SUM(downvotes), 0) FROM comment_aggregates)
+        WHERE site_id = 1;
     "#;
 
     match sql_query(update_site_aggregates_stmt).execute(conn) {
