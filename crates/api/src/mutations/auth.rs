@@ -161,10 +161,6 @@ impl Auth {
         // PASSWORD CHECK
         password_length_check(&password)?;
 
-
-        let mut avatar_url =
-            Url::parse(format!("{}/media/default_pfp.png", &protocol_and_hostname).as_str())?;
-
         let invite = match registration_mode {
             RegistrationMode::InviteOnlyAdmin | RegistrationMode::InviteOnlyUser => {
                 let invite = DbSiteInvite::read_for_token(pool, &invite_code.unwrap())
@@ -177,11 +173,8 @@ impl Auth {
 
         //let actor_keypair = generate_actor_keypair()?;
 
-
-        // if we have a default avatar for the site, then use it
-        if site.default_avatar.is_some() {
-            avatar_url = Url::parse(&site.default_avatar.unwrap().clone())?;
-        }
+        // Use site's default avatar if configured, otherwise NULL to let frontend handle fallback
+        let avatar_url = site.default_avatar.as_ref().and_then(|url| Url::parse(url).ok());
 
         // create user account
         let passhash = hash_password(password);
@@ -192,7 +185,7 @@ impl Auth {
             display_name: Some(display_name.unwrap_or(username.clone())),
             email: Some(email),
             passhash: Some(passhash),
-            avatar: Some(Some(avatar_url.into())),
+            avatar: Some(avatar_url.map(|u| u.into())),
             is_application_accepted: Some(!requires_application),
             ..UserForm::default()
         };

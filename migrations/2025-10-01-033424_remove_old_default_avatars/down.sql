@@ -1,0 +1,2 @@
+-- This migration cannot be reversed as we don't know which users had the default avatar intentionally
+-- vs which had it set by the system
