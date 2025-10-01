@@ -4,6 +4,37 @@ use tinyboards_db::models::user::user::AdminPerms;
 use crate::LoggedInUser;
 
 #[derive(SimpleObject)]
+pub struct SiteStats {
+    pub users: i64,
+    pub posts: i64,
+    pub comments: i64,
+    pub boards: i64,
+    pub users_active_day: i64,
+    pub users_active_week: i64,
+    pub users_active_month: i64,
+    pub users_active_half_year: i64,
+    pub upvotes: i64,
+    pub downvotes: i64,
+}
+
+impl From<tinyboards_db::aggregates::structs::SiteAggregates> for SiteStats {
+    fn from(value: tinyboards_db::aggregates::structs::SiteAggregates) -> Self {
+        Self {
+            users: value.users,
+            posts: value.posts,
+            comments: value.comments,
+            boards: value.boards,
+            users_active_day: value.users_active_day,
+            users_active_week: value.users_active_week,
+            users_active_month: value.users_active_month,
+            users_active_half_year: value.users_active_half_year,
+            upvotes: value.upvotes,
+            downvotes: value.downvotes,
+        }
+    }
+}
+
+#[derive(SimpleObject)]
 #[graphql(complex)]
 pub struct LocalSite {
     pub id: i32,

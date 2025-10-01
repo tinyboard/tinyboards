@@ -82,5 +82,7 @@ pub struct SiteAggregates {
     pub users_active_week: i64,
     pub users_active_month: i64,
     pub users_active_half_year: i64,
+    pub upvotes: i64,
+    pub downvotes: i64,
 }
 
