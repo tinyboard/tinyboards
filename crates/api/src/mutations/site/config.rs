@@ -50,6 +50,7 @@ pub struct UpdateSiteConfigInput {
     pub approved_image_hosts: Option<String>,
     pub image_embed_hosts_only: Option<bool>,
     pub registration_mode: Option<String>,
+    pub default_avatar: Option<String>,
 }
 
 #[Object]
@@ -60,6 +61,7 @@ impl SiteConfig {
         ctx: &Context<'_>,
         input: UpdateSiteConfigInput,
         icon_file: Option<Upload>,
+        default_avatar_file: Option<Upload>,
     ) -> Result<LocalSite> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
@@ -72,10 +74,15 @@ impl SiteConfig {
         let _site = DbSite::read(pool).await?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
-        // Handle file upload
+        // Handle file uploads
         let icon_url = match icon_file {
             Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_site_icon_size_mb), ctx).await?.to_string()),
             None => input.icon
+        };
+
+        let default_avatar_url = match default_avatar_file {
+            Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_avatar_size_mb), ctx).await?.to_string()),
+            None => input.default_avatar
         };
 
         let form = SiteForm {
@@ -114,6 +121,7 @@ impl SiteConfig {
             approved_image_hosts: input.approved_image_hosts.map(Some),
             image_embed_hosts_only: input.image_embed_hosts_only,
             registration_mode: input.registration_mode,
+            default_avatar: default_avatar_url.map(Some),
             updated: Some(naive_now()),
             ..SiteForm::default()
         };
