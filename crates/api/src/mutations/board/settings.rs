@@ -8,7 +8,7 @@ use tinyboards_db::{
     traits::Crud,
     utils::DbPool,
 };
-use tinyboards_utils::TinyBoardsError;
+use tinyboards_utils::{TinyBoardsError, parser::parse_markdown_opt, utils::custom_body_parsing};
 use chrono::Utc;
 
 #[derive(InputObject)]
@@ -80,6 +80,15 @@ impl UpdateBoardSettings {
             None => input.banner
         };
 
+        // Parse sidebar markdown to HTML if sidebar is being updated
+        let sidebar_html = match &input.sidebar {
+            Some(sidebar_text) => {
+                let sidebar_html = parse_markdown_opt(sidebar_text);
+                Some(Some(custom_body_parsing(&sidebar_html.unwrap_or_default(), settings)))
+            }
+            None => None,
+        };
+
         // Build the update form - only include fields that were provided to avoid data loss
         let board_form = BoardForm {
             title: input.title,
@@ -89,6 +98,7 @@ impl UpdateBoardSettings {
             secondary_color: input.secondary_color,
             hover_color: input.hover_color,
             sidebar: input.sidebar.map(Some), // Only update if provided
+            sidebar_html, // Update sidebar_html when sidebar is updated
             posting_restricted_to_mods: input.posting_restricted_to_mods,
             is_hidden: input.is_hidden,
             exclude_from_all: input.exclude_from_all,
