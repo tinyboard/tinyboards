@@ -133,7 +133,7 @@ services:
         condition: service_healthy
     # Enable health check for better startup coordination
     healthcheck:
-      test: ["CMD-SHELL", "curl -s --connect-timeout 3 --fail http://127.0.0.1:8536/media/ || exit 1"]
+      test: ["CMD-SHELL", "curl -s --connect-timeout 3 --fail http://127.0.0.1:8536/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 6

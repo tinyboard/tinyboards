@@ -147,6 +147,8 @@ async fn main() -> Result<(), TinyBoardsError> {
             .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
             .app_data(Data::new(context))
+            // Health check endpoint
+            .configure(api_routes::health_check_config)
             // GraphQL
             .configure(api_routes::graphql_config)
             // Media file serving - always use OpenDAL handler (works for all backends)

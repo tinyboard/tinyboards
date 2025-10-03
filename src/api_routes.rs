@@ -15,6 +15,16 @@ pub fn media_files_config(cfg: &mut web::ServiceConfig) {
     cfg.route("/media/{filename:.*}", web::get().to(media_handler::serve_media));
 }
 
+pub fn health_check_config(cfg: &mut web::ServiceConfig) {
+    cfg.route("/", web::get().to(health_check));
+}
+
+async fn health_check() -> HttpResponse {
+    HttpResponse::Ok()
+        .content_type("text/plain")
+        .body("TinyBoards is running")
+}
+
 fn get_auth(req: &HttpRequest) -> Option<&str> {
     let auth_header = req
         .headers()
