@@ -104,6 +104,8 @@ async-graphql = { version = "=7.0.7", features = ["dataloader", "unblock"] }
 async-graphql-actix-web = "=7.0.7"
 # OpenDAL for multi-backend storage support
 opendal = { version = "0.54", features = ["services-s3", "services-fs", "services-azblob", "services-gcs"] }
+# Pin base64ct to avoid edition2024 requirement
+base64ct = "=1.6.0"
 
 [dependencies]
 tinyboards_api = { workspace = true }

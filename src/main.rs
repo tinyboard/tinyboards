@@ -149,8 +149,8 @@ async fn main() -> Result<(), TinyBoardsError> {
             .app_data(Data::new(context))
             // GraphQL
             .configure(api_routes::graphql_config)
-            // Static file serving for uploaded media
-            .configure(|cfg| api_routes::static_files_config(cfg, settings.get_media_path()))
+            // Media file serving - always use OpenDAL handler (works for all backends)
+            .configure(api_routes::media_files_config)
     })
     .bind((settings_bind.bind, settings_bind.port))
     .map_err(|_| TinyBoardsError::from_message(500, "could not bind to ip"))?

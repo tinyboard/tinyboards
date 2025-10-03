@@ -1,23 +1,18 @@
-use actix_files::Files;
 use actix_web::*;
 use async_graphql::dataloader::DataLoader;
 use async_graphql_actix_web::{GraphQLRequest, GraphQLResponse};
 //use tinyboards_api::{Perform, PerformUpload};
 use tinyboards_api::{context::TinyBoardsContext, utils::auth::get_user_from_header_opt};
 use tinyboards_api::{LoggedInUser, MasterKey, PostgresLoader, Settings as GQLSettings};
+use crate::media_handler;
 
 pub fn graphql_config(cfg: &mut web::ServiceConfig) {
     cfg.route("/api/v2/graphql", web::post().to(perform_graphql));
 }
 
-pub fn static_files_config(cfg: &mut web::ServiceConfig, media_path: String) {
-    cfg.service(
-        Files::new("/media", media_path)
-            .show_files_listing()
-            .use_last_modified(true)
-            .use_etag(true)
-            .prefer_utf8(true)
-    );
+pub fn media_files_config(cfg: &mut web::ServiceConfig) {
+    // Serve media files through OpenDAL storage backend (works for all backends: fs, s3, azure, gcs)
+    cfg.route("/media/{filename:.*}", web::get().to(media_handler::serve_media));
 }
 
 fn get_auth(req: &HttpRequest) -> Option<&str> {

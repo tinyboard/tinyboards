@@ -1,5 +1,5 @@
 # Simplified Dockerfile without cargo-chef for debugging
-ARG RUST_VERSION=1.82
+ARG RUST_VERSION=1.83
 ARG DEBIAN_VERSION=bookworm
 ARG CACHE_BUST_SIMPLE=1
 
