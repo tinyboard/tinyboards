@@ -64,6 +64,7 @@ async fn perform_graphql(
                 .data(MasterKey::from(context.master_key().jwt_secret.clone()))
                 .data(GQLSettings::from(context.settings()))
                 .data(context.pool().clone())
+                .data(context.storage().clone())
                 .data(DataLoader::new(
                     PostgresLoader::new(context.pool(), my_user_id),
                     tokio::spawn,
