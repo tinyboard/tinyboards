@@ -8,7 +8,7 @@ use tinyboards_db::{
 };
 use tinyboards_utils::TinyBoardsError;
 
-use crate::{structs::site::LocalSite, LoggedInUser, helpers::files::upload::upload_file, Settings};
+use crate::{structs::site::LocalSite, LoggedInUser, helpers::files::upload::upload_file_opendal, Settings};
 
 #[derive(Default)]
 pub struct SiteConfig;
@@ -76,12 +76,12 @@ impl SiteConfig {
 
         // Handle file uploads
         let icon_url = match icon_file {
-            Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_site_icon_size_mb), ctx).await?.to_string()),
+            Some(file) => Some(upload_file_opendal(file, None, user.id, Some(settings.media.max_site_icon_size_mb), ctx).await?.to_string()),
             None => input.icon
         };
 
         let default_avatar_url = match default_avatar_file {
-            Some(file) => Some(upload_file(file, None, user.id, Some(settings.media.max_avatar_size_mb), ctx).await?.to_string()),
+            Some(file) => Some(upload_file_opendal(file, None, user.id, Some(settings.media.max_avatar_size_mb), ctx).await?.to_string()),
             None => input.default_avatar
         };
 

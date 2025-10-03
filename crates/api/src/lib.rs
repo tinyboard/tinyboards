@@ -4,11 +4,12 @@ pub(crate) mod loaders;
 pub mod mutations;
 pub(crate) mod newtypes;
 pub mod queries;
+pub mod storage;
 pub(crate) mod structs;
 pub mod utils;
 
 use crate::mutations::{
-    admin::{board_moderation::AdminBoardModeration, registration_applications::RegistrationApplicationMutations},
+    admin::{board_moderation::AdminBoardModeration, registration_applications::RegistrationApplicationMutations, user_management::UserManagement},
     auth::Auth,
     board::{actions::BoardActions, create::CreateBoard, settings::UpdateBoardSettings},
     board_moderation::BoardModerationMutations,
@@ -108,8 +109,9 @@ pub struct Query(
 
 #[derive(MergedObject, Default)]
 pub struct Mutation(
-    AdminBoardModeration,
     Auth,
+    UserManagement,
+    AdminBoardModeration,
     BoardActions,
     CreateBoard,
     UpdateBoardSettings,

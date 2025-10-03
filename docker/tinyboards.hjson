@@ -63,6 +63,43 @@
     # maximum file size in megabytes for site icons
     max_site_icon_size_mb: 1
   }
+  # Storage backend configuration for file uploads
+  storage: {
+    # Storage backend type: "fs" (filesystem), "s3", "azure", "gcs"
+    backend: "fs"
+
+    # Filesystem storage configuration (used when backend = "fs")
+    fs: {
+      # Root directory for file storage
+      root: "/opt/tinyboards/media"
+    }
+
+    # S3 storage configuration (used when backend = "s3")
+    # Uncomment and configure if using S3
+    # s3: {
+    #   bucket: "tinyboards-media"
+    #   region: "us-east-1"
+    #   access_key_id: "${S3_ACCESS_KEY_ID}"
+    #   secret_access_key: "${S3_SECRET_KEY}"
+    #   # Optional: Custom endpoint for S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
+    #   # endpoint: "https://nyc3.digitaloceanspaces.com"
+    # }
+
+    # Azure Blob Storage configuration (used when backend = "azure")
+    # Uncomment and configure if using Azure
+    # azure: {
+    #   container: "tinyboards-media"
+    #   account_name: "${AZURE_ACCOUNT_NAME}"
+    #   account_key: "${AZURE_ACCOUNT_KEY}"
+    # }
+
+    # Google Cloud Storage configuration (used when backend = "gcs")
+    # Uncomment and configure if using GCS
+    # gcs: {
+    #   bucket: "tinyboards-media"
+    #   credential: "${GCS_CREDENTIAL_PATH}"
+    # }
+  }
   # Email sending configuration. All options except login/password are mandatory
   email: {
     # Hostname and port of the smtp server

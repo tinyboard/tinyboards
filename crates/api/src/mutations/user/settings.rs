@@ -1,4 +1,4 @@
-use crate::helpers::files::upload::{delete_file, upload_file};
+use crate::helpers::files::upload::{delete_file, upload_file_opendal};
 use crate::{structs::user::User, DbPool, LoggedInUser, Settings};
 use async_graphql::*;
 use tinyboards_db::{
@@ -133,7 +133,7 @@ impl UpdateSettings {
 
         let avatar = match avatar {
             Some(upload) => Some(
-                upload_file(
+                upload_file_opendal(
                     upload,
                     Some(format!("user_{}_avatar", v.id)),
                     v.id,
@@ -148,7 +148,7 @@ impl UpdateSettings {
 
         let banner = match banner {
             Some(upload) => Some(
-                upload_file(
+                upload_file_opendal(
                     upload,
                     Some(format!("user_{}_banner", v.id)),
                     v.id,
@@ -163,7 +163,7 @@ impl UpdateSettings {
 
         let profile_background = match profile_background {
             Some(upload) => Some(
-                upload_file(
+                upload_file_opendal(
                     upload,
                     Some(format!("user_{}_bg", v.id)),
                     v.id,

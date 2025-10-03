@@ -1,4 +1,4 @@
-use crate::{DbPool, Settings};
+use crate::{DbPool, Settings, storage::StorageBackend};
 use async_graphql::*;
 use std::io::Read;
 use tinyboards_db::models::site::uploads::{Upload as DbUpload, UploadForm};
@@ -9,11 +9,12 @@ use tinyboards_utils::{
     utils::{
         generate_secure_filename, is_acceptable_file_type,
         validate_file_size, validate_file_content, get_file_path_for_type,
-        ensure_upload_directories, format_file_size
+        get_storage_key_for_type, ensure_upload_directories, format_file_size
     },
 };
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use tokio::io::AsyncReadExt;
 use url::Url;
 
 pub async fn upload_file(
@@ -131,6 +132,112 @@ pub async fn upload_file(
     let _upload = DbUpload::create(pool, &upload_form).await?;
 
     println!("File uploaded successfully: {} ({})", upload_url, format_file_size(size));
+    Ok(upload_url)
+}
+
+pub async fn upload_file_opendal(
+    upload: Upload,
+    file_name: Option<String>,
+    for_user_id: i32,
+    max_size_mb: Option<u32>,
+    ctx: &Context<'_>,
+) -> Result<Url> {
+    let settings = ctx.data::<Settings>()?.as_ref();
+    let pool = ctx.data::<DbPool>()?;
+    let storage = ctx.data::<StorageBackend>()?;
+
+    let upload_value = upload.value(ctx)?;
+    let original_file_name = upload_value.filename.clone();
+    let content_type = upload_value.content_type.clone().unwrap_or_default();
+
+    // Validate file type
+    if !is_acceptable_file_type(&content_type) {
+        return Err(TinyBoardsError::from_message(
+            400,
+            &format!("{} is not an acceptable file type", content_type),
+        ).into());
+    }
+
+    // For validation, read first chunk
+    let file = upload_value.content;
+    let mut async_reader = tokio::fs::File::from_std(file);
+
+    let mut validation_buffer = vec![0u8; 1024 * 1024]; // 1MB for validation
+    let bytes_read = async_reader.read(&mut validation_buffer).await?;
+    validation_buffer.truncate(bytes_read);
+
+    // Validate file content
+    validate_file_content(&validation_buffer, &content_type).map_err(|e| {
+        TinyBoardsError::from_message(400, &e)
+    })?;
+
+    // Generate secure filename
+    let generated_file_name = generate_secure_filename(
+        file_name.or(Some(original_file_name.clone())),
+        &content_type
+    );
+
+    // Determine storage key (subdirectory + filename)
+    let storage_key = get_storage_key_for_type(&generated_file_name, &content_type, &original_file_name);
+
+    // Stream upload with OpenDAL
+    let mut writer = storage.operator().writer_with(&storage_key)
+        .chunk(8 * 1024 * 1024)  // 8MB chunks
+        .concurrent(4)
+        .await
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to create writer"))?;
+
+    // Write validation buffer first
+    let mut total_size = validation_buffer.len() as i64;
+    writer.write(validation_buffer).await
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to write"))?;
+
+    // Stream remaining content
+    let mut buffer = vec![0u8; 8 * 1024 * 1024];
+    loop {
+        let n = async_reader.read(&mut buffer).await?;
+        if n == 0 { break; }
+
+        total_size += n as i64;
+
+        // Check size limit during streaming
+        if let Some(max_mb) = max_size_mb {
+            let max_size = (max_mb * 1024 * 1024) as i64;
+            if total_size > max_size {
+                writer.abort().await.ok();
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    &format!("File exceeds maximum size of {}", format_file_size(max_size)),
+                ).into());
+            }
+        }
+
+        // Clone the buffer slice to create owned data
+        let chunk = buffer[..n].to_vec();
+        writer.write(chunk).await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to write"))?;
+    }
+
+    writer.close().await
+        .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to complete upload"))?;
+
+    // Generate public URL
+    let upload_url = Url::parse(&storage.get_public_url(&storage_key))?;
+
+    // Save to database
+    let upload_form = UploadForm {
+        user_id: for_user_id,
+        original_name: original_file_name.clone(),
+        file_name: generated_file_name,
+        file_path: storage_key.clone(),  // Stores logical key, not filesystem path
+        upload_url: Some(upload_url.clone().into()),
+        size: total_size,
+    };
+
+    DbUpload::create(pool, &upload_form).await?;
+
+    tracing::info!("File uploaded: {} ({} bytes)", storage_key, total_size);
+
     Ok(upload_url)
 }
 

@@ -90,6 +90,8 @@ pub struct User {
     _has_verified_email: Option<bool>,
     #[graphql(skip)]
     _is_application_accepted: bool,
+    #[graphql(skip)]
+    _board_creation_approved: bool,
     // Settings: only available for your own account
     #[graphql(skip)]
     _settings: Option<Settings>,
@@ -159,6 +161,22 @@ impl User {
         let v = v_opt.unwrap();
         if v.id == self.id || v.admin_level >= AdminPerms::Users as i32 {
             Some(self._is_application_accepted)
+        } else {
+            None
+        }
+    }
+
+    /// Board creation approval status (admin-only or self)
+    pub async fn board_creation_approved(&self, ctx: &Context<'_>) -> Option<bool> {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.id == self.id || v.admin_level >= AdminPerms::Users as i32 {
+            Some(self._board_creation_approved)
         } else {
             None
         }
@@ -391,6 +409,7 @@ impl From<(DbUser, DbUserAggregates)> for User {
             profile_music_youtube: user.profile_music_youtube,
             _has_verified_email: Some(user.email_verified),
             _is_application_accepted: user.is_application_accepted,
+            _board_creation_approved: user.board_creation_approved,
             _settings: Some(Settings {
                 email: user.email,
                 email_notifications_enabled: user.email_notifications_enabled,

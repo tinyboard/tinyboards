@@ -100,8 +100,10 @@ futures-core = { version = "0.3.27", default-features = false }
 pin-project-lite = "0.2.9"
 serde_with = "3.0.0"
 # Pin all async-graphql dependencies to avoid edition2024 requirement
-async-graphql = { version = "=7.0.7", features = ["dataloader"] }
+async-graphql = { version = "=7.0.7", features = ["dataloader", "unblock"] }
 async-graphql-actix-web = "=7.0.7"
+# OpenDAL for multi-backend storage support
+opendal = { version = "0.54", features = ["services-s3", "services-fs", "services-azblob", "services-gcs"] }
 
 [dependencies]
 tinyboards_api = { workspace = true }
@@ -138,3 +140,4 @@ actix-files = { workspace = true }
 tokio = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-actix-web = { workspace = true }
+opendal = { workspace = true }

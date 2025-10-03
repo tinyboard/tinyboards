@@ -58,6 +58,14 @@ async fn main() -> Result<(), TinyBoardsError> {
         TinyBoardsError::from_message(500, &format!("Failed to create upload directories: {}", e))
     })?;
 
+    // Initialize storage backend
+    let storage = tinyboards_api::storage::StorageBackend::from_settings(&settings).await
+        .map_err(|e| {
+            TinyBoardsError::from_message(500, &format!("Failed to initialize storage: {}", e))
+        })?;
+
+    tracing::info!("Storage backend initialized: {:?}", storage.backend_type());
+
     let db_url = get_db_url(Some(&settings));
     thread::spawn(move || {
         scheduled_tasks::setup(db_url).expect("Couldn't setup scheduled tasks");
@@ -102,6 +110,7 @@ async fn main() -> Result<(), TinyBoardsError> {
             client.clone(),
             settings.clone(),
             secret.clone(),
+            storage.clone(),
             //rate_limit_cell.clone(),
             graphql_schema.clone(),
         );

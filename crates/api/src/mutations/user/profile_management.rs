@@ -7,7 +7,7 @@ use tinyboards_db::models::user::user::{User as DbUser, UserForm};
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::{TinyBoardsError, passhash::{hash_password, verify_password}};
 use crate::utils::auth::password_length_check;
-use crate::helpers::files::upload::upload_file;
+use crate::helpers::files::upload::upload_file_opendal;
 
 #[derive(Default)]
 pub struct ProfileManagement;
@@ -188,7 +188,7 @@ impl ProfileManagement {
         }
 
         // Upload the new avatar with size limit of 5MB
-        let avatar_url = upload_file(avatar, None, user.id, Some(5), ctx).await?;
+        let avatar_url = upload_file_opendal(avatar, None, user.id, Some(5), ctx).await?;
 
         // Update user's avatar in database
         let user_form = UserForm {

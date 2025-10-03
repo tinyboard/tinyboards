@@ -441,6 +441,24 @@ pub fn get_file_path_for_type(media_path: &str, filename: &str, content_type: &s
     format!("{}/{}/{}", media_path, subdir, filename)
 }
 
+pub fn get_storage_key_for_type(filename: &str, content_type: &str, original_name: &str) -> String {
+    let subdir = if content_type.starts_with("image/") && filename.starts_with("emoji_") {
+        "emojis"
+    } else if content_type.starts_with("image/") && (filename.contains("avatar") || original_name.contains("avatar")) {
+        "avatars"
+    } else if is_video_type(content_type) {
+        "videos"
+    } else if is_audio_type(content_type) {
+        "audio"
+    } else if is_document_type(content_type) {
+        "documents"
+    } else {
+        return filename.to_string();
+    };
+
+    format!("{}/{}", subdir, filename)
+}
+
 pub fn extract_img_file_name(i_url: &str) -> Option<String> {
     // find last "/" position on the string
     let last_slash_pos = i_url.rfind('/')?;

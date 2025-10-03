@@ -5,7 +5,7 @@ use tinyboards_utils::{
     settings::{structs::Settings, SETTINGS},
 };
 
-use crate::{Mutation, Query};
+use crate::{Mutation, Query, storage::StorageBackend};
 
 /// The global context for the application
 pub struct TinyBoardsContext {
@@ -13,6 +13,7 @@ pub struct TinyBoardsContext {
     client: ClientWithMiddleware,
     settings: Settings,
     master_key: Secret,
+    storage: StorageBackend,
     //rate_limit_cell: RateLimitCell,
     schema: Schema<Query, Mutation, EmptySubscription>,
 }
@@ -23,6 +24,7 @@ impl TinyBoardsContext {
         client: ClientWithMiddleware,
         settings: Settings,
         master_key: Secret,
+        storage: StorageBackend,
         //rate_limit_cell: RateLimitCell,
         schema: Schema<Query, Mutation, EmptySubscription>,
     ) -> TinyBoardsContext {
@@ -31,6 +33,7 @@ impl TinyBoardsContext {
             client,
             settings,
             master_key,
+            storage,
             //rate_limit_cell,
             schema,
         }
@@ -52,6 +55,10 @@ impl TinyBoardsContext {
         &self.master_key
     }
 
+    pub fn storage(&self) -> &StorageBackend {
+        &self.storage
+    }
+
     /*pub fn rate_limit_cell(&self) -> &RateLimitCell {
         &&self.rate_limit_cell
     }*/
@@ -68,6 +75,7 @@ impl Clone for TinyBoardsContext {
             client: self.client.clone(),
             settings: self.settings.clone(),
             master_key: self.master_key.clone(),
+            storage: self.storage.clone(),
             //rate_limit_cell: self.rate_limit_cell.clone(),
             schema: self.schema.clone(),
         }

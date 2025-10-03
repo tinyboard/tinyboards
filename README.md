@@ -24,7 +24,8 @@ TinyBoards is a standalone social media platform similar to Reddit, Hacker News,
 - **Real-time Features** - Notifications, messaging, and live updates
 - **Comprehensive API** - Full GraphQL API for integrations
 - **Flexible Permissions** - Role-based access control
-- **Media Support** - Image and file upload capabilities
+- **Multi-Backend Storage** - Local filesystem, AWS S3, Azure Blob, or Google Cloud Storage
+- **Streaming Uploads** - Memory-efficient file handling for large uploads
 - **Rate Limiting** - Built-in protection against abuse
 - **Admin Tools** - Comprehensive site administration
 
@@ -551,6 +552,9 @@ For comprehensive documentation, see the [`docs/`](docs/) directory:
 - **[GraphQL Quick Reference](docs/api/GRAPHQL_QUICK_REFERENCE.md)** - Concise reference for all operations
 - **[Authentication & Security](docs/api/API_AUTHENTICATION_SECURITY.md)** - JWT authentication and security features
 - **[Data Models](docs/api/DATA_MODELS.md)** - Entity relationships and database schema
+
+### Configuration & Deployment
+- **[Storage Backends Guide](docs/storage-backends.md)** - Configure cloud storage (S3, Azure, GCS) or local filesystem for media uploads
 
 ### API Endpoints
 - **GraphQL API**: `http://localhost:8536/api/v2/graphql`

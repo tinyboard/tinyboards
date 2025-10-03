@@ -1,4 +1,4 @@
-use crate::helpers::files::upload::upload_file;
+use crate::helpers::files::upload::upload_file_opendal;
 use crate::structs::post::Post;
 use crate::utils::emoji::process_content_with_emojis;
 use crate::{DbPool, LoggedInUser, Settings};
@@ -189,7 +189,7 @@ impl SubmitPost {
 
         // handle file upload
         let file_url = match file {
-            Some(file) => Some(upload_file(file, None, v.id, None, ctx).await?),
+            Some(file) => Some(upload_file_opendal(file, None, v.id, None, ctx).await?),
             None => None,
         };
 

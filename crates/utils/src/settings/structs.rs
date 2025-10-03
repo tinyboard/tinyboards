@@ -23,6 +23,9 @@ pub struct Settings {
   /// Parameters to configure how media uploads are stored on the instance
   #[default(Default::default())]
   pub media: MediaConfig,
+  /// Storage backend configuration for file uploads
+  #[default(Default::default())]
+  pub storage: StorageConfig,
   /// Parameters for automatic configuration of new instance (only used at first start)
   #[default(None)]
   #[doku(example = "Some(Default::default())")]
@@ -170,6 +173,60 @@ pub struct MediaConfig {
   /// maximum file size in megabytes for site icons
   #[default(1)]
   pub max_site_icon_size_mb: u32,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
+#[serde(default)]
+pub struct StorageConfig {
+  /// Storage backend type: "fs", "s3", "azure", "gcs"
+  #[default(Some("fs".to_string()))]
+  pub backend: Option<String>,
+  /// Filesystem storage configuration
+  pub fs: Option<FilesystemConfig>,
+  /// S3 storage configuration
+  pub s3: Option<S3Config>,
+  /// Azure Blob storage configuration
+  pub azure: Option<AzureConfig>,
+  /// Google Cloud Storage configuration
+  pub gcs: Option<GcsConfig>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Document)]
+pub struct FilesystemConfig {
+  /// Root directory for file storage
+  pub root: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Document)]
+pub struct S3Config {
+  /// S3 bucket name
+  pub bucket: String,
+  /// AWS region
+  pub region: String,
+  /// AWS access key ID
+  pub access_key_id: String,
+  /// AWS secret access key
+  pub secret_access_key: String,
+  /// Custom endpoint for S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
+  pub endpoint: Option<String>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Document)]
+pub struct AzureConfig {
+  /// Azure Blob container name
+  pub container: String,
+  /// Azure storage account name
+  pub account_name: String,
+  /// Azure storage account key
+  pub account_key: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone, Document)]
+pub struct GcsConfig {
+  /// GCS bucket name
+  pub bucket: String,
+  /// Path to service account JSON credential file
+  pub credential: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, SmartDefault, Document)]
