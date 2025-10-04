@@ -25,7 +25,7 @@ pub fn sanitize_html(html: &str) -> String {
         ])
         // Allow attributes for styling and functionality
         .add_generic_attributes(hashset!["class", "id"])
-        .add_tag_attributes("a", hashset!["href", "title", "target", "rel"])
+        .add_tag_attributes("a", hashset!["href", "title", "target"])
         .add_tag_attributes("img", hashset!["src", "alt", "title", "width", "height", "loading"])
         .add_tag_attributes("span", hashset!["style", "class"])
         .add_tag_attributes("div", hashset!["style", "class"])
