@@ -11,7 +11,7 @@ pub fn parse_markdown(text: &str) -> String {
 
 /// Sanitize HTML content to allow rich text editor formatting while preventing XSS
 pub fn sanitize_html(html: &str) -> String {
-    Builder::default()
+    Builder::new()
         // Allow all standard text formatting tags
         .add_tags(hashset![
             "h1", "h2", "h3", "h4", "h5", "h6",
