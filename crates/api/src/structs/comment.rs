@@ -35,6 +35,7 @@ pub struct Comment {
     board_id: i32,
     local: bool,
     creator_vote: i32,
+    quoted_comment_id: Option<i32>,
     replies: Option<Vec<Self>>,
     #[graphql(skip)]
     counts: DbCommentAggregates,
@@ -104,6 +105,48 @@ impl Comment {
             .map(|v| v.unwrap_or(false))
             .map_err(|e| e.into())
     }
+
+    /// Get aggregated reaction counts for this comment
+    pub async fn reaction_counts(&self, ctx: &Context<'_>) -> Result<Vec<super::reaction::ReactionAggregate>> {
+        use tinyboards_db::models::reaction::reactions::ReactionAggregate;
+        use tinyboards_db::utils::DbPool;
+        use tinyboards_utils::TinyBoardsError;
+        let pool = ctx.data::<DbPool>()?;
+
+        let aggregates = ReactionAggregate::list_for_comment(pool, self.id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load reaction counts"))?;
+
+        Ok(aggregates.into_iter().map(super::reaction::ReactionAggregate::from).collect())
+    }
+
+    /// Get the current user's reaction to this comment (if any)
+    pub async fn my_reaction(&self, ctx: &Context<'_>) -> Result<Option<super::reaction::Reaction>> {
+        use tinyboards_db::models::reaction::reactions::Reaction;
+        use tinyboards_db::utils::DbPool;
+        use tinyboards_utils::TinyBoardsError;
+        use crate::LoggedInUser;
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.inner();
+
+        if let Some(u) = user {
+            // Get all user's reactions for this comment
+            let reactions = Reaction::list_for_comment(pool, self.id)
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load reactions"))?;
+
+            // Filter to current user's reactions
+            let my_reactions: Vec<_> = reactions.into_iter()
+                .filter(|r| r.user_id == u.id)
+                .map(super::reaction::Reaction::from)
+                .collect();
+
+            // Return first reaction (users can have multiple reactions with different emojis)
+            Ok(my_reactions.into_iter().next())
+        } else {
+            Ok(None)
+        }
+    }
 }
 
 impl From<(DbComment, DbCommentAggregates)> for Comment {
@@ -125,6 +168,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             board_id: comment.board_id,
             local: true,
             creator_vote: comment.creator_vote,
+            quoted_comment_id: comment.quoted_comment_id,
             counts,
             replies: None,
         }

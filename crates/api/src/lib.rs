@@ -17,6 +17,7 @@ use crate::mutations::{
     message::{actions::MessageActionMutations, send_message::SendMessageMutations, edit_message::EditMessageMutations},
     moderation_unified::ModerationMutations,
     notifications::NotificationMutations,
+    reactions::ReactionMutations,
     user::{actions::UserActions, profile_management::ProfileManagement, settings::UpdateSettings},
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
@@ -132,6 +133,7 @@ pub struct Mutation(
     SiteConfig,
     SiteInvite,
     NotificationMutations,
+    ReactionMutations,
     ReportMutations,
     BoardModerationMutations,
     RegistrationApplicationMutations,

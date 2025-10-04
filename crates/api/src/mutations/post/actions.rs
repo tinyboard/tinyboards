@@ -31,6 +31,15 @@ impl PostActions {
 
         let post = DbPost::read(pool, id).await?;
 
+        // Prevent voting on thread posts
+        if post.post_type == "thread" {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Voting is not enabled for thread posts. Thread posts are sorted by activity instead.",
+            )
+            .into());
+        }
+
         if post.is_deleted || post.is_removed {
             return Err(TinyBoardsError::from_message(
                 404,
@@ -143,7 +152,16 @@ impl PostActions {
         }
 
         let feature_type = feature_type.unwrap_or_else(|| "board".to_string());
-        
+
+        // For thread posts, only allow board-level featuring (pinning)
+        if post.post_type == "thread" && feature_type == "local" {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Thread posts can only be pinned to their board, not featured site-wide.",
+            )
+            .into());
+        }
+
         // Check permissions
         let can_feature = match feature_type.as_str() {
             "local" => {

@@ -26,6 +26,7 @@ pub struct Comment {
     pub approved_by: Option<i32>,
     pub approved_at: Option<NaiveDateTime>,
     pub creator_vote: i32,
+    pub quoted_comment_id: Option<i32>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -49,6 +50,7 @@ pub struct CommentForm {
     pub approved_by: Option<i32>,
     pub approved_at: Option<NaiveDateTime>,
     pub creator_vote: Option<i32>,
+    pub quoted_comment_id: Option<i32>,
 }
 
 impl Comment {

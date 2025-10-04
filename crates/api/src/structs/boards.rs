@@ -50,6 +50,7 @@ pub struct Board {
     sidebar: Option<String>,
     #[graphql(name = "sidebarHTML")]
     sidebar_html: Option<String>,
+    section_config: i32,
     // `counts` is not queryable, fields will be made available through resolvers
     #[graphql(skip)]
     counts: DbBoardAggregates,
@@ -109,6 +110,29 @@ impl Board {
 
     pub async fn users_active_half_year(&self) -> i64 {
         self.counts.users_active_half_year
+    }
+
+    /// Check if feed section is enabled (bit flag 1)
+    pub async fn has_feed(&self) -> bool {
+        (self.section_config & 1) == 1
+    }
+
+    /// Check if threads section is enabled (bit flag 2)
+    pub async fn has_threads(&self) -> bool {
+        (self.section_config & 2) == 2
+    }
+
+    /// Get reaction settings for this board
+    pub async fn reaction_settings(&self, ctx: &Context<'_>) -> Result<Option<super::reaction::BoardReactionSettings>> {
+        use tinyboards_db::models::reaction::reactions::BoardReactionSettings;
+        let pool = ctx.data::<DbPool>()?;
+
+        let settings = BoardReactionSettings::get_for_board(pool, self.id)
+            .await
+            .ok() // Convert error to None
+            .map(super::reaction::BoardReactionSettings::from);
+
+        Ok(settings)
     }
 
     pub async fn my_mod_permissions(&self, ctx: &Context<'_>) -> Result<i32> {
@@ -222,6 +246,7 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             hover_color: board.hover_color,
             sidebar: board.sidebar,
             sidebar_html: board.sidebar_html,
+            section_config: board.section_config,
             hidden_: board.is_hidden,
             exclude_from_all_: board.exclude_from_all,
             counts,

@@ -35,6 +35,7 @@ impl SubmitPost {
         #[graphql(name = "isNSFW")] is_nsfw: Option<bool>,
         alt_text: Option<String>,
         file: Option<Upload>,
+        post_type: Option<String>,
     ) -> Result<Post> {
         let v = ctx
             .data_unchecked::<LoggedInUser>()
@@ -165,6 +166,17 @@ impl SubmitPost {
             None => None,
         };
 
+        // Determine post type (feed or thread, default to feed)
+        let determined_post_type = post_type.unwrap_or_else(|| "feed".to_string());
+
+        // Validate post_type
+        if determined_post_type != "feed" && determined_post_type != "thread" {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "post_type must be either 'feed' or 'thread'"
+            ).into());
+        }
+
         let post_form = PostForm {
             title: Some(title.clone()),
             type_: Some(type_),
@@ -182,6 +194,8 @@ impl SubmitPost {
             is_deleted: Some(false),
             featured_board: Some(false),
             featured_local: Some(false),
+            post_type: Some(determined_post_type.clone()),
+            creator_vote: Some(if determined_post_type == "thread" { 0 } else { 1 }), // No self-vote for threads
             ..Default::default()
         };
 
@@ -235,14 +249,16 @@ impl SubmitPost {
                 })?;
         }
 
-        // auto upvote own post
-        let post_vote = PostVoteForm {
-            post_id: published_post.id,
-            user_id: v.id,
-            score: 1,
-        };
+        // auto upvote own post (only for feed posts, not threads)
+        if determined_post_type == "feed" {
+            let post_vote = PostVoteForm {
+                post_id: published_post.id,
+                user_id: v.id,
+                score: 1,
+            };
 
-        PostVote::vote(pool, &post_vote).await?;
+            PostVote::vote(pool, &post_vote).await?;
+        }
 
         let post_with_counts = DbPost::get_with_counts(pool, published_post.id, false)
             .await

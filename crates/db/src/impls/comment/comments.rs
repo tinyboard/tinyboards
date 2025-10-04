@@ -440,6 +440,43 @@ impl Comment {
             .map(|_| ())
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "could not resolve reports"))
     }
+
+    /// Load comments chronologically for thread posts (no tree structure)
+    pub async fn load_chronological_for_post(
+        pool: &DbPool,
+        for_post_id: i32,
+        limit: Option<i64>,
+        page: Option<i64>,
+        include_deleted: bool,
+        include_removed: bool,
+    ) -> Result<Vec<(Self, CommentAggregates)>, Error> {
+        use crate::schema::{comment_aggregates, comments};
+        let conn = &mut get_conn(pool).await?;
+
+        let (limit, offset) = limit_and_offset_unlimited(page, limit);
+
+        let mut query = comments::table
+            .inner_join(comment_aggregates::table)
+            .filter(comments::post_id.eq(for_post_id))
+            .into_boxed();
+
+        if !include_deleted {
+            query = query.filter(comments::is_deleted.eq(false));
+        }
+
+        if !include_removed {
+            query = query.filter(comments::is_removed.eq(false));
+        }
+
+        // Sort chronologically by creation_date (ignore parent_id/level)
+        query
+            .order_by(comments::creation_date.asc())
+            .limit(limit)
+            .offset(offset)
+            .select((comments::all_columns, comment_aggregates::all_columns))
+            .load::<(Self, CommentAggregates)>(conn)
+            .await
+    }
 }
 
 #[async_trait::async_trait]

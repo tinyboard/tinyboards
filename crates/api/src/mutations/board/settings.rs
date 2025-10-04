@@ -26,6 +26,7 @@ pub struct UpdateBoardSettingsInput {
     pub exclude_from_all: Option<bool>,
     pub icon: Option<String>,
     pub banner: Option<String>,
+    pub section_config: Option<i32>,
 }
 
 #[derive(SimpleObject)]
@@ -69,6 +70,16 @@ impl UpdateBoardSettings {
 
         let settings = ctx.data::<Settings>()?.as_ref();
 
+        // Validate section_config if provided
+        if let Some(config) = input.section_config {
+            if config <= 0 {
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "At least one section must be enabled (section_config must be > 0)"
+                ).into());
+            }
+        }
+
         // Handle file uploads
         let icon_url = match icon_file {
             Some(file) => Some(upload_file_opendal(file, None, user.id, Some(settings.media.max_board_icon_size_mb), ctx).await?.to_string()),
@@ -104,6 +115,7 @@ impl UpdateBoardSettings {
             exclude_from_all: input.exclude_from_all,
             icon: icon_url.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
             banner: banner_url.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
+            section_config: input.section_config,
             updated: Some(Some(Utc::now().naive_utc())),
             ..Default::default()
         };

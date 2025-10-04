@@ -51,6 +51,7 @@ pub struct Post {
     last_crawl_date: Option<String>,
     title_chunk: String,
     creator_vote: i32,
+    post_type: String,
     #[graphql(skip)]
     counts: DbPostAggregates,
     /*creator: Option<Person>,
@@ -138,6 +139,43 @@ impl Post {
             .await
             .map(|v| v.unwrap_or(false))
             .map_err(|e| e.into())
+    }
+
+    /// Get aggregated reaction counts for this post
+    pub async fn reaction_counts(&self, ctx: &Context<'_>) -> Result<Vec<super::reaction::ReactionAggregate>> {
+        use tinyboards_db::models::reaction::reactions::ReactionAggregate;
+        let pool = ctx.data::<DbPool>()?;
+
+        let aggregates = ReactionAggregate::list_for_post(pool, self.id)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load reaction counts"))?;
+
+        Ok(aggregates.into_iter().map(super::reaction::ReactionAggregate::from).collect())
+    }
+
+    /// Get the current user's reaction to this post (if any)
+    pub async fn my_reaction(&self, ctx: &Context<'_>) -> Result<Option<super::reaction::Reaction>> {
+        use tinyboards_db::models::reaction::reactions::Reaction;
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.inner();
+
+        if let Some(u) = user {
+            // Get all user's reactions for this post
+            let reactions = Reaction::list_for_post(pool, self.id)
+                .await
+                .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load reactions"))?;
+
+            // Filter to current user's reactions
+            let my_reactions: Vec<_> = reactions.into_iter()
+                .filter(|r| r.user_id == u.id)
+                .map(super::reaction::Reaction::from)
+                .collect();
+
+            // Return first reaction (users can have multiple reactions with different emojis)
+            Ok(my_reactions.into_iter().next())
+        } else {
+            Ok(None)
+        }
     }
 
     pub async fn participants(&self, ctx: &Context<'_>) -> Result<Vec<User>> {
@@ -343,6 +381,7 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             last_crawl_date: post.last_crawl_date.map(|date| date.to_string()),
             title_chunk: post.title_chunk,
             creator_vote: post.creator_vote,
+            post_type: post.post_type,
             counts,
             /*creator: creator.map(|c| Person::from((c, creator_counts.unwrap()))),
             is_creator_banned_from_board: creator_banned_from_board,

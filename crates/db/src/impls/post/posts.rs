@@ -602,6 +602,50 @@ impl Post {
 
         query.load::<(Self, PostAggregates)>(conn).await
     }
+
+    /// List thread posts for a board (sorted by activity)
+    pub async fn list_threads_for_board(
+        pool: &DbPool,
+        the_board_id: i32,
+        limit: Option<i64>,
+        page: Option<i64>,
+    ) -> Result<Vec<Self>, Error> {
+        use crate::schema::{post_aggregates, posts};
+        let conn = &mut get_conn(pool).await?;
+
+        let (limit, offset) = limit_and_offset(page, limit)?;
+
+        posts::table
+            .inner_join(post_aggregates::table)
+            .filter(posts::board_id.eq(the_board_id))
+            .filter(posts::post_type.eq("thread"))
+            .filter(posts::is_deleted.eq(false))
+            .filter(posts::is_removed.eq(false))
+            .order_by(posts::featured_board.desc()) // Pinned first
+            .then_order_by(post_aggregates::newest_comment_time.desc()) // Then by activity
+            .limit(limit)
+            .offset(offset)
+            .select(posts::all_columns)
+            .load::<Self>(conn)
+            .await
+    }
+
+    /// Pin or unpin a thread post
+    pub async fn pin_thread(
+        pool: &DbPool,
+        post_id: i32,
+        pinned: bool,
+    ) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+
+        diesel::update(posts::table.find(post_id))
+            .set((
+                posts::featured_board.eq(pinned),
+                posts::updated.eq(Some(naive_now())),
+            ))
+            .get_result::<Self>(conn)
+            .await
+    }
 }
 
 #[async_trait::async_trait]
@@ -732,3 +776,4 @@ impl Moderateable for Post {
         Ok(())
     }
 }
+

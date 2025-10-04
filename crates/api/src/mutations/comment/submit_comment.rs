@@ -32,6 +32,7 @@ impl SubmitComment {
         reply_to_post_id: Option<i32>,
         reply_to_comment_id: Option<i32>,
         body: String,
+        quoted_comment_id: Option<i32>,
     ) -> Result<Comment> {
         let v = ctx
             .data_unchecked::<LoggedInUser>()
@@ -80,6 +81,12 @@ impl SubmitComment {
 
         // validate parent comment id and load parent comment, if provided
         let parent_comment = match reply_to_comment_id {
+            Some(comment_id) => Some(DbComment::read(pool, comment_id).await?),
+            None => None,
+        };
+
+        // validate quoted comment id and load quoted comment, if provided
+        let quoted_comment = match quoted_comment_id {
             Some(comment_id) => Some(DbComment::read(pool, comment_id).await?),
             None => None,
         };
@@ -178,6 +185,30 @@ impl SubmitComment {
             }
         }
 
+        // Validate quoted comment if provided
+        if let Some(ref quoted_comment) = quoted_comment {
+            // Ensure the quoted comment belongs to the same post
+            if quoted_comment.post_id != parent_post.id {
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "Quoted comment must belong to the same post.",
+                )
+                .into());
+            }
+
+            if quoted_comment.is_deleted {
+                return Err(
+                    TinyBoardsError::from_message(410, "Quoted comment has been deleted.").into(),
+                );
+            }
+
+            if !is_mod_or_admin && quoted_comment.is_removed {
+                return Err(
+                    TinyBoardsError::from_message(403, "Quoted comment has been removed.").into(),
+                );
+            }
+        }
+
         // top comment's level is 1
         // child comment's level is its parent's level + 1
         let level = match parent_comment {
@@ -219,6 +250,7 @@ impl SubmitComment {
             parent_id: parent_comment.as_ref().map(|c| c.id),
             board_id: Some(parent_post.board_id),
             level: Some(level),
+            quoted_comment_id: quoted_comment.as_ref().map(|c| c.id),
             ..CommentForm::default()
         };
 

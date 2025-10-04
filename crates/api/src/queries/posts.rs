@@ -10,6 +10,7 @@ use tinyboards_db::{
         post::posts::Post as DbPost,
         post::post_hidden::PostHidden,
     },
+    traits::Crud,
     utils::DbPool,
 };
 use tinyboards_utils::TinyBoardsError;
@@ -200,5 +201,67 @@ impl QueryPosts {
         }
 
         Ok(posts)
+    }
+
+    /// List thread posts for a specific board (sorted by activity, pinned first)
+    pub async fn list_threads(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Board ID to fetch threads from")] board_id: i32,
+        #[graphql(desc = "Limit of threads to load. Default is 25.")] limit: Option<i64>,
+        #[graphql(desc = "Page number for pagination")] page: Option<i64>,
+    ) -> Result<Vec<Post>> {
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
+
+        // Check if board exists and is not banned
+        let board = DbBoard::read(pool, board_id).await?;
+
+        let require_board_not_banned = match v_opt {
+            Some(v) => !v.has_permission(AdminPerms::Boards),
+            None => true,
+        };
+
+        if require_board_not_banned && (board.is_removed || board.is_deleted) {
+            return Err(TinyBoardsError::from_message(
+                410,
+                &format!("/b/{} is banned or deleted.", &board.name),
+            )
+            .into());
+        }
+
+        if board.is_banned {
+            let reason = board
+                .public_ban_reason
+                .as_deref()
+                .unwrap_or("This board has been banned");
+            return Err(TinyBoardsError::from_message(403, reason).into());
+        }
+
+        // Check if threads section is enabled for this board
+        let has_threads = (board.section_config & 2) == 2;
+        if !has_threads {
+            return Err(TinyBoardsError::from_message(
+                400,
+                "Threads section is not enabled for this board",
+            )
+            .into());
+        }
+
+        // Load threads (sorted by pinned first, then by activity)
+        let threads = DbPost::list_threads_for_board(pool, board_id, limit, page).await?;
+
+        // Convert to GraphQL type with counts
+        let mut result_posts = Vec::new();
+        for thread in threads {
+            match DbPost::get_with_counts(pool, thread.id, false).await {
+                Ok(post_data) => result_posts.push(Post::from(post_data)),
+                Err(_) => continue, // Skip if thread was deleted
+            }
+        }
+
+        Ok(result_posts)
     }
 }

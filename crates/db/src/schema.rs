@@ -90,6 +90,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    board_reaction_settings (id) {
+        id -> Int4,
+        board_id -> Int4,
+        emoji_weights -> Jsonb,
+        reactions_enabled -> Bool,
+    }
+}
+
+diesel::table! {
     board_subscriber (id) {
         id -> Int4,
         board_id -> Int4,
@@ -146,6 +155,7 @@ diesel::table! {
         exclude_from_all -> Bool,
         moderators_url -> Nullable<Text>,
         featured_url -> Nullable<Text>,
+        section_config -> Int4,
     }
 }
 
@@ -234,6 +244,7 @@ diesel::table! {
         approved_by -> Nullable<Int4>,
         approved_at -> Nullable<Timestamp>,
         creator_vote -> Int4,
+        quoted_comment_id -> Nullable<Int4>,
     }
 }
 
@@ -640,6 +651,8 @@ diesel::table! {
         approved_by -> Nullable<Int4>,
         approved_at -> Nullable<Timestamp>,
         creator_vote -> Int4,
+        #[max_length = 10]
+        post_type -> Varchar,
     }
 }
 
@@ -655,6 +668,30 @@ diesel::table! {
         updated -> Nullable<Timestamp>,
         is_sender_hidden -> Bool,
         title -> Text,
+    }
+}
+
+diesel::table! {
+    reaction_aggregates (id) {
+        id -> Int4,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+        #[max_length = 100]
+        emoji -> Varchar,
+        count -> Int4,
+    }
+}
+
+diesel::table! {
+    reactions (id) {
+        id -> Int4,
+        user_id -> Int4,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+        #[max_length = 100]
+        emoji -> Varchar,
+        score -> Int4,
+        creation_date -> Timestamp,
     }
 }
 
@@ -910,6 +947,7 @@ diesel::joinable!(board_language -> boards (board_id));
 diesel::joinable!(board_language -> language (language_id));
 diesel::joinable!(board_mods -> boards (board_id));
 diesel::joinable!(board_mods -> users (user_id));
+diesel::joinable!(board_reaction_settings -> boards (board_id));
 diesel::joinable!(board_subscriber -> boards (board_id));
 diesel::joinable!(board_subscriber -> users (user_id));
 diesel::joinable!(board_user_bans -> boards (board_id));
@@ -943,6 +981,11 @@ diesel::joinable!(post_votes -> posts (post_id));
 diesel::joinable!(post_votes -> users (user_id));
 diesel::joinable!(posts -> boards (board_id));
 diesel::joinable!(posts -> language (language_id));
+diesel::joinable!(reaction_aggregates -> comments (comment_id));
+diesel::joinable!(reaction_aggregates -> posts (post_id));
+diesel::joinable!(reactions -> comments (comment_id));
+diesel::joinable!(reactions -> posts (post_id));
+diesel::joinable!(reactions -> users (user_id));
 diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
@@ -963,6 +1006,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     board_aggregates,
     board_language,
     board_mods,
+    board_reaction_settings,
     board_subscriber,
     board_user_bans,
     boards,
@@ -1003,6 +1047,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_votes,
     posts,
     private_message,
+    reaction_aggregates,
+    reactions,
     registration_applications,
     relations,
     secret,
