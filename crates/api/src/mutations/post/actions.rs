@@ -240,6 +240,15 @@ impl PostActions {
             .into());
         }
 
+        // If actually deleting (not undeleting), clean up associated files
+        if deleted {
+            let storage = ctx.data::<crate::storage::StorageBackend>()?;
+            if let Err(e) = crate::helpers::files::cleanup::delete_post_files(pool, post_id, storage).await {
+                tracing::error!("Failed to cleanup post files: {:?}", e);
+                // Don't fail the deletion if file cleanup fails
+            }
+        }
+
         // Update the post's deleted status
         DbPost::update_deleted(pool, post_id, deleted).await?;
 

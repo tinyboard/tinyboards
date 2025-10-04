@@ -15,7 +15,7 @@ use tinyboards_db::models::{
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
 use tinyboards_utils::{
-    content_filter::ContentFilter, parser::parse_markdown_opt, utils::custom_body_parsing,
+    content_filter::ContentFilter, parser::{parse_markdown_opt, sanitize_html}, utils::custom_body_parsing,
     TinyBoardsError,
 };
 use url::Url;
@@ -96,28 +96,52 @@ impl SubmitPost {
             .into());
         }
 
+        // Determine if this is a thread post (HTML from rich editor) or feed post (markdown)
+        let is_thread_post = post_type.as_deref() == Some("thread");
+
         let body_html = match body {
             Some(ref body) => {
-                if site_config.emoji_enabled {
-                    // Process content with emoji parsing (use site config limit)
-                    let emoji_limit = site_config.max_emojis_per_post.map(|limit| limit as usize);
-                    let processed_html = process_content_with_emojis(
-                        body,
-                        pool,
-                        Some(board.id),
-                        settings,
-                        emoji_limit,
-                    )
-                    .await?;
-
-                    Some(processed_html)
+                if is_thread_post {
+                    // Thread posts use rich text editor - sanitize HTML directly
+                    let sanitized = sanitize_html(body);
+                    let processed = if site_config.emoji_enabled {
+                        let emoji_limit = site_config.max_emojis_per_post.map(|limit| limit as usize);
+                        process_content_with_emojis(
+                            &sanitized,
+                            pool,
+                            Some(board.id),
+                            settings,
+                            emoji_limit,
+                        )
+                        .await?
+                    } else {
+                        custom_body_parsing(&sanitized, settings)
+                    };
+                    Some(processed)
                 } else {
-                    // Emojis disabled, use regular markdown processing
-                    let body_html = parse_markdown_opt(body);
-                    Some(custom_body_parsing(
-                        &body_html.unwrap_or_default(),
-                        settings,
-                    ))
+                    // Feed posts use markdown - convert then sanitize
+                    if site_config.emoji_enabled {
+                        // Process content with emoji parsing (use site config limit)
+                        let emoji_limit = site_config.max_emojis_per_post.map(|limit| limit as usize);
+                        let processed_html = process_content_with_emojis(
+                            body,
+                            pool,
+                            Some(board.id),
+                            settings,
+                            emoji_limit,
+                        )
+                        .await?;
+
+                        Some(sanitize_html(&processed_html))
+                    } else {
+                        // Emojis disabled, use regular markdown processing
+                        let body_html = parse_markdown_opt(body);
+                        let processed = custom_body_parsing(
+                            &body_html.unwrap_or_default(),
+                            settings,
+                        );
+                        Some(sanitize_html(&processed))
+                    }
                 }
             }
             None => Some(String::new()),

@@ -153,6 +153,15 @@ impl CommentActions {
             .into());
         }
 
+        // If actually deleting (not undeleting), clean up associated files
+        if deleted {
+            let storage = ctx.data::<crate::storage::StorageBackend>()?;
+            if let Err(e) = crate::helpers::files::cleanup::delete_comment_files(pool, comment_id, storage).await {
+                tracing::error!("Failed to cleanup comment files: {:?}", e);
+                // Don't fail the deletion if file cleanup fails
+            }
+        }
+
         // Update the comment's deleted status
         DbComment::update_deleted(pool, comment_id, deleted).await?;
 

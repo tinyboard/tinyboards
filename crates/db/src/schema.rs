@@ -249,6 +249,17 @@ diesel::table! {
 }
 
 diesel::table! {
+    content_uploads (id) {
+        id -> Int4,
+        upload_id -> Int4,
+        post_id -> Nullable<Int4>,
+        comment_id -> Nullable<Int4>,
+        created_at -> Timestamp,
+        position -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     email_verification (id) {
         id -> Int4,
         user_id -> Int4,
@@ -961,6 +972,9 @@ diesel::joinable!(comment_votes -> posts (post_id));
 diesel::joinable!(comment_votes -> users (user_id));
 diesel::joinable!(comments -> language (language_id));
 diesel::joinable!(comments -> posts (post_id));
+diesel::joinable!(content_uploads -> comments (comment_id));
+diesel::joinable!(content_uploads -> posts (post_id));
+diesel::joinable!(content_uploads -> uploads (upload_id));
 diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(emoji_keyword -> emoji (emoji_id));
 diesel::joinable!(moderation_log -> boards (board_id));
@@ -1016,6 +1030,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     comment_saved,
     comment_votes,
     comments,
+    content_uploads,
     email_verification,
     emoji,
     emoji_keyword,

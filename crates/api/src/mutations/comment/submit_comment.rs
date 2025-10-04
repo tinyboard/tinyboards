@@ -17,7 +17,7 @@ use tinyboards_db::models::post::posts::Post as DbPost;
 use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
 use tinyboards_utils::content_filter::ContentFilter;
-use tinyboards_utils::parser::parse_markdown_opt;
+use tinyboards_utils::parser::{parse_markdown_opt, sanitize_html};
 use tinyboards_utils::utils::custom_body_parsing;
 use tinyboards_utils::TinyBoardsError;
 
@@ -216,29 +216,49 @@ impl SubmitComment {
             None => 1,
         };
 
+        // Thread comments use rich text editor (HTML), feed comments use markdown
+        let is_thread_comment = parent_post.post_type == "thread";
+
         // parse body with emoji support if enabled
-        let body_html = if site_config.emoji_enabled {
-            let emoji_limit = site_config
-                .max_emojis_per_comment
-                .map(|limit| limit as usize);
-            Some(
+        let body_html = if is_thread_comment {
+            // Thread comments use rich text editor - sanitize HTML directly
+            let sanitized = sanitize_html(&body);
+            let processed = if site_config.emoji_enabled {
+                let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
                 process_content_with_emojis(
+                    &sanitized,
+                    pool,
+                    Some(parent_board.id),
+                    settings,
+                    emoji_limit,
+                )
+                .await?
+            } else {
+                custom_body_parsing(&sanitized, settings)
+            };
+            Some(processed)
+        } else {
+            // Feed comments use markdown - convert then sanitize
+            if site_config.emoji_enabled {
+                let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
+                let processed = process_content_with_emojis(
                     &body,
                     pool,
                     Some(parent_board.id),
                     settings,
                     emoji_limit,
                 )
-                .await?,
-            )
-        } else {
-            // Emojis disabled, use regular markdown processing
-            let mut body_html = parse_markdown_opt(&body);
-            body_html = Some(custom_body_parsing(
-                &body_html.unwrap_or_default(),
-                settings,
-            ));
-            body_html
+                .await?;
+                Some(sanitize_html(&processed))
+            } else {
+                // Emojis disabled, use regular markdown processing
+                let mut body_html = parse_markdown_opt(&body);
+                body_html = Some(custom_body_parsing(
+                    &body_html.unwrap_or_default(),
+                    settings,
+                ));
+                body_html.map(|h| sanitize_html(&h))
+            }
         };
 
         // insert new comment into db

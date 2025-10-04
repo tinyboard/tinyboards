@@ -4,4 +4,5 @@ pub mod email_verification;
 pub mod site_invite;
 pub mod password_resets;
 pub mod uploads;
+pub mod content_uploads;
 pub mod local_site_rate_limit;
