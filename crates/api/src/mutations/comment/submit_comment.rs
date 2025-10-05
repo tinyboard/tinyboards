@@ -266,7 +266,7 @@ impl SubmitComment {
         let new_comment = CommentForm {
             creator_id: Some(v.id),
             body: Some(body),
-            body_html,
+            body_html: body_html.clone(),
             post_id: Some(parent_post.id),
             parent_id: parent_comment.as_ref().map(|c| c.id),
             board_id: Some(parent_post.board_id),

@@ -208,7 +208,7 @@ impl SubmitPost {
             url: url.map(|url| url.into()),
             // image: data.image,
             body: Some(body.unwrap_or_default()), // Ensure body is always Some(String)
-            body_html: body_html,
+            body_html: body_html.clone(),
             creator_id: Some(v.id),
             board_id: Some(board.id),
             is_nsfw: Some(is_nsfw),
