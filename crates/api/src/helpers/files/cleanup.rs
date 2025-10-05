@@ -1,6 +1,6 @@
 use crate::{DbPool, storage::StorageBackend};
 use std::collections::HashSet;
-use tinyboards_db::models::site::content_uploads::ContentUpload;
+use tinyboards_db::models::site::content_uploads::{ContentUpload, ContentUploadForm};
 use tinyboards_db::models::site::uploads::Upload;
 use tinyboards_db::traits::Crud;
 use tinyboards_utils::TinyBoardsError;
@@ -199,4 +199,64 @@ mod tests {
         let urls = extract_image_urls_from_html(html);
         assert_eq!(urls.len(), 0);
     }
+}
+
+/// Link uploads found in HTML content to a post or comment
+///
+/// This function:
+/// 1. Extracts all image URLs from the HTML content
+/// 2. Finds matching Upload records by URL
+/// 3. Creates ContentUpload records to link them
+///
+/// Should be called after creating a post/comment with HTML content
+pub async fn link_content_uploads(
+    pool: &DbPool,
+    content_id: i32,
+    is_post: bool,  // true for post, false for comment
+    html_content: &str,
+) -> Result<(), TinyBoardsError> {
+    // Extract image URLs from HTML
+    let image_urls = extract_image_urls_from_html(html_content);
+
+    if image_urls.is_empty() {
+        return Ok(());
+    }
+
+    // Find matching uploads and create links
+    for (position, url) in image_urls.iter().enumerate() {
+        // Try to find the upload by URL
+        match Upload::find_by_url_str(pool, url).await {
+            Ok(upload) => {
+                // Create ContentUpload link
+                let content_upload_form = ContentUploadForm {
+                    upload_id: upload.id,
+                    post_id: if is_post { Some(content_id) } else { None },
+                    comment_id: if is_post { None } else { Some(content_id) },
+                    position: Some(position as i32),
+                };
+
+                ContentUpload::create(pool, &content_upload_form)
+                    .await
+                    .map_err(|e| TinyBoardsError::from_error_message(
+                        e,
+                        500,
+                        "Failed to create content upload link"
+                    ))?;
+
+                tracing::info!(
+                    "Linked upload {} to {} id {}",
+                    upload.file_name,
+                    if is_post { "post" } else { "comment" },
+                    content_id
+                );
+            }
+            Err(_) => {
+                // Upload not found - could be external image or already linked
+                tracing::debug!("Upload not found for URL: {}", url);
+                continue;
+            }
+        }
+    }
+
+    Ok(())
 }

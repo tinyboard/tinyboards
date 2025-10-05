@@ -20,6 +20,17 @@ impl Upload {
             .await
     }
 
+    pub async fn find_by_url_str(pool: &DbPool, f_url: &str) -> Result<Self, Error> {
+        let conn = &mut get_conn(pool).await?;
+        // Convert string to DbUrl for comparison
+        let parsed_url = url::Url::parse(f_url).map_err(|_| Error::NotFound)?;
+        let db_url: DbUrl = parsed_url.into();
+        uploads
+            .filter(upload_url.eq(db_url))
+            .first::<Self>(conn)
+            .await
+    }
+
     pub async fn list_all(pool: &DbPool) -> Result<Vec<Self>, Error> {
         let conn = &mut get_conn(pool).await?;
         uploads

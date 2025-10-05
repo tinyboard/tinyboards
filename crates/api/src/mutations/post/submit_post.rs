@@ -1,4 +1,5 @@
 use crate::helpers::files::upload::upload_file_opendal;
+use crate::helpers::files::cleanup::link_content_uploads;
 use crate::structs::post::Post;
 use crate::utils::emoji::process_content_with_emojis;
 use crate::{DbPool, LoggedInUser, Settings};
@@ -282,6 +283,13 @@ impl SubmitPost {
             };
 
             PostVote::vote(pool, &post_vote).await?;
+        }
+
+        // Link any uploaded images found in the HTML content
+        if let Some(ref html) = body_html {
+            if !html.is_empty() {
+                link_content_uploads(pool, published_post.id, true, html).await?;
+            }
         }
 
         let post_with_counts = DbPost::get_with_counts(pool, published_post.id, false)

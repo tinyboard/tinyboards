@@ -1,3 +1,4 @@
+use crate::helpers::files::cleanup::link_content_uploads;
 use crate::structs::comment::Comment;
 use crate::DbPool;
 use crate::LoggedInUser;
@@ -316,6 +317,13 @@ impl SubmitComment {
                 })?;
             }
         }*/
+
+        // Link any uploaded images found in the HTML content
+        if let Some(ref html) = body_html {
+            if !html.is_empty() {
+                link_content_uploads(pool, new_comment.id, false, html).await?;
+            }
+        }
 
         let comment = DbComment::get_with_counts(pool, new_comment.id).await?;
         Ok(Comment::from(comment))
