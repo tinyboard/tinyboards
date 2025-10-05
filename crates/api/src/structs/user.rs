@@ -85,6 +85,7 @@ pub struct User {
     instance: Option<String>,
     profile_music: Option<String>,
     profile_music_youtube: Option<String>,
+    signature: Option<String>,
     // Private fields for additional admin things
     #[graphql(skip)]
     _has_verified_email: Option<bool>,
@@ -407,6 +408,7 @@ impl From<(DbUser, DbUserAggregates)> for User {
             instance: None, // No instance field in consolidated User model
             profile_music: user.profile_music.map(|m| m.as_str().into()),
             profile_music_youtube: user.profile_music_youtube,
+            signature: user.signature,
             _has_verified_email: Some(user.email_verified),
             _is_application_accepted: user.is_application_accepted,
             _board_creation_approved: user.board_creation_approved,

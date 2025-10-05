@@ -221,21 +221,21 @@ impl SubmitComment {
 
         // parse body with emoji support if enabled
         let body_html = if is_thread_comment {
-            // Thread comments use rich text editor - sanitize HTML directly
+            // Thread comments use rich text editor - body is already HTML
+            // Sanitize, parse custom emojis, then custom body parsing
             let sanitized = sanitize_html(&body);
-            let processed = if site_config.emoji_enabled {
+            let with_emojis = if site_config.emoji_enabled {
+                let parser = crate::utils::emoji::EmojiParser::new(pool, Some(parent_board.id)).await?;
                 let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
-                process_content_with_emojis(
-                    &sanitized,
-                    pool,
-                    Some(parent_board.id),
-                    settings,
-                    emoji_limit,
-                )
-                .await?
+                parser.validate_emoji_usage(&sanitized, emoji_limit)?;
+                let html_with_emojis = parser.parse_emojis_to_html(&sanitized);
+                // Increment usage in background
+                let _task = parser.increment_emoji_usage(&html_with_emojis, pool);
+                html_with_emojis
             } else {
-                custom_body_parsing(&sanitized, settings)
+                sanitized
             };
+            let processed = custom_body_parsing(&with_emojis, settings);
             Some(processed)
         } else {
             // Feed comments use markdown - convert then sanitize

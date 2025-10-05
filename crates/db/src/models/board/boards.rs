@@ -35,6 +35,8 @@ pub struct Board {
     pub moderators_url: Option<String>,
     pub featured_url: Option<String>,
     pub section_config: i32,
+    pub section_order: Option<String>,
+    pub default_section: Option<String>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Default, Insertable, AsChangeset)]
@@ -67,6 +69,8 @@ pub struct BoardForm {
     pub moderators_url: Option<Option<String>>,
     pub featured_url: Option<Option<String>>,
     pub section_config: Option<i32>,
+    pub section_order: Option<Option<String>>,
+    pub default_section: Option<Option<String>>,
 }
 
 /// A safe representation of board, without the sensitive info
@@ -99,4 +103,6 @@ pub struct BoardSafe {
     pub moderators_url: Option<String>,
     pub featured_url: Option<String>,
     pub section_config: i32,
+    pub section_order: Option<String>,
+    pub default_section: Option<String>,
 }

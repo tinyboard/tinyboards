@@ -529,6 +529,10 @@ impl Post {
             query = query.filter(posts::board_id.eq(board_id));
         }
 
+        // Exclude thread posts from feed listings (only show feed posts)
+        // Thread posts are only visible in the /b/[board]/threads section
+        query = query.filter(posts::post_type.eq("feed"));
+
         match listing_type {
             // All posts feed: hide posts from hidden boards and boards excluded from /all, except those which the user is a member of
             ListingType::All => {

@@ -51,6 +51,8 @@ pub struct Board {
     #[graphql(name = "sidebarHTML")]
     sidebar_html: Option<String>,
     section_config: i32,
+    section_order: Option<String>,
+    default_section: Option<String>,
     // `counts` is not queryable, fields will be made available through resolvers
     #[graphql(skip)]
     counts: DbBoardAggregates,
@@ -247,6 +249,8 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             sidebar: board.sidebar,
             sidebar_html: board.sidebar_html,
             section_config: board.section_config,
+            section_order: board.section_order,
+            default_section: board.default_section,
             hidden_: board.is_hidden,
             exclude_from_all_: board.exclude_from_all,
             counts,

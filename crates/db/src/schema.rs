@@ -156,6 +156,8 @@ diesel::table! {
         moderators_url -> Nullable<Text>,
         featured_url -> Nullable<Text>,
         section_config -> Int4,
+        section_order -> Nullable<Text>,
+        default_section -> Nullable<Text>,
     }
 }
 

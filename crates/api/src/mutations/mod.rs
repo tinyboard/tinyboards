@@ -4,6 +4,7 @@ pub mod board;
 pub mod board_moderation;
 pub mod comment;
 pub mod emoji;
+pub mod file_upload;
 pub mod message;
 pub mod moderation;
 pub mod moderation_unified;

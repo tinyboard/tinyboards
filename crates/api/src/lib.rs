@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 pub mod context;
 pub(crate) mod helpers;
 pub(crate) mod loaders;
@@ -139,6 +141,7 @@ pub struct Mutation(
     RegistrationApplicationMutations,
     EmojiMutations,
     ModerationMutations,
+    mutations::file_upload::FileUploadMutation,
 );
 
 pub fn gen_schema() -> Schema<Query, Mutation, EmptySubscription> {

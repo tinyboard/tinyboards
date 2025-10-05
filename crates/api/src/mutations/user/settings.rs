@@ -34,6 +34,7 @@ impl UpdateSettings {
 	name: Option<String>,
         display_name: Option<String>,
         bio: Option<String>,
+        signature: Option<String>,
         show_nsfw: Option<bool>,
         default_sort_type: Option<i16>,
         default_listing_type: Option<i16>,
@@ -94,6 +95,15 @@ impl UpdateSettings {
             }
         };
 
+        // Check signature length
+        if let Some(ref sig) = signature {
+            if sig.len() > 500 {
+                return Err(
+                    TinyBoardsError::from_message(400, "Signature too long (max 500 chars)").into(),
+                );
+            }
+        };
+
         // Parse bio markdown
         let bio_html = match bio {
             Some(ref bio) => {
@@ -101,6 +111,27 @@ impl UpdateSettings {
                 Some(custom_body_parsing(&bio_html.unwrap_or_default(), settings))
             }
             None => v.bio_html.clone(),
+        };
+
+        // Parse signature with emoji support
+        let signature_parsed = match signature {
+            Some(ref sig) => {
+                if sig.is_empty() {
+                    None
+                } else {
+                    // Parse custom emojis in signature if site has emoji enabled
+                    let sig_with_emojis = if site.emoji_enabled {
+                        use crate::utils::emoji::EmojiParser;
+                        let parser = EmojiParser::new(pool, None).await?;
+                        // No usage increment for signatures, just parse
+                        parser.parse_emojis_to_html(sig)
+                    } else {
+                        sig.clone()
+                    };
+                    Some(sig_with_emojis)
+                }
+            }
+            None => v.signature.clone(),
         };
 
         let has_new_email = email.is_some();
@@ -184,6 +215,7 @@ impl UpdateSettings {
 	    name: Some(name.clone()),
             bio,
             bio_html,
+            signature: Some(signature_parsed.clone()),
             display_name: Some(display_name),
             avatar: Some(avatar.clone()),
             banner: Some(banner.clone()),

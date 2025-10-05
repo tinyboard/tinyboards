@@ -27,6 +27,8 @@ pub struct UpdateBoardSettingsInput {
     pub icon: Option<String>,
     pub banner: Option<String>,
     pub section_config: Option<i32>,
+    pub section_order: Option<String>,
+    pub default_section: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -116,6 +118,8 @@ impl UpdateBoardSettings {
             icon: icon_url.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
             banner: banner_url.and_then(|s| s.parse::<url::Url>().ok().map(|url| url.into())),
             section_config: input.section_config,
+            section_order: input.section_order.map(Some),
+            default_section: input.default_section.map(Some),
             updated: Some(Some(Utc::now().naive_utc())),
             ..Default::default()
         };
