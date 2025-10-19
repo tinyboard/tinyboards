@@ -948,6 +948,7 @@ diesel::table! {
         is_application_accepted -> Bool,
         creation_date -> Timestamp,
         updated -> Nullable<Timestamp>,
+        last_seen -> Timestamp,
     }
 }
 

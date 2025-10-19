@@ -80,6 +80,21 @@ pub async fn get_user_from_header_opt(
     let user = User::read(pool, claims.sub).await
         .map_err(|_| TinyBoardsError::from_message(401, "User not found"))?;
 
+    // Update last_seen timestamp (fire and forget - don't block on this)
+    let pool_clone = pool.clone();
+    let user_id = user.id;
+    tokio::spawn(async move {
+        use tinyboards_db::models::user::user::UserForm;
+        use tinyboards_db::traits::Crud;
+        use chrono::Utc;
+
+        let update_form = UserForm::builder()
+            .last_seen(Some(Utc::now().naive_utc()))
+            .build();
+
+        let _ = User::update(&pool_clone, user_id, &update_form).await;
+    });
+
     Ok(Some(user))
 }
 

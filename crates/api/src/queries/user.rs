@@ -84,6 +84,63 @@ impl QueryUser {
         Ok(users.into_iter().map(|(user, aggregates)| User::from((user, aggregates))).collect::<Vec<User>>())
     }
 
+    /// Get list of users who were online in the last N minutes
+    pub async fn list_online_users(
+        &self,
+        context: &Context<'_>,
+        #[graphql(desc = "Minutes to look back (default: 10)")] minutes: Option<i64>,
+        #[graphql(desc = "Maximum number of users to return")] limit: Option<i64>,
+    ) -> Result<Vec<User>> {
+        use chrono::{Utc, Duration};
+        use diesel::prelude::*;
+        use tinyboards_db::schema::users::dsl::*;
+        use tinyboards_db::aggregates::structs::UserAggregates;
+
+        let pool = context.data::<DbPool>()?;
+        let v_opt = context.data::<LoggedInUser>()?.inner();
+
+        check_private_instance(v_opt, pool).await?;
+
+        let minutes_ago = minutes.unwrap_or(10);
+        let max_users = limit.unwrap_or(100).min(500); // Cap at 500 users max
+        let cutoff_time = Utc::now().naive_utc() - Duration::minutes(minutes_ago);
+
+        let mut conn = pool.get().await.map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Failed to get database connection")
+        })?;
+
+        // Query users whose last_seen is within the time window
+        let online_users: Vec<DbUser> = users
+            .filter(last_seen.gt(cutoff_time))
+            .filter(is_deleted.eq(false))
+            .filter(is_banned.eq(false))
+            .order(last_seen.desc())
+            .limit(max_users)
+            .load::<DbUser>(&mut conn)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to fetch online users")
+            })?;
+
+        // Fetch aggregates for each user
+        let mut result = Vec::new();
+        for user in online_users {
+            let aggregates = UserAggregates::read(pool, user.id)
+                .await
+                .unwrap_or_else(|_| UserAggregates {
+                    id: 0,
+                    user_id: user.id,
+                    post_count: 0,
+                    post_score: 0,
+                    comment_count: 0,
+                    comment_score: 0,
+                });
+            result.push(User::from((user, aggregates)));
+        }
+
+        Ok(result)
+    }
+
     /// Get list of followers for a user
     pub async fn user_followers(
         &self,

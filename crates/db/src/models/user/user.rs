@@ -56,6 +56,7 @@ pub struct User {
     pub is_application_accepted: bool,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub last_seen: NaiveDateTime,
 }
 
 /// A safe representation of user, without sensitive info like password hash and email
@@ -90,6 +91,7 @@ pub struct UserSafe {
     pub board_creation_approved: bool,
     pub creation_date: NaiveDateTime,
     pub updated: Option<NaiveDateTime>,
+    pub last_seen: NaiveDateTime,
 }
 
 /// Struct for retrieving setting columns from user table
@@ -158,6 +160,7 @@ pub struct UserForm {
     pub is_application_accepted: Option<bool>,
     pub creation_date: Option<NaiveDateTime>,
     pub updated: Option<Option<NaiveDateTime>>,
+    pub last_seen: Option<NaiveDateTime>,
 }
 
 impl User {
