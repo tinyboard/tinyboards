@@ -84,6 +84,52 @@ impl QueryUser {
         Ok(users.into_iter().map(|(user, aggregates)| User::from((user, aggregates))).collect::<Vec<User>>())
     }
 
+    /// Search users by username prefix for autocomplete
+    /// Returns up to 10 matching usernames
+    pub async fn search_usernames(
+        &self,
+        context: &Context<'_>,
+        query: String,
+        limit: Option<i32>,
+    ) -> Result<Vec<String>> {
+        use tinyboards_db::schema::users::dsl::*;
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+
+        let pool = context.data::<DbPool>()?;
+
+        // Optional: require authentication
+        // let _v = context.data::<LoggedInUser>()?.require_user()?;
+
+        let search_limit = limit.unwrap_or(10).min(20).max(1); // Cap at 20, min 1
+
+        // Validate query length
+        if query.len() < 2 {
+            return Ok(Vec::new());
+        }
+
+        let mut conn = pool.get().await.map_err(|e| {
+            TinyBoardsError::from_error_message(e, 500, "Failed to get database connection")
+        })?;
+
+        // Search for usernames starting with the query
+        let search_pattern = format!("{}%", query.to_lowercase());
+
+        let matching_users = users
+            .filter(name.ilike(&search_pattern))
+            .filter(is_deleted.eq(false))
+            .filter(is_banned.eq(false))
+            .select(name)
+            .limit(search_limit as i64)
+            .load::<String>(&mut *conn)
+            .await
+            .map_err(|e| {
+                TinyBoardsError::from_error_message(e, 500, "Failed to search usernames")
+            })?;
+
+        Ok(matching_users)
+    }
+
     /// Get list of users who were online in the last N minutes
     pub async fn list_online_users(
         &self,

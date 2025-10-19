@@ -153,6 +153,12 @@ impl PostActions {
 
         let feature_type = feature_type.unwrap_or_else(|| "board".to_string());
 
+        // Debug logging
+        tracing::debug!(
+            "feature_post: user_id={}, is_admin={}, admin_level={}, post_id={}, board_id={}, feature_type={}",
+            user.id, user.is_admin, user.admin_level, post_id, post.board_id, feature_type
+        );
+
         // For thread posts, only allow board-level featuring (pinning)
         if post.post_type == "thread" && feature_type == "local" {
             return Err(TinyBoardsError::from_message(
@@ -190,6 +196,11 @@ impl PostActions {
             }
             _ => false,
         };
+
+        tracing::debug!(
+            "feature_post: can_feature={}, feature_type={}",
+            can_feature, feature_type
+        );
 
         if !can_feature {
             return Err(TinyBoardsError::from_message(

@@ -27,9 +27,14 @@ pub struct QueryNotifications;
 #[derive(SimpleObject)]
 pub struct Notification {
     pub id: i32,
+    #[graphql(name = "type")]
     pub kind: String,
+    #[graphql(name = "isRead")]
     pub is_read: bool,
+    #[graphql(name = "createdAt")]
     pub created: String,
+    #[graphql(name = "updatedAt")]
+    pub updated: Option<String>,
     pub comment: Option<GqlComment>,
     pub post: Option<GqlPost>,
     pub user: Option<GqlUser>,
@@ -77,16 +82,16 @@ impl QueryNotifications {
     pub async fn get_notifications(
         &self,
         ctx: &Context<'_>,
-        filters: Option<NotificationFilters>,
+        #[graphql(name = "unreadOnly")] unread_only: Option<bool>,
+        #[graphql(name = "kindFilter")] kind_filter: Option<String>,
+        page: Option<i32>,
+        limit: Option<i32>,
     ) -> Result<Vec<Notification>> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
 
-        let filters = filters.unwrap_or_default();
-        let unread_only = filters.unread_only;
-        let kind_filter = filters.kind_filter;
-        let page = filters.page.unwrap_or(1).max(1);
-        let limit = filters.limit.unwrap_or(25).min(50).max(1); // Cap at 50, min 1
+        let page = page.unwrap_or(1).max(1);
+        let limit = limit.unwrap_or(25).min(50).max(1); // Cap at 50, min 1
         let offset = (page - 1) * limit;
 
         let db_notifications = DbNotification::get_for_user(
@@ -128,6 +133,7 @@ impl QueryNotifications {
                 kind: notification.kind,
                 is_read: notification.is_read,
                 created: notification.created.to_string(),
+                updated: None, // TODO: Add updated field to database schema if needed
                 comment,
                 post,
                 user,

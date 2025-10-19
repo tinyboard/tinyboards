@@ -393,11 +393,17 @@ impl User {
 impl User {
     /// Check if user has the specified admin permission level
     pub fn has_permission(&self, perm: tinyboards_db::models::user::user::AdminPerms) -> bool {
+        tracing::debug!(
+            "User::has_permission - user_id={}, is_admin={}, admin_level={}",
+            self.id, self.is_admin, self.admin_level
+        );
+
         if !self.is_admin {
+            tracing::debug!("User::has_permission - DENIED: is_admin is false");
             return false;
         }
 
-        match perm {
+        let result = match perm {
             tinyboards_db::models::user::user::AdminPerms::Null => true,
             tinyboards_db::models::user::user::AdminPerms::Appearance => self.admin_level >= 1,
             tinyboards_db::models::user::user::AdminPerms::Config => self.admin_level >= 2,
@@ -408,7 +414,10 @@ impl User {
             tinyboards_db::models::user::user::AdminPerms::Full => self.admin_level >= 6,
             tinyboards_db::models::user::user::AdminPerms::Owner => self.admin_level >= 7,
             tinyboards_db::models::user::user::AdminPerms::System => self.admin_level >= 8,
-        }
+        };
+
+        tracing::debug!("User::has_permission - result={}", result);
+        result
     }
 }
 

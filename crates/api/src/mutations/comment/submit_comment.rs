@@ -237,7 +237,12 @@ impl SubmitComment {
                 sanitized
             };
             let processed = custom_body_parsing(&with_emojis, settings);
-            Some(processed)
+
+            // Convert @mentions to links
+            use crate::helpers::notifications::convert_mentions_to_links;
+            let with_mention_links = convert_mentions_to_links(&processed);
+
+            Some(with_mention_links)
         } else {
             // Feed comments use markdown - convert then sanitize
             if site_config.emoji_enabled {
@@ -250,7 +255,12 @@ impl SubmitComment {
                     emoji_limit,
                 )
                 .await?;
-                Some(sanitize_html(&processed))
+
+                // Convert @mentions to links before sanitizing
+                use crate::helpers::notifications::convert_mentions_to_links;
+                let with_mention_links = convert_mentions_to_links(&processed);
+
+                Some(sanitize_html(&with_mention_links))
             } else {
                 // Emojis disabled, use regular markdown processing
                 let mut body_html = parse_markdown_opt(&body);
@@ -258,6 +268,11 @@ impl SubmitComment {
                     &body_html.unwrap_or_default(),
                     settings,
                 ));
+
+                // Convert @mentions to links
+                use crate::helpers::notifications::convert_mentions_to_links;
+                body_html = body_html.map(|h| convert_mentions_to_links(&h));
+
                 body_html.map(|h| sanitize_html(&h))
             }
         };
@@ -265,7 +280,7 @@ impl SubmitComment {
         // insert new comment into db
         let new_comment = CommentForm {
             creator_id: Some(v.id),
-            body: Some(body),
+            body: Some(body.clone()), // Clone for later use in notifications
             body_html: body_html.clone(),
             post_id: Some(parent_post.id),
             parent_id: parent_comment.as_ref().map(|c| c.id),
@@ -287,36 +302,55 @@ impl SubmitComment {
 
         DbCommentVote::vote(pool, &comment_vote).await?;
 
-        //let new_comment =
-        //   CommentView::read(context.pool(), new_comment.id, Some(view.id)).await?;
+        // Send notifications for replies and mentions
+        use crate::helpers::notifications::{
+            extract_mentions, get_user_ids_for_mentions,
+            create_reply_notification, create_mention_notification, create_post_reply_notification
+        };
 
-        // send notifications
-        //let mentions = scrape_text_for_mentions(&new_comment.comment.body_html);
-        //let recipient_ids =
-        //   send_notifications(mentions, &new_comment.comment, &view.person, &post, context)
-        //       .await?;
-
-        // if parent comment has person_mentions then mark them as read
-        /*if let Some(ref parent_comment) = parent_comment {
-            let person_id = v.id;
-            let person_mention =
-                DbPersonMention::read_by_comment_and_person(pool, parent_comment.id, person_id)
-                    .await;
-            if let Ok(mention) = person_mention {
-                DbPersonMention::update(
+        // 1. Notify parent comment author if this is a reply
+        if let Some(ref parent_comment) = parent_comment {
+            // Don't notify if replying to yourself
+            if parent_comment.creator_id != v.id {
+                let _ = create_reply_notification(
                     pool,
-                    mention.id,
-                    &PersonMentionForm {
-                        read: Some(true),
-                        ..PersonMentionForm::default()
-                    },
-                )
-                .await
-                .map_err(|e| {
-                    TinyBoardsError::from_error_message(e, 400, "could not update person mention")
-                })?;
+                    parent_comment.creator_id,
+                    new_comment.id,
+                    Some(parent_post.id),
+                ).await; // Ignore errors for notifications
             }
-        }*/
+        } else {
+            // 2. Notify post author for top-level comments
+            if parent_post.creator_id != v.id {
+                let _ = create_post_reply_notification(
+                    pool,
+                    parent_post.creator_id,
+                    parent_post.id,
+                    new_comment.id,
+                ).await; // Ignore errors for notifications
+            }
+        }
+
+        // 3. Extract and notify mentioned users
+        let body_text = body_html.as_ref().unwrap_or(&body);
+        let mentions = extract_mentions(body_text);
+
+        if !mentions.is_empty() {
+            // Get user IDs for mentioned usernames
+            if let Ok(mentioned_user_ids) = get_user_ids_for_mentions(pool, mentions).await {
+                for mentioned_user_id in mentioned_user_ids {
+                    // Don't notify yourself
+                    if mentioned_user_id != v.id {
+                        let _ = create_mention_notification(
+                            pool,
+                            mentioned_user_id,
+                            new_comment.id,
+                            Some(parent_post.id),
+                        ).await; // Ignore errors for notifications
+                    }
+                }
+            }
+        }
 
         // Link any uploaded images found in the HTML content
         if let Some(ref html) = body_html {
