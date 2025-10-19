@@ -237,6 +237,68 @@ impl User {
         })
     }
 
+    /// Get unread replies count for this user (only visible to self)
+    pub async fn unread_replies_count(&self, ctx: &Context<'_>) -> Option<i64> {
+        use tinyboards_db::models::notification::notifications::Notification as DbNotification;
+
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.id != self.id {
+            return None; // Only show your own unread counts
+        }
+
+        let pool = ctx.data_unchecked::<DbPool>();
+
+        // Get counts for comment_reply and post_reply
+        match DbNotification::count_unread_by_kind(pool, self.id).await {
+            Ok(counts) => {
+                let reply_count: i64 = counts
+                    .iter()
+                    .filter(|(kind, _)| kind == "comment_reply" || kind == "post_reply")
+                    .map(|(_, count)| *count)
+                    .sum();
+                Some(reply_count)
+            }
+            Err(_) => Some(0),
+        }
+    }
+
+    /// Get unread mentions count for this user (only visible to self)
+    pub async fn unread_mentions_count(&self, ctx: &Context<'_>) -> Option<i64> {
+        use tinyboards_db::models::notification::notifications::Notification as DbNotification;
+
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.id != self.id {
+            return None; // Only show your own unread counts
+        }
+
+        let pool = ctx.data_unchecked::<DbPool>();
+
+        // Get count for mention notifications
+        match DbNotification::count_unread_by_kind(pool, self.id).await {
+            Ok(counts) => {
+                let mention_count: i64 = counts
+                    .iter()
+                    .filter(|(kind, _)| kind == "mention")
+                    .map(|(_, count)| *count)
+                    .sum();
+                Some(mention_count)
+            }
+            Err(_) => Some(0),
+        }
+    }
+
     pub async fn moderates(&self, ctx: &Context<'_>) -> Result<Vec<BoardMod>> {
         let pool = ctx.data_unchecked::<DbPool>();
 
