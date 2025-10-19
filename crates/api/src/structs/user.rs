@@ -81,6 +81,8 @@ pub struct User {
     avatar: Option<String>,
     banner: Option<String>,
     profile_background: Option<String>,
+    #[graphql(skip)]
+    pub is_admin: bool,
     admin_level: i32,
     is_local: bool,
     instance: Option<String>,
@@ -388,6 +390,28 @@ impl User {
     }
 }
 
+impl User {
+    /// Check if user has the specified admin permission level
+    pub fn has_permission(&self, perm: tinyboards_db::models::user::user::AdminPerms) -> bool {
+        if !self.is_admin {
+            return false;
+        }
+
+        match perm {
+            tinyboards_db::models::user::user::AdminPerms::Null => true,
+            tinyboards_db::models::user::user::AdminPerms::Appearance => self.admin_level >= 1,
+            tinyboards_db::models::user::user::AdminPerms::Config => self.admin_level >= 2,
+            tinyboards_db::models::user::user::AdminPerms::Content => self.admin_level >= 3,
+            tinyboards_db::models::user::user::AdminPerms::Users => self.admin_level >= 4,
+            tinyboards_db::models::user::user::AdminPerms::Boards => self.admin_level >= 5,
+            tinyboards_db::models::user::user::AdminPerms::Emoji => self.admin_level >= 2,
+            tinyboards_db::models::user::user::AdminPerms::Full => self.admin_level >= 6,
+            tinyboards_db::models::user::user::AdminPerms::Owner => self.admin_level >= 7,
+            tinyboards_db::models::user::user::AdminPerms::System => self.admin_level >= 8,
+        }
+    }
+}
+
 impl From<(DbUser, DbUserAggregates)> for User {
     fn from((user, counts): (DbUser, DbUserAggregates)) -> Self {
         Self {
@@ -405,6 +429,7 @@ impl From<(DbUser, DbUserAggregates)> for User {
             avatar: user.avatar.map(|a| a.as_str().into()),
             banner: user.banner.map(|a| a.as_str().into()),
             profile_background: user.profile_background.map(|a| a.as_str().into()),
+            is_admin: user.is_admin,
             admin_level: user.admin_level,
             is_local: true, // All users are local in consolidated model
             instance: None, // No instance field in consolidated User model
