@@ -88,9 +88,10 @@ pub async fn get_user_from_header_opt(
         use tinyboards_db::traits::Crud;
         use chrono::Utc;
 
-        let update_form = UserForm::builder()
-            .last_seen(Some(Utc::now().naive_utc()))
-            .build();
+        let update_form = UserForm {
+            last_seen: Some(Utc::now().naive_utc()),
+            ..UserForm::default()
+        };
 
         let _ = User::update(&pool_clone, user_id, &update_form).await;
     });

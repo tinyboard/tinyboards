@@ -93,6 +93,7 @@ impl QueryUser {
     ) -> Result<Vec<User>> {
         use chrono::{Utc, Duration};
         use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
         use tinyboards_db::schema::users::dsl::*;
         use tinyboards_db::aggregates::structs::UserAggregates;
 
@@ -116,7 +117,7 @@ impl QueryUser {
             .filter(is_banned.eq(false))
             .order(last_seen.desc())
             .limit(max_users)
-            .load::<DbUser>(&mut conn)
+            .load::<DbUser>(&mut *conn)
             .await
             .map_err(|e| {
                 TinyBoardsError::from_error_message(e, 500, "Failed to fetch online users")
