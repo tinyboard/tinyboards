@@ -3,15 +3,18 @@ use tinyboards_db::{
     models::{
         message::message::{Message as DbMessage, MessageForm, MessageNotif, MessageNotifForm},
         user::user_blocks::UserBlock,
+        site::site::Site,
     },
     traits::Crud,
     utils::DbPool,
 };
-use tinyboards_utils::{TinyBoardsError, parser::parse_markdown_opt};
+use tinyboards_utils::{TinyBoardsError, parser::{parse_markdown_opt, sanitize_html}};
 
 use crate::{
     structs::message::Message,
     LoggedInUser,
+    utils::emoji::process_content_with_emojis,
+    Settings,
 };
 
 #[derive(Default)]
@@ -69,8 +72,27 @@ impl SendMessageMutations {
             return Err(TinyBoardsError::from_message(400, "Message too long").into());
         }
 
-        // Parse markdown
-        let body_html = parse_markdown_opt(&input.body);
+        // Load site config to check if emojis are enabled
+        let site_config = Site::read(pool).await?;
+        let settings = ctx.data::<Settings>()?.as_ref();
+
+        // Parse markdown and process emojis
+        let mut body_html = parse_markdown_opt(&input.body);
+
+        if site_config.emoji_enabled {
+            if let Some(ref html) = body_html {
+                let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
+                let processed = process_content_with_emojis(
+                    html,
+                    pool,
+                    None, // No board context for private messages
+                    settings,
+                    emoji_limit,
+                )
+                .await?;
+                body_html = Some(sanitize_html(&processed));
+            }
+        }
 
         // Create message
         let message_form = MessageForm {

@@ -1,14 +1,19 @@
 use async_graphql::*;
 use tinyboards_db::{
-    models::message::message::{Message as DbMessage, MessageForm},
+    models::{
+        message::message::{Message as DbMessage, MessageForm},
+        site::site::Site,
+    },
     traits::Crud,
     utils::DbPool,
 };
-use tinyboards_utils::{TinyBoardsError, parser::parse_markdown_opt};
+use tinyboards_utils::{TinyBoardsError, parser::{parse_markdown_opt, sanitize_html}};
 
 use crate::{
     structs::message::Message,
     LoggedInUser,
+    utils::emoji::process_content_with_emojis,
+    Settings,
 };
 
 #[derive(Default)]
@@ -64,12 +69,31 @@ impl EditMessageMutations {
             }
         }
 
-        // Parse markdown for body if provided
-        let body_html = if let Some(ref body) = input.body {
+        // Load site config to check if emojis are enabled
+        let site_config = Site::read(pool).await?;
+        let settings = ctx.data::<Settings>()?.as_ref();
+
+        // Parse markdown and process emojis for body if provided
+        let mut body_html = if let Some(ref body) = input.body {
             parse_markdown_opt(body)
         } else {
             None
         };
+
+        if site_config.emoji_enabled {
+            if let Some(ref html) = body_html {
+                let emoji_limit = site_config.max_emojis_per_comment.map(|limit| limit as usize);
+                let processed = process_content_with_emojis(
+                    html,
+                    pool,
+                    None, // No board context for private messages
+                    settings,
+                    emoji_limit,
+                )
+                .await?;
+                body_html = Some(sanitize_html(&processed));
+            }
+        }
 
         // Create update form
         let message_form = MessageForm {
