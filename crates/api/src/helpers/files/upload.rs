@@ -245,7 +245,14 @@ pub async fn delete_file(pool: &DbPool, img_url: &DbUrl) -> Result<(), TinyBoard
     let file = DbUpload::find_by_url(pool, img_url).await?;
 
     // delete the file from the file system
-    std::fs::remove_file(file.file_path.clone())?;
+    // Ignore error if file doesn't exist (it may have been manually deleted)
+    if let Err(e) = std::fs::remove_file(file.file_path.clone()) {
+        if e.kind() != std::io::ErrorKind::NotFound {
+            // Only propagate errors that aren't "file not found"
+            return Err(e.into());
+        }
+        // File doesn't exist, that's fine - continue to delete DB entry
+    }
 
     // delete DB entry
     DbUpload::delete(pool, file.id.clone()).await?;

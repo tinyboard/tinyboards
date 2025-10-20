@@ -342,16 +342,17 @@ impl UpdateSettings {
 	    return Err(TinyBoardsError::from_message(403, "Password incorrect.").into());
 	}
 
+	// Try to delete user files, but don't fail account deletion if files can't be deleted
 	if let Some(ref avatar) = v.avatar {
-	    delete_file(pool, avatar).await?;
+	    let _ = delete_file(pool, avatar).await; // Ignore errors
 	}
 
 	if let Some(ref banner) = v.banner {
-	    delete_file(pool, banner).await?;
+	    let _ = delete_file(pool, banner).await; // Ignore errors
 	}
 
 	if let Some(ref bg) = v.profile_background {
-	    delete_file(pool, bg).await?;
+	    let _ = delete_file(pool, bg).await; // Ignore errors
 	}
 
 	DbUser::delete(pool, v.id).await?;
