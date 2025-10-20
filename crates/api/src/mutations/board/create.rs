@@ -46,7 +46,7 @@ impl CreateBoard {
         banner_file: Option<Upload>,
     ) -> Result<CreateBoardResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_approved(pool).await?;
 
         // Check if board creation is allowed
         let site = Site::read(pool).await

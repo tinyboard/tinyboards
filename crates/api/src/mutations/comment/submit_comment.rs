@@ -35,10 +35,11 @@ impl SubmitComment {
         body: String,
         quoted_comment_id: Option<i32>,
     ) -> Result<Comment> {
+        let pool = ctx.data::<DbPool>()?;
         let v = ctx
             .data_unchecked::<LoggedInUser>()
-            .require_user_not_banned()?;
-        let pool = ctx.data::<DbPool>()?;
+            .require_user_approved(pool)
+            .await?;
         let settings = ctx.data::<Settings>()?.as_ref();
 
         // Input validation

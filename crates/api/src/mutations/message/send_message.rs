@@ -38,7 +38,7 @@ impl SendMessageMutations {
         input: SendMessageInput,
     ) -> Result<SendMessageResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data_unchecked::<LoggedInUser>().require_user_approved(pool).await?;
 
         // Check if sender is blocked by recipient
         let is_blocked = UserBlock::is_blocked(pool, input.recipient_id, user.id).await.unwrap_or(false);

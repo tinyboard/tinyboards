@@ -190,6 +190,25 @@ impl LoggedInUser {
             None => Err(TinyBoardsError::from_message(401, "Login required").into()),
         }
     }
+
+    /// Require user is not banned AND application is accepted (if site requires applications)
+    pub(crate) async fn require_user_approved(&self, pool: &DbPool) -> Result<&User> {
+        let user = self.require_user_not_banned()?;
+
+        // Check if site requires application approval
+        use tinyboards_db::{models::site::site::Site as DbSite, RegistrationMode};
+        let site = DbSite::read(pool).await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load site config"))?;
+
+        if site.get_registration_mode() == RegistrationMode::RequireApplication && !user.is_application_accepted {
+            return Err(TinyBoardsError::from_message(
+                403,
+                "Your account application has not been approved yet. Please wait for an administrator to review your application."
+            ).into());
+        }
+
+        Ok(user)
+    }
 }
 
 impl MasterKey {
