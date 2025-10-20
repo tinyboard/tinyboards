@@ -3,6 +3,7 @@ use tinyboards_db::{
     models::{
         post::posts::Post,
         comment::comments::Comment,
+        message::message::Message as DbMessage,
         notification::{
             notifications::Notification as DbNotification,
             notification_settings::{NotificationSettings as DbNotificationSettings, NotificationSettingsForm},
@@ -184,6 +185,10 @@ impl QueryNotifications {
             count_map.insert(kind, count as i32);
         }
 
+        // Get unread private message count from separate table
+        let private_messages_count = DbMessage::get_unread_count_for_user(pool, user.id).await
+            .unwrap_or(0) as i32;
+
         Ok(UnreadNotificationCount {
             total,
             comment_replies: count_map.get("comment_reply").copied().unwrap_or(0),
@@ -191,7 +196,7 @@ impl QueryNotifications {
             mentions: count_map.get("mention").copied().unwrap_or(0),
             post_votes: count_map.get("post_vote").copied().unwrap_or(0),
             comment_votes: count_map.get("comment_vote").copied().unwrap_or(0),
-            private_messages: count_map.get("private_message").copied().unwrap_or(0),
+            private_messages: private_messages_count,
             board_invites: count_map.get("board_invite").copied().unwrap_or(0),
             moderator_actions: count_map.get("moderator_action").copied().unwrap_or(0),
             system_notifications: count_map.get("system_notification").copied().unwrap_or(0),
