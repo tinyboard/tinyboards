@@ -195,16 +195,22 @@ impl LoggedInUser {
     pub(crate) async fn require_user_approved(&self, pool: &DbPool) -> Result<&User> {
         let user = self.require_user_not_banned()?;
 
-        // Check if site requires application approval
-        use tinyboards_db::{models::site::site::Site as DbSite, RegistrationMode};
-        let site = DbSite::read(pool).await
-            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load site config"))?;
+        // Check if user has a pending application
+        // Only block if they actually submitted an application that's pending
+        if !user.is_application_accepted {
+            use tinyboards_db::models::site::registration_applications::RegistrationApplication;
 
-        if site.get_registration_mode() == RegistrationMode::RequireApplication && !user.is_application_accepted {
-            return Err(TinyBoardsError::from_message(
-                403,
-                "Your account application has not been approved yet. Please wait for an administrator to review your application."
-            ).into());
+            // Check if there's a pending application for this user
+            let has_pending_application = RegistrationApplication::find_by_user_id(pool, user.id)
+                .await
+                .is_ok();
+
+            if has_pending_application {
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "Your account application has not been approved yet. Please wait for an administrator to review your application."
+                ).into());
+            }
         }
 
         Ok(user)
