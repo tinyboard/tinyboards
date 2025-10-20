@@ -72,13 +72,23 @@ impl Auth {
 
         let site = DbSite::read(pool).await?;
 
-        // if application mode is enabled, each acccount must be admin approved before it can be used
-        if site.get_registration_mode() == RegistrationMode::RequireApplication && !u.is_application_accepted {
-            return Err(TinyBoardsError::from_message(
-                403,
-                "You cannot use your account yet because your application hasn't been accepted.",
-            )
-            .into());
+        // Check if user has a pending application
+        // Only block login if they actually submitted an application that's pending
+        if !u.is_application_accepted {
+            use tinyboards_db::models::site::registration_applications::RegistrationApplication;
+
+            // Check if there's a pending application for this user
+            let has_pending_application = RegistrationApplication::find_by_user_id(pool, u.id)
+                .await
+                .is_ok();
+
+            if has_pending_application {
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "You cannot use your account yet because your application hasn't been accepted.",
+                )
+                .into());
+            }
         }
 
         // all good: generate access token
