@@ -100,8 +100,14 @@ impl Notification {
             query = query.filter(notifications::is_read.eq(false));
         }
 
-        if let Some(kind) = kind_filter {
-            query = query.filter(notifications::kind.eq(kind));
+        if let Some(ref kind) = kind_filter {
+            // Support comma-separated kinds for consolidated filtering
+            let kinds: Vec<&str> = kind.split(',').collect();
+            if kinds.len() > 1 {
+                query = query.filter(notifications::kind.eq_any(kinds));
+            } else {
+                query = query.filter(notifications::kind.eq(kinds[0]));
+            }
         }
 
         query = query.order(notifications::created.desc());

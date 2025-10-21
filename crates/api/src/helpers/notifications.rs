@@ -24,7 +24,7 @@ pub async fn create_reply_notification(
     Notification::create(pool, &form).await
 }
 
-/// Create a notification for a mention
+/// Create a notification for a mention in a comment
 pub async fn create_mention_notification(
     pool: &DbPool,
     recipient_user_id: i32,
@@ -36,6 +36,25 @@ pub async fn create_mention_notification(
         recipient_user_id,
         comment_id: Some(comment_id),
         post_id,
+        message_id: None,
+        is_read: Some(false),
+        created: Some(Utc::now().naive_utc()),
+    };
+
+    Notification::create(pool, &form).await
+}
+
+/// Create a notification for a mention in a post
+pub async fn create_post_mention_notification(
+    pool: &DbPool,
+    recipient_user_id: i32,
+    post_id: i32,
+) -> Result<Notification, diesel::result::Error> {
+    let form = NotificationForm {
+        kind: "mention".to_string(),
+        recipient_user_id,
+        comment_id: None,
+        post_id: Some(post_id),
         message_id: None,
         is_read: Some(false),
         created: Some(Utc::now().naive_utc()),

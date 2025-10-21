@@ -333,8 +333,9 @@ impl SubmitComment {
         }
 
         // 3. Extract and notify mentioned users
-        let body_text = body_html.as_ref().unwrap_or(&body);
-        let mentions = extract_mentions(body_text);
+        // Extract mentions from the original body (before HTML conversion)
+        // because body_html has mentions already converted to <a> tags
+        let mentions = extract_mentions(&body);
 
         if !mentions.is_empty() {
             // Get user IDs for mentioned usernames

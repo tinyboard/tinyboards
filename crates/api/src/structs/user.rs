@@ -170,6 +170,30 @@ impl User {
         }
     }
 
+    /// Check if user has a pending application (visible to self and admins)
+    pub async fn has_pending_application(&self, ctx: &Context<'_>) -> Option<bool> {
+        let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();
+
+        if v_opt.is_none() {
+            return None;
+        }
+
+        let v = v_opt.unwrap();
+        if v.id == self.id || v.admin_level >= AdminPerms::Users as i32 {
+            use tinyboards_db::models::site::registration_applications::RegistrationApplication;
+            let pool = ctx.data_unchecked::<DbPool>();
+
+            // Check if there's an application for this user
+            let has_application = RegistrationApplication::find_by_user_id(pool, self.id)
+                .await
+                .is_ok();
+
+            Some(has_application)
+        } else {
+            None
+        }
+    }
+
     /// Board creation approval status (admin-only or self)
     pub async fn board_creation_approved(&self, ctx: &Context<'_>) -> Option<bool> {
         let v_opt = ctx.data_unchecked::<LoggedInUser>().inner();

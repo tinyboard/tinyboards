@@ -101,6 +101,14 @@ impl SubmitPost {
         // Determine if this is a thread post (HTML from rich editor) or feed post (markdown)
         let is_thread_post = post_type.as_deref() == Some("thread");
 
+        // Extract mentions from title and body BEFORE they get moved
+        // We'll send notifications later after the post is created
+        let mut all_text_for_mentions = title.clone();
+        if let Some(ref body_text) = body {
+            all_text_for_mentions.push(' ');
+            all_text_for_mentions.push_str(body_text);
+        }
+
         let body_html = match body {
             Some(ref body) => {
                 if is_thread_post {
@@ -119,7 +127,12 @@ impl SubmitPost {
                         sanitized
                     };
                     let processed = custom_body_parsing(&with_emojis, settings);
-                    Some(processed)
+
+                    // Convert @mentions to links
+                    use crate::helpers::notifications::convert_mentions_to_links;
+                    let with_mention_links = convert_mentions_to_links(&processed);
+
+                    Some(with_mention_links)
                 } else {
                     // Feed posts use markdown - convert then sanitize
                     if site_config.emoji_enabled {
@@ -134,7 +147,11 @@ impl SubmitPost {
                         )
                         .await?;
 
-                        Some(sanitize_html(&processed_html))
+                        // Convert @mentions to links before sanitizing
+                        use crate::helpers::notifications::convert_mentions_to_links;
+                        let with_mention_links = convert_mentions_to_links(&processed_html);
+
+                        Some(sanitize_html(&with_mention_links))
                     } else {
                         // Emojis disabled, use regular markdown processing
                         let body_html = parse_markdown_opt(body);
@@ -142,7 +159,12 @@ impl SubmitPost {
                             &body_html.unwrap_or_default(),
                             settings,
                         );
-                        Some(sanitize_html(&processed))
+
+                        // Convert @mentions to links
+                        use crate::helpers::notifications::convert_mentions_to_links;
+                        let with_mention_links = convert_mentions_to_links(&processed);
+
+                        Some(sanitize_html(&with_mention_links))
                     }
                 }
             }
@@ -290,6 +312,29 @@ impl SubmitPost {
         if let Some(ref html) = body_html {
             if !html.is_empty() {
                 link_content_uploads(pool, published_post.id, true, html).await?;
+            }
+        }
+
+        // Send notifications for mentions in post
+        use crate::helpers::notifications::{
+            extract_mentions, get_user_ids_for_mentions, create_post_mention_notification
+        };
+
+        let mentions = extract_mentions(&all_text_for_mentions);
+
+        if !mentions.is_empty() {
+            // Get user IDs for mentioned usernames
+            if let Ok(mentioned_user_ids) = get_user_ids_for_mentions(pool, mentions).await {
+                for mentioned_user_id in mentioned_user_ids {
+                    // Don't notify yourself
+                    if mentioned_user_id != v.id {
+                        let _ = create_post_mention_notification(
+                            pool,
+                            mentioned_user_id,
+                            published_post.id,
+                        ).await; // Ignore errors for notifications
+                    }
+                }
             }
         }
 

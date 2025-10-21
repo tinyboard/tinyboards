@@ -47,8 +47,6 @@ pub struct NotificationSettings {
     pub comment_replies_enabled: bool,
     pub post_replies_enabled: bool,
     pub mentions_enabled: bool,
-    pub post_votes_enabled: bool,
-    pub comment_votes_enabled: bool,
     pub private_messages_enabled: bool,
     pub board_invites_enabled: bool,
     pub moderator_actions_enabled: bool,
@@ -58,15 +56,10 @@ pub struct NotificationSettings {
 #[derive(SimpleObject)]
 pub struct UnreadNotificationCount {
     pub total: i32,
-    pub comment_replies: i32,
-    pub post_replies: i32,
+    pub replies: i32,
     pub mentions: i32,
-    pub post_votes: i32,
-    pub comment_votes: i32,
     pub private_messages: i32,
-    pub board_invites: i32,
-    pub moderator_actions: i32,
-    pub system_notifications: i32,
+    pub activity: i32,
 }
 
 #[derive(InputObject)]
@@ -95,11 +88,18 @@ impl QueryNotifications {
         let limit = limit.unwrap_or(25).min(50).max(1); // Cap at 50, min 1
         let offset = (page - 1) * limit;
 
+        // Expand consolidated filter types
+        let expanded_kind_filter = kind_filter.as_deref().and_then(|filter| match filter {
+            "replies" => Some("comment_reply,post_reply".to_string()),
+            "activity" => Some("board_invite,moderator_action,system_notification".to_string()),
+            other => Some(other.to_string()),
+        });
+
         let db_notifications = DbNotification::get_for_user(
             pool,
             user.id,
             unread_only,
-            kind_filter,
+            expanded_kind_filter,
             Some(limit as i64),
             Some(offset as i64),
         )
@@ -159,8 +159,6 @@ impl QueryNotifications {
             comment_replies_enabled: settings.comment_replies_enabled,
             post_replies_enabled: settings.post_replies_enabled,
             mentions_enabled: settings.mentions_enabled,
-            post_votes_enabled: settings.post_votes_enabled,
-            comment_votes_enabled: settings.comment_votes_enabled,
             private_messages_enabled: settings.private_messages_enabled,
             board_invites_enabled: settings.board_invites_enabled,
             moderator_actions_enabled: settings.moderator_actions_enabled,
@@ -191,15 +189,13 @@ impl QueryNotifications {
 
         Ok(UnreadNotificationCount {
             total,
-            comment_replies: count_map.get("comment_reply").copied().unwrap_or(0),
-            post_replies: count_map.get("post_reply").copied().unwrap_or(0),
+            replies: count_map.get("comment_reply").copied().unwrap_or(0)
+                + count_map.get("post_reply").copied().unwrap_or(0),
             mentions: count_map.get("mention").copied().unwrap_or(0),
-            post_votes: count_map.get("post_vote").copied().unwrap_or(0),
-            comment_votes: count_map.get("comment_vote").copied().unwrap_or(0),
             private_messages: private_messages_count,
-            board_invites: count_map.get("board_invite").copied().unwrap_or(0),
-            moderator_actions: count_map.get("moderator_action").copied().unwrap_or(0),
-            system_notifications: count_map.get("system_notification").copied().unwrap_or(0),
+            activity: count_map.get("board_invite").copied().unwrap_or(0)
+                + count_map.get("moderator_action").copied().unwrap_or(0)
+                + count_map.get("system_notification").copied().unwrap_or(0),
         })
     }
 }

@@ -26,8 +26,6 @@ impl NotificationSettings {
             comment_replies_enabled: Some(true),
             post_replies_enabled: Some(true),
             mentions_enabled: Some(true),
-            post_votes_enabled: Some(false), // votes can be noisy by default
-            comment_votes_enabled: Some(false),
             private_messages_enabled: Some(true),
             board_invites_enabled: Some(true),
             moderator_actions_enabled: Some(true),
@@ -100,8 +98,6 @@ impl NotificationSettings {
             "comment_reply" => settings.comment_replies_enabled,
             "post_reply" => settings.post_replies_enabled,
             "mention" => settings.mentions_enabled,
-            "post_vote" => settings.post_votes_enabled,
-            "comment_vote" => settings.comment_votes_enabled,
             "private_message" => settings.private_messages_enabled,
             "board_invite" => settings.board_invites_enabled,
             "moderator_action" => settings.moderator_actions_enabled,

@@ -493,8 +493,6 @@ diesel::table! {
         comment_replies_enabled -> Bool,
         post_replies_enabled -> Bool,
         mentions_enabled -> Bool,
-        post_votes_enabled -> Bool,
-        comment_votes_enabled -> Bool,
         private_messages_enabled -> Bool,
         board_invites_enabled -> Bool,
         moderator_actions_enabled -> Bool,
