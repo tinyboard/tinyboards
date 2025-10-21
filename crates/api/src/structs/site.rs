@@ -87,6 +87,7 @@ pub struct LocalSite {
     pub approved_image_hosts: Option<String>,
     pub image_embed_hosts_only: Option<bool>,
     pub registration_mode: String,
+    pub homepage_banner: Option<String>,
 }
 
 #[ComplexObject]
@@ -158,6 +159,7 @@ impl From<tinyboards_db::models::site::site::Site> for LocalSite {
             approved_image_hosts: value.approved_image_hosts,
             image_embed_hosts_only: value.image_embed_hosts_only,
             registration_mode: value.registration_mode,
+            homepage_banner: value.homepage_banner,
         }
     }
 }

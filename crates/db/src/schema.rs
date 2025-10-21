@@ -793,6 +793,7 @@ diesel::table! {
         max_emojis_per_comment -> Nullable<Int4>,
         emoji_max_file_size_mb -> Int4,
         board_emojis_enabled -> Bool,
+        homepage_banner -> Nullable<Text>,
     }
 }
 

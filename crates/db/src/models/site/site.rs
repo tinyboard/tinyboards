@@ -59,6 +59,7 @@ pub struct Site {
     pub max_emojis_per_comment: Option<i32>,
     pub emoji_max_file_size_mb: i32,
     pub board_emojis_enabled: bool,
+    pub homepage_banner: Option<String>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -114,6 +115,7 @@ pub struct SiteForm {
     pub max_emojis_per_comment: Option<Option<i32>>,
     pub emoji_max_file_size_mb: Option<i32>,
     pub board_emojis_enabled: Option<bool>,
+    pub homepage_banner: Option<Option<String>>,
 }
 
 impl Site {

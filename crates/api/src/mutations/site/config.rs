@@ -51,6 +51,7 @@ pub struct UpdateSiteConfigInput {
     pub image_embed_hosts_only: Option<bool>,
     pub registration_mode: Option<String>,
     pub default_avatar: Option<String>,
+    pub homepage_banner: Option<String>,
 }
 
 #[Object]
@@ -62,6 +63,7 @@ impl SiteConfig {
         input: UpdateSiteConfigInput,
         icon_file: Option<Upload>,
         default_avatar_file: Option<Upload>,
+        homepage_banner_file: Option<Upload>,
     ) -> Result<LocalSite> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
@@ -83,6 +85,11 @@ impl SiteConfig {
         let default_avatar_url = match default_avatar_file {
             Some(file) => Some(upload_file_opendal(file, None, user.id, Some(settings.media.max_avatar_size_mb), ctx).await?.to_string()),
             None => input.default_avatar
+        };
+
+        let homepage_banner_url = match homepage_banner_file {
+            Some(file) => Some(upload_file_opendal(file, None, user.id, Some(settings.media.max_banner_size_mb), ctx).await?.to_string()),
+            None => input.homepage_banner
         };
 
         let form = SiteForm {
@@ -122,6 +129,7 @@ impl SiteConfig {
             image_embed_hosts_only: input.image_embed_hosts_only,
             registration_mode: input.registration_mode,
             default_avatar: default_avatar_url.map(Some),
+            homepage_banner: homepage_banner_url.map(Some),
             updated: Some(naive_now()),
             ..SiteForm::default()
         };
