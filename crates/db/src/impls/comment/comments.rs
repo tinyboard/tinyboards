@@ -44,7 +44,7 @@ impl Comment {
             .await
     }
 
-    /// Returns a list of users who commented on a given post.
+    /// Returns a list of the 5 most recent unique users who commented on a given post.
     pub async fn load_participants_for_post(
         pool: &DbPool,
         for_post_id: i32,
@@ -52,13 +52,45 @@ impl Comment {
         use crate::schema::{comments, users};
         let conn = &mut get_conn(pool).await?;
 
-        comments::table
-            .inner_join(users::table.on(users::id.eq(comments::creator_id)))
+        // Get all comments for this post ordered by most recent first
+        let all_comments: Vec<Comment> = comments::table
             .filter(comments::post_id.eq(for_post_id))
-            .select(users::all_columns)
-            .distinct_on(comments::creator_id)
+            .order(comments::creation_date.desc())
+            .load::<Comment>(conn)
+            .await?;
+
+        // Get unique creator_ids in order of first appearance (most recent)
+        let mut seen = std::collections::HashSet::new();
+        let unique_creator_ids: Vec<i32> = all_comments
+            .iter()
+            .filter_map(|c| {
+                if seen.insert(c.creator_id) {
+                    Some(c.creator_id)
+                } else {
+                    None
+                }
+            })
+            .take(5)
+            .collect();
+
+        // Fetch the users
+        if unique_creator_ids.is_empty() {
+            return Ok(vec![]);
+        }
+
+        let users_map: std::collections::HashMap<i32, User> = users::table
+            .filter(users::id.eq_any(&unique_creator_ids))
             .load::<User>(conn)
-            .await
+            .await?
+            .into_iter()
+            .map(|user| (user.id, user))
+            .collect();
+
+        // Return users in the same order as unique_creator_ids (most recent first)
+        Ok(unique_creator_ids
+            .into_iter()
+            .filter_map(|user_id| users_map.get(&user_id).cloned())
+            .collect())
     }
 
     /// Get a single comment with its counts

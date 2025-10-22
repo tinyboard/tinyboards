@@ -46,12 +46,50 @@ impl From<DbReaction> for Reaction {
 
 /// Aggregated reaction counts for an emoji
 #[derive(Clone, Debug, Serialize, Deserialize, SimpleObject)]
+#[graphql(complex)]
 pub struct ReactionAggregate {
     pub id: i32,
     pub post_id: Option<i32>,
     pub comment_id: Option<i32>,
     pub emoji: String,
     pub count: i32,
+}
+
+#[ComplexObject]
+impl ReactionAggregate {
+    /// List of users who reacted with this emoji
+    async fn users(&self, ctx: &Context<'_>) -> Result<Vec<super::user::User>> {
+        use tinyboards_db::{models::reaction::reactions::Reaction, utils::DbPool};
+
+        let pool = ctx.data::<DbPool>()?;
+
+        // Get all reactions for this emoji on this post/comment
+        let reactions = if let Some(post_id) = self.post_id {
+            Reaction::list_for_post(pool, post_id).await?
+        } else if let Some(comment_id) = self.comment_id {
+            Reaction::list_for_comment(pool, comment_id).await?
+        } else {
+            return Ok(vec![]);
+        };
+
+        // Filter to only reactions matching this emoji and get unique users
+        let user_ids: Vec<i32> = reactions
+            .iter()
+            .filter(|r| r.emoji == self.emoji)
+            .map(|r| r.user_id)
+            .collect();
+
+        // Fetch user details
+        use tinyboards_db::{models::user::user::User, traits::Crud};
+        let mut users = Vec::new();
+        for user_id in user_ids {
+            if let Ok(user) = User::read(pool, user_id).await {
+                users.push(super::user::User::from(user));
+            }
+        }
+
+        Ok(users)
+    }
 }
 
 impl From<DbReactionAggregate> for ReactionAggregate {
