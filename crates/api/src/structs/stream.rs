@@ -14,8 +14,8 @@ pub struct Stream {
     pub creator_id: i32,
     pub is_public: bool,
     pub share_token: Option<String>,
-    pub created_at: String,
-    pub updated_at: Option<String>,
+    pub creation_date: String,
+    pub updated: Option<String>,
     pub last_viewed_at: Option<String>,
     pub max_posts_per_board: Option<i32>,
     #[graphql(skip)]
@@ -168,7 +168,7 @@ pub struct StreamBoardSubscription {
 pub struct StreamFollower {
     pub user_id: i32,
     pub stream_id: i32,
-    pub followed_at: String,
+    pub creation_date: String,
     pub add_to_navbar: bool,
     pub navbar_position: Option<i32>,
 }
@@ -307,8 +307,8 @@ impl From<(
             creator_id: stream.creator_id,
             is_public: stream.is_public,
             share_token: stream.share_token,
-            created_at: stream.created_at.to_string(),
-            updated_at: stream.updated_at.map(|t| t.to_string()),
+            creation_date: stream.creation_date.to_string(),
+            updated: stream.updated.map(|t| t.to_string()),
             last_viewed_at: stream.last_viewed_at.map(|t| t.to_string()),
             max_posts_per_board: stream.max_posts_per_board,
             aggregates: StreamAggregatesData {
@@ -353,7 +353,7 @@ impl From<tinyboards_db::models::stream::stream_follower::StreamFollower> for St
         Self {
             user_id: follower.user_id,
             stream_id: follower.stream_id,
-            followed_at: follower.followed_at.to_string(),
+            creation_date: follower.creation_date.to_string(),
             add_to_navbar: follower.added_to_navbar,
             navbar_position: follower.navbar_position,
         }

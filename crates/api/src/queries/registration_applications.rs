@@ -21,7 +21,7 @@ pub struct RegistrationApplicationView {
     pub answer: String,
     pub admin_id: Option<i32>,
     pub deny_reason: Option<String>,
-    pub created_at: String,
+    pub creation_date: String,
 }
 
 #[Object]
@@ -85,7 +85,7 @@ impl RegistrationApplicationQueries {
                     answer,
                     admin_id,
                     deny_reason,
-                    created_at: creation_date.format("%Y-%m-%d %H:%M:%S").to_string(),
+                    creation_date: creation_date.format("%Y-%m-%d %H:%M:%S").to_string(),
                 }
             })
             .collect();
@@ -125,7 +125,7 @@ impl RegistrationApplicationQueries {
             answer: application.answer,
             admin_id: application.admin_id,
             deny_reason: application.deny_reason,
-            created_at: application.creation_date.format("%Y-%m-%d %H:%M:%S").to_string(),
+            creation_date: application.creation_date.format("%Y-%m-%d %H:%M:%S").to_string(),
         }))
     }
 

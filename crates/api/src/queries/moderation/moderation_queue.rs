@@ -25,7 +25,7 @@ pub struct ModerationQueueItem {
     pub reporter_id: Option<i32>,
     pub reason: Option<String>,
     pub content_preview: String,
-    pub created_at: String,
+    pub creation_date: String,
     pub board_id: i32,
     pub priority: i32, // Higher number = higher priority
 }
@@ -111,7 +111,7 @@ impl ModerationQueueQueries {
                     reporter_id: Some(report.creator_id),
                     reason: Some(report.reason),
                     content_preview: report.original_post_title,
-                    created_at: report.creation_date.to_string(),
+                    creation_date: report.creation_date.to_string(),
                     board_id: 0, // Will be filled from post data if needed
                     priority: 2, // Reports have high priority
                 });
@@ -142,7 +142,7 @@ impl ModerationQueueQueries {
                     reporter_id: Some(report.creator_id),
                     reason: Some(report.reason),
                     content_preview: preview,
-                    created_at: report.creation_date.to_string(),
+                    creation_date: report.creation_date.to_string(),
                     board_id: 0, // Will be filled from comment data if needed
                     priority: 2, // Reports have high priority
                 });
@@ -172,7 +172,7 @@ impl ModerationQueueQueries {
                     reporter_id: None,
                     reason: None,
                     content_preview: preview,
-                    created_at: post.creation_date.to_string(),
+                    creation_date: post.creation_date.to_string(),
                     board_id: post.board_id,
                     priority: 1, // Pending content has lower priority than reports
                 });
@@ -202,7 +202,7 @@ impl ModerationQueueQueries {
                     reporter_id: None,
                     reason: None,
                     content_preview: preview,
-                    created_at: comment.creation_date.to_string(),
+                    creation_date: comment.creation_date.to_string(),
                     board_id: comment.board_id,
                     priority: 1, // Pending content has lower priority than reports
                 });
@@ -212,7 +212,7 @@ impl ModerationQueueQueries {
         // Sort by priority (descending) then by creation date (descending)
         items.sort_by(|a, b| {
             b.priority.cmp(&a.priority)
-                .then_with(|| b.created_at.cmp(&a.created_at))
+                .then_with(|| b.creation_date.cmp(&a.creation_date))
         });
 
         // Calculate counts

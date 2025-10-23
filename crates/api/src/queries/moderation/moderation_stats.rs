@@ -127,7 +127,7 @@ impl ModerationStatsQueries {
 
         // Filter by date range
         let recent_logs: Vec<_> = all_logs.into_iter()
-            .filter(|log| log.created_at >= since_date)
+            .filter(|log| log.creation_date >= since_date)
             .collect();
 
         // Calculate moderator activity
@@ -137,8 +137,8 @@ impl ModerationStatsQueries {
         for log in &recent_logs {
             let entry = moderator_activity.entry(log.moderator_id).or_insert((0, None));
             entry.0 += 1;
-            if entry.1.is_none() || log.created_at > entry.1.unwrap() {
-                entry.1 = Some(log.created_at);
+            if entry.1.is_none() || log.creation_date > entry.1.unwrap() {
+                entry.1 = Some(log.creation_date);
             }
         }
 

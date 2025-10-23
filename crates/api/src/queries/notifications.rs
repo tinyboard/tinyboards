@@ -32,7 +32,7 @@ pub struct Notification {
     #[graphql(name = "createdAt")]
     pub created: String,
     #[graphql(name = "updatedAt")]
-    pub updated_at: Option<String>,
+    pub updated: Option<String>,
     pub comment: Option<GqlComment>,
     pub post: Option<GqlPost>,
     pub user: Option<GqlUser>,
@@ -131,7 +131,7 @@ impl QueryNotifications {
                 kind: notification.kind,
                 is_read: notification.is_read,
                 created: notification.created.to_string(),
-                updated_at: None, // TODO: Add updated field to database schema if needed
+                updated: None, // TODO: Add updated field to database schema if needed
                 comment,
                 post,
                 user,

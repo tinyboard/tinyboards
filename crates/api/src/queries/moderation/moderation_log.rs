@@ -26,7 +26,7 @@ pub struct ModerationLogEntry {
     pub board_id: Option<i32>,
     pub reason: Option<String>,
     pub metadata: Option<String>, // JSON stringified
-    pub created_at: String,
+    pub creation_date: String,
     pub expires_at: Option<String>,
 }
 
@@ -48,7 +48,7 @@ impl From<(ModerationLog, String)> for ModerationLogEntry {
             board_id: log.board_id,
             reason: log.reason,
             metadata: log.metadata.map(|v| v.to_string()),
-            created_at: log.created_at.to_string(),
+            creation_date: log.creation_date.to_string(),
             expires_at: log.expires_at.map(|dt| dt.to_string()),
         }
     }

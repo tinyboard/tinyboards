@@ -21,8 +21,8 @@ pub struct FlairTemplate {
     pub requires_approval: bool,
     pub is_active: bool,
     pub usage_count: i32,
-    pub created_at: String,
-    pub updated_at: Option<String>,
+    pub creation_date: String,
+    pub updated: Option<String>,
     pub created_by: i32,
 }
 
@@ -61,7 +61,7 @@ pub struct PostFlair {
     pub text_color: Option<String>,
     pub style_config: Option<String>,
     pub emoji_ids: Option<Vec<i32>>,
-    pub assigned_at: String,
+    pub creation_date: String,
     pub assigned_by: i32,
 }
 
@@ -87,7 +87,7 @@ pub struct UserFlair {
     pub style_config: Option<String>,
     pub emoji_ids: Option<Vec<i32>>,
     pub is_approved: bool,
-    pub assigned_at: String,
+    pub creation_date: String,
     pub assigned_by: Option<i32>,
     pub approved_at: Option<String>,
     pub approved_by: Option<i32>,
@@ -293,8 +293,8 @@ impl From<tinyboards_db::models::flair::FlairTemplate> for FlairTemplate {
             requires_approval: db.requires_approval,
             is_active: db.is_active,
             usage_count: db.usage_count,
-            created_at: db.created_at.to_string(),
-            updated_at: Some(db.updated_at.to_string()),
+            creation_date: db.creation_date.to_string(),
+            updated: Some(db.updated.to_string()),
             created_by: db.created_by,
         }
     }
@@ -311,7 +311,7 @@ impl From<tinyboards_db::models::flair::PostFlair> for PostFlair {
             text_color: db.custom_text_color,
             style_config: None,
             emoji_ids: None,
-            assigned_at: db.assigned_at.to_string(),
+            creation_date: db.creation_date.to_string(),
             assigned_by: db.assigned_by,
         }
     }
@@ -330,7 +330,7 @@ impl From<tinyboards_db::models::flair::UserFlair> for UserFlair {
             style_config: None,
             emoji_ids: None,
             is_approved: db.is_approved,
-            assigned_at: db.assigned_at.to_string(),
+            creation_date: db.creation_date.to_string(),
             assigned_by: None,  // Not in current schema
             approved_at: db.approved_at.map(|d| d.to_string()),
             approved_by: db.approved_by,

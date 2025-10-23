@@ -10,7 +10,7 @@ pub struct Message {
     pub title: String,
     pub body: String,
     pub published: String,
-    pub updated_at: Option<String>,
+    pub updated: Option<String>,
     #[graphql(skip)]
     pub creator_id: i32,
     #[graphql(skip)]
@@ -58,7 +58,7 @@ impl From<DbMessage> for Message {
             title: message.title,
             body: message.body,
             published: message.published.to_string(),
-            updated_at: message.updated.map(|u| u.to_string()),
+            updated: message.updated.map(|u| u.to_string()),
             creator_id: message.creator_id,
             recipient_user_id: message.recipient_user_id,
         }
