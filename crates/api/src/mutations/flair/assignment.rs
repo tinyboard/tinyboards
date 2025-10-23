@@ -73,7 +73,7 @@ impl FlairAssignmentMutations {
         let mut text_color: Option<String> = None;
 
         if let Some(template_id) = input.template_id {
-            let template = FlairTemplateDb::read(pool, template_id).await
+            let template = FlairTemplateDb::read(pool,template_id).await
                 .map_err(|_| TinyBoardsError::from_message(404, "Flair template not found"))?;
 
             // Validate template is for posts and is active
@@ -212,7 +212,7 @@ impl FlairAssignmentMutations {
         let mut text_color: Option<String> = None;
 
         if let Some(template_id) = input.template_id {
-            let template = FlairTemplateDb::read(pool, template_id).await
+            let template = FlairTemplateDb::read(pool,template_id).await
                 .map_err(|_| TinyBoardsError::from_message(404, "Flair template not found"))?;
 
             // Validate template is for users and is active

@@ -128,7 +128,7 @@ impl FlairTemplateMutations {
         use tinyboards_db::traits::Crud;
 
         // Get existing template
-        let existing_template = DbFlairTemplate::read(pool, template_id).await
+        let existing_template = DbFlairTemplate::read(pool,template_id).await
             .map_err(|_| TinyBoardsError::from_message(404, "Flair template not found"))?;
 
         // Check permissions - all flairs are board-specific
@@ -183,7 +183,7 @@ impl FlairTemplateMutations {
         use tinyboards_db::traits::Crud;
 
         // Get existing template
-        let existing_template = DbFlairTemplate::read(pool, template_id).await
+        let existing_template = DbFlairTemplate::read(pool,template_id).await
             .map_err(|_| TinyBoardsError::from_message(404, "Flair template not found"))?;
 
         // Check permissions - all flairs are board-specific

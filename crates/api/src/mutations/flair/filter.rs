@@ -60,7 +60,7 @@ impl FlairFilterMutations {
 
         if !all_flair_ids.is_empty() {
             for flair_id in &all_flair_ids {
-                let template = FlairTemplate::read(pool, *flair_id).await.map_err(|_| {
+                let template = FlairTemplate::read(pool,*flair_id).await.map_err(|_| {
                     TinyBoardsError::from_message(
                         404,
                         &format!("Flair template with ID {} not found", flair_id),
@@ -186,7 +186,7 @@ impl FlairFilterMutations {
         })?;
 
         // Validate that the flair template exists and belongs to this board
-        let template = FlairTemplate::read(pool, template_id).await.map_err(|_| {
+        let template = FlairTemplate::read(pool,template_id).await.map_err(|_| {
             TinyBoardsError::from_message(404, &format!("Flair template with ID {} not found", template_id))
         })?;
 
@@ -262,7 +262,7 @@ impl FlairFilterMutations {
         })?;
 
         // Validate that the flair template exists and belongs to this board
-        let template = FlairTemplate::read(pool, template_id).await.map_err(|_| {
+        let template = FlairTemplate::read(pool,template_id).await.map_err(|_| {
             TinyBoardsError::from_message(404, &format!("Flair template with ID {} not found", template_id))
         })?;
 

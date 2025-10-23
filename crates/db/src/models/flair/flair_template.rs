@@ -1,6 +1,8 @@
 use crate::schema::flair_templates;
+use crate::utils::DbPool;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
+use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize, Queryable, Identifiable, Selectable)]
@@ -47,4 +49,14 @@ pub struct FlairTemplateForm {
     pub display_order: Option<i32>,
     pub is_active: Option<bool>,
     pub created_by: Option<i32>,
+}
+
+impl FlairTemplate {
+    pub async fn read(pool: &DbPool, flair_id: i32) -> Result<Self, diesel::result::Error> {
+        let conn = &mut pool.get().await.map_err(|_| diesel::result::Error::NotFound)?;
+        flair_templates::table
+            .find(flair_id)
+            .first::<Self>(conn)
+            .await
+    }
 }

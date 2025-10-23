@@ -43,11 +43,24 @@ pub struct FlairStyle {
     pub border_color: Option<String>,
     pub border_width: Option<i32>,
     pub border_radius: Option<i32>,
+    pub border_style: Option<String>,
     pub font_weight: Option<String>,
     pub font_size: Option<String>,
     pub padding: Option<String>,
     pub margin: Option<String>,
     pub custom_css: Option<String>,
+    // Shadow properties
+    pub shadow_color: Option<String>,
+    pub shadow_offset_x: Option<i32>,
+    pub shadow_offset_y: Option<i32>,
+    pub shadow_blur: Option<i32>,
+    // Animation properties
+    pub animation_type: Option<String>,
+    pub animation_duration: Option<i32>,
+    // Gradient properties
+    pub gradient_start: Option<String>,
+    pub gradient_end: Option<String>,
+    pub gradient_direction: Option<String>,
 }
 
 #[derive(SimpleObject, Clone)]
@@ -71,6 +84,22 @@ impl PostFlair {
         self.style_config.as_ref().and_then(|s| {
             serde_json::from_str::<FlairStyle>(s).ok()
         })
+    }
+
+    async fn template(&self, ctx: &Context<'_>) -> Result<Option<FlairTemplate>> {
+        use tinyboards_db::models::flair::flair_template::FlairTemplate as DbFlairTemplate;
+        use tinyboards_db::utils::DbPool;
+
+        if let Some(template_id) = self.template_id {
+            let pool = ctx.data::<DbPool>()?;
+
+            match DbFlairTemplate::read(pool, template_id).await {
+                Ok(template) => Ok(Some(FlairTemplate::from(template))),
+                Err(_) => Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -99,6 +128,22 @@ impl UserFlair {
         self.style_config.as_ref().and_then(|s| {
             serde_json::from_str::<FlairStyle>(s).ok()
         })
+    }
+
+    async fn template(&self, ctx: &Context<'_>) -> Result<Option<FlairTemplate>> {
+        use tinyboards_db::models::flair::flair_template::FlairTemplate as DbFlairTemplate;
+        use tinyboards_db::utils::DbPool;
+
+        if let Some(template_id) = self.template_id {
+            let pool = ctx.data::<DbPool>()?;
+
+            match DbFlairTemplate::read(pool, template_id).await {
+                Ok(template) => Ok(Some(FlairTemplate::from(template))),
+                Err(_) => Ok(None)
+            }
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -174,11 +219,24 @@ pub struct FlairStyleInput {
     pub border_color: Option<String>,
     pub border_width: Option<i32>,
     pub border_radius: Option<i32>,
+    pub border_style: Option<String>,
     pub font_weight: Option<String>,
     pub font_size: Option<String>,
     pub padding: Option<String>,
     pub margin: Option<String>,
     pub custom_css: Option<String>,
+    // Shadow properties
+    pub shadow_color: Option<String>,
+    pub shadow_offset_x: Option<i32>,
+    pub shadow_offset_y: Option<i32>,
+    pub shadow_blur: Option<i32>,
+    // Animation properties
+    pub animation_type: Option<String>,
+    pub animation_duration: Option<i32>,
+    // Gradient properties
+    pub gradient_start: Option<String>,
+    pub gradient_end: Option<String>,
+    pub gradient_direction: Option<String>,
 }
 
 #[derive(InputObject)]
@@ -264,11 +322,21 @@ impl From<FlairStyle> for FlairStyleInput {
             border_color: style.border_color,
             border_width: style.border_width,
             border_radius: style.border_radius,
+            border_style: style.border_style,
             font_weight: style.font_weight,
             font_size: style.font_size,
             padding: style.padding,
             margin: style.margin,
             custom_css: style.custom_css,
+            shadow_color: style.shadow_color,
+            shadow_offset_x: style.shadow_offset_x,
+            shadow_offset_y: style.shadow_offset_y,
+            shadow_blur: style.shadow_blur,
+            animation_type: style.animation_type,
+            animation_duration: style.animation_duration,
+            gradient_start: style.gradient_start,
+            gradient_end: style.gradient_end,
+            gradient_direction: style.gradient_direction,
         }
     }
 }
