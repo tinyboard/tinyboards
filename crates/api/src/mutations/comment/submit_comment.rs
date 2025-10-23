@@ -20,6 +20,7 @@ use tinyboards_db::traits::Voteable;
 use tinyboards_utils::content_filter::ContentFilter;
 use tinyboards_utils::parser::{parse_markdown_opt, sanitize_html};
 use tinyboards_utils::utils::custom_body_parsing;
+use tinyboards_utils::slug::generate_slug;
 use tinyboards_utils::TinyBoardsError;
 
 #[derive(Default)]
@@ -278,6 +279,13 @@ impl SubmitComment {
             }
         };
 
+        // Generate slug from first 60 chars of body
+        // For comments, we'll append a random suffix since we don't have ID yet
+        use rand::{thread_rng, Rng};
+        let random_suffix: u32 = thread_rng().gen();
+        let base_slug = generate_slug(&body, Some(40)); // 40 chars to leave room for suffix
+        let comment_slug = format!("{}-{}", base_slug, random_suffix);
+
         // insert new comment into db
         let new_comment = CommentForm {
             creator_id: Some(v.id),
@@ -288,6 +296,7 @@ impl SubmitComment {
             board_id: Some(parent_post.board_id),
             level: Some(level),
             quoted_comment_id: quoted_comment.as_ref().map(|c| c.id),
+            slug: Some(comment_slug),
             ..CommentForm::default()
         };
 

@@ -38,6 +38,7 @@ pub struct Post {
     pub approved_at: Option<NaiveDateTime>,
     pub creator_vote: i32,
     pub post_type: String,
+    pub slug: String,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -74,6 +75,7 @@ pub struct PostForm {
     pub approved_at: Option<NaiveDateTime>,
     pub creator_vote: Option<i32>,
     pub post_type: Option<String>,
+    pub slug: Option<String>,
 }
 
 impl Post {

@@ -24,7 +24,7 @@ use super::{board_mods::BoardMod, post::Post};
 #[graphql(complex)]
 pub struct Board {
     pub id: i32,
-    name: String,
+    pub name: String,
     title: String,
     description: Option<String>,
     creation_date: String,

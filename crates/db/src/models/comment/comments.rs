@@ -25,6 +25,7 @@ pub struct Comment {
     pub approval_status: String,
     pub approved_by: Option<i32>,
     pub approved_at: Option<NaiveDateTime>,
+    pub slug: String,
     pub creator_vote: i32,
     pub quoted_comment_id: Option<i32>,
 }
@@ -49,6 +50,7 @@ pub struct CommentForm {
     pub approval_status: Option<String>,
     pub approved_by: Option<i32>,
     pub approved_at: Option<NaiveDateTime>,
+    pub slug: Option<String>,
     pub creator_vote: Option<i32>,
     pub quoted_comment_id: Option<i32>,
 }

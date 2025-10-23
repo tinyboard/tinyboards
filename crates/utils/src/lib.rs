@@ -9,6 +9,7 @@ pub mod version;
 pub mod email;
 pub mod claims;
 pub mod content_filter;
+pub mod slug;
 
 pub use error::TinyBoardsError;
 pub use passhash::hash_password;

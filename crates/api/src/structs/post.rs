@@ -52,8 +52,11 @@ pub struct Post {
     title_chunk: String,
     creator_vote: i32,
     post_type: String,
+    slug: String,
     #[graphql(skip)]
     counts: DbPostAggregates,
+    #[graphql(skip)]
+    board_slug: Option<String>,
     /*creator: Option<Person>,
     is_creator_banned_from_board: bool,
     is_saved: bool,
@@ -93,6 +96,32 @@ impl Post {
 
     pub async fn controversy_rank(&self) -> f64 {
         self.counts.controversy_rank
+    }
+
+    /// Get the canonical URL for this post
+    pub async fn url_path(&self, ctx: &Context<'_>) -> Result<String> {
+        use crate::utils::url_builder::{get_boards_enabled, UrlBuilder};
+        let pool = ctx.data::<DbPool>()?;
+
+        // Get boards_enabled setting
+        let boards_enabled = get_boards_enabled(pool).await?;
+        let url_builder = UrlBuilder::new(boards_enabled);
+
+        // Get board slug if boards are enabled
+        let board_slug = if boards_enabled {
+            self.board(ctx).await?.map(|b| b.name.clone())
+        } else {
+            None
+        };
+
+        // Build URL based on post type
+        let url = if self.post_type == "feed" {
+            url_builder.build_feed_url(self.id, &self.slug, board_slug.as_deref())
+        } else {
+            url_builder.build_thread_url(self.id, &self.slug, board_slug.as_deref())
+        };
+
+        Ok(url)
     }
 
     pub async fn creator(&self, ctx: &Context<'_>) -> Result<Option<User>> {
@@ -394,6 +423,8 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             title_chunk: post.title_chunk,
             creator_vote: post.creator_vote,
             post_type: post.post_type,
+            slug: post.slug,
+            board_slug: None, // Will be loaded via dataloader when needed
             counts,
             /*creator: creator.map(|c| Person::from((c, creator_counts.unwrap()))),
             is_creator_banned_from_board: creator_banned_from_board,

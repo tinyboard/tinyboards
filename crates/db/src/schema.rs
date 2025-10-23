@@ -245,6 +245,8 @@ diesel::table! {
         approval_status -> Varchar,
         approved_by -> Nullable<Int4>,
         approved_at -> Nullable<Timestamp>,
+        #[max_length = 80]
+        slug -> Varchar,
         creator_vote -> Int4,
         quoted_comment_id -> Nullable<Int4>,
     }
@@ -734,6 +736,8 @@ diesel::table! {
         creator_vote -> Int4,
         #[max_length = 10]
         post_type -> Varchar,
+        #[max_length = 80]
+        slug -> Varchar,
     }
 }
 

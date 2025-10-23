@@ -17,6 +17,7 @@ use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
 use tinyboards_utils::{
     content_filter::ContentFilter, parser::{parse_markdown_opt, sanitize_html}, utils::custom_body_parsing,
+    slug::{generate_slug, ensure_unique_slug},
     TinyBoardsError,
 };
 use url::Url;
@@ -225,6 +226,35 @@ impl SubmitPost {
             ).into());
         }
 
+        // Generate slug from title
+        let base_slug = generate_slug(&title, Some(60));
+
+        // Ensure slug is unique within board context
+        use tinyboards_db::schema::posts;
+        use diesel::dsl::*;
+        use diesel_async::RunQueryDsl;
+
+        let unique_slug = ensure_unique_slug(&base_slug, |slug| {
+            // Check if slug already exists in this board
+            let pool = pool.clone();
+            let slug = slug.to_string();
+            let board_id = board.id;
+
+            tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async {
+                    let conn = &mut tinyboards_db::utils::get_conn(&pool).await.ok()?;
+                    let count: i64 = posts::table
+                        .filter(posts::board_id.eq(board_id))
+                        .filter(posts::slug.eq(&slug))
+                        .count()
+                        .get_result(conn)
+                        .await
+                        .ok()?;
+                    Some(count > 0)
+                })
+            }).unwrap_or(false)
+        });
+
         let post_form = PostForm {
             title: Some(title.clone()),
             url: url.map(|url| url.into()),
@@ -242,6 +272,7 @@ impl SubmitPost {
             featured_local: Some(false),
             type_: Some(determined_post_type.clone()),
             creator_vote: Some(if determined_post_type == "thread" { 0 } else { 1 }), // No self-vote for threads
+            slug: Some(unique_slug),
             ..Default::default()
         };
 

@@ -36,6 +36,7 @@ pub struct Comment {
     local: bool,
     creator_vote: i32,
     quoted_comment_id: Option<i32>,
+    slug: String,
     replies: Option<Vec<Self>>,
     #[graphql(skip)]
     counts: DbCommentAggregates,
@@ -169,6 +170,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             local: true,
             creator_vote: comment.creator_vote,
             quoted_comment_id: comment.quoted_comment_id,
+            slug: comment.slug,
             counts,
             replies: None,
         }
