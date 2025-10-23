@@ -15,7 +15,7 @@ pub struct ContentUpload {
     pub upload_id: i32,
     pub post_id: Option<i32>,
     pub comment_id: Option<i32>,
-    pub created_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub position: Option<i32>,
 }
 
@@ -35,7 +35,7 @@ pub struct ContentUploadView {
     pub upload_id: i32,
     pub post_id: Option<i32>,
     pub comment_id: Option<i32>,
-    pub created_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub position: Option<i32>,
     // Upload details
     pub file_name: String,

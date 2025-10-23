@@ -22,8 +22,8 @@ pub struct FlairTemplate {
     pub requires_approval: bool,
     pub display_order: i32,
     pub is_active: bool,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
+    pub updated: NaiveDateTime,
     pub created_by: i32,
     pub usage_count: i32,
 }

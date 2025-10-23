@@ -41,7 +41,7 @@ pub struct UserSettings {
     pub default_listing_type: i16,
     pub email_notifications_enabled: bool,
     pub interface_language: String,
-    pub updated_at: Option<String>,
+    pub updated: Option<String>,
 }
 
 impl From<tinyboards_db::models::user::user::UserSettings> for UserSettings {
@@ -57,7 +57,7 @@ impl From<tinyboards_db::models::user::user::UserSettings> for UserSettings {
             default_listing_type: settings.default_listing_type,
             email_notifications_enabled: settings.email_notifications_enabled,
             interface_language: settings.interface_language,
-            updated_at: settings.updated.map(|u| u.to_string()),
+            updated: settings.updated.map(|u| u.to_string()),
         }
     }
 }
@@ -75,8 +75,8 @@ pub struct User {
     bio: Option<String>,
     #[graphql(name = "bioHTML")]
     bio_html: Option<String>,
-    created_at: String,
-    updated_at: Option<String>,
+    creation_date: String,
+    updated: Option<String>,
     last_seen: String,
     avatar: Option<String>,
     banner: Option<String>,
@@ -208,6 +208,26 @@ impl User {
         } else {
             None
         }
+    }
+
+    /// Get flairs assigned to this user
+    pub async fn flairs(&self, ctx: &Context<'_>) -> Result<Vec<super::flair::UserFlair>> {
+        use tinyboards_db::{models::flair::user_flair::UserFlair as DbUserFlair, schema::user_flairs, utils::get_conn};
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+
+        let pool = ctx.data::<DbPool>()?;
+        let conn = &mut get_conn(pool).await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to get database connection"))?;
+
+        let user_flairs = user_flairs::table
+            .filter(user_flairs::user_id.eq(self.id))
+            .filter(user_flairs::is_approved.eq(true))
+            .load::<DbUserFlair>(conn)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load user flairs"))?;
+
+        Ok(user_flairs.into_iter().map(super::flair::UserFlair::from).collect())
     }
 
     pub async fn settings(&self, ctx: &Context<'_>) -> Option<&Settings> {
@@ -519,8 +539,8 @@ impl From<(DbUser, DbUserAggregates)> for User {
             display_name: user.display_name,
             bio: user.bio,
             bio_html: user.bio_html,
-            created_at: user.creation_date.to_string(),
-            updated_at: user.updated.map(|t| t.to_string()),
+            creation_date: user.creation_date.to_string(),
+            updated: user.updated.map(|t| t.to_string()),
             last_seen: user.last_seen.to_string(),
             avatar: user.avatar.map(|a| a.as_str().into()),
             banner: user.banner.map(|a| a.as_str().into()),

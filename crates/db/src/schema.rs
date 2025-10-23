@@ -256,7 +256,7 @@ diesel::table! {
         upload_id -> Int4,
         post_id -> Nullable<Int4>,
         comment_id -> Nullable<Int4>,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
         position -> Nullable<Int4>,
     }
 }
@@ -316,8 +316,8 @@ diesel::table! {
         trending_score -> Numeric,
         hot_rank -> Numeric,
         last_used_at -> Nullable<Timestamp>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        creation_date -> Timestamp,
+        updated -> Timestamp,
     }
 }
 
@@ -345,8 +345,8 @@ diesel::table! {
         requires_approval -> Bool,
         display_order -> Int4,
         is_active -> Bool,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        creation_date -> Timestamp,
+        updated -> Timestamp,
         created_by -> Int4,
         usage_count -> Int4,
     }
@@ -533,7 +533,7 @@ diesel::table! {
         board_id -> Nullable<Int4>,
         reason -> Nullable<Text>,
         metadata -> Nullable<Jsonb>,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
         expires_at -> Nullable<Timestamp>,
     }
 }
@@ -619,7 +619,7 @@ diesel::table! {
         custom_text_color -> Nullable<Varchar>,
         #[max_length = 7]
         custom_background_color -> Nullable<Varchar>,
-        assigned_at -> Timestamp,
+        creation_date -> Timestamp,
         assigned_by -> Int4,
         is_original_author -> Bool,
     }
@@ -920,7 +920,7 @@ diesel::table! {
         posts_last_week -> Int4,
         posts_last_month -> Int4,
         creation_date -> Timestamp,
-        updated_at -> Nullable<Timestamp>,
+        updated -> Nullable<Timestamp>,
     }
 }
 
@@ -930,7 +930,7 @@ diesel::table! {
         stream_id -> Int4,
         board_id -> Int4,
         include_all_posts -> Bool,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -939,7 +939,7 @@ diesel::table! {
         id -> Int4,
         stream_id -> Int4,
         board_id -> Int4,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -948,7 +948,7 @@ diesel::table! {
         id -> Int4,
         stream_id -> Int4,
         user_id -> Int4,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -958,7 +958,7 @@ diesel::table! {
         stream_id -> Int4,
         board_id -> Int4,
         flair_id -> Int4,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -967,7 +967,7 @@ diesel::table! {
         id -> Int4,
         stream_id -> Int4,
         user_id -> Int4,
-        followed_at -> Timestamp,
+        creation_date -> Timestamp,
         added_to_navbar -> Bool,
         navbar_position -> Nullable<Int4>,
     }
@@ -979,7 +979,7 @@ diesel::table! {
         stream_id -> Int4,
         #[max_length = 50]
         tag -> Varchar,
-        created_at -> Timestamp,
+        creation_date -> Timestamp,
     }
 }
 
@@ -1015,8 +1015,8 @@ diesel::table! {
         time_range -> Nullable<Varchar>,
         show_nsfw -> Bool,
         max_posts_per_board -> Nullable<Int4>,
-        created_at -> Timestamp,
-        updated_at -> Nullable<Timestamp>,
+        creation_date -> Timestamp,
+        updated -> Nullable<Timestamp>,
         last_viewed_at -> Nullable<Timestamp>,
     }
 }
@@ -1084,8 +1084,8 @@ diesel::table! {
         filter_mode -> Varchar,
         included_flair_ids -> Array<Nullable<Int4>>,
         excluded_flair_ids -> Array<Nullable<Int4>>,
-        created_at -> Timestamp,
-        updated_at -> Timestamp,
+        creation_date -> Timestamp,
+        updated -> Timestamp,
     }
 }
 
@@ -1104,7 +1104,7 @@ diesel::table! {
         is_approved -> Bool,
         approved_at -> Nullable<Timestamp>,
         approved_by -> Nullable<Int4>,
-        assigned_at -> Timestamp,
+        creation_date -> Timestamp,
         is_self_assigned -> Bool,
     }
 }

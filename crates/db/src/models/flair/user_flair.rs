@@ -16,7 +16,7 @@ pub struct UserFlair {
     pub is_approved: bool,
     pub approved_at: Option<NaiveDateTime>,
     pub approved_by: Option<i32>,
-    pub assigned_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub is_self_assigned: bool,
 }
 

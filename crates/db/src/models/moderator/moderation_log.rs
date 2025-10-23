@@ -18,7 +18,7 @@ pub struct ModerationLog {
     pub board_id: Option<i32>,
     pub reason: Option<String>,
     pub metadata: Option<serde_json::Value>,
-    pub created_at: chrono::NaiveDateTime,
+    pub creation_date: chrono::NaiveDateTime,
     pub expires_at: Option<chrono::NaiveDateTime>,
 }
 
@@ -32,7 +32,7 @@ pub struct ModerationLogForm {
     pub board_id: Option<i32>,
     pub reason: Option<String>,
     pub metadata: Option<serde_json::Value>,
-    pub created_at: Option<chrono::NaiveDateTime>,
+    pub creation_date: Option<chrono::NaiveDateTime>,
     pub expires_at: Option<chrono::NaiveDateTime>,
 }
 
@@ -156,7 +156,7 @@ impl ModerationLog {
 
         let logs = diesel_async::RunQueryDsl::load(
             query
-                .order(moderation_log::created_at.desc())
+                .order(moderation_log::creation_date.desc())
                 .limit(limit as i64)
                 .offset(offset as i64),
             conn
@@ -187,7 +187,7 @@ impl ModerationLog {
             board_id,
             reason,
             metadata,
-            created_at: Some(chrono::Utc::now().naive_utc()),
+            creation_date: Some(chrono::Utc::now().naive_utc()),
             expires_at,
         };
 
@@ -225,7 +225,7 @@ impl ModerationLog {
 
         let actions_today: i64 = diesel_async::RunQueryDsl::get_result(
             today_query
-                .filter(moderation_log::created_at.ge(today))
+                .filter(moderation_log::creation_date.ge(today))
                 .count(),
             conn
         )
@@ -239,7 +239,7 @@ impl ModerationLog {
 
         let actions_this_week: i64 = diesel_async::RunQueryDsl::get_result(
             week_query
-                .filter(moderation_log::created_at.ge(week_ago))
+                .filter(moderation_log::creation_date.ge(week_ago))
                 .count(),
             conn
         )

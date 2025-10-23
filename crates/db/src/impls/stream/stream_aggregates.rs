@@ -18,7 +18,7 @@ impl StreamAggregates {
                 stream_aggregates::board_subscription_count.eq(0i32),
                 stream_aggregates::flair_subscription_count.eq(0i32),
                 stream_aggregates::total_subscription_count.eq(0i32),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -74,7 +74,7 @@ impl StreamAggregates {
                 stream_aggregates::board_subscription_count.eq(board_count),
                 stream_aggregates::flair_subscription_count.eq(flair_count),
                 stream_aggregates::total_subscription_count.eq(total_count),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -87,7 +87,7 @@ impl StreamAggregates {
         diesel::update(stream_aggregates::table.filter(stream_aggregates::stream_id.eq(stream_id)))
             .set((
                 stream_aggregates::follower_count.eq(stream_aggregates::follower_count + 1),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -100,7 +100,7 @@ impl StreamAggregates {
         diesel::update(stream_aggregates::table.filter(stream_aggregates::stream_id.eq(stream_id)))
             .set((
                 stream_aggregates::follower_count.eq(stream_aggregates::follower_count - 1),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -119,7 +119,7 @@ impl StreamAggregates {
                     .eq(stream_aggregates::board_subscription_count + 1),
                 stream_aggregates::total_subscription_count
                     .eq(stream_aggregates::total_subscription_count + 1),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -138,7 +138,7 @@ impl StreamAggregates {
                     .eq(stream_aggregates::board_subscription_count - 1),
                 stream_aggregates::total_subscription_count
                     .eq(stream_aggregates::total_subscription_count - 1),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -157,7 +157,7 @@ impl StreamAggregates {
                     .eq(stream_aggregates::flair_subscription_count + 1),
                 stream_aggregates::total_subscription_count
                     .eq(stream_aggregates::total_subscription_count + 1),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -176,7 +176,7 @@ impl StreamAggregates {
                     .eq(stream_aggregates::flair_subscription_count - 1),
                 stream_aggregates::total_subscription_count
                     .eq(stream_aggregates::total_subscription_count - 1),
-                stream_aggregates::updated_at.eq(naive_now()),
+                stream_aggregates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await

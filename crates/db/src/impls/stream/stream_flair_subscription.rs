@@ -88,7 +88,7 @@ impl StreamFlairSubscription {
 
         stream_flair_subscriptions::table
             .filter(dsl::stream_id.eq(stream_id))
-            .order_by(dsl::created_at.desc())
+            .order_by(dsl::creation_date.desc())
             .load::<Self>(conn)
             .await
     }
@@ -105,7 +105,7 @@ impl StreamFlairSubscription {
         stream_flair_subscriptions::table
             .filter(dsl::stream_id.eq(stream_id))
             .filter(dsl::board_id.eq(board_id))
-            .order_by(dsl::created_at.desc())
+            .order_by(dsl::creation_date.desc())
             .load::<Self>(conn)
             .await
     }

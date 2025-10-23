@@ -21,8 +21,8 @@ pub struct Stream {
     pub time_range: Option<String>,
     pub show_nsfw: bool,
     pub max_posts_per_board: Option<i32>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: Option<NaiveDateTime>,
+    pub creation_date: NaiveDateTime,
+    pub updated: Option<NaiveDateTime>,
     pub last_viewed_at: Option<NaiveDateTime>,
 }
 
@@ -61,7 +61,7 @@ pub struct UpdateStreamForm {
     pub time_range: Option<Option<String>>,
     pub show_nsfw: Option<bool>,
     pub max_posts_per_board: Option<Option<i32>>,
-    pub updated_at: Option<Option<NaiveDateTime>>,
+    pub updated: Option<Option<NaiveDateTime>>,
     pub last_viewed_at: Option<Option<NaiveDateTime>>,
 }
 

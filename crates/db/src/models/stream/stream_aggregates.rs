@@ -19,7 +19,7 @@ pub struct StreamAggregates {
     pub posts_last_week: i32,
     pub posts_last_month: i32,
     pub creation_date: NaiveDateTime,
-    pub updated_at: Option<NaiveDateTime>,
+    pub updated: Option<NaiveDateTime>,
 }
 
 /// Form for updating stream aggregates
@@ -34,7 +34,7 @@ pub struct UpdateStreamAggregatesForm {
     pub posts_last_day: Option<i32>,
     pub posts_last_week: Option<i32>,
     pub posts_last_month: Option<i32>,
-    pub updated_at: Option<Option<NaiveDateTime>>,
+    pub updated: Option<Option<NaiveDateTime>>,
 }
 
 /// Statistics summary for a stream

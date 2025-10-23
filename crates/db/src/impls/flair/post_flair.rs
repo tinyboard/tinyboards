@@ -92,7 +92,7 @@ impl PostFlair {
         }
 
         query
-            .order_by(post_flairs::assigned_at.desc())
+            .order_by(post_flairs::creation_date.desc())
             .load::<Self>(conn)
             .await
     }

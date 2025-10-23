@@ -60,7 +60,7 @@ impl FlairAggregates {
         // Get last used date (max of post and user flair assignment dates)
         let last_post_date = post_flairs::table
             .filter(post_flairs::flair_template_id.eq(template_id))
-            .select(diesel::dsl::max(post_flairs::assigned_at))
+            .select(diesel::dsl::max(post_flairs::creation_date))
             .first::<Option<chrono::NaiveDateTime>>(conn)
             .await
             .ok()
@@ -69,7 +69,7 @@ impl FlairAggregates {
         let last_user_date = user_flairs::table
             .filter(user_flairs::flair_template_id.eq(template_id))
             .filter(user_flairs::is_approved.eq(true))
-            .select(diesel::dsl::max(user_flairs::assigned_at))
+            .select(diesel::dsl::max(user_flairs::creation_date))
             .first::<Option<chrono::NaiveDateTime>>(conn)
             .await
             .ok()

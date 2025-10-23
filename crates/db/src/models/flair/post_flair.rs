@@ -12,7 +12,7 @@ pub struct PostFlair {
     pub custom_text: Option<String>,
     pub custom_text_color: Option<String>,
     pub custom_background_color: Option<String>,
-    pub assigned_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub assigned_by: i32,
     pub is_original_author: bool,
 }

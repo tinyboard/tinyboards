@@ -74,7 +74,7 @@ impl FlairTemplate {
         diesel::update(flair_templates::table.find(template_id))
             .set((
                 flair_templates::is_active.eq(false),
-                flair_templates::updated_at.eq(naive_now()),
+                flair_templates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -90,7 +90,7 @@ impl FlairTemplate {
         diesel::update(flair_templates::table.find(template_id))
             .set((
                 flair_templates::display_order.eq(new_order),
-                flair_templates::updated_at.eq(naive_now()),
+                flair_templates::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await

@@ -34,11 +34,11 @@ pub struct Post {
     pub board_id: i32,
     is_removed: bool,
     is_locked: bool,
-    created_at: String,
+    creation_date: String,
     is_active: bool,
     #[graphql(name = "isNSFW")]
     is_nsfw: bool,
-    updated_at: Option<String>,
+    updated: Option<String>,
     image: Option<String>,
     local: bool,
     featured_board: bool,
@@ -176,6 +176,18 @@ impl Post {
         } else {
             Ok(None)
         }
+    }
+
+    /// Get flairs assigned to this post
+    pub async fn flairs(&self, ctx: &Context<'_>) -> Result<Vec<super::flair::PostFlair>> {
+        use tinyboards_db::models::flair::post_flair::PostFlair as DbPostFlair;
+        let pool = ctx.data::<DbPool>()?;
+
+        let post_flairs = DbPostFlair::get_for_posts(pool, vec![self.id])
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to load post flairs"))?;
+
+        Ok(post_flairs.into_iter().map(super::flair::PostFlair::from).collect())
     }
 
     pub async fn participants(&self, ctx: &Context<'_>) -> Result<Vec<User>> {
@@ -365,10 +377,10 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             board_id: post.board_id,
             is_removed: post.is_removed,
             is_locked: post.is_locked,
-            created_at: post.creation_date.to_string(),
+            creation_date: post.creation_date.to_string(),
             is_active: post.is_deleted,
             is_nsfw: post.is_nsfw,
-            updated_at: post.updated.map(|t| t.to_string()),
+            updated: post.updated.map(|t| t.to_string()),
             image: post.image.map(|i| i.as_str().into()),
             local: true,
             featured_board: post.featured_board,
@@ -422,10 +434,10 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             board_id: post.board_id,
             is_removed: post.is_removed,
             is_locked: post.is_locked,
-            created_at: post.creation_date.to_string(),
+            creation_date: post.creation_date.to_string(),
             is_active: post.is_deleted,
             is_nsfw: post.is_nsfw,
-            updated_at: post.updated.map(|t| t.to_string()),
+            updated: post.updated.map(|t| t.to_string()),
             image: post.image.map(|i| i.as_str().into()),
             local: true,
             featured_board: post.featured_board,

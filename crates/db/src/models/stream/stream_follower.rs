@@ -11,7 +11,7 @@ pub struct StreamFollower {
     pub id: i32,
     pub stream_id: i32,
     pub user_id: i32,
-    pub followed_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
     pub added_to_navbar: bool,
     pub navbar_position: Option<i32>,
 }

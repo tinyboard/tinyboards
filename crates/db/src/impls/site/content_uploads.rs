@@ -78,7 +78,7 @@ impl ContentUpload {
                 content_uploads::upload_id,
                 content_uploads::post_id,
                 content_uploads::comment_id,
-                content_uploads::created_at,
+                content_uploads::creation_date,
                 content_uploads::position,
                 uploads::file_name,
                 uploads::original_name,
@@ -89,13 +89,13 @@ impl ContentUpload {
             .await
             .map(|rows| {
                 rows.into_iter()
-                    .map(|(id, upload_id, post_id, comment_id, created_at, position, file_name, original_name, upload_url, size)| {
+                    .map(|(id, upload_id, post_id, comment_id, creation_date, position, file_name, original_name, upload_url, size)| {
                         ContentUploadView {
                             id,
                             upload_id,
                             post_id,
                             comment_id,
-                            created_at,
+                            creation_date,
                             position,
                             file_name,
                             original_name,
@@ -122,7 +122,7 @@ impl ContentUpload {
                 content_uploads::upload_id,
                 content_uploads::post_id,
                 content_uploads::comment_id,
-                content_uploads::created_at,
+                content_uploads::creation_date,
                 content_uploads::position,
                 uploads::file_name,
                 uploads::original_name,
@@ -133,13 +133,13 @@ impl ContentUpload {
             .await
             .map(|rows| {
                 rows.into_iter()
-                    .map(|(id, upload_id, post_id, comment_id, created_at, position, file_name, original_name, upload_url, size)| {
+                    .map(|(id, upload_id, post_id, comment_id, creation_date, position, file_name, original_name, upload_url, size)| {
                         ContentUploadView {
                             id,
                             upload_id,
                             post_id,
                             comment_id,
-                            created_at,
+                            creation_date,
                             position,
                             file_name,
                             original_name,

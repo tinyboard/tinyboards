@@ -22,6 +22,6 @@ pub struct FlairAggregates {
     pub trending_score: BigDecimal,
     pub hot_rank: BigDecimal,
     pub last_used_at: Option<NaiveDateTime>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
+    pub updated: NaiveDateTime,
 }

@@ -123,7 +123,7 @@ impl Stream {
 
         streams
             .filter(creator_id.eq(user_id))
-            .order_by(created_at.desc())
+            .order_by(creation_date.desc())
             .load::<Self>(conn)
             .await
     }
@@ -140,7 +140,7 @@ impl Stream {
         let mut query = streams
             .filter(is_public.eq(true))
             .filter(is_discoverable.eq(true))
-            .order_by(created_at.desc())
+            .order_by(creation_date.desc())
             .into_boxed();
 
         if let Some(lim) = limit {
@@ -169,7 +169,7 @@ impl Stream {
             .set((
                 is_public.eq(public),
                 share_token.eq(token),
-                updated_at.eq(naive_now()),
+                updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -182,7 +182,7 @@ impl Stream {
         use crate::schema::streams::dsl::*;
 
         diesel::update(streams.find(stream_id))
-            .set((share_token.eq(Some(new_token)), updated_at.eq(naive_now())))
+            .set((share_token.eq(Some(new_token)), updated.eq(naive_now())))
             .get_result::<Self>(conn)
             .await
     }
@@ -280,7 +280,7 @@ impl Stream {
 
         let mut query = streams
             .filter(creator_id.eq(user_id))
-            .order_by(created_at.desc())
+            .order_by(creation_date.desc())
             .into_boxed();
 
         if let Some(lim) = limit {
@@ -310,8 +310,8 @@ impl Stream {
 
         // Apply sorting
         query = match sort_by.as_deref() {
-            Some("old") => query.order_by(created_at.asc()),
-            Some("new") | None | _ => query.order_by(created_at.desc()),
+            Some("old") => query.order_by(creation_date.asc()),
+            Some("new") | None | _ => query.order_by(creation_date.desc()),
         };
 
         if let Some(lim) = limit {
@@ -356,7 +356,7 @@ impl Stream {
             );
         }
 
-        query = query.order_by(created_at.desc());
+        query = query.order_by(creation_date.desc());
 
         if let Some(lim) = limit {
             query = query.limit(lim);
@@ -396,7 +396,7 @@ impl Stream {
         diesel::update(streams.find(stream_id))
             .set((
                 share_token.eq(token),
-                updated_at.eq(naive_now()),
+                updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await

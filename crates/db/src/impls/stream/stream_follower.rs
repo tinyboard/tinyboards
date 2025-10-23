@@ -62,7 +62,7 @@ impl StreamFollower {
 
         stream_followers::table
             .filter(dsl::user_id.eq(user_id))
-            .order_by(dsl::followed_at.desc())
+            .order_by(dsl::creation_date.desc())
             .load::<Self>(conn)
             .await
     }
@@ -74,7 +74,7 @@ impl StreamFollower {
 
         stream_followers::table
             .filter(dsl::stream_id.eq(stream_id))
-            .order_by(dsl::followed_at.desc())
+            .order_by(dsl::creation_date.desc())
             .load::<Self>(conn)
             .await
     }
@@ -236,7 +236,7 @@ impl StreamFollower {
         let mut query = stream_followers::table
             .filter(dsl::user_id.eq(user_id))
             .select(dsl::stream_id)
-            .order_by(dsl::followed_at.desc())
+            .order_by(dsl::creation_date.desc())
             .into_boxed();
 
         if let Some(lim) = limit {
@@ -278,7 +278,7 @@ impl StreamFollower {
 
         let mut query = stream_followers::table
             .filter(dsl::stream_id.eq(stream_id))
-            .order_by(dsl::followed_at.desc())
+            .order_by(dsl::creation_date.desc())
             .into_boxed();
 
         if let Some(lim) = limit {

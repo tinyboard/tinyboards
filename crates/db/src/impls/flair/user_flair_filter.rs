@@ -112,7 +112,7 @@ impl UserFlairFilter {
         diesel::update(user_flair_filters::table.find(filter.id))
             .set((
                 user_flair_filters::included_flair_ids.eq(current_ids),
-                user_flair_filters::updated_at.eq(naive_now()),
+                user_flair_filters::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await
@@ -146,7 +146,7 @@ impl UserFlairFilter {
         diesel::update(user_flair_filters::table.find(filter.id))
             .set((
                 user_flair_filters::excluded_flair_ids.eq(current_ids),
-                user_flair_filters::updated_at.eq(naive_now()),
+                user_flair_filters::updated.eq(naive_now()),
             ))
             .get_result::<Self>(conn)
             .await

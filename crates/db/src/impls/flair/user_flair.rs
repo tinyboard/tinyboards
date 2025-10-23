@@ -153,7 +153,7 @@ impl UserFlair {
         }
 
         query
-            .order_by(user_flairs::assigned_at.asc())
+            .order_by(user_flairs::creation_date.asc())
             .load::<Self>(conn)
             .await
     }
@@ -182,7 +182,7 @@ impl UserFlair {
         }
 
         query
-            .order_by(user_flairs::assigned_at.desc())
+            .order_by(user_flairs::creation_date.desc())
             .load::<Self>(conn)
             .await
     }

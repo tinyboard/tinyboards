@@ -21,8 +21,8 @@ pub struct UserFlairFilter {
     pub filter_mode: String,
     pub included_flair_ids: Vec<Option<i32>>,
     pub excluded_flair_ids: Vec<Option<i32>>,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub creation_date: NaiveDateTime,
+    pub updated: NaiveDateTime,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
