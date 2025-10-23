@@ -4,10 +4,8 @@ use tinyboards_db::{
         notifications::Notification as DbNotification,
         notification_settings::{NotificationSettings as DbNotificationSettings, NotificationSettingsForm},
     },
-    utils::{DbPool, get_conn},
+    utils::DbPool,
 };
-use diesel::ExpressionMethods;
-use diesel_async::RunQueryDsl;
 use tinyboards_utils::TinyBoardsError;
 
 use crate::LoggedInUser;
@@ -65,7 +63,7 @@ impl NotificationMutations {
         notification_id: i32,
     ) -> Result<MarkNotificationsReadResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         match DbNotification::mark_as_read(pool, notification_id, user.id).await {
             Ok(_) => Ok(MarkNotificationsReadResponse {
@@ -82,7 +80,7 @@ impl NotificationMutations {
         ctx: &Context<'_>,
     ) -> Result<MarkNotificationsReadResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let marked_count = DbNotification::mark_all_as_read(pool, user.id).await? as i32;
 
@@ -100,7 +98,7 @@ impl NotificationMutations {
         mark_all: Option<bool>,
     ) -> Result<MarkNotificationsReadResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let mark_all = mark_all.unwrap_or(false);
 
@@ -136,7 +134,7 @@ impl NotificationMutations {
         notification_id: i32,
     ) -> Result<DeleteNotificationResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         match DbNotification::delete(pool, notification_id, user.id).await {
             Ok(deleted_count) => {
@@ -157,7 +155,7 @@ impl NotificationMutations {
         input: UpdateNotificationSettingsInput,
     ) -> Result<UpdateNotificationSettingsResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let form = NotificationSettingsForm {
             user_id: user.id,
@@ -170,7 +168,7 @@ impl NotificationMutations {
             moderator_actions_enabled: input.moderator_actions_enabled,
             system_notifications_enabled: input.system_notifications_enabled,
             created: None, // Don't update creation time
-            updated: None, // Will be set automatically in the implementation
+            updated: Some(Some(chrono::Utc::now().naive_utc())), // Will be set automatically in the implementation
         };
 
         match DbNotificationSettings::update(pool, user.id, &form).await {

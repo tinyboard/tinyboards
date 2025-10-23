@@ -20,9 +20,9 @@ pub struct QueryUser;
 
 #[Object]
 impl QueryUser {
-    pub async fn user(&self, context: &Context<'_>, name: String) -> Result<User> {
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+    pub async fn user(&self, ctx: &Context<'_>, name: String) -> Result<User> {
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 
@@ -53,15 +53,15 @@ impl QueryUser {
 
     pub async fn list_users(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         search_term: Option<String>,
         listing_type: Option<UserListingType>,
         sort: Option<UserSortType>,
         page: Option<i64>,
         limit: Option<i64>,
     ) -> Result<Vec<User>> {
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 
@@ -88,7 +88,7 @@ impl QueryUser {
     /// Returns up to 10 matching usernames
     pub async fn search_usernames(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         query: String,
         limit: Option<i32>,
     ) -> Result<Vec<String>> {
@@ -96,7 +96,7 @@ impl QueryUser {
         use diesel::prelude::*;
         use diesel_async::RunQueryDsl;
 
-        let pool = context.data::<DbPool>()?;
+        let pool = ctx.data::<DbPool>()?;
 
         // Optional: require authentication
         // let _v = context.data::<LoggedInUser>()?.require_user()?;
@@ -133,7 +133,7 @@ impl QueryUser {
     /// Get list of users who were online in the last N minutes
     pub async fn list_online_users(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         #[graphql(desc = "Minutes to look back (default: 10)")] minutes: Option<i64>,
         #[graphql(desc = "Maximum number of users to return")] limit: Option<i64>,
     ) -> Result<Vec<User>> {
@@ -143,8 +143,8 @@ impl QueryUser {
         use tinyboards_db::schema::users::dsl::*;
         use tinyboards_db::aggregates::structs::UserAggregates;
 
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 
@@ -191,11 +191,11 @@ impl QueryUser {
     /// Get list of followers for a user
     pub async fn user_followers(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         user_id: i32,
     ) -> Result<Vec<User>> {
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 
@@ -225,11 +225,11 @@ impl QueryUser {
     /// Get list of users that a user is following
     pub async fn user_following(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         user_id: i32,
     ) -> Result<Vec<User>> {
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 
@@ -259,10 +259,10 @@ impl QueryUser {
     /// Get pending follow requests for the current user
     pub async fn pending_follow_requests(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
     ) -> Result<Vec<User>> {
-        let pool = context.data::<DbPool>()?;
-        let user = context.data::<LoggedInUser>()?.require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let pending_requests = UserSubscriber::get_pending_requests(pool, user.id)
             .await
@@ -290,11 +290,11 @@ impl QueryUser {
     /// Check if current user is following another user
     pub async fn is_following_user(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         user_id: i32,
     ) -> Result<bool> {
-        let pool = context.data::<DbPool>()?;
-        let user = context.data::<LoggedInUser>()?.require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let is_following = UserSubscriber::is_following(pool, user.id, user_id)
             .await
@@ -304,9 +304,9 @@ impl QueryUser {
     }
 
     /// Get current user's private settings
-    pub async fn get_user_settings(&self, context: &Context<'_>) -> Result<UserSettings> {
-        let pool = context.data::<DbPool>()?;
-        let user = context.data::<LoggedInUser>()?.require_user_not_banned()?;
+    pub async fn get_user_settings(&self, ctx: &Context<'_>) -> Result<UserSettings> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         // Use the existing UserSettings struct that includes private fields
         let db_user_settings = DbUserSettings {
@@ -329,13 +329,13 @@ impl QueryUser {
     /// Get saved posts for authenticated user with pagination
     pub async fn get_user_saved_posts(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         limit: Option<i64>,
         page: Option<i64>,
         sort: Option<SortType>,
     ) -> Result<Vec<Post>> {
-        let pool = context.data::<DbPool>()?;
-        let user = context.data::<LoggedInUser>()?.require_user_not_banned()?;
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let limit = limit.unwrap_or(10).min(50); // Default 10, max 50
         let page = page.unwrap_or(1).max(1);
@@ -410,14 +410,14 @@ impl QueryUser {
     /// Get user's post history with pagination
     pub async fn get_user_post_history(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         username: String,
         limit: Option<i64>,
         page: Option<i64>,
         sort: Option<SortType>,
     ) -> Result<Vec<Post>> {
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 
@@ -496,14 +496,14 @@ impl QueryUser {
     /// Get user's comment history with pagination
     pub async fn get_user_comment_history(
         &self,
-        context: &Context<'_>,
+        ctx: &Context<'_>,
         username: String,
         limit: Option<i64>,
         page: Option<i64>,
         sort: Option<SortType>,
     ) -> Result<Vec<Comment>> {
-        let pool = context.data::<DbPool>()?;
-        let v_opt = context.data::<LoggedInUser>()?.inner();
+        let pool = ctx.data::<DbPool>()?;
+        let v_opt = ctx.data::<LoggedInUser>()?.inner();
 
         check_private_instance(v_opt, pool).await?;
 

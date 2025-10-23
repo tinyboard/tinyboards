@@ -1,6 +1,7 @@
 pub mod board;
 pub mod comment;
 pub mod emoji;
+pub mod flair;
 pub mod message;
 pub mod moderator;
 pub mod notification;
@@ -8,4 +9,5 @@ pub mod post;
 pub mod reaction;
 pub mod secret;
 pub mod site;
+pub mod stream;
 pub mod user;

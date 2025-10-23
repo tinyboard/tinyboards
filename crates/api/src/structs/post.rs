@@ -34,16 +34,16 @@ pub struct Post {
     pub board_id: i32,
     is_removed: bool,
     is_locked: bool,
-    creation_date: String,
-    is_deleted: bool,
+    created_at: String,
+    is_active: bool,
     #[graphql(name = "isNSFW")]
     is_nsfw: bool,
-    updated: Option<String>,
+    updated_at: Option<String>,
     image: Option<String>,
     local: bool,
     featured_board: bool,
     featured_local: bool,
-    alt_text: Option<String>,
+    alt_text_display: Option<String>,
     embed_title: Option<String>,
     embed_description: Option<String>,
     embed_video_url: Option<String>,
@@ -200,7 +200,7 @@ impl Post {
         //no_tree: Option<bool>,
         search: Option<String>,
         top_comment_id: Option<i32>,
-        context: Option<u16>,
+        context_display: Option<u16>,
         include_deleted: Option<bool>,
         include_removed: Option<bool>,
         max_depth: Option<i32>,
@@ -252,7 +252,7 @@ impl Post {
                 DbComment::get_with_replies_and_counts(
                     pool,
                     top_comment_id,
-                    context,
+                    context_display,
                     sort.into(),
                     user_id_join,
                     Some(self.id),
@@ -298,7 +298,7 @@ impl Post {
         if !is_admin {
             for comment in comments
                 .iter_mut()
-                .filter(|comment| comment.is_removed || comment.is_deleted)
+                .filter(|comment| comment.is_removed || !comment.is_active)
             {
                 comment.censor(user_id_join, is_admin, is_mod);
             }
@@ -316,7 +316,7 @@ impl Post {
 impl Censorable for Post {
     fn censor(&mut self, my_user_id: i32, is_admin: bool, is_mod: bool) {
         // do nothing
-        if !(self.is_removed || self.is_deleted) {
+        if !(self.is_removed || self.is_active) {
             return;
         }
 
@@ -330,7 +330,7 @@ impl Censorable for Post {
             return;
         }
 
-        let obscure_text = if self.is_deleted {
+        let obscure_text = if self.is_active {
             "[ deleted by creator ]"
         } else {
             "[ removed by mod ]"
@@ -338,7 +338,7 @@ impl Censorable for Post {
         .to_string();
 
         // more strict censoring for deleted posts
-        if self.is_deleted {
+        if self.is_active {
             self.title = obscure_text.clone();
             self.creator_id = -1;
         }
@@ -365,15 +365,15 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             board_id: post.board_id,
             is_removed: post.is_removed,
             is_locked: post.is_locked,
-            creation_date: post.creation_date.to_string(),
-            is_deleted: post.is_deleted,
+            created_at: post.creation_date.to_string(),
+            is_active: post.is_deleted,
             is_nsfw: post.is_nsfw,
-            updated: post.updated.map(|t| t.to_string()),
+            updated_at: post.updated.map(|t| t.to_string()),
             image: post.image.map(|i| i.as_str().into()),
             local: true,
             featured_board: post.featured_board,
             featured_local: post.featured_local,
-            alt_text: post.alt_text,
+            alt_text_display: post.alt_text,
             embed_title: post.embed_title,
             embed_description: post.embed_description,
             embed_video_url: post.embed_video_url.map(|url| url.as_str().into()),
@@ -422,10 +422,10 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             board_id: post.board_id,
             is_removed: post.is_removed,
             is_locked: post.is_locked,
-            creation_date: post.creation_date.to_string(),
-            is_deleted: post.is_deleted,
+            created_at: post.creation_date.to_string(),
+            is_active: post.is_deleted,
             is_nsfw: post.is_nsfw,
-            updated: post.updated.map(|t| t.to_string()),
+            updated_at: post.updated.map(|t| t.to_string()),
             image: post.image.map(|i| i.as_str().into()),
             local: true,
             featured_board: post.featured_board,

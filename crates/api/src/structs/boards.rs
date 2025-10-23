@@ -27,9 +27,9 @@ pub struct Board {
     name: String,
     title: String,
     description: Option<String>,
-    creation_date: String,
-    updated: Option<String>,
-    is_deleted: bool,
+    created_at: String,
+    updated_at: Option<String>,
+    is_active: bool,
     #[graphql(name = "isNSFW")]
     is_nsfw: bool,
     moderators_url: Option<String>,
@@ -193,7 +193,7 @@ impl Board {
             None => -1,
         };
         // If the board is banned (or deleted), only admins can view its posts
-        let can_view_posts = if self.is_removed || self.is_deleted {
+        let can_view_posts = if self.is_removed || self.is_active {
             match v_opt {
                 Some(v) => v.has_permission(AdminPerms::Boards),
                 None => false,
@@ -231,9 +231,9 @@ impl From<(DbBoard, DbBoardAggregates)> for Board {
             icon: board.icon.map(|a| a.as_str().into()),
             banner: board.banner.map(|a| a.as_str().into()),
             description: board.description,
-            creation_date: board.creation_date.to_string(),
-            updated: board.updated.map(|t| t.to_string()),
-            is_deleted: board.is_deleted,
+            created_at: board.creation_date.to_string(),
+            updated_at: board.updated.map(|t| t.to_string()),
+            is_active: board.is_deleted,
             is_removed: board.is_removed,
             is_nsfw: board.is_nsfw,
             moderators_url: board.moderators_url.map(|a| a.as_str().into()),

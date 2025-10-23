@@ -14,7 +14,7 @@ lazy_static::lazy_static! {
 pub struct EmojiReplacement {
     pub shortcode: String,
     pub image_url: String,
-    pub alt_text: String,
+    pub alt_text_display: String,
 }
 
 pub struct EmojiParser {
@@ -34,7 +34,7 @@ impl EmojiParser {
                 EmojiReplacement {
                     shortcode: emoji.shortcode,
                     image_url: emoji.image_url.to_string(),
-                    alt_text: emoji.alt_text,
+                    alt_text_display: emoji.alt_text,
                 },
             );
         }
@@ -308,7 +308,7 @@ mod tests {
             EmojiReplacement {
                 shortcode: "test".to_string(),
                 image_url: "https://example.com/test.png".to_string(),
-                alt_text: "Test emoji".to_string(),
+                alt_text_display: "Test emoji".to_string(),
             },
         );
         emoji_map.insert(
@@ -316,7 +316,7 @@ mod tests {
             EmojiReplacement {
                 shortcode: "smile".to_string(),
                 image_url: "https://example.com/smile.png".to_string(),
-                alt_text: "Smile emoji".to_string(),
+                alt_text_display: "Smile emoji".to_string(),
             },
         );
 

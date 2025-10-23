@@ -300,6 +300,59 @@ diesel::table! {
 }
 
 diesel::table! {
+    flair_aggregates (id) {
+        id -> Int4,
+        flair_template_id -> Int4,
+        total_usage_count -> Int4,
+        post_usage_count -> Int4,
+        user_usage_count -> Int4,
+        active_user_count -> Int4,
+        usage_last_day -> Int4,
+        usage_last_week -> Int4,
+        usage_last_month -> Int4,
+        avg_post_score -> Numeric,
+        total_post_comments -> Int4,
+        total_post_score -> Int4,
+        trending_score -> Numeric,
+        hot_rank -> Numeric,
+        last_used_at -> Nullable<Timestamp>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    flair_templates (id) {
+        id -> Int4,
+        board_id -> Int4,
+        #[max_length = 10]
+        flair_type -> Varchar,
+        #[max_length = 100]
+        template_name -> Varchar,
+        #[max_length = 50]
+        template_key -> Nullable<Varchar>,
+        #[max_length = 64]
+        text_display -> Varchar,
+        #[max_length = 7]
+        text_color -> Varchar,
+        #[max_length = 7]
+        background_color -> Varchar,
+        style_config -> Jsonb,
+        emoji_ids -> Array<Nullable<Int4>>,
+        mod_only -> Bool,
+        is_editable -> Bool,
+        max_text_length -> Int4,
+        requires_approval -> Bool,
+        display_order -> Int4,
+        is_active -> Bool,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        created_by -> Int4,
+        usage_count -> Int4,
+    }
+}
+
+diesel::table! {
     language (id) {
         id -> Int4,
         #[max_length = 3]
@@ -552,6 +605,23 @@ diesel::table! {
         board_id -> Int4,
         creator_id -> Int4,
         controversy_rank -> Float8,
+    }
+}
+
+diesel::table! {
+    post_flairs (id) {
+        id -> Int4,
+        post_id -> Int4,
+        flair_template_id -> Int4,
+        #[max_length = 64]
+        custom_text -> Nullable<Varchar>,
+        #[max_length = 7]
+        custom_text_color -> Nullable<Varchar>,
+        #[max_length = 7]
+        custom_background_color -> Nullable<Varchar>,
+        assigned_at -> Timestamp,
+        assigned_by -> Int4,
+        is_original_author -> Bool,
     }
 }
 
@@ -839,6 +909,119 @@ diesel::table! {
 }
 
 diesel::table! {
+    stream_aggregates (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        flair_subscription_count -> Int4,
+        board_subscription_count -> Int4,
+        total_subscription_count -> Int4,
+        follower_count -> Int4,
+        posts_last_day -> Int4,
+        posts_last_week -> Int4,
+        posts_last_month -> Int4,
+        creation_date -> Timestamp,
+        updated_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    stream_board_subscriptions (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        board_id -> Int4,
+        include_all_posts -> Bool,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    stream_excluded_boards (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        board_id -> Int4,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    stream_excluded_users (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        user_id -> Int4,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    stream_flair_subscriptions (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        board_id -> Int4,
+        flair_id -> Int4,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    stream_followers (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        user_id -> Int4,
+        followed_at -> Timestamp,
+        added_to_navbar -> Bool,
+        navbar_position -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    stream_tags (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        #[max_length = 50]
+        tag -> Varchar,
+        created_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    stream_view_history (id) {
+        id -> Int4,
+        stream_id -> Int4,
+        user_id -> Nullable<Int4>,
+        viewed_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    streams (id) {
+        id -> Int4,
+        creator_id -> Int4,
+        #[max_length = 100]
+        name -> Varchar,
+        #[max_length = 100]
+        slug -> Varchar,
+        description -> Nullable<Text>,
+        #[max_length = 255]
+        icon -> Nullable<Varchar>,
+        #[max_length = 25]
+        color -> Nullable<Varchar>,
+        is_public -> Bool,
+        is_discoverable -> Bool,
+        #[max_length = 64]
+        share_token -> Nullable<Varchar>,
+        #[max_length = 20]
+        sort_type -> Varchar,
+        #[max_length = 20]
+        time_range -> Nullable<Varchar>,
+        show_nsfw -> Bool,
+        max_posts_per_board -> Nullable<Int4>,
+        created_at -> Timestamp,
+        updated_at -> Nullable<Timestamp>,
+        last_viewed_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     uploads (id) {
         id -> Int4,
         user_id -> Int4,
@@ -889,6 +1072,40 @@ diesel::table! {
         user_id -> Int4,
         board_id -> Int4,
         creation_date -> Timestamp,
+    }
+}
+
+diesel::table! {
+    user_flair_filters (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        #[max_length = 10]
+        filter_mode -> Varchar,
+        included_flair_ids -> Array<Nullable<Int4>>,
+        excluded_flair_ids -> Array<Nullable<Int4>>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+    }
+}
+
+diesel::table! {
+    user_flairs (id) {
+        id -> Int4,
+        user_id -> Int4,
+        board_id -> Int4,
+        flair_template_id -> Int4,
+        #[max_length = 64]
+        custom_text -> Nullable<Varchar>,
+        #[max_length = 7]
+        custom_text_color -> Nullable<Varchar>,
+        #[max_length = 7]
+        custom_background_color -> Nullable<Varchar>,
+        is_approved -> Bool,
+        approved_at -> Nullable<Timestamp>,
+        approved_by -> Nullable<Int4>,
+        assigned_at -> Timestamp,
+        is_self_assigned -> Bool,
     }
 }
 
@@ -979,6 +1196,9 @@ diesel::joinable!(content_uploads -> posts (post_id));
 diesel::joinable!(content_uploads -> uploads (upload_id));
 diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(emoji_keyword -> emoji (emoji_id));
+diesel::joinable!(flair_aggregates -> flair_templates (flair_template_id));
+diesel::joinable!(flair_templates -> boards (board_id));
+diesel::joinable!(flair_templates -> users (created_by));
 diesel::joinable!(moderation_log -> boards (board_id));
 diesel::joinable!(moderation_log -> users (moderator_id));
 diesel::joinable!(notification_settings -> users (user_id));
@@ -986,6 +1206,9 @@ diesel::joinable!(notifications -> private_message (message_id));
 diesel::joinable!(password_resets -> users (user_id));
 diesel::joinable!(pm_notif -> private_message (pm_id));
 diesel::joinable!(post_aggregates -> posts (post_id));
+diesel::joinable!(post_flairs -> flair_templates (flair_template_id));
+diesel::joinable!(post_flairs -> posts (post_id));
+diesel::joinable!(post_flairs -> users (assigned_by));
 diesel::joinable!(post_hidden -> posts (post_id));
 diesel::joinable!(post_hidden -> users (user_id));
 diesel::joinable!(post_read -> posts (post_id));
@@ -1005,11 +1228,30 @@ diesel::joinable!(reactions -> users (user_id));
 diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(site_language -> language (language_id));
 diesel::joinable!(site_language -> site (site_id));
+diesel::joinable!(stream_aggregates -> streams (stream_id));
+diesel::joinable!(stream_board_subscriptions -> boards (board_id));
+diesel::joinable!(stream_board_subscriptions -> streams (stream_id));
+diesel::joinable!(stream_excluded_boards -> boards (board_id));
+diesel::joinable!(stream_excluded_boards -> streams (stream_id));
+diesel::joinable!(stream_excluded_users -> streams (stream_id));
+diesel::joinable!(stream_excluded_users -> users (user_id));
+diesel::joinable!(stream_flair_subscriptions -> boards (board_id));
+diesel::joinable!(stream_flair_subscriptions -> streams (stream_id));
+diesel::joinable!(stream_followers -> streams (stream_id));
+diesel::joinable!(stream_followers -> users (user_id));
+diesel::joinable!(stream_tags -> streams (stream_id));
+diesel::joinable!(stream_view_history -> streams (stream_id));
+diesel::joinable!(stream_view_history -> users (user_id));
+diesel::joinable!(streams -> users (creator_id));
 diesel::joinable!(uploads -> users (user_id));
 diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_ban -> users (banned_by));
 diesel::joinable!(user_board_blocks -> boards (board_id));
 diesel::joinable!(user_board_blocks -> users (user_id));
+diesel::joinable!(user_flair_filters -> boards (board_id));
+diesel::joinable!(user_flair_filters -> users (user_id));
+diesel::joinable!(user_flairs -> boards (board_id));
+diesel::joinable!(user_flairs -> flair_templates (flair_template_id));
 diesel::joinable!(user_language -> language (language_id));
 diesel::joinable!(user_language -> users (user_id));
 
@@ -1036,6 +1278,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     email_verification,
     emoji,
     emoji_keyword,
+    flair_aggregates,
+    flair_templates,
     language,
     local_site_rate_limit,
     messages,
@@ -1056,6 +1300,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     password_resets,
     pm_notif,
     post_aggregates,
+    post_flairs,
     post_hidden,
     post_read,
     post_report,
@@ -1074,11 +1319,22 @@ diesel::allow_tables_to_appear_in_same_query!(
     site_invite,
     site_language,
     stray_images,
+    stream_aggregates,
+    stream_board_subscriptions,
+    stream_excluded_boards,
+    stream_excluded_users,
+    stream_flair_subscriptions,
+    stream_followers,
+    stream_tags,
+    stream_view_history,
+    streams,
     uploads,
     user_aggregates,
     user_ban,
     user_blocks,
     user_board_blocks,
+    user_flair_filters,
+    user_flairs,
     user_language,
     user_subscriber,
     users,

@@ -10,6 +10,7 @@ pub enum ModPerms {
     Content,
     Users,
     Emoji,
+    Flair,
     Full,
 }
 

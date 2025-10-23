@@ -27,11 +27,11 @@ pub struct Comment {
     body_html: String,
     pub(crate) is_removed: bool,
     is_locked: bool,
-    pub(crate) is_deleted: bool,
+    pub(crate) is_active: bool,
     is_pinned: bool,
-    creation_date: String,
+    created_at: String,
     level: i32,
-    updated: Option<String>,
+    updated_at: Option<String>,
     board_id: i32,
     local: bool,
     creator_vote: i32,
@@ -159,12 +159,12 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             body: comment.body,
             body_html: comment.body_html,
             is_removed: comment.is_removed,
-            is_deleted: comment.is_deleted,
+            is_active: comment.is_deleted,
             is_locked: comment.is_locked,
             is_pinned: comment.is_pinned.unwrap_or(false),
-            creation_date: comment.creation_date.to_string(),
+            created_at: comment.creation_date.to_string(),
             level: comment.level,
-            updated: comment.updated.map(|u| u.to_string()),
+            updated_at: comment.updated.map(|u| u.to_string()),
             board_id: comment.board_id,
             local: true,
             creator_vote: comment.creator_vote,
@@ -179,7 +179,7 @@ impl Censorable for Comment {
     /// Censor comment body for deleted/removed comments. Used when comments are nested.
     fn censor(&mut self, my_user_id: i32, is_admin: bool, is_mod: bool) {
         // nothing to do here lol
-        if !(self.is_removed || self.is_deleted) {
+        if !(self.is_removed || self.is_active) {
             return;
         }
 
@@ -193,7 +193,7 @@ impl Censorable for Comment {
             return;
         }
 
-        let censor_text = if self.is_deleted {
+        let censor_text = if self.is_active {
             "[ deleted by creator ]"
         } else {
             "[ removed by mod or admin ]"

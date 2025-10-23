@@ -227,7 +227,6 @@ impl SubmitPost {
 
         let post_form = PostForm {
             title: Some(title.clone()),
-            type_: Some(type_),
             url: url.map(|url| url.into()),
             // image: data.image,
             body: Some(body.unwrap_or_default()), // Ensure body is always Some(String)
@@ -239,10 +238,9 @@ impl SubmitPost {
             title_chunk: Some(DbPost::generate_chunk(title)),
             is_removed: Some(false),
             is_locked: Some(false),
-            is_deleted: Some(false),
             featured_board: Some(false),
             featured_local: Some(false),
-            post_type: Some(determined_post_type.clone()),
+            type_: Some(determined_post_type.clone()),
             creator_vote: Some(if determined_post_type == "thread" { 0 } else { 1 }), // No self-vote for threads
             ..Default::default()
         };

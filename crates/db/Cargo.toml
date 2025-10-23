@@ -26,3 +26,6 @@ serde_with = { workspace = true }
 tokio = { workspace = true }
 typed-builder = { workspace = true }
 regex = { workspace = true }
+rand = "0.8"
+slug = "0.1"
+bigdecimal = { version = "0.3", features = ["serde"] }

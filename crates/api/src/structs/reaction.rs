@@ -16,7 +16,7 @@ pub struct Reaction {
     pub comment_id: Option<i32>,
     pub emoji: String,
     pub score: i32, // -1 (negative), 0 (neutral), or 1 (positive)
-    pub creation_date: String,
+    pub created_at: String,
 }
 
 #[ComplexObject]
@@ -39,7 +39,7 @@ impl From<DbReaction> for Reaction {
             comment_id: r.comment_id,
             emoji: r.emoji,
             score: r.score,
-            creation_date: r.creation_date.to_string(),
+            created_at: r.creation_date.to_string(),
         }
     }
 }

@@ -6,14 +6,11 @@ use tinyboards_db::{
         message::message::Message as DbMessage,
         notification::{
             notifications::Notification as DbNotification,
-            notification_settings::{NotificationSettings as DbNotificationSettings, NotificationSettingsForm},
+            notification_settings::NotificationSettings as DbNotificationSettings,
         },
     },
-    utils::{DbPool, get_conn},
+    utils::DbPool,
 };
-use diesel::prelude::*;
-use diesel_async::RunQueryDsl;
-use chrono::NaiveDateTime;
 use std::collections::HashMap;
 
 
@@ -35,7 +32,7 @@ pub struct Notification {
     #[graphql(name = "createdAt")]
     pub created: String,
     #[graphql(name = "updatedAt")]
-    pub updated: Option<String>,
+    pub updated_at: Option<String>,
     pub comment: Option<GqlComment>,
     pub post: Option<GqlPost>,
     pub user: Option<GqlUser>,
@@ -82,7 +79,7 @@ impl QueryNotifications {
         limit: Option<i32>,
     ) -> Result<Vec<Notification>> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let page = page.unwrap_or(1).max(1);
         let limit = limit.unwrap_or(25).min(50).max(1); // Cap at 50, min 1
@@ -134,7 +131,7 @@ impl QueryNotifications {
                 kind: notification.kind,
                 is_read: notification.is_read,
                 created: notification.created.to_string(),
-                updated: None, // TODO: Add updated field to database schema if needed
+                updated_at: None, // TODO: Add updated field to database schema if needed
                 comment,
                 post,
                 user,
@@ -150,7 +147,7 @@ impl QueryNotifications {
         ctx: &Context<'_>,
     ) -> Result<NotificationSettings> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let settings = DbNotificationSettings::read_or_create_default(pool, user.id).await?;
 
@@ -172,7 +169,7 @@ impl QueryNotifications {
         ctx: &Context<'_>,
     ) -> Result<UnreadNotificationCount> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let total = DbNotification::count_unread_for_user(pool, user.id).await? as i32;
         let counts_by_kind = DbNotification::count_unread_by_kind(pool, user.id).await?;

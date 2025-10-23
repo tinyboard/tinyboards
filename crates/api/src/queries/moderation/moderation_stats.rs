@@ -72,7 +72,7 @@ impl ModerationStatsQueries {
         days: Option<i32>, // Time period for statistics
     ) -> Result<ModerationStatsResponse> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         let days = days.unwrap_or(30).min(365); // Max 1 year
 
@@ -207,7 +207,7 @@ impl ModerationStatsQueries {
         board_id: Option<i32>,
     ) -> Result<ModerationStats> {
         let pool = ctx.data::<DbPool>()?;
-        let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
 
         // Check if user is admin or moderator
         let is_admin = user.has_permission(AdminPerms::Content);

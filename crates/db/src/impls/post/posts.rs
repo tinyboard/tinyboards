@@ -685,6 +685,108 @@ impl Crud for Post {
     }
 }
 
+impl Post {
+    /// Load posts for a stream feed based on flair and board subscriptions
+    pub async fn load_stream_feed(
+        pool: &DbPool,
+        _user_id: i32,
+        flair_ids: &[i32],
+        board_ids: &[i32],
+        sort_type: SortType,
+        show_nsfw: bool,
+        max_posts_per_board: Option<i32>,
+        limit: i64,
+        offset: i64,
+    ) -> Result<Vec<(Self, PostAggregates)>, Error> {
+        let conn = &mut get_conn(pool).await?;
+        use crate::schema::{post_aggregates, posts, post_flairs};
+
+        // Build base query
+        let mut query = posts::table
+            .inner_join(post_aggregates::table)
+            .left_join(post_flairs::table.on(post_flairs::post_id.eq(posts::id)))
+            .into_boxed();
+
+        // Filter by flair IDs or board IDs
+        if !flair_ids.is_empty() && !board_ids.is_empty() {
+            query = query.filter(
+                post_flairs::flair_template_id.eq_any(flair_ids)
+                    .or(posts::board_id.eq_any(board_ids))
+            );
+        } else if !flair_ids.is_empty() {
+            query = query.filter(post_flairs::flair_template_id.eq_any(flair_ids));
+        } else if !board_ids.is_empty() {
+            query = query.filter(posts::board_id.eq_any(board_ids));
+        } else {
+            // No subscriptions, return empty
+            return Ok(Vec::new());
+        }
+
+        // Filter out deleted and removed posts
+        query = query
+            .filter(posts::is_deleted.eq(false))
+            .filter(posts::is_removed.eq(false));
+
+        // NSFW filter
+        if !show_nsfw {
+            query = query.filter(posts::is_nsfw.eq(false));
+        }
+
+        // Apply sorting
+        query = match sort_type {
+            SortType::Hot => query.order_by(hot_rank(post_aggregates::score, post_aggregates::creation_date).desc()),
+            SortType::Active => query.order_by(hot_rank(post_aggregates::score, post_aggregates::newest_comment_time).desc()),
+            SortType::New => query.order_by(posts::creation_date.desc()),
+            SortType::Old => query.order_by(posts::creation_date.asc()),
+            SortType::TopDay => query
+                .filter(posts::creation_date.gt(now - 1.days()))
+                .order_by(post_aggregates::score.desc()),
+            SortType::TopWeek => query
+                .filter(posts::creation_date.gt(now - 1.weeks()))
+                .order_by(post_aggregates::score.desc()),
+            SortType::TopMonth => query
+                .filter(posts::creation_date.gt(now - 1.months()))
+                .order_by(post_aggregates::score.desc()),
+            SortType::TopYear => query
+                .filter(posts::creation_date.gt(now - 1.years()))
+                .order_by(post_aggregates::score.desc()),
+            SortType::TopAll => query.order_by(post_aggregates::score.desc()),
+            SortType::MostComments => query.order_by(post_aggregates::comments.desc()),
+            _ => query.order_by(posts::creation_date.desc()),
+        };
+
+        // Apply limit and offset
+        query = query.limit(limit).offset(offset);
+
+        // Execute query
+        let results = query
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .load::<(Self, PostAggregates)>(conn)
+            .await?;
+
+        // Apply max_posts_per_board limit if specified
+        if let Some(max_per_board) = max_posts_per_board {
+            let mut board_counts: std::collections::HashMap<i32, i32> = std::collections::HashMap::new();
+            let filtered_results: Vec<(Self, PostAggregates)> = results
+                .into_iter()
+                .filter(|(post, _)| {
+                    let count = board_counts.entry(post.board_id).or_insert(0);
+                    if *count < max_per_board {
+                        *count += 1;
+                        true
+                    } else {
+                        false
+                    }
+                })
+                .collect();
+
+            Ok(filtered_results)
+        } else {
+            Ok(results)
+        }
+    }
+}
+
 #[async_trait::async_trait]
 impl Moderateable for Post {
     fn get_board_id(&self) -> i32 {

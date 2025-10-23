@@ -26,8 +26,8 @@ pub struct PostReportView {
     pub reason: String,
     pub resolved: bool,
     pub resolver_id: Option<i32>,
-    pub creation_date: String,
-    pub updated: Option<String>,
+    pub created_at: String,
+    pub updated_at: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -35,12 +35,12 @@ pub struct CommentReportView {
     pub id: i32,
     pub creator_id: i32,
     pub comment_id: i32,
-    pub original_comment_text: String,
+    pub original_comment_text_display: String,
     pub reason: String,
     pub resolved: bool,
     pub resolver_id: Option<i32>,
-    pub creation_date: String,
-    pub updated: Option<String>,
+    pub created_at: String,
+    pub updated_at: Option<String>,
 }
 
 impl From<PostReport> for PostReportView {
@@ -55,8 +55,8 @@ impl From<PostReport> for PostReportView {
             reason: report.reason,
             resolved: report.resolved,
             resolver_id: report.resolver_id,
-            creation_date: report.creation_date.to_string(),
-            updated: report.updated.map(|dt| dt.to_string()),
+            created_at: report.creation_date.to_string(),
+            updated_at: report.updated.map(|dt| dt.to_string()),
         }
     }
 }
@@ -67,12 +67,12 @@ impl From<CommentReport> for CommentReportView {
             id: report.id,
             creator_id: report.creator_id,
             comment_id: report.comment_id,
-            original_comment_text: report.original_comment_text,
+            original_comment_text_display: report.original_comment_text,
             reason: report.reason,
             resolved: report.resolved,
             resolver_id: report.resolver_id,
-            creation_date: report.creation_date.to_string(),
-            updated: report.updated.map(|dt| dt.to_string()),
+            created_at: report.creation_date.to_string(),
+            updated_at: report.updated.map(|dt| dt.to_string()),
         }
     }
 }

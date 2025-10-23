@@ -73,7 +73,7 @@ impl EmojiMutations {
         let emoji_form = EmojiForm {
             shortcode: Some(input.shortcode),
             image_url: Some(upload_url.into()),
-            alt_text: Some(input.alt_text),
+            alt_text: Some(input.alt_text_display),
             category: Some(input.category),
             board_id: input.board_id,
             created_by_user_id: Some(user.id),
@@ -143,7 +143,7 @@ impl EmojiMutations {
         let emoji_form = EmojiForm {
             shortcode: input.shortcode,
             image_url: new_image_url,
-            alt_text: input.alt_text,
+            alt_text: input.alt_text_display,
             category: input.category,
             is_active: input.is_active,
             updated: Some(Utc::now().naive_utc()),

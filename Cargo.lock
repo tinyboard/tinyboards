@@ -695,6 +695,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "bigdecimal"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6773ddc0eafc0e509fb60e48dff7f450f8e674a0686ae8605e8d9901bd5eefa"
+dependencies = [
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+ "serde",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1223,16 +1235,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "deunicode"
+version = "1.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abd57806937c9cc163efc8ea3910e00a62e2aeb0b8119f1793a978088f8f6b04"
+
+[[package]]
 name = "diesel"
 version = "2.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ff236accb9a5069572099f0b350a92e9560e8e63a9b8d546162f4a5e03026bb2"
 dependencies = [
+ "bigdecimal",
  "bitflags 2.9.4",
  "byteorder",
  "chrono",
  "diesel_derives",
  "itoa",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
  "pq-sys",
  "r2d2",
  "serde_json",
@@ -4459,6 +4481,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a2ae44ef20feb57a68b23d846850f861394c2e02dc425a50098ae8c90267589"
 
 [[package]]
+name = "slug"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "882a80f72ee45de3cc9a5afeb2da0331d58df69e4e7d8eeb5d3c7784ae67e724"
+dependencies = [
+ "deunicode",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4853,11 +4885,13 @@ dependencies = [
  "jsonwebtoken 8.3.0",
  "lazy_static",
  "opendal",
+ "rand 0.8.5",
  "regex",
  "reqwest-middleware",
  "serde",
  "serde_json",
  "serde_with",
+ "slug",
  "tinyboards_db",
  "tinyboards_utils",
  "tokio",
@@ -4874,15 +4908,18 @@ dependencies = [
  "actix-web",
  "async-trait",
  "bb8",
+ "bigdecimal",
  "chrono",
  "diesel",
  "diesel-async",
  "diesel-derive-newtype",
  "diesel_migrations",
+ "rand 0.8.5",
  "regex",
  "serde",
  "serde_json",
  "serde_with",
+ "slug",
  "strum 0.24.1",
  "strum_macros 0.24.3",
  "tinyboards_utils",

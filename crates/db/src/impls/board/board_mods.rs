@@ -19,7 +19,8 @@ impl ModPerms {
             Content => 8,
             Users => 16,
             Emoji => 32,
-            Full => 64,
+            Flair => 64,
+            Full => 128,
         }
     }
 }

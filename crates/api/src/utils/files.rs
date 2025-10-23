@@ -33,7 +33,7 @@ pub struct FileNamePath {
 impl GetFile {
     pub async fn perform(
         data: Query<Self>,
-        context: Data<TinyBoardsContext>,
+        context_display: Data<TinyBoardsContext>,
         path: Path<String>,
         req: HttpRequest,
     ) -> Result<HttpResponse, TinyBoardsError> {
@@ -41,8 +41,8 @@ impl GetFile {
         let file_name = path.into_inner();
 
         // default pfp is assumed to be always present
-        let media_path = &context.settings().get_media_path();
-        let file_path = match Upload::find_by_name(context.pool(), &file_name).await {
+        let media_path = &context_display.settings().get_media_path();
+        let file_path = match Upload::find_by_name(context_display.pool(), &file_name).await {
             Ok(file) => format!("{}/{}", media_path, file.file_name),
             Err(_) => "config/file_not_found.jpg".to_string(),
         };

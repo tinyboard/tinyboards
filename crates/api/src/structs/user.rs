@@ -41,7 +41,7 @@ pub struct UserSettings {
     pub default_listing_type: i16,
     pub email_notifications_enabled: bool,
     pub interface_language: String,
-    pub updated: Option<String>,
+    pub updated_at: Option<String>,
 }
 
 impl From<tinyboards_db::models::user::user::UserSettings> for UserSettings {
@@ -57,7 +57,7 @@ impl From<tinyboards_db::models::user::user::UserSettings> for UserSettings {
             default_listing_type: settings.default_listing_type,
             email_notifications_enabled: settings.email_notifications_enabled,
             interface_language: settings.interface_language,
-            updated: settings.updated.map(|u| u.to_string()),
+            updated_at: settings.updated.map(|u| u.to_string()),
         }
     }
 }
@@ -69,14 +69,14 @@ pub struct User {
     pub id: i32,
     name: String,
     is_banned: bool,
-    is_deleted: bool,
+    is_active: bool,
     unban_date: Option<String>,
     display_name: Option<String>,
     bio: Option<String>,
     #[graphql(name = "bioHTML")]
     bio_html: Option<String>,
-    creation_date: String,
-    updated: Option<String>,
+    created_at: String,
+    updated_at: Option<String>,
     last_seen: String,
     avatar: Option<String>,
     banner: Option<String>,
@@ -497,6 +497,7 @@ impl User {
             tinyboards_db::models::user::user::AdminPerms::Users => self.admin_level >= 4,
             tinyboards_db::models::user::user::AdminPerms::Boards => self.admin_level >= 5,
             tinyboards_db::models::user::user::AdminPerms::Emoji => self.admin_level >= 2,
+            tinyboards_db::models::user::user::AdminPerms::Flair => self.admin_level >= 2,
             tinyboards_db::models::user::user::AdminPerms::Full => self.admin_level >= 6,
             tinyboards_db::models::user::user::AdminPerms::Owner => self.admin_level >= 7,
             tinyboards_db::models::user::user::AdminPerms::System => self.admin_level >= 8,
@@ -513,13 +514,13 @@ impl From<(DbUser, DbUserAggregates)> for User {
             id: user.id,
             name: user.name,
             is_banned: user.is_banned,
-            is_deleted: user.is_deleted,
+            is_active: !user.is_deleted,
             unban_date: user.unban_date.map(|t| t.to_string()),
             display_name: user.display_name,
             bio: user.bio,
             bio_html: user.bio_html,
-            creation_date: user.creation_date.to_string(),
-            updated: user.updated.map(|t| t.to_string()),
+            created_at: user.creation_date.to_string(),
+            updated_at: user.updated.map(|t| t.to_string()),
             last_seen: user.last_seen.to_string(),
             avatar: user.avatar.map(|a| a.as_str().into()),
             banner: user.banner.map(|a| a.as_str().into()),

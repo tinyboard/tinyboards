@@ -16,10 +16,16 @@ use crate::mutations::{
     board::{actions::BoardActions, create::CreateBoard, settings::UpdateBoardSettings},
     board_moderation::BoardModerationMutations,
     emoji::EmojiMutations,
+    flair::{assignment::FlairAssignmentMutations, filter::FlairFilterMutations, template::FlairTemplateMutations},
     message::{actions::MessageActionMutations, send_message::SendMessageMutations, edit_message::EditMessageMutations},
     moderation_unified::ModerationMutations,
     notifications::NotificationMutations,
     reactions::ReactionMutations,
+    stream::{
+        manage::StreamManageMutations,
+        subscriptions::StreamSubscriptionMutations,
+        follow::StreamFollowMutations,
+    },
     user::{actions::UserActions, profile_management::ProfileManagement, settings::UpdateSettings},
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
@@ -36,6 +42,7 @@ use queries::{
     boards::QueryBoards,
     comments::QueryComments,
     emojis::EmojiQueries,
+    flairs::FlairQueries,
     invites::QueryInvites,
     site::QuerySite,
     me::MeQuery,
@@ -47,6 +54,7 @@ use queries::{
     registration_applications::RegistrationApplicationQueries,
     reports::ReportQueries,
     search::QuerySearch,
+    streams::StreamQueries,
 };
 use tinyboards_db::{models::user::user::User, utils::DbPool};
 //use queries::Query;
@@ -106,8 +114,10 @@ pub struct Query(
     QuerySearch,
     RegistrationApplicationQueries,
     EmojiQueries,
+    FlairQueries,
     ReportQueries,
     ModerationQueries,
+    StreamQueries,
 );
 
 #[derive(MergedObject, Default)]
@@ -140,7 +150,13 @@ pub struct Mutation(
     BoardModerationMutations,
     RegistrationApplicationMutations,
     EmojiMutations,
+    FlairTemplateMutations,
+    FlairAssignmentMutations,
+    FlairFilterMutations,
     ModerationMutations,
+    StreamManageMutations,
+    StreamSubscriptionMutations,
+    StreamFollowMutations,
     mutations::file_upload::FileUploadMutation,
 );
 

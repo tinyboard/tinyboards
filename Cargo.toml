@@ -37,6 +37,7 @@ diesel = { version = "2.1.0", features = [
     "r2d2",
     "serde_json",
     "chrono",
+    "numeric",
 ] }
 diesel-async = "0.3.1"
 diesel_migrations = "2.0.0"

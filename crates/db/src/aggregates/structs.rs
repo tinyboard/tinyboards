@@ -1,5 +1,5 @@
 use crate::schema::{
-    board_aggregates, comment_aggregates, post_aggregates, site_aggregates,
+    board_aggregates, comment_aggregates, post_aggregates, site_aggregates, stream_aggregates,
 };
 use chrono::NaiveDateTime;
 use diesel::{Associations, Identifiable, Queryable};
@@ -84,5 +84,42 @@ pub struct SiteAggregates {
     pub users_active_half_year: i64,
     pub upvotes: i64,
     pub downvotes: i64,
+}
+
+#[derive(
+    PartialEq, Eq, Debug, Serialize, Deserialize, Clone, Queryable, Associations, Identifiable,
+)]
+#[diesel(table_name = stream_aggregates)]
+#[diesel(belongs_to(crate::models::stream::stream::Stream))]
+pub struct StreamAggregates {
+    pub id: i32,
+    pub stream_id: i32,
+    pub flair_subscription_count: i32,
+    pub board_subscription_count: i32,
+    pub total_subscription_count: i32,
+    pub follower_count: i32,
+    pub posts_last_day: i32,
+    pub posts_last_week: i32,
+    pub posts_last_month: i32,
+    pub creation_date: NaiveDateTime,
+    pub updated_at: Option<NaiveDateTime>,
+}
+
+impl Default for StreamAggregates {
+    fn default() -> Self {
+        Self {
+            id: 0,
+            stream_id: 0,
+            flair_subscription_count: 0,
+            board_subscription_count: 0,
+            total_subscription_count: 0,
+            follower_count: 0,
+            posts_last_day: 0,
+            posts_last_week: 0,
+            posts_last_month: 0,
+            creation_date: chrono::NaiveDateTime::from_timestamp_opt(0, 0).unwrap(),
+            updated_at: None,
+        }
+    }
 }
 

@@ -146,7 +146,7 @@ impl BoardModerationMutations {
             id: updated_board.id,
             board_id: updated_board.id,
             subscribers: 0,
-            posts: 0, 
+            posts: 0,
             comments: 0,
             creation_date: updated_board.creation_date,
             users_active_day: 0,
@@ -235,7 +235,7 @@ impl BoardModerationMutations {
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
 
         // Verify board exists
-        let board = Board::read(pool, board_id).await?;
+        let _board = Board::read(pool, board_id).await?;
 
         // Check if user has permission to remove moderators
         let can_remove_mod = if user.has_permission(AdminPerms::Users) {
@@ -300,7 +300,7 @@ impl BoardModerationMutations {
         let user = ctx.data_unchecked::<LoggedInUser>().require_user_not_banned()?;
 
         // Verify board exists
-        let board = Board::read(pool, board_id).await?;
+        let _board = Board::read(pool, board_id).await?;
 
         // Check if user is the current board owner or admin
         let can_transfer = if user.has_permission(AdminPerms::Users) {
