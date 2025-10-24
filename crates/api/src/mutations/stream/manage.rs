@@ -67,14 +67,14 @@ impl StreamManageMutations {
             description: input.description.map(|d| d.trim().to_string()),
             creator_id: user.id,
             is_public: input.is_public.unwrap_or(false),
-            is_discoverable: input.is_public.unwrap_or(false), // Discoverable if public by default
+            is_discoverable: input.is_discoverable.unwrap_or_else(|| input.is_public.unwrap_or(false)),
             share_token: None,
             max_posts_per_board: input.max_posts_per_board,
             icon: None,
             color: None,
-            sort_type: "hot".to_string(),
-            time_range: None,
-            show_nsfw: false,
+            sort_type: input.sort_type.unwrap_or_else(|| "hot".to_string()),
+            time_range: input.time_range,
+            show_nsfw: input.show_nsfw.unwrap_or(false),
         };
 
         let stream = <DbStream as Crud>::create(pool, &form)
@@ -134,11 +134,11 @@ impl StreamManageMutations {
             icon: stream.icon,
             color: stream.color,
             is_public: input.is_public.unwrap_or(stream.is_public),
-            is_discoverable: stream.is_discoverable,
+            is_discoverable: input.is_discoverable.unwrap_or(stream.is_discoverable),
             share_token: stream.share_token,
-            sort_type: stream.sort_type,
-            time_range: stream.time_range,
-            show_nsfw: stream.show_nsfw,
+            sort_type: input.sort_type.unwrap_or(stream.sort_type),
+            time_range: input.time_range.or(stream.time_range),
+            show_nsfw: input.show_nsfw.unwrap_or(stream.show_nsfw),
             max_posts_per_board: input.max_posts_per_board.or(stream.max_posts_per_board),
         };
 

@@ -11,8 +11,14 @@ pub struct Stream {
     pub name: String,
     pub slug: String,
     pub description: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
     pub creator_id: i32,
     pub is_public: bool,
+    pub is_discoverable: bool,
+    pub sort_type: String,
+    pub time_range: Option<String>,
+    pub show_nsfw: bool,
     pub share_token: Option<String>,
     pub creation_date: String,
     pub updated: Option<String>,
@@ -132,6 +138,23 @@ impl Stream {
 
         Ok(None)
     }
+
+    /// Check if current user has added this stream to navbar (simple boolean)
+    async fn added_to_navbar(&self, ctx: &Context<'_>) -> Result<bool> {
+        use crate::LoggedInUser;
+        use tinyboards_db::models::stream::stream_follower::StreamFollower as DbStreamFollower;
+
+        let pool = ctx.data::<crate::DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.inner();
+
+        if let Some(u) = user {
+            if let Ok(follower) = DbStreamFollower::get(pool, u.id, self.id).await {
+                return Ok(follower.added_to_navbar);
+            }
+        }
+
+        Ok(false)
+    }
 }
 
 /// Internal struct for aggregate data (not exposed directly to GraphQL)
@@ -201,6 +224,10 @@ pub struct CreateStreamInput {
     pub name: String,
     pub description: Option<String>,
     pub is_public: Option<bool>,
+    pub is_discoverable: Option<bool>,
+    pub sort_type: Option<String>,
+    pub time_range: Option<String>,
+    pub show_nsfw: Option<bool>,
     pub max_posts_per_board: Option<i32>,
 }
 
@@ -211,6 +238,10 @@ pub struct UpdateStreamInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub is_public: Option<bool>,
+    pub is_discoverable: Option<bool>,
+    pub sort_type: Option<String>,
+    pub time_range: Option<String>,
+    pub show_nsfw: Option<bool>,
     pub max_posts_per_board: Option<i32>,
 }
 
@@ -304,8 +335,14 @@ impl From<(
             name: stream.name,
             slug: stream.slug,
             description: stream.description,
+            icon: stream.icon,
+            color: stream.color,
             creator_id: stream.creator_id,
             is_public: stream.is_public,
+            is_discoverable: stream.is_discoverable,
+            sort_type: stream.sort_type,
+            time_range: stream.time_range,
+            show_nsfw: stream.show_nsfw,
             share_token: stream.share_token,
             creation_date: stream.creation_date.to_string(),
             updated: stream.updated.map(|t| t.to_string()),
