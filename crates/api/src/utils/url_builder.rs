@@ -2,12 +2,13 @@ use tinyboards_db::{models::site::site::Site, schema::site, utils::DbPool};
 use tinyboards_utils::TinyBoardsError;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use lazy_static::lazy_static;
 use std::sync::{Arc, RwLock};
-use once_cell::sync::Lazy;
 
-/// Global cache for boards_enabled setting
-static BOARDS_ENABLED_CACHE: Lazy<Arc<RwLock<Option<bool>>>> =
-    Lazy::new(|| Arc::new(RwLock::new(None)));
+lazy_static! {
+    /// Global cache for boards_enabled setting
+    static ref BOARDS_ENABLED_CACHE: Arc<RwLock<Option<bool>>> = Arc::new(RwLock::new(None));
+}
 
 /// URL Builder for generating consistent URLs across the application
 ///

@@ -4,6 +4,7 @@ use crate::structs::post::Post;
 use crate::utils::emoji::process_content_with_emojis;
 use crate::{DbPool, LoggedInUser, Settings};
 use async_graphql::*;
+use diesel::{ExpressionMethods, QueryDsl};
 use tinyboards_db::models::board::board_mods::ModPerms;
 use tinyboards_db::models::user::user::AdminPerms;
 use tinyboards_db::models::{
@@ -17,10 +18,11 @@ use tinyboards_db::traits::Crud;
 use tinyboards_db::traits::Voteable;
 use tinyboards_utils::{
     content_filter::ContentFilter, parser::{parse_markdown_opt, sanitize_html}, utils::custom_body_parsing,
-    slug::{generate_slug, ensure_unique_slug},
+    slug::generate_slug,
     TinyBoardsError,
 };
 use url::Url;
+use rand::{thread_rng, Rng};
 
 #[derive(Default)]
 pub struct SubmitPost;
@@ -229,31 +231,37 @@ impl SubmitPost {
         // Generate slug from title
         let base_slug = generate_slug(&title, Some(60));
 
-        // Ensure slug is unique within board context
+        // Ensure slug is unique within board context using async code
         use tinyboards_db::schema::posts;
-        use diesel::dsl::*;
         use diesel_async::RunQueryDsl;
 
-        let unique_slug = ensure_unique_slug(&base_slug, |slug| {
-            // Check if slug already exists in this board
-            let pool = pool.clone();
-            let slug = slug.to_string();
-            let board_id = board.id;
+        let conn = &mut tinyboards_db::utils::get_conn(pool).await?;
+        let mut unique_slug = base_slug.clone();
+        let mut counter = 2;
 
-            tokio::task::block_in_place(|| {
-                tokio::runtime::Handle::current().block_on(async {
-                    let conn = &mut tinyboards_db::utils::get_conn(&pool).await.ok()?;
-                    let count: i64 = posts::table
-                        .filter(posts::board_id.eq(board_id))
-                        .filter(posts::slug.eq(&slug))
-                        .count()
-                        .get_result(conn)
-                        .await
-                        .ok()?;
-                    Some(count > 0)
-                })
-            }).unwrap_or(false)
-        });
+        // Check if base slug exists and iterate until we find a unique one
+        loop {
+            let count: i64 = posts::table
+                .filter(posts::board_id.eq(board.id))
+                .filter(posts::slug.eq(&unique_slug))
+                .count()
+                .get_result(conn)
+                .await?;
+
+            if count == 0 {
+                break;
+            }
+
+            unique_slug = format!("{}-{}", base_slug, counter);
+            counter += 1;
+
+            // Safety check to prevent infinite loops
+            if counter > 1000 {
+                let random_suffix: u32 = thread_rng().gen();
+                unique_slug = format!("{}-{}", base_slug, random_suffix);
+                break;
+            }
+        }
 
         let post_form = PostForm {
             title: Some(title.clone()),
