@@ -17,7 +17,7 @@ use crate::{
     ListingType, LoggedInUser, SortType, SubscribedType,
 };
 
-use super::{board_mods::BoardMod, post::Post};
+use super::{board_mods::BoardMod, post::Post, flair::{FlairCategory, FlairTemplate}};
 
 /// GraphQL representation of Board.
 #[derive(SimpleObject, Clone)]
@@ -219,6 +219,46 @@ impl Board {
         .await?;
 
         Ok(posts.into_iter().map(Post::from).collect::<Vec<Post>>())
+    }
+
+    pub async fn flairs(&self, ctx: &Context<'_>) -> Result<Vec<FlairTemplate>> {
+        use tinyboards_db::models::flair::flair_template::FlairTemplate as DbFlairTemplate;
+
+        let pool = ctx.data::<DbPool>()?;
+
+        let flairs = DbFlairTemplate::for_board(pool, self.id)
+            .await
+            .map_err(|e| -> async_graphql::Error {
+                TinyBoardsError::from_error_message(e, 500, "Failed to load board flairs.").into()
+            })?;
+
+        Ok(flairs.into_iter().map(FlairTemplate::from).collect::<Vec<FlairTemplate>>())
+    }
+
+    pub async fn flair_categories(&self, ctx: &Context<'_>) -> Result<Vec<FlairCategory>> {
+        use tinyboards_db::models::flair::flair_category::FlairCategory as DbFlairCategory;
+
+        let pool = ctx.data::<DbPool>()?;
+
+        let categories = DbFlairCategory::for_board(pool, self.id)
+            .await
+            .map_err(|e| -> async_graphql::Error {
+                TinyBoardsError::from_error_message(e, 500, "Failed to load flair categories.").into()
+            })?;
+
+        // Convert to GraphQL types and get flair counts
+        let mut result = Vec::new();
+        for category in categories {
+            let flair_count = DbFlairCategory::get_flair_count(pool, category.id)
+                .await
+                .unwrap_or(0) as i32;
+
+            let mut gql_category = FlairCategory::from(category);
+            gql_category.flair_count = flair_count;
+            result.push(gql_category);
+        }
+
+        Ok(result)
     }
 }
 

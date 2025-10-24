@@ -6,6 +6,7 @@ pub mod comment;
 pub mod emoji;
 pub mod file_upload;
 pub mod flair;
+pub mod flair_categories;
 pub mod message;
 pub mod moderation;
 pub mod moderation_unified;
