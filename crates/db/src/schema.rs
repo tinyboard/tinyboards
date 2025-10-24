@@ -245,10 +245,10 @@ diesel::table! {
         approval_status -> Varchar,
         approved_by -> Nullable<Int4>,
         approved_at -> Nullable<Timestamp>,
-        #[max_length = 80]
-        slug -> Varchar,
         creator_vote -> Int4,
         quoted_comment_id -> Nullable<Int4>,
+        #[max_length = 80]
+        slug -> Varchar,
     }
 }
 
@@ -324,6 +324,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    flair_categories (id) {
+        id -> Int4,
+        board_id -> Int4,
+        #[max_length = 100]
+        name -> Varchar,
+        description -> Nullable<Text>,
+        #[max_length = 7]
+        color -> Nullable<Varchar>,
+        display_order -> Int4,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        created_by -> Int4,
+    }
+}
+
+diesel::table! {
     flair_templates (id) {
         id -> Int4,
         board_id -> Int4,
@@ -351,6 +367,7 @@ diesel::table! {
         updated -> Timestamp,
         created_by -> Int4,
         usage_count -> Int4,
+        category_id -> Nullable<Int4>,
     }
 }
 
@@ -1201,7 +1218,10 @@ diesel::joinable!(content_uploads -> uploads (upload_id));
 diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(emoji_keyword -> emoji (emoji_id));
 diesel::joinable!(flair_aggregates -> flair_templates (flair_template_id));
+diesel::joinable!(flair_categories -> boards (board_id));
+diesel::joinable!(flair_categories -> users (created_by));
 diesel::joinable!(flair_templates -> boards (board_id));
+diesel::joinable!(flair_templates -> flair_categories (category_id));
 diesel::joinable!(flair_templates -> users (created_by));
 diesel::joinable!(moderation_log -> boards (board_id));
 diesel::joinable!(moderation_log -> users (moderator_id));
@@ -1283,6 +1303,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     emoji,
     emoji_keyword,
     flair_aggregates,
+    flair_categories,
     flair_templates,
     language,
     local_site_rate_limit,
