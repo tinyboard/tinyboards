@@ -28,6 +28,7 @@ pub struct FlairTemplate {
     pub updated: NaiveDateTime,
     pub created_by: i32,
     pub usage_count: i32,
+    pub category_id: Option<i32>,
 }
 
 #[derive(Clone, Default, Insertable, AsChangeset)]
@@ -48,6 +49,7 @@ pub struct FlairTemplateForm {
     pub requires_approval: Option<bool>,
     pub display_order: Option<i32>,
     pub is_active: Option<bool>,
+    pub category_id: Option<Option<i32>>,
     pub created_by: Option<i32>,
 }
 
@@ -57,6 +59,15 @@ impl FlairTemplate {
         flair_templates::table
             .find(flair_id)
             .first::<Self>(conn)
+            .await
+    }
+
+    pub async fn for_board(pool: &DbPool, board_id_param: i32) -> Result<Vec<Self>, diesel::result::Error> {
+        let conn = &mut pool.get().await.map_err(|_| diesel::result::Error::NotFound)?;
+        flair_templates::table
+            .filter(flair_templates::board_id.eq(board_id_param))
+            .order(flair_templates::display_order.asc())
+            .load::<Self>(conn)
             .await
     }
 }

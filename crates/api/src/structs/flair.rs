@@ -16,7 +16,8 @@ pub struct FlairTemplate {
     pub style_config: Option<String>, // JSON string
     pub emoji_ids: Option<Vec<i32>>,
     pub max_text_length: Option<i32>,
-    pub category: Option<String>,
+    pub category: Option<String>, // Deprecated - use category_id instead
+    pub category_id: Option<i32>,
     pub display_order: i32,
     pub requires_approval: bool,
     pub is_active: bool,
@@ -157,12 +158,42 @@ pub struct FlairAggregates {
 
 #[derive(SimpleObject, Clone)]
 pub struct FlairCategory {
+    pub id: i32,
+    pub board_id: i32,
     pub name: String,
+    pub description: Option<String>,
+    pub color: Option<String>,
     pub display_order: i32,
-    pub template_count: i32,
+    pub flair_count: i32,
+    pub creation_date: String,
+    pub updated: String,
 }
 
 // ===== Input Types =====
+
+#[derive(InputObject)]
+pub struct CreateFlairCategoryInput {
+    pub board_id: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub color: Option<String>,
+    pub display_order: Option<i32>,
+}
+
+#[derive(InputObject)]
+pub struct UpdateFlairCategoryInput {
+    pub id: i32,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub color: Option<String>,
+    pub display_order: Option<i32>,
+}
+
+#[derive(InputObject)]
+pub struct ReorderFlairCategoriesInput {
+    pub id: i32,
+    pub display_order: i32,
+}
 
 #[derive(InputObject)]
 pub struct CreateFlairTemplateInput {
@@ -190,6 +221,7 @@ pub struct UpdateFlairTemplateInput {
     pub emoji_ids: Option<Vec<i32>>,
     pub max_text_length: Option<i32>,
     pub category: Option<String>,
+    pub category_id: Option<i32>,
     pub display_order: Option<i32>,
     pub requires_approval: Option<bool>,
     pub is_active: Option<bool>,
@@ -356,7 +388,8 @@ impl From<tinyboards_db::models::flair::FlairTemplate> for FlairTemplate {
             style_config: Some(db.style_config.to_string()),
             emoji_ids: Some(db.emoji_ids.into_iter().filter_map(|id| id).collect()),
             max_text_length: Some(db.max_text_length),
-            category: None,  // Not in current schema
+            category: None,  // Deprecated
+            category_id: db.category_id,
             display_order: db.display_order,
             requires_approval: db.requires_approval,
             is_active: db.is_active,
@@ -402,6 +435,22 @@ impl From<tinyboards_db::models::flair::UserFlair> for UserFlair {
             assigned_by: None,  // Not in current schema
             approved_at: db.approved_at.map(|d| d.to_string()),
             approved_by: db.approved_by,
+        }
+    }
+}
+
+impl From<tinyboards_db::models::flair::FlairCategory> for FlairCategory {
+    fn from(db: tinyboards_db::models::flair::FlairCategory) -> Self {
+        Self {
+            id: db.id,
+            board_id: db.board_id,
+            name: db.name,
+            description: db.description,
+            color: db.color,
+            display_order: db.display_order,
+            flair_count: 0, // Will be populated by resolver
+            creation_date: db.created_at.to_string(),
+            updated: db.updated_at.to_string(),
         }
     }
 }

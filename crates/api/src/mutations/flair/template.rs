@@ -158,6 +158,7 @@ impl FlairTemplateMutations {
             background_color: input.background_color,
             text_color: input.text_color,
             max_text_length: input.max_text_length,
+            category_id: input.category_id.map(Some),
             display_order: input.display_order,
             mod_only: input.requires_approval,
             is_active: input.is_active,
