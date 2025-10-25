@@ -695,6 +695,7 @@ impl Post {
         sort_type: SortType,
         show_nsfw: bool,
         max_posts_per_board: Option<i32>,
+        post_type_filter: Option<&str>,
         limit: i64,
         offset: i64,
     ) -> Result<Vec<(Self, PostAggregates)>, Error> {
@@ -730,6 +731,11 @@ impl Post {
         // NSFW filter
         if !show_nsfw {
             query = query.filter(posts::is_nsfw.eq(false));
+        }
+
+        // Filter by post type if specified (feed or thread)
+        if let Some(post_type) = post_type_filter {
+            query = query.filter(posts::post_type.eq(post_type));
         }
 
         // Apply sorting

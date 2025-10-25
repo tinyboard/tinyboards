@@ -168,6 +168,7 @@ pub struct StreamAggregatesData {
 
 /// Flair subscription within a stream
 #[derive(SimpleObject, Clone)]
+#[graphql(complex)]
 pub struct StreamFlairSubscription {
     pub id: i32,
     pub stream_id: i32,
@@ -176,13 +177,62 @@ pub struct StreamFlairSubscription {
     pub added_at: String,
 }
 
+#[ComplexObject]
+impl StreamFlairSubscription {
+    /// Get the flair
+    async fn flair(&self, ctx: &Context<'_>) -> Result<Option<super::flair::FlairTemplate>> {
+        use tinyboards_db::{
+            models::flair::flair_template::FlairTemplate as DbFlairTemplate,
+            traits::Crud,
+        };
+        use tinyboards_utils::TinyBoardsError;
+
+        let pool = ctx.data::<crate::DbPool>()?;
+
+        match DbFlairTemplate::read(pool, self.flair_id).await {
+            Ok(flair) => Ok(Some(super::flair::FlairTemplate::from(flair))),
+            Err(_) => Ok(None),
+        }
+    }
+
+    /// Get the board
+    async fn board(&self, ctx: &Context<'_>) -> Result<Option<super::boards::Board>> {
+        use crate::newtypes::BoardId;
+        use crate::PostgresLoader;
+        use dataloader::DataLoader;
+
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(BoardId(self.board_id))
+            .await
+            .map_err(|e| e.into())
+    }
+}
+
 /// Board subscription within a stream (subscribe to ALL content from a board)
 #[derive(SimpleObject, Clone)]
+#[graphql(complex)]
 pub struct StreamBoardSubscription {
     pub id: i32,
     pub stream_id: i32,
     pub board_id: i32,
     pub added_at: String,
+}
+
+#[ComplexObject]
+impl StreamBoardSubscription {
+    /// Get the board
+    async fn board(&self, ctx: &Context<'_>) -> Result<Option<super::boards::Board>> {
+        use crate::newtypes::BoardId;
+        use crate::PostgresLoader;
+        use dataloader::DataLoader;
+
+        let loader = ctx.data_unchecked::<DataLoader<PostgresLoader>>();
+        loader
+            .load_one(BoardId(self.board_id))
+            .await
+            .map_err(|e| e.into())
+    }
 }
 
 /// Stream follower
@@ -229,6 +279,7 @@ pub struct CreateStreamInput {
     pub time_range: Option<String>,
     pub show_nsfw: Option<bool>,
     pub max_posts_per_board: Option<i32>,
+    pub added_to_navbar: Option<bool>,
 }
 
 /// Input for updating a stream
@@ -237,6 +288,8 @@ pub struct UpdateStreamInput {
     pub stream_id: i32,
     pub name: Option<String>,
     pub description: Option<String>,
+    pub icon: Option<String>,
+    pub color: Option<String>,
     pub is_public: Option<bool>,
     pub is_discoverable: Option<bool>,
     pub sort_type: Option<String>,

@@ -81,6 +81,16 @@ impl StreamManageMutations {
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to create stream"))?;
 
+        // Auto-follow the stream for the creator
+        use tinyboards_db::models::stream::stream_follower::{StreamFollower as DbStreamFollower, StreamFollowerForm};
+        let follower_form = StreamFollowerForm {
+            user_id: user.id,
+            stream_id: stream.id,
+            added_to_navbar: input.added_to_navbar.unwrap_or(false),
+            navbar_position: None,
+        };
+        let _ = DbStreamFollower::follow(pool, &follower_form).await;
+
         let aggregates = StreamAggregates::get_for_stream(pool, stream.id).await.unwrap_or_default();
 
         Ok(Stream::from((stream, aggregates)))
@@ -131,8 +141,8 @@ impl StreamManageMutations {
             name: input.name.map(|n| n.trim().to_string()).unwrap_or(stream.name),
             slug: stream.slug,
             description: input.description.or(stream.description),
-            icon: stream.icon,
-            color: stream.color,
+            icon: input.icon.or(stream.icon),
+            color: input.color.or(stream.color),
             is_public: input.is_public.unwrap_or(stream.is_public),
             is_discoverable: input.is_discoverable.unwrap_or(stream.is_discoverable),
             share_token: stream.share_token,

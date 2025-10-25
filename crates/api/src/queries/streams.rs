@@ -235,6 +235,7 @@ impl StreamQueries {
         limit: Option<i64>,
         offset: Option<i64>,
         sort_type: Option<SortType>,
+        post_type: Option<String>,
     ) -> Result<Vec<Post>> {
         let pool = ctx.data::<DbPool>()?;
         let user = ctx.data::<LoggedInUser>()?.inner();
@@ -266,12 +267,23 @@ impl StreamQueries {
         let offset = offset.unwrap_or(0);
         let sort = sort_type.unwrap_or(SortType::Hot);
 
+        // Validate post_type if provided
+        let post_type_filter = if let Some(pt) = post_type {
+            if pt != "feed" && pt != "thread" {
+                return Err(TinyBoardsError::from_message(400, "post_type must be 'feed' or 'thread'").into());
+            }
+            Some(pt)
+        } else {
+            None
+        };
+
         // Generate feed using the feed generator helper
         let posts = generate_stream_feed(
             pool,
             &stream,
             user,
             sort.into(),
+            post_type_filter.as_deref(),
             limit,
             offset,
         ).await?;

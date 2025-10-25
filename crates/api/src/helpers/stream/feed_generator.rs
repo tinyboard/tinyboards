@@ -29,11 +29,13 @@ use crate::structs::post::Post;
 /// - Pagination
 /// - Deleted/removed post filtering
 /// - max_posts_per_board limiting (if configured)
+/// - Optional post type filtering (feed or thread)
 pub async fn generate_stream_feed(
     pool: &DbPool,
     stream: &Stream,
     user: Option<&User>,
     sort_type: DbSortType,
+    post_type_filter: Option<&str>,
     limit: i64,
     offset: i64,
 ) -> Result<Vec<Post>, async_graphql::Error> {
@@ -65,6 +67,7 @@ pub async fn generate_stream_feed(
     // Query posts that match EITHER:
     // 1. Post has a flair in flair_ids
     // 2. Post's board is in board_ids
+    // And optionally filter by post type (feed or thread)
     let posts_with_aggregates = DbPost::load_stream_feed(
         pool,
         user_id,
@@ -73,6 +76,7 @@ pub async fn generate_stream_feed(
         sort_type,
         show_nsfw,
         stream.max_posts_per_board,
+        post_type_filter,
         limit,
         offset,
     )

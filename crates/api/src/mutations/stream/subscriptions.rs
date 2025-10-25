@@ -92,10 +92,8 @@ impl StreamSubscriptionMutations {
             }
         }
 
-        if created_subscriptions.is_empty() {
-            return Err(TinyBoardsError::from_message(409, "All provided flairs are already subscribed").into());
-        }
-
+        // Return the created subscriptions (empty vec if all were duplicates)
+        // This is not an error - it just means the flairs were already subscribed
         Ok(created_subscriptions)
     }
 
@@ -177,10 +175,8 @@ impl StreamSubscriptionMutations {
             }
         }
 
-        if created_subscriptions.is_empty() {
-            return Err(TinyBoardsError::from_message(409, "All provided boards are already subscribed").into());
-        }
-
+        // Return the created subscriptions (empty vec if all were duplicates)
+        // This is not an error - it just means the boards were already subscribed
         Ok(created_subscriptions)
     }
 
