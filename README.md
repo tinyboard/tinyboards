@@ -26,13 +26,12 @@ TinyBoards is a standalone social media platform similar to Reddit, Hacker News,
 - **Flexible Permissions** - Role-based access control
 - **Multi-Backend Storage** - Local filesystem, AWS S3, Azure Blob, or Google Cloud Storage
 - **Streaming Uploads** - Memory-efficient file handling for large uploads
-- **Rate Limiting** - Built-in protection against abuse
 - **Admin Tools** - Comprehensive site administration
 
 ### Why TinyBoards?
 
 - 🏠 **Self-hosted** - Own your data and community
-- 🎨 **Customizable** - Tailor the platform to your needs
+- 🎨 **Customizable** - Tailor the platform to your needs, the goal is to be able to run your Tinyboards however you like it!
 - 🔓 **Open Source** - Transparent and community-driven
 - 🚫 **Ad-free** - No corporate control or advertisements
 - ⚡ **Performance** - Built with Rust for speed and reliability
