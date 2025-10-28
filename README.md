@@ -538,7 +538,7 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 
 - 📚 **Documentation**: Check the [`docs/`](docs/) directory
 - 🐛 **Bug Reports**: Open an issue on GitHub
-- 💬 **Discussions**: Use GitHub Discussions for questions
+- 💬 **Discord**: [Chat, get help, give feedback](https://discord.gg/AaY3DT9MWe)
 - 📧 **Security Issues**: Email security concerns privately
 
 ---
