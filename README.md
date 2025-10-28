@@ -38,7 +38,11 @@ TinyBoards is a standalone social media platform similar to Reddit, Hacker News,
 - ⚡ **Performance** - Built with Rust for speed and reliability
 - 🔌 **API-first** - Easy integration and automation
 
+## Support
 
+- 📚 **Documentation**: Check the [`docs/`](docs/) directory
+- 🐛 **Bug Reports**: Open an issue on GitHub
+- 💬 **Discord**: [Chat, get help, give feedback](https://discord.gg/AaY3DT9MWe)
 
 ## Quick Start
 
@@ -533,13 +537,6 @@ docker-compose logs -f            # View logs
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-- 📚 **Documentation**: Check the [`docs/`](docs/) directory
-- 🐛 **Bug Reports**: Open an issue on GitHub
-- 💬 **Discord**: [Chat, get help, give feedback](https://discord.gg/AaY3DT9MWe)
-- 📧 **Security Issues**: Email security concerns privately
 
 ---
 
