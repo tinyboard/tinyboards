@@ -26,19 +26,22 @@ TinyBoards is a standalone social media platform similar to Reddit, Hacker News,
 - **Flexible Permissions** - Role-based access control
 - **Multi-Backend Storage** - Local filesystem, AWS S3, Azure Blob, or Google Cloud Storage
 - **Streaming Uploads** - Memory-efficient file handling for large uploads
-- **Rate Limiting** - Built-in protection against abuse
 - **Admin Tools** - Comprehensive site administration
 
 ### Why TinyBoards?
 
 - 🏠 **Self-hosted** - Own your data and community
-- 🎨 **Customizable** - Tailor the platform to your needs
+- 🎨 **Customizable** - Tailor the platform to your needs, the goal is to be able to run your Tinyboards however you like it!
 - 🔓 **Open Source** - Transparent and community-driven
 - 🚫 **Ad-free** - No corporate control or advertisements
 - ⚡ **Performance** - Built with Rust for speed and reliability
 - 🔌 **API-first** - Easy integration and automation
 
+## Support
 
+- 📚 **Documentation**: Check the [`docs/`](docs/) directory
+- 🐛 **Bug Reports**: Open an issue on GitHub
+- 💬 **Discord**: [Chat, get help, give feedback](https://discord.gg/AaY3DT9MWe)
 
 ## Quick Start
 
@@ -533,13 +536,6 @@ docker-compose logs -f            # View logs
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-- 📚 **Documentation**: Check the [`docs/`](docs/) directory
-- 🐛 **Bug Reports**: Open an issue on GitHub
-- 💬 **Discussions**: Use GitHub Discussions for questions
-- 📧 **Security Issues**: Email security concerns privately
 
 ---
 
