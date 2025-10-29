@@ -5,38 +5,38 @@ use tinyboards_utils::TinyBoardsError;
 /// Validate flair template input
 pub fn validate_flair_template_input(
     text_display: &str,
-    text_editable: bool,
+    _is_editable: bool,
     emoji_ids: &Option<Vec<i32>>,
-    max_text_length: i32,
+    max_emoji_count: i32,
 ) -> Result<()> {
     // Validate text length
     if text_display.is_empty() {
         return Err(TinyBoardsError::from_message(400, "Flair text cannot be empty").into());
     }
 
-    if text_display.len() > 64 {
+    if text_display.len() > 150 {
         return Err(TinyBoardsError::from_message(
             400,
-            "Flair text cannot exceed 64 characters",
+            "Flair text cannot exceed 150 characters",
         )
         .into());
     }
 
-    // Validate max_text_length
-    if max_text_length < 0 || max_text_length > 10 {
+    // Validate max_emoji_count
+    if max_emoji_count < 0 || max_emoji_count > 30 {
         return Err(TinyBoardsError::from_message(
             400,
-            "max_text_length must be between 0 and 10",
+            "max_emoji_count must be between 0 and 30",
         )
         .into());
     }
 
     // Validate emoji count
     if let Some(ref emoji_ids) = emoji_ids {
-        if emoji_ids.len() > max_text_length as usize {
+        if emoji_ids.len() > max_emoji_count as usize {
             return Err(TinyBoardsError::from_message(
                 400,
-                &format!("Too many emojis specified (max: {})", max_text_length),
+                &format!("Too many emojis specified (max: {})", max_emoji_count),
             )
             .into());
         }

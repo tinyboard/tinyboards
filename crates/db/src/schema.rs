@@ -359,7 +359,7 @@ diesel::table! {
         emoji_ids -> Array<Nullable<Int4>>,
         mod_only -> Bool,
         is_editable -> Bool,
-        max_text_length -> Int4,
+        max_emoji_count -> Int4,
         requires_approval -> Bool,
         display_order -> Int4,
         is_active -> Bool,

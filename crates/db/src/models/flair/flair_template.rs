@@ -20,7 +20,7 @@ pub struct FlairTemplate {
     pub emoji_ids: Vec<Option<i32>>,
     pub mod_only: bool,
     pub is_editable: bool,
-    pub max_text_length: i32,
+    pub max_emoji_count: i32,
     pub requires_approval: bool,
     pub display_order: i32,
     pub is_active: bool,
@@ -45,7 +45,7 @@ pub struct FlairTemplateForm {
     pub emoji_ids: Option<Vec<Option<i32>>>,
     pub mod_only: Option<bool>,
     pub is_editable: Option<bool>,
-    pub max_text_length: Option<i32>,
+    pub max_emoji_count: Option<i32>,
     pub requires_approval: Option<bool>,
     pub display_order: Option<i32>,
     pub is_active: Option<bool>,
@@ -66,6 +66,7 @@ impl FlairTemplate {
         let conn = &mut pool.get().await.map_err(|_| diesel::result::Error::NotFound)?;
         flair_templates::table
             .filter(flair_templates::board_id.eq(board_id_param))
+            .filter(flair_templates::is_active.eq(true))
             .order(flair_templates::display_order.asc())
             .load::<Self>(conn)
             .await

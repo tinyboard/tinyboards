@@ -9,13 +9,15 @@ pub struct FlairTemplate {
     pub id: i32,
     pub board_id: Option<i32>,
     pub flair_type: String,
+    pub name: String, // template_name in DB
     pub text_display: String,
-    pub text_editable: bool,
+    pub is_editable: bool,
+    pub mod_only: bool,
     pub background_color: Option<String>,
     pub text_color: Option<String>,
     pub style_config: Option<String>, // JSON string
     pub emoji_ids: Option<Vec<i32>>,
-    pub max_text_length: Option<i32>,
+    pub max_emoji_count: Option<i32>,
     pub category: Option<String>, // Deprecated - use category_id instead
     pub category_id: Option<i32>,
     pub display_order: i32,
@@ -34,6 +36,36 @@ impl FlairTemplate {
         self.style_config.as_ref().and_then(|s| {
             serde_json::from_str::<FlairStyle>(s).ok()
         })
+    }
+
+    /// Get the board this flair template belongs to
+    async fn board(&self, ctx: &Context<'_>) -> Result<Option<crate::structs::boards::Board>> {
+        use tinyboards_db::{
+            utils::{DbPool, get_conn},
+            traits::Crud,
+            schema::{boards, board_aggregates},
+            models::board::boards::Board as DbBoard,
+            aggregates::structs::BoardAggregates as DbBoardAggregates
+        };
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+
+        if let Some(board_id) = self.board_id {
+            let pool = ctx.data::<DbPool>()?;
+            let conn = &mut get_conn(pool).await?;
+
+            let result: Option<(DbBoard, DbBoardAggregates)> = boards::table
+                .inner_join(board_aggregates::table)
+                .filter(boards::id.eq(board_id))
+                .select((boards::all_columns, board_aggregates::all_columns))
+                .first::<(DbBoard, DbBoardAggregates)>(conn)
+                .await
+                .ok();
+
+            Ok(result.map(crate::structs::boards::Board::from))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -200,13 +232,14 @@ pub struct CreateFlairTemplateInput {
     pub board_id: Option<i32>,
     pub flair_type: FlairType,
     pub text_display: String,
-    pub text_editable: Option<bool>,
+    pub is_editable: Option<bool>,
     pub background_color: Option<String>,
     pub text_color: Option<String>,
     pub style_config: Option<FlairStyleInput>,
     pub emoji_ids: Option<Vec<i32>>,
-    pub max_text_length: Option<i32>,
-    pub category: Option<String>,
+    pub max_emoji_count: Option<i32>,
+    pub category: Option<String>, // Deprecated - use category_id instead
+    pub category_id: Option<i32>,
     pub display_order: Option<i32>,
     pub requires_approval: Option<bool>,
 }
@@ -214,12 +247,12 @@ pub struct CreateFlairTemplateInput {
 #[derive(InputObject)]
 pub struct UpdateFlairTemplateInput {
     pub text_display: Option<String>,
-    pub text_editable: Option<bool>,
+    pub is_editable: Option<bool>,
     pub background_color: Option<String>,
     pub text_color: Option<String>,
     pub style_config: Option<FlairStyleInput>,
     pub emoji_ids: Option<Vec<i32>>,
-    pub max_text_length: Option<i32>,
+    pub max_emoji_count: Option<i32>,
     pub category: Option<String>,
     pub category_id: Option<i32>,
     pub display_order: Option<i32>,
@@ -381,13 +414,15 @@ impl From<tinyboards_db::models::flair::FlairTemplate> for FlairTemplate {
             id: db.id,
             board_id: Some(db.board_id),
             flair_type: db.flair_type,
+            name: db.template_name,
             text_display: db.text_display,
-            text_editable: db.is_editable,
+            is_editable: db.is_editable,
+            mod_only: db.mod_only,
             background_color: Some(db.background_color),
             text_color: Some(db.text_color),
             style_config: Some(db.style_config.to_string()),
             emoji_ids: Some(db.emoji_ids.into_iter().filter_map(|id| id).collect()),
-            max_text_length: Some(db.max_text_length),
+            max_emoji_count: Some(db.max_emoji_count),
             category: None,  // Deprecated
             category_id: db.category_id,
             display_order: db.display_order,

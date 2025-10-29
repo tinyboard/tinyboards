@@ -98,11 +98,11 @@ impl FlairAssignmentMutations {
                 .into());
             }
 
-            // Validate text length if template has a max length
-            if template.max_text_length > 0 && input.text_display.len() > template.max_text_length as usize {
+            // Validate text length (max 150 characters)
+            if input.text_display.len() > 150 {
                 return Err(TinyBoardsError::from_message(
                     400,
-                    &format!("Flair text exceeds maximum length of {}", template.max_text_length),
+                    "Flair text exceeds maximum length of 150 characters",
                 )
                 .into());
             }
@@ -244,11 +244,11 @@ impl FlairAssignmentMutations {
                 .into());
             }
 
-            // Validate text length if template has a max length
-            if template.max_text_length > 0 && input.text_display.len() > template.max_text_length as usize {
+            // Validate text length (max 150 characters)
+            if input.text_display.len() > 150 {
                 return Err(TinyBoardsError::from_message(
                     400,
-                    &format!("Flair text exceeds maximum length of {}", template.max_text_length),
+                    "Flair text exceeds maximum length of 150 characters",
                 )
                 .into());
             }
@@ -287,7 +287,7 @@ impl FlairAssignmentMutations {
             custom_text_color: Some(text_color),
             custom_background_color: Some(background_color),
             is_approved: Some(auto_approve),
-            approved_by: if !is_self && auto_approve { Some(Some(user.id)) } else { None },
+            approved_by: if !is_self && auto_approve { Some(Some(user.id)) } else { Some(None) },
             is_self_assigned: Some(is_self),
         };
 
@@ -427,6 +427,73 @@ impl FlairAssignmentMutations {
             };
 
             results.push(updated_flair.into());
+        }
+
+        Ok(results)
+    }
+
+    /// Update post flairs - remove all existing and assign new ones (moderator only)
+    async fn update_post_flairs(
+        &self,
+        ctx: &Context<'_>,
+        post_id: i32,
+        flair_ids: Vec<i32>,
+    ) -> Result<Vec<PostFlair>> {
+        let pool = ctx.data::<DbPool>()?;
+        let user = ctx.data::<LoggedInUser>()?.require_user_not_banned()?;
+
+        // Get post to verify it exists and check permissions
+        let post = Post::read(pool, post_id).await
+            .map_err(|_| TinyBoardsError::from_message(404, "Post not found"))?;
+
+        // Check permissions - mod/admin only
+        require_mod_or_admin(
+            user,
+            pool,
+            post.board_id,
+            ModPerms::Flair,
+            Some(AdminPerms::Flair),
+        )
+        .await?;
+
+        // Remove all existing post flairs
+        PostFlairDb::remove_from_post(pool, post_id).await?;
+
+        let mut results: Vec<PostFlair> = Vec::new();
+
+        // Assign new flairs
+        for template_id in flair_ids {
+            // Get template to validate and get default text
+            let template = FlairTemplateDb::read(pool, template_id).await
+                .map_err(|_| TinyBoardsError::from_message(404, "Flair template not found"))?;
+
+            // Validate template is for posts and is active
+            if template.flair_type != "post" {
+                continue; // Skip non-post templates
+            }
+            if !template.is_active {
+                continue; // Skip inactive templates
+            }
+
+            // Validate template belongs to the same board
+            if template.board_id != post.board_id {
+                continue; // Skip templates from other boards
+            }
+
+            let form = PostFlairForm {
+                post_id: Some(post_id),
+                flair_template_id: Some(template_id),
+                custom_text: Some(Some(template.text_display.clone())),
+                custom_text_color: Some(Some(template.text_color.clone())),
+                custom_background_color: Some(Some(template.background_color.clone())),
+                assigned_by: Some(user.id),
+                is_original_author: Some(false),
+            };
+
+            match PostFlairDb::assign_to_post(pool, post_id, &form).await {
+                Ok(flair) => results.push(flair.into()),
+                Err(_) => continue,
+            }
         }
 
         Ok(results)

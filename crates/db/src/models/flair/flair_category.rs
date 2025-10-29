@@ -121,6 +121,7 @@ impl FlairCategory {
 
         flair_templates::table
             .filter(flair_templates::category_id.eq(cat_id))
+            .filter(flair_templates::is_active.eq(true))
             .count()
             .get_result(conn)
             .await

@@ -66,6 +66,184 @@ impl FlairQueries {
         }
     }
 
+    /// Get a specific flair template by ID (alias for flair_template)
+    async fn flair(
+        &self,
+        ctx: &Context<'_>,
+        id: i32,
+    ) -> Result<Option<FlairTemplate>> {
+        self.flair_template(ctx, id).await
+    }
+
+    /// Get usage statistics for a flair template
+    async fn get_flair_usage_stats(
+        &self,
+        ctx: &Context<'_>,
+        flair_id: i32,
+    ) -> Result<FlairUsageStats> {
+        let pool = ctx.data::<DbPool>()?;
+
+        use tinyboards_db::traits::Crud;
+        let template = tinyboards_db::models::flair::FlairTemplate::read(pool, flair_id).await?;
+
+        // For now, return basic stats from the template
+        // TODO: Implement actual statistics queries
+        Ok(FlairUsageStats {
+            total_usage: template.usage_count as i64,
+            this_week: 0,
+            this_month: 0,
+            unique_users: 0,
+        })
+    }
+
+    /// Get usage chart data for a flair template
+    async fn get_flair_usage_chart(
+        &self,
+        _ctx: &Context<'_>,
+        _flair_id: i32,
+    ) -> Result<Vec<FlairUsageChartData>> {
+        // TODO: Implement actual chart data queries
+        Ok(vec![])
+    }
+
+    /// Get posts using a specific flair
+    async fn get_flair_posts(
+        &self,
+        ctx: &Context<'_>,
+        flair_id: i32,
+        limit: Option<i32>,
+    ) -> Result<Vec<crate::structs::post::Post>> {
+        let pool = ctx.data::<DbPool>()?;
+        let limit = limit.unwrap_or(50).min(100) as i64;
+
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        use tinyboards_db::{
+            schema::{post_flairs, posts, post_aggregates},
+            utils::get_conn,
+            models::post::posts::Post as DbPost,
+            aggregates::structs::PostAggregates as DbPostAggregates
+        };
+
+        let conn = &mut get_conn(pool).await?;
+
+        let results: Vec<(DbPost, DbPostAggregates)> = post_flairs::table
+            .inner_join(posts::table.on(post_flairs::post_id.eq(posts::id)))
+            .inner_join(post_aggregates::table.on(posts::id.eq(post_aggregates::post_id)))
+            .filter(post_flairs::flair_template_id.eq(flair_id))
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .limit(limit)
+            .load::<(DbPost, DbPostAggregates)>(conn)
+            .await?;
+
+        Ok(results.into_iter().map(crate::structs::post::Post::from).collect())
+    }
+
+    /// Get users with a specific flair
+    async fn get_flair_users(
+        &self,
+        ctx: &Context<'_>,
+        flair_id: i32,
+        limit: Option<i32>,
+    ) -> Result<Vec<crate::structs::user::User>> {
+        let pool = ctx.data::<DbPool>()?;
+        let limit = limit.unwrap_or(50).min(100) as i64;
+
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        use tinyboards_db::{schema::user_flairs, utils::get_conn, traits::Crud};
+
+        let conn = &mut get_conn(pool).await?;
+
+        let user_ids: Vec<i32> = user_flairs::table
+            .filter(user_flairs::flair_template_id.eq(flair_id))
+            .filter(user_flairs::is_approved.eq(true))
+            .select(user_flairs::user_id)
+            .limit(limit)
+            .load::<i32>(conn)
+            .await?;
+
+        let mut result_users = vec![];
+        for user_id in user_ids {
+            if let Ok(user) = tinyboards_db::models::user::user::User::read(pool, user_id).await {
+                result_users.push(crate::structs::user::User::from(user));
+            }
+        }
+
+        Ok(result_users)
+    }
+
+    /// Get top posts with a specific flair (by score)
+    async fn get_flair_top_posts(
+        &self,
+        ctx: &Context<'_>,
+        flair_id: i32,
+        limit: Option<i32>,
+    ) -> Result<Vec<crate::structs::post::Post>> {
+        let pool = ctx.data::<DbPool>()?;
+        let limit = limit.unwrap_or(5).min(20) as i64;
+
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        use tinyboards_db::{
+            schema::{posts, post_flairs, post_aggregates},
+            utils::get_conn,
+            models::post::posts::Post as DbPost,
+            aggregates::structs::PostAggregates as DbPostAggregates
+        };
+
+        let conn = &mut get_conn(pool).await?;
+
+        let results: Vec<(DbPost, DbPostAggregates)> = post_flairs::table
+            .inner_join(posts::table.on(post_flairs::post_id.eq(posts::id)))
+            .inner_join(post_aggregates::table.on(posts::id.eq(post_aggregates::post_id)))
+            .filter(post_flairs::flair_template_id.eq(flair_id))
+            .select((posts::all_columns, post_aggregates::all_columns))
+            .order(post_aggregates::score.desc())
+            .limit(limit)
+            .load::<(DbPost, DbPostAggregates)>(conn)
+            .await?;
+
+        Ok(results.into_iter().map(crate::structs::post::Post::from).collect())
+    }
+
+    /// Get top users with a specific flair (by combined post and comment score)
+    async fn get_flair_top_users(
+        &self,
+        ctx: &Context<'_>,
+        flair_id: i32,
+        limit: Option<i32>,
+    ) -> Result<Vec<crate::structs::user::User>> {
+        let pool = ctx.data::<DbPool>()?;
+        let limit = limit.unwrap_or(5).min(20) as i64;
+
+        use diesel::prelude::*;
+        use diesel_async::RunQueryDsl;
+        use tinyboards_db::{schema::{user_flairs, users, user_aggregates}, utils::get_conn, traits::Crud};
+
+        let conn = &mut get_conn(pool).await?;
+
+        let user_ids: Vec<i32> = user_flairs::table
+            .inner_join(users::table.on(user_flairs::user_id.eq(users::id)))
+            .inner_join(user_aggregates::table.on(users::id.eq(user_aggregates::user_id)))
+            .filter(user_flairs::flair_template_id.eq(flair_id))
+            .filter(user_flairs::is_approved.eq(true))
+            .select(user_flairs::user_id)
+            .order((user_aggregates::post_score + user_aggregates::comment_score).desc())
+            .limit(limit)
+            .load::<i32>(conn)
+            .await?;
+
+        let mut result_users = vec![];
+        for user_id in user_ids {
+            if let Ok(user) = tinyboards_db::models::user::user::User::read(pool, user_id).await {
+                result_users.push(crate::structs::user::User::from(user));
+            }
+        }
+
+        Ok(result_users)
+    }
+
     /// Get flair assigned to a specific post
     async fn post_flair(
         &self,
@@ -104,13 +282,15 @@ impl FlairQueries {
     async fn flair_categories(
         &self,
         ctx: &Context<'_>,
-        _board_id: Option<i32>,
-        _flair_type: Option<FlairType>,
+        board_id: i32,
     ) -> Result<Vec<FlairCategory>> {
-        let _pool = ctx.data::<DbPool>()?;
-        // Categories are not currently implemented in the database schema
-        // This would require adding a category field to FlairTemplate
-        Ok(vec![])
+        let pool = ctx.data::<DbPool>()?;
+
+        use tinyboards_db::models::flair::FlairCategory as DbFlairCategory;
+
+        let categories = DbFlairCategory::for_board(pool, board_id).await?;
+
+        Ok(categories.into_iter().map(FlairCategory::from).collect())
     }
 
     /// Get all flairs for a board (admin/mod view with inactive ones)
@@ -219,4 +399,19 @@ pub struct FlairFilters {
     pub board_id: Option<i32>,
     pub hidden_flair_ids: Vec<i32>,
     pub highlighted_flair_ids: Vec<i32>,
+}
+
+#[derive(SimpleObject, Clone)]
+pub struct FlairUsageStats {
+    pub total_usage: i64,
+    pub this_week: i64,
+    pub this_month: i64,
+    pub unique_users: i64,
+}
+
+#[derive(SimpleObject, Clone)]
+pub struct FlairUsageChartData {
+    pub date: String,
+    pub label: String,
+    pub count: i64,
 }
