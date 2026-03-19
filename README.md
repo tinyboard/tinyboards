@@ -1,4 +1,4 @@
-# tinyboards
+# Tinyboards
 
 [![Built with Rust](https://img.shields.io/badge/built_with-Rust-orange?logo=rust)](https://www.rust-lang.org)
 [![Built with Vue](https://img.shields.io/badge/built_with-Vue-42b883?logo=vue.js)](https://vuejs.org)
