@@ -383,6 +383,8 @@ infallible `unwrap()` on date/time values.
    `feat(auth): implement JWT refresh token flow`
    `fix(posts): correct pagination offset`
    No co-author lines. No attribution of any kind.
+   Never append session links, tracking URLs, or any external references to
+   commit messages.
 4. Code comments explain what and why, as any developer would write them.
 
 ---
