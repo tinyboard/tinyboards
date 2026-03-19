@@ -1,0 +1,299 @@
+version: '3.8'
+
+# Development-optimized Docker Compose configuration
+# Features: hot reloading, debugging support, optimized caching
+
+# Configuration for development
+
+services:
+  # Nginx reverse proxy for development
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: tinyboards_nginx_dev
+    ports:
+      - "80:80"
+      - "8080:8080"  # Alternative port for testing
+    volumes:
+      - ./nginx/conf/dev/:/etc/nginx/conf.d:ro
+      - nginx_cache_dev:/var/cache/nginx
+      # Mount logs for debugging
+      - ./logs/nginx:/var/log/nginx
+    networks:
+      - tinyboards_dev
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
+    depends_on:
+      tinyboards:
+        condition: service_started
+      tinyboards-fe:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_SUFFIX=.template
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+
+  # TinyBoards backend with development optimizations
+  tinyboards:
+    image: tinyboards:dev
+    container_name: tinyboards_backend_dev
+    ports:
+      - "8536:8536"  # Main API port
+      - "6669:6669"  # WebSocket port
+      - "9229:9229"  # Debug port for potential future use
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
+    environment:
+      - RUST_LOG=debug,tinyboards_api=trace,tinyboards_db=debug
+      - RUST_BACKTRACE=full
+      - DATABASE_URL=postgresql://tinyboards:tinyboards@postgres:5432/tinyboards
+      - TB_CONFIG_LOCATION=/opt/tinyboards/config/defaults.hjson
+      - ENVIRONMENT=development
+      # Development-specific settings
+      - CARGO_INCREMENTAL=1
+      - RUST_LOG_STYLE=always
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      target: runtime  # Use optimized multi-stage build
+      cache_from:
+        - tinyboards:dev
+        - rust:1.75-slim-bookworm
+    volumes:
+      # Configuration
+      - ./tinyboards.hjson:/opt/tinyboards/config/defaults.hjson:ro
+      # Media uploads with proper permissions
+      - ./media:/opt/tinyboards/media
+      # Source code for development (if using dev build)
+      - ../src:/app/src:ro
+      - ../crates:/app/crates:ro
+      - ../Cargo.toml:/app/Cargo.toml:ro
+      - ../Cargo.lock:/app/Cargo.lock:ro
+      # Cargo cache for faster rebuilds
+      - cargo_cache_dev:/usr/local/cargo
+      - cargo_target_dev:/app/target
+      # Logs
+      - ./logs/backend:/app/logs
+    networks:
+      - tinyboards_dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8536/api/v1/site || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    # Resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '1.0'
+
+  # TinyBoards frontend with hot reloading
+  tinyboards-fe:
+    image: tinyboards-fe:dev
+    container_name: tinyboards_frontend_dev
+    ports:
+      - "3000:3000"  # Main frontend port
+      - "24678:24678"  # Nuxt DevTools port
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
+    environment:
+      - NODE_ENV=development
+      - NUXT_HOST=0.0.0.0
+      - NUXT_PORT=3000
+      - NITRO_PORT=3000
+      - NITRO_HOST=0.0.0.0
+      - NUXT_DEVTOOLS_ENABLED=true
+      - NUXT_PUBLIC_API_BASE=http://tinyboards:8536
+      - NUXT_PUBLIC_DOMAIN=tinyboards:8536
+      - NUXT_PUBLIC_USE_HTTPS=false
+    build:
+      context: ../../tinyboards-fe
+      dockerfile: Dockerfile
+      cache_from:
+        - tinyboards-fe:dev
+        - node:22-alpine
+    volumes:
+      # Source code for hot reloading (excluding build artifacts)
+      - ../../tinyboards-fe/components:/app/components
+      - ../../tinyboards-fe/pages:/app/pages
+      - ../../tinyboards-fe/stores:/app/stores
+      - ../../tinyboards-fe/assets:/app/assets
+      - ../../tinyboards-fe/public:/app/public
+      - ../../tinyboards-fe/types:/app/types
+      - ../../tinyboards-fe/graphql:/app/graphql
+      - ../../tinyboards-fe/package.json:/app/package.json:ro
+      - ../../tinyboards-fe/nuxt.config.ts:/app/nuxt.config.ts:ro
+      - ../../tinyboards-fe/tsconfig.json:/app/tsconfig.json:ro
+      - ../../tinyboards-fe/tailwind.config.ts:/app/tailwind.config.ts:ro
+      # Let container manage these directories
+      - /app/node_modules
+      - /app/.nuxt
+      - /app/.output
+      # NPM cache for faster installs
+      - npm_cache_dev:/home/node/.npm
+    networks:
+      - tinyboards_dev
+    depends_on:
+      - tinyboards
+    command: ["npm", "run", "dev"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # Resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.5'
+
+  # PostgreSQL with development optimizations
+  postgres:
+    image: postgres:15-alpine
+    container_name: tinyboards_postgres_dev
+    ports:
+      - "5433:5432"  # Use different port to avoid conflicts
+    environment:
+      - POSTGRES_USER=tinyboards
+      - POSTGRES_PASSWORD=tinyboards
+      - POSTGRES_DB=tinyboards
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --lc-collate=C --lc-ctype=C
+      # Development-specific settings
+      - POSTGRES_HOST_AUTH_METHOD=trust  # Only for development!
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data_dev:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+      - ./postgres/dev-config:/etc/postgresql:ro
+      # Logs for debugging
+      - ./logs/postgres:/var/log/postgresql
+    networks:
+      - tinyboards_dev
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+        labels: "service,environment=development"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tinyboards -d tinyboards"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    # Development-optimized PostgreSQL configuration
+    command: [
+      "postgres",
+      # Development-specific settings for faster queries and debugging
+      "-c", "log_statement=all",
+      "-c", "log_min_duration_statement=0",
+      "-c", "log_line_prefix=%t [%p]: [%l-1] user=%u,db=%d,app=%a,client=%h ",
+      "-c", "log_checkpoints=on",
+      "-c", "log_connections=on",
+      "-c", "log_disconnections=on",
+      "-c", "log_lock_waits=on",
+      "-c", "log_temp_files=0",
+      # Performance settings for development
+      "-c", "shared_buffers=256MB",
+      "-c", "effective_cache_size=1GB",
+      "-c", "work_mem=16MB",
+      "-c", "maintenance_work_mem=256MB",
+      "-c", "checkpoint_completion_target=0.9",
+      "-c", "wal_buffers=16MB",
+      "-c", "default_statistics_target=100",
+      # Development debugging
+      "-c", "session_preload_libraries=auto_explain",
+      "-c", "auto_explain.log_min_duration=100ms",
+      "-c", "auto_explain.log_analyze=true",
+      "-c", "auto_explain.log_buffers=true",
+      "-c", "auto_explain.log_timing=true",
+      "-c", "auto_explain.log_triggers=true",
+      "-c", "auto_explain.log_verbose=true"
+    ]
+    # Resource limits for development
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+
+  # Development tools and utilities
+  adminer:
+    image: adminer:4.8.1
+    container_name: tinyboards_adminer_dev
+    ports:
+      - "8081:8080"
+    networks:
+      - tinyboards_dev
+    restart: "no"  # Don't auto-restart in dev to see crashes
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+      - ADMINER_DESIGN=hydra
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+
+networks:
+  tinyboards_dev:
+    driver: bridge
+
+volumes:
+  # Application data
+  media_uploads_dev:
+    name: tinyboards_media_dev
+    driver: local
+  postgres_data_dev:
+    name: tinyboards_postgres_dev
+    driver: local
+
+  # Build caches for faster development
+  cargo_cache_dev:
+    name: tinyboards_cargo_cache_dev
+    driver: local
+  cargo_target_dev:
+    name: tinyboards_cargo_target_dev
+    driver: local
+  npm_cache_dev:
+    name: tinyboards_npm_cache_dev
+    driver: local
+  nginx_cache_dev:
+    name: tinyboards_nginx_cache_dev
+    driver: local

@@ -1,0 +1,43 @@
+{
+  "name": "tinyboards-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run codegen && nuxi dev",
+    "build": "npm run codegen && nuxi build",
+    "generate": "npm run codegen && nuxi generate",
+    "preview": "nuxt preview",
+    "typecheck": "npm run codegen && nuxi typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:watch": "graphql-codegen --config codegen.ts --watch"
+  },
+  "dependencies": {
+    "@headlessui/vue": "^1.7.0",
+    "@pinia/nuxt": "^0.10.1",
+    "@urql/vue": "^1.4.0",
+    "date-fns": "^4.1.0",
+    "dompurify": "^3.2.0",
+    "graphql": "^16.10.0",
+    "nuxt": "^3.16.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.0",
+    "hjson": "^3.2.2",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/typed-document-node": "^5.1.2",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "@nuxtjs/tailwindcss": "^6.13.0",
+    "@tailwindcss/forms": "^0.5.0",
+    "@tailwindcss/typography": "^0.5.0",
+    "@types/dompurify": "^3.2.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0"
+  }
+}

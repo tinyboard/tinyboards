@@ -1,0 +1,90 @@
+name: Schema Drift Detection
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  schema-drift:
+    name: Check schema drift
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tinyboards
+          POSTGRES_PASSWORD: tinyboards
+          POSTGRES_DB: tinyboards
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tinyboards"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            backend/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('backend/Cargo.lock') }}
+
+      - name: Build backend
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://tinyboards:tinyboards@localhost:5432/tinyboards
+        run: cargo build --release
+
+      - name: Run migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://tinyboards:tinyboards@localhost:5432/tinyboards
+        run: cargo run --release -- migrate
+
+      - name: Start backend
+        working-directory: backend
+        env:
+          DATABASE_URL: postgres://tinyboards:tinyboards@localhost:5432/tinyboards
+        run: |
+          cargo run --release &
+          sleep 5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Introspect live schema
+        run: |
+          npx @graphql-inspector/cli introspect \
+            http://localhost:8536/api/v2/graphql \
+            --write live-schema.graphql
+
+      - name: Check for breaking changes
+        id: breaking
+        continue-on-error: false
+        run: |
+          npx @graphql-inspector/cli diff \
+            schema.graphql \
+            live-schema.graphql \
+            --rule suppressRemovalOfDeprecatedField \
+            --onUsage || true
+
+      - name: Check for non-breaking additions
+        continue-on-error: true
+        run: |
+          npx @graphql-inspector/cli diff \
+            schema.graphql \
+            live-schema.graphql

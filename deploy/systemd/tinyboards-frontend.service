@@ -1,0 +1,39 @@
+[Unit]
+Description=tinyboards frontend (Nuxt 3)
+# Start after the backend is available so SSR can reach the API
+After=network.target tinyboards-backend.service
+
+[Service]
+Type=simple
+User=tinyboards
+Group=tinyboards
+
+# The .output directory is created by `npx nuxi build`
+WorkingDirectory=/opt/tinyboards/frontend
+ExecStart=/usr/bin/node /opt/tinyboards/frontend/.output/server/index.mjs
+
+# Restart on failure with a 5-second delay
+Restart=on-failure
+RestartSec=5s
+
+# Load NUXT_INTERNAL_GQL_HOST, NUXT_PUBLIC_DOMAIN, etc. from the env file
+EnvironmentFile=/opt/tinyboards/.env
+
+# Force production mode and bind to all interfaces on port 3000
+Environment=NODE_ENV=production
+Environment=HOST=0.0.0.0
+Environment=PORT=3000
+
+# --- Security hardening ---
+
+# Prevent privilege escalation
+NoNewPrivileges=true
+
+# Isolate /tmp from other services
+PrivateTmp=true
+
+# Prevent access to /home and /root
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

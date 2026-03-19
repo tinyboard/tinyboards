@@ -1,0 +1,60 @@
+[package]
+name = "tinyboards_utils"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "tinyboards_utils"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+pulldown-cmark = { workspace = true }
+ammonia = { workspace = true }
+maplit = { workspace = true }
+actix-web = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+derive_more = { workspace = true }
+rust-argon2 = { workspace = true }
+dotenv = { workspace = true }
+chrono = { workspace = true }
+regex = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+tracing-error = { workspace = true }
+rand = { workspace = true }
+once_cell = { workspace = true }
+openssl = { workspace = true }
+url = { workspace = true }
+anyhow = { workspace = true }
+reqwest-middleware = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+futures = { workspace = true }
+diesel = { workspace = true }
+diesel-async = { workspace = true, features = ["postgres", "bb8"] }
+bb8 = { workspace = true }
+http = { workspace = true }
+deser-hjson = { workspace = true }
+smart-default = { workspace = true }
+doku = { workspace = true }
+html2text = { workspace = true }
+jsonwebtoken = { workspace = true }
+lettre = { workspace = true }
+tokio = { workspace = true }
+typed-builder = { workspace = true }
+itertools = { workspace = true }
+glob = "0.3"
+
+[dependencies.uuid]
+version = "1.1.2"
+features = [
+    "v4",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde"
+]
+
+#[build-dependencies]
+#rosetta-build = "0.1.2"

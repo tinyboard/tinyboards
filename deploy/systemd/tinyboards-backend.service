@@ -1,0 +1,46 @@
+[Unit]
+Description=tinyboards backend
+# Wait for network and PostgreSQL before starting
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=tinyboards
+Group=tinyboards
+
+# Working directory where the binary and media folder live
+WorkingDirectory=/opt/tinyboards
+
+# Path to the compiled release binary
+ExecStart=/opt/tinyboards/tinyboards-server
+
+# Restart on failure with a 5-second delay to avoid rapid restart loops
+Restart=on-failure
+RestartSec=5s
+
+# Load DATABASE_URL, JWT_SECRET, and other config from the env file
+EnvironmentFile=/opt/tinyboards/.env
+
+# --- Security hardening ---
+
+# Prevent the process from gaining new privileges via setuid/setgid binaries
+NoNewPrivileges=true
+
+# Give the service its own /tmp directory, isolated from other processes
+PrivateTmp=true
+
+# Mount the entire filesystem as read-only, except paths listed in ReadWritePaths
+ProtectSystem=strict
+
+# Allow writes only to the media upload directory
+ReadWritePaths=/opt/tinyboards/media
+
+# Prevent access to /home, /root, and /run/user
+ProtectHome=true
+
+# Limit the number of open file descriptors (connections + files)
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

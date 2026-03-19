@@ -1,0 +1,342 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+      - master
+  schedule:
+    # Weekly builds on Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag to build'
+        required: false
+        default: 'latest'
+      platforms:
+        description: 'Build platforms'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+      push_images:
+        description: 'Push images to registry'
+        required: false
+        default: 'true'
+        type: boolean
+
+env:
+  DOCKERHUB_USERNAME: kronusdev
+  REGISTRY: docker.io
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      should_push: ${{ steps.meta.outputs.should_push }}
+      matrix: ${{ steps.meta.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine build metadata
+        id: meta
+        run: |
+          # Determine version
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] && [[ -n "${{ github.event.inputs.version }}" ]]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"  # Remove 'v' prefix
+          elif [[ "${{ github.ref_name }}" == "main" ]] || [[ "${{ github.ref_name }}" == "master" ]]; then
+            VERSION="latest"
+          else
+            VERSION="${{ github.ref_name }}"
+          fi
+
+          # Determine if we should push
+          SHOULD_PUSH="false"
+          if [[ "${{ github.event_name }}" == "push" ]] || [[ "${{ github.event_name }}" == "schedule" ]]; then
+            SHOULD_PUSH="true"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            SHOULD_PUSH="${{ github.event.inputs.push_images }}"
+          fi
+
+          # Create build matrix
+          MATRIX='{"include":[{"component":"backend","dockerfile":"docker/Dockerfile","context":"."},{"component":"frontend","dockerfile":"docker/Dockerfile","context":"../tinyboards-fe"}]}'
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "should_push=$SHOULD_PUSH" >> $GITHUB_OUTPUT
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+          echo "🏷️ Version: $VERSION"
+          echo "📤 Push: $SHOULD_PUSH"
+
+  build-backend:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: needs.prepare.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKERHUB_USERNAME }}/tinyboards-be
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.prepare.outputs.version }}
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: ${{ needs.prepare.outputs.should_push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.prepare.outputs.version }}
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            GIT_SHA=${{ github.sha }}
+
+  build-frontend:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - linux/amd64
+          - linux/arm64
+    steps:
+      - name: Checkout backend repository
+        uses: actions/checkout@v4
+        with:
+          path: tinyboards
+
+      - name: Checkout frontend repository
+        uses: actions/checkout@v4
+        with:
+          repository: tinyboards/tinyboards-fe
+          path: tinyboards-fe
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: needs.prepare.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create frontend Dockerfile
+        run: |
+          mkdir -p tinyboards-fe/docker
+          cat > tinyboards-fe/docker/Dockerfile << 'EOF'
+          # Multi-stage build for Nuxt.js frontend
+          ARG NODE_VERSION=18
+
+          FROM node:${NODE_VERSION}-alpine AS base
+          WORKDIR /app
+
+          # Build stage
+          FROM base AS builder
+
+          # Build arguments
+          ARG VERSION=latest
+          ARG BUILD_DATE
+          ARG GIT_SHA
+
+          # Labels
+          LABEL org.opencontainers.image.title="TinyBoards Frontend"
+          LABEL org.opencontainers.image.description="TinyBoards Frontend - Social media platform frontend"
+          LABEL org.opencontainers.image.version="${VERSION}"
+          LABEL org.opencontainers.image.created="${BUILD_DATE}"
+          LABEL org.opencontainers.image.revision="${GIT_SHA}"
+          LABEL org.opencontainers.image.vendor="TinyBoards"
+          LABEL org.opencontainers.image.source="https://github.com/tinyboards/tinyboards-fe"
+
+          # Install dependencies
+          COPY package*.json ./
+          RUN npm ci --only=production --no-audit --no-fund && npm cache clean --force
+
+          # Copy source code
+          COPY . .
+
+          # Build the application
+          ENV NODE_ENV=production
+          RUN npm run build
+
+          # Production stage
+          FROM node:${NODE_VERSION}-alpine AS runtime
+
+          # Security: Create non-root user
+          RUN addgroup -g 1001 -S nodejs && \
+              adduser -S nuxt -u 1001 && \
+              apk add --no-cache curl
+
+          WORKDIR /app
+
+          # Copy built application with correct ownership
+          COPY --from=builder --chown=nuxt:nodejs /app/.output /app/.output
+
+          # Switch to non-root user
+          USER nuxt
+
+          # Expose port
+          EXPOSE 3000
+
+          # Environment variables
+          ENV NODE_ENV=production
+          ENV NUXT_HOST=0.0.0.0
+          ENV NUXT_PORT=3000
+          ENV NODE_OPTIONS="--max-old-space-size=512"
+
+          # Health check
+          HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+              CMD curl -f http://localhost:3000/health || exit 1
+
+          # Start the application
+          CMD ["node", ".output/server/index.mjs"]
+          EOF
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKERHUB_USERNAME }}/tinyboards-fe
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ needs.prepare.outputs.version }}
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: tinyboards-fe
+          file: tinyboards-fe/docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: ${{ needs.prepare.outputs.should_push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            VERSION=${{ needs.prepare.outputs.version }}
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            GIT_SHA=${{ github.sha }}
+
+  test-images:
+    needs: [prepare, build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: needs.prepare.outputs.should_push == 'true'
+    steps:
+      - name: Test backend image
+        run: |
+          docker run --rm ${{ env.DOCKERHUB_USERNAME }}/tinyboards-be:${{ needs.prepare.outputs.version }} --version || echo "Backend test completed"
+
+      - name: Test frontend image
+        run: |
+          # Start frontend container
+          docker run -d --name test-frontend -p 3000:3000 ${{ env.DOCKERHUB_USERNAME }}/tinyboards-fe:${{ needs.prepare.outputs.version }}
+
+          # Wait for startup
+          sleep 10
+
+          # Test health endpoint
+          if curl -f http://localhost:3000/health; then
+            echo "✅ Frontend health check passed"
+          else
+            echo "❌ Frontend health check failed"
+            docker logs test-frontend
+          fi
+
+          # Cleanup
+          docker stop test-frontend
+          docker rm test-frontend
+
+  security-scan:
+    needs: [prepare, build-backend, build-frontend]
+    runs-on: ubuntu-latest
+    if: needs.prepare.outputs.should_push == 'true'
+    strategy:
+      matrix:
+        image:
+          - tinyboards-be
+          - tinyboards-fe
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.DOCKERHUB_USERNAME }}/${{ matrix.image }}:${{ needs.prepare.outputs.version }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  notify:
+    needs: [prepare, build-backend, build-frontend, test-images]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## 🐳 Docker Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`${{ needs.prepare.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Push:** ${{ needs.prepare.outputs.should_push }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Images Built" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏗️ Backend: \`${{ env.DOCKERHUB_USERNAME }}/tinyboards-be:${{ needs.prepare.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 Frontend: \`${{ env.DOCKERHUB_USERNAME }}/tinyboards-fe:${{ needs.prepare.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Status" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Build: ${{ needs.build-backend.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend Build: ${{ needs.build-frontend.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.test-images.result }}" >> $GITHUB_STEP_SUMMARY

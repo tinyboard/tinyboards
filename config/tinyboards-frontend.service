@@ -1,0 +1,26 @@
+[Unit]
+Description=TinyBoards Frontend (Nuxt SSR)
+After=network.target tinyboards-backend.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/tinyboards/frontend
+ExecStart=/usr/bin/node .output/server/index.mjs
+EnvironmentFile=/opt/tinyboards/.env
+Environment=NODE_ENV=production HOST=0.0.0.0 PORT=3000
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tinyboards-frontend
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

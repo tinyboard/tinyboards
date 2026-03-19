@@ -1,0 +1,73 @@
+name: Release Docker Images
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        default: 'v1.0.0'
+
+env:
+  DOCKERHUB_USERNAME: kronusdev
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout frontend repository
+        uses: actions/checkout@v4
+        with:
+          repository: tinyboards/tinyboards-fe
+          path: ../tinyboards-fe
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.event_name }}" == "release" ]]; then
+            VERSION="${{ github.event.release.tag_name }}"
+          else
+            VERSION="${{ github.event.inputs.tag }}"
+          fi
+          VERSION="${VERSION#v}"  # Remove 'v' prefix
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Build and push images
+        run: |
+          # Make script executable
+          chmod +x docker/scripts/build-and-push.sh
+
+          # Build and push both images
+          docker/scripts/build-and-push.sh -v "${{ steps.version.outputs.version }}" both
+
+      - name: Create release summary
+        run: |
+          echo "## 🚀 Release ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Images Published" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏗️ Backend: \`${{ env.DOCKERHUB_USERNAME }}/tinyboards-be:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 🏗️ Backend: \`${{ env.DOCKERHUB_USERNAME }}/tinyboards-be:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 Frontend: \`${{ env.DOCKERHUB_USERNAME }}/tinyboards-fe:${{ steps.version.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 Frontend: \`${{ env.DOCKERHUB_USERNAME }}/tinyboards-fe:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Pull Commands" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.DOCKERHUB_USERNAME }}/tinyboards-be:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ${{ env.DOCKERHUB_USERNAME }}/tinyboards-fe:${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

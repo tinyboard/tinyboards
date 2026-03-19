@@ -1,0 +1,202 @@
+{
+  # ===========================================================================
+  # TinyBoards — Configuration File
+  # ===========================================================================
+  #
+  # This is the SINGLE source of truth for the entire tinyboards stack.
+  # Copy this file to tinyboards.hjson and edit it with your settings:
+  #
+  #   cp tinyboards.example.hjson tinyboards.hjson
+  #
+  # Then:
+  #   Docker:      ./configure.sh && docker compose up -d
+  #   Bare metal:  point the backend at it with TB_CONFIG_LOCATION and
+  #                reference it when setting up PostgreSQL and the frontend.
+  #
+  # The configure.sh script reads tinyboards.hjson and generates the .env
+  # that docker-compose needs — you should never edit .env directly.
+  # tinyboards.hjson is gitignored so your local settings won't be committed.
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL
+  # ---------------------------------------------------------------------------
+  database: {
+    user: "tinyboards"
+    password: "changeme_strong_password_here"
+    # Docker: use "postgres" (the compose service name)
+    # Bare metal: use "localhost" or wherever your postgres is
+    host: "postgres"
+    port: 5432
+    database: "tinyboards"
+    pool_size: 5
+  }
+
+  # ---------------------------------------------------------------------------
+  # Server
+  # ---------------------------------------------------------------------------
+
+  # The public domain of your instance (REQUIRED — no protocol prefix)
+  hostname: "localhost"
+  # Listen address and port inside the container (or on the host for bare metal)
+  bind: "0.0.0.0"
+  port: 8536
+  # Set to true once TLS is in front of the backend (required for federation)
+  tls_enabled: false
+  # "prod" or "dev"
+  environment: "prod"
+  # Maximum length for board and user names
+  name_max_length: 20
+  # Salt suffix for password hashing — generate with: openssl rand -hex 32
+  salt_suffix: "changeme_generate_random_salt"
+
+  # ---------------------------------------------------------------------------
+  # Initial setup (first run only — ignored afterward)
+  # ---------------------------------------------------------------------------
+  setup: {
+    admin_username: "admin"
+    # Must be at least 10 characters
+    admin_password: "changeme_strong_admin_password"
+    site_name: "My Tiny Board"
+    default_board_name: "campfire"
+    default_board_description: "General discussion and community topics"
+  }
+
+  # ---------------------------------------------------------------------------
+  # CORS
+  # ---------------------------------------------------------------------------
+  cors: {
+    # Add your public URL once deployed (e.g. "https://example.com")
+    allowed_origins: [
+      "http://localhost:3000"
+      "http://localhost"
+    ]
+    allow_credentials: true
+    max_age: 3600
+    allowed_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+    allowed_headers: [
+      "Content-Type"
+      "Authorization"
+      "Accept"
+      "Origin"
+      "X-Requested-With"
+    ]
+  }
+
+  # ---------------------------------------------------------------------------
+  # Rate limits (requests per interval, per IP)
+  # ---------------------------------------------------------------------------
+  rate_limit: {
+    message: 180
+    message_per_second: 60
+    post: 6
+    post_per_second: 600
+    register: 3
+    register_per_second: 3600
+    image: 6
+    image_per_second: 3600
+    comment: 6
+    comment_per_second: 600
+    search: 60
+    search_per_second: 600
+  }
+
+  # ---------------------------------------------------------------------------
+  # CAPTCHA
+  # ---------------------------------------------------------------------------
+  captcha: {
+    enabled: false
+    # easy, medium, or hard
+    difficulty: "medium"
+  }
+
+  # ---------------------------------------------------------------------------
+  # Media uploads
+  # ---------------------------------------------------------------------------
+  media: {
+    # Docker: /app/media (matches the volume mount)
+    # Bare metal: any writable path, e.g. /var/lib/tinyboards/media
+    media_path: "/app/media"
+    max_file_size_mb: 50
+    max_avatar_size_mb: 2
+    max_banner_size_mb: 5
+    max_board_icon_size_mb: 5
+    max_board_banner_size_mb: 10
+    max_site_icon_size_mb: 1
+  }
+
+  # ---------------------------------------------------------------------------
+  # Storage backend for uploads
+  # ---------------------------------------------------------------------------
+  storage: {
+    # "fs" (local filesystem), "s3", "azure", or "gcs"
+    backend: "fs"
+
+    fs: {
+      root: "/app/media"
+    }
+
+    # Uncomment ONE block below for cloud storage:
+
+    # s3: {
+    #   bucket: "tinyboards-media"
+    #   region: "us-east-1"
+    #   access_key_id: "your-access-key"
+    #   secret_access_key: "your-secret-key"
+    #   # Custom endpoint for S3-compatible services (MinIO, R2, Spaces, etc.)
+    #   # endpoint: "https://nyc3.digitaloceanspaces.com"
+    # }
+
+    # azure: {
+    #   container: "tinyboards-media"
+    #   account_name: "your-account"
+    #   account_key: "your-key"
+    # }
+
+    # gcs: {
+    #   bucket: "tinyboards-media"
+    #   credential: "/path/to/service-account.json"
+    # }
+  }
+
+  # ---------------------------------------------------------------------------
+  # Email / SMTP (optional — needed for verification & password reset)
+  # ---------------------------------------------------------------------------
+  # Uncomment to enable:
+  #
+  # email: {
+  #   smtp_server: "smtp.example.com:587"
+  #   smtp_login: "apikey"
+  #   smtp_password: "your-smtp-password"
+  #   smtp_from_address: "noreply@example.com"
+  #   # none, tls, or starttls
+  #   tls_type: "starttls"
+  # }
+
+  # ---------------------------------------------------------------------------
+  # Frontend (used by configure.sh for Docker; reference for bare metal)
+  # ---------------------------------------------------------------------------
+  frontend: {
+    # Use HTTPS for public-facing URLs
+    use_https: false
+    # Internal backend URL (Docker service name) — bare metal: http://localhost:8536
+    internal_api_host: "http://backend:8536"
+  }
+
+  # ---------------------------------------------------------------------------
+  # Logging (optional — controls RUST_LOG env var in Docker)
+  # ---------------------------------------------------------------------------
+  logging: {
+    # See https://docs.rs/tracing-subscriber for filter syntax
+    rust_log: "info"
+  }
+
+  # ---------------------------------------------------------------------------
+  # Docker (only used by configure.sh, ignored by the backend)
+  # ---------------------------------------------------------------------------
+  docker: {
+    # Image tag to pull from Docker Hub — pin to a version for stability
+    image_tag: "latest"
+    compose_project_name: "tinyboards"
+  }
+}

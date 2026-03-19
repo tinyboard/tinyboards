@@ -1,0 +1,33 @@
+[package]
+name = "tinyboards_db"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+full = []
+
+[dependencies]
+tinyboards_utils = { workspace = true }
+chrono = { workspace = true }
+diesel = { workspace = true, features = ["64-column-tables"] }
+diesel-async = { workspace = true, features = ["postgres", "bb8"] }
+diesel_migrations = { workspace = true }
+diesel-derive-newtype = { workspace = true }
+serde = { workspace = true }
+url = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+async-trait = { workspace = true }
+actix-web = { workspace = true }
+tracing = { workspace = true }
+bb8 = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+tokio = { workspace = true }
+typed-builder = { workspace = true }
+regex = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+rand = "0.8"
+slug = "0.1"
+bigdecimal = { version = "0.3", features = ["serde"] }

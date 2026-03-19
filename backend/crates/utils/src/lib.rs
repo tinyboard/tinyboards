@@ -1,0 +1,42 @@
+pub mod error;
+pub mod parser;
+pub mod rate_limit;
+pub mod settings;
+pub mod time;
+pub mod utils;
+pub mod version;
+pub mod email;
+pub mod content_filter;
+pub mod slug;
+
+pub use error::TinyBoardsError;
+pub use time::time;
+pub use slug::generate_slug as slugify;
+pub use parser::{parse_markdown as markdown_to_html, sanitize_html};
+
+use std::{fmt, time::Duration};
+
+pub const REQWEST_TIMEOUT: Duration = Duration::from_secs(10);
+
+#[derive(PartialEq, Eq, Hash, Debug, Clone)]
+pub struct IpAddr(pub String);
+
+impl fmt::Display for IpAddr {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(10);
+
+#[macro_export]
+macro_rules! location_info {
+    () => {
+        format!(
+            "None value at {}:{}, column {}",
+            file!(),
+            line!(),
+            column!()
+        )
+    };
+}

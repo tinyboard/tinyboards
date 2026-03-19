@@ -1,0 +1,117 @@
+# Docker Compose configuration for tinyboards
+#
+# All application config lives in tinyboards.hjson (single source of truth).
+# Run ./configure.sh to generate the .env that docker-compose needs, then:
+#
+#   ./configure.sh && docker compose up -d
+#
+# For local development with source builds, use:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # These values are extracted from tinyboards.hjson by configure.sh.
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tinyboards}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-tinyboards}
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/postgres/postgresql-${POSTGRES_PROFILE:-1gb}.conf:/etc/postgresql/postgresql.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  backend:
+    image: tinyboard/tinyboards-backend:${TINYBOARDS_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TB_CONFIG_LOCATION: /app/config/defaults.hjson
+      RUST_LOG: ${RUST_LOG:-info}
+      TLS_ENABLED: ${TLS_ENABLED:-false}
+    volumes:
+      - media_data:/app/media
+      - ./tinyboards.hjson:/app/config/defaults.hjson:ro
+    expose:
+      - "8536"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8536/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - internal
+
+  frontend:
+    image: tinyboard/tinyboards-frontend:${TINYBOARDS_TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      # The frontend reads tinyboards.hjson directly at startup.
+      TB_CONFIG_LOCATION: /app/config/defaults.hjson
+      # Nuxt runtimeConfig overrides — these take effect at runtime even though
+      # nuxt.config.ts bakes defaults at build time. All three must be set
+      # because internalGqlHost is derived from internalApiHost during build.
+      NUXT_INTERNAL_API_HOST: http://backend:8536
+      NUXT_BACKEND_URL: http://backend:8536
+      NUXT_INTERNAL_GQL_HOST: http://backend:8536/api/v2/graphql
+    volumes:
+      - ./tinyboards.hjson:/app/config/defaults.hjson:ro
+    expose:
+      - "3000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - media_data:/app/media:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - internal
+      - external
+
+volumes:
+  postgres_data:
+  media_data:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  external:
+    driver: bridge

@@ -1,0 +1,51 @@
+[package]
+name = "tinyboards_auth"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "tinyboards_auth"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+# Password hashing (RustCrypto argon2id implementation)
+argon2 = { version = "0.5", features = ["std"] }
+
+# JWT
+jsonwebtoken = { workspace = true }
+
+# Database
+diesel = { workspace = true }
+diesel-async = { workspace = true, features = ["postgres", "bb8"] }
+bb8 = { workspace = true }
+
+# Web framework
+actix-web = { workspace = true, features = ["cookies"] }
+futures = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Types
+uuid = { workspace = true, features = ["v4", "serde"] }
+chrono = { workspace = true }
+
+# Random + encoding
+rand = { workspace = true }
+hex = "0.4"
+
+# Validation
+regex = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Error handling
+thiserror = "1.0"
+
+[dev-dependencies]
+actix-rt = "2"
+actix-test = "0.1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

@@ -1,0 +1,1114 @@
+scalar Upload
+scalar DateTime
+scalar JSON
+
+type Query {
+  # Auth / Me
+  me: MeResponse!
+
+  # Site
+  site: LocalSite!
+  siteStats: SiteStats!
+
+  # Users
+  user(username: String!): User!
+  listUsers(searchTerm: String, page: Int, limit: Int): [User!]!
+  searchUsernames(query: String!, limit: Int): [String!]!
+
+  # Boards
+  board(name: String!): Board!
+  listBoards(
+    limit: Int
+    page: Int
+    sort: SortType
+    listingType: ListingType
+    searchTerm: String
+    searchTitleAndDesc: Boolean
+    bannedBoards: Boolean
+  ): [Board!]!
+
+  # Posts
+  post(id: ID!): Post!
+  listPosts(
+    limit: Int
+    sort: SortType
+    listingType: ListingType
+    userId: ID
+    boardId: ID
+    userName: String
+    boardName: String
+    savedOnly: Boolean
+    removedOnly: Boolean
+    includeRemoved: Boolean
+    page: Int
+  ): [Post!]!
+
+  # Comments
+  comment(id: ID!): Comment!
+  comments(
+    limit: Int
+    page: Int
+    sort: CommentSortType
+    postId: ID
+    userId: ID
+    boardId: ID
+    userName: String
+    boardName: String
+    removedOnly: Boolean
+    includeRemoved: Boolean
+  ): [Comment!]!
+
+  # Notifications
+  getNotifications(
+    unreadOnly: Boolean
+    kindFilter: String
+    page: Int
+    limit: Int
+  ): [Notification!]!
+  getUnreadNotificationCount: UnreadNotificationCount!
+
+  # Messages
+  listConversations: [Conversation!]!
+  getConversation(userId: ID!, limit: Int, offset: Int): [PrivateMessage!]!
+  getUnreadMessageCount: Int!
+
+  # Search
+  searchContent(
+    q: String!
+    searchType: SearchType
+    sort: SortType
+    boardId: ID
+    creatorId: ID
+    page: Int
+    limit: Int
+  ): SearchResult!
+
+  # Moderation
+  getBoardModerators(boardId: ID!): [BoardModerator!]!
+  getModeratedBoards(page: Int, limit: Int): [Board!]!
+  getBoardSettings(boardId: ID!): BoardSettings!
+  getBoardBannedUsers(boardId: ID!, page: Int, limit: Int): [BoardBannedUser!]!
+  listBannedUsers(page: Int, limit: Int): BannedUsersResponse!
+
+  # Reports
+  getPostReports(boardId: ID, statusFilter: String, limit: Int, offset: Int): [PostReportView!]!
+  getCommentReports(boardId: ID, statusFilter: String, limit: Int, offset: Int): [CommentReportView!]!
+
+  # Registration Applications
+  listRegistrationApplications(limit: Int, offset: Int): [RegistrationApplication!]!
+
+  # Invites
+  listInvites: [SiteInviteGql!]!
+
+  # User settings
+  getUserSettings: UserSettings!
+
+  # Notification settings
+  getNotificationSettings: NotificationSettings!
+
+  # Wiki
+  wikiPage(boardName: String!, slug: String!): WikiPage
+  listWikiPages(boardName: String!, includeDeleted: Boolean): [WikiPage!]!
+  wikiPageHistory(pageId: ID!): [WikiRevision!]!
+
+  # Emojis
+  listEmojis(input: ListEmojisInput): [EmojiObject!]!
+  getAllEmojisAdmin(boardId: ID): [EmojiObject!]!
+
+  # Flairs
+  boardFlairs(boardId: ID!, flairType: FlairType, activeOnly: Boolean): [FlairTemplate!]!
+  manageBoardFlairs(boardId: ID!, flairType: FlairType): [FlairTemplate!]!
+  flairTemplate(id: ID!): FlairTemplate
+
+  # Moderation log
+  getModerationLog(boardId: ID, actionType: String, moderatorId: ID, limit: Int, offset: Int): ModerationLogResponse!
+
+  # Streams
+  stream(id: ID, slug: String): Stream
+  myStreams(limit: Int, offset: Int): [Stream!]!
+  discoverStreams(sortBy: StreamSortType, limit: Int, offset: Int): [Stream!]!
+  followedStreams(limit: Int, offset: Int): [Stream!]!
+  navbarStreams: [Stream!]!
+  searchStreams(query: String!, limit: Int, offset: Int): [Stream!]!
+}
+
+type Mutation {
+  # Authentication is handled via REST: POST /api/v2/auth/login and /api/v2/auth/register
+
+  # Posts
+  createPost(
+    title: String!
+    board: String
+    body: String
+    link: String
+    isNSFW: Boolean
+    altText: String
+    file: Upload
+    postType: String
+  ): Post!
+  editPost(
+    id: ID!
+    body: String!
+    altText: String
+  ): Post!
+  voteOnPost(postId: ID!, direction: Int!): Post!
+  savePost(postId: ID!): Post!
+  unsavePost(postId: ID!): Post!
+  hidePost(postId: ID!): Post!
+  unhidePost(postId: ID!): Post!
+  lockPost(postId: ID!): Post!
+  unlockPost(postId: ID!): Post!
+  featurePost(postId: ID!, featured: Boolean!, featureType: String): Post!
+  removePost(postId: ID!, reason: String): Post!
+  restorePost(postId: ID!): Post!
+
+  # Comments
+  createComment(postId: ID!, body: String!, parentId: ID): Comment!
+  editComment(id: ID!, body: String!): Comment!
+  voteOnComment(commentId: ID!, direction: Int!): Comment!
+  saveComment(commentId: ID!): Comment!
+  unsaveComment(commentId: ID!): Comment!
+  removeComment(commentId: ID!, reason: String): Comment!
+  restoreComment(commentId: ID!): Comment!
+
+  # Boards
+  createBoard(input: CreateBoardInput!, iconFile: Upload, bannerFile: Upload): CreateBoardResponse!
+  updateBoardSettings(input: UpdateBoardSettingsInput!, iconFile: Upload, bannerFile: Upload): UpdateBoardSettingsResponse!
+  subscribeToBoard(boardId: ID!): Boolean!
+  unsubscribeFromBoard(boardId: ID!): Boolean!
+
+  # Board moderation
+  addModerator(boardId: ID!, userId: ID!, permissions: Int): AddModeratorResponse!
+  removeBoardModerator(boardId: ID!, userId: ID!): RemoveModeratorResponse!
+
+  # Users
+  followUser(userId: ID!): Boolean!
+  unfollowUser(userId: ID!): Boolean!
+  blockUser(userId: ID!): Boolean!
+  unblockUser(userId: ID!): Boolean!
+  blockBoard(boardId: ID!): Boolean!
+  unblockBoard(boardId: ID!): Boolean!
+  updateSettings(input: UpdateSettingsInput!): UserSettings!
+  updateProfile(input: UpdateProfileInput!): User!
+
+  # Messages
+  sendMessage(input: SendMessageInput!): SendMessageResponse!
+  editMessage(input: EditMessageInput!): EditMessageResponse!
+  deleteMessage(messageId: ID!): Boolean!
+
+  # Notifications
+  markNotificationsRead(notificationIds: [ID!]!): MarkNotificationsReadResponse!
+  deleteNotification(notificationId: ID!): DeleteNotificationResponse!
+
+  # Reports
+  reportPost(postId: ID!, reason: String!): ReportResponse!
+  reportComment(commentId: ID!, reason: String!): ReportResponse!
+
+  # Site admin
+  updateSiteConfig(input: UpdateSiteConfigInput!): LocalSite!
+
+  # Site moderation
+  banUserFromSite(input: BanUserInput!): BanUserResponse!
+  unbanUserFromSite(userId: ID!, reason: String): UnbanUserResponse!
+
+  # Report moderation
+  resolveReport(reportId: ID!, reportType: String!): ResolveReportResponse!
+  dismissReport(reportId: ID!, reportType: String!): ResolveReportResponse!
+
+  # Notification settings
+  updateNotificationSettings(input: UpdateNotificationSettingsInput!): UpdateNotificationSettingsResponse!
+
+  # Notifications (mark all)
+  markAllNotificationsAsRead: MarkNotificationsReadResponse!
+
+  # Invites
+  createInvite: String!
+
+  # Account
+  deleteAccount: Boolean!
+
+  # File upload
+  uploadFile(file: Upload!): String!
+
+  # Wiki
+  createWikiPage(boardId: ID!, input: CreateWikiPageInput!): WikiPage!
+  editWikiPage(pageId: ID!, input: EditWikiPageInput!): WikiPage!
+  deleteWikiPage(pageId: ID!): Boolean!
+
+  # Flairs
+  createFlairTemplate(input: CreateFlairTemplateInput!): FlairTemplate!
+  updateFlairTemplate(templateId: ID!, input: UpdateFlairTemplateInput!): FlairTemplate!
+  deleteFlairTemplate(templateId: ID!): Boolean!
+  assignPostFlair(input: AssignPostFlairInput!): PostFlair!
+  removePostFlair(postId: ID!): Boolean!
+
+  # Emojis
+  createEmoji(input: CreateEmojiInput!): EmojiObject!
+  deleteEmoji(emojiId: ID!): Boolean!
+
+  # Board bans
+  banUserFromBoard(input: BoardBanUserInput!): BoardBanResponse!
+  unbanUserFromBoard(boardId: ID!, userId: ID!): BoardUnbanResponse!
+
+  # Streams
+  createStream(input: CreateStreamInput!): Stream!
+  updateStream(streamId: ID!, input: UpdateStreamInput!): Stream!
+  deleteStream(streamId: ID!): Boolean!
+  regenerateShareToken(streamId: ID!): String!
+  addBoardSubscriptions(input: AddBoardSubscriptionsInput!): [StreamBoardSubscription!]!
+  removeBoardSubscription(streamId: ID!, boardId: ID!): Boolean!
+  addFlairSubscriptions(input: AddFlairSubscriptionsInput!): [StreamFlairSubscription!]!
+  removeFlairSubscription(streamId: ID!, boardId: ID!, flairId: Int!): Boolean!
+  clearStreamSubscriptions(streamId: ID!): Boolean!
+  followStream(streamId: ID!): Boolean!
+  unfollowStream(streamId: ID!): Boolean!
+  updateStreamNavbarSettings(streamId: ID!, addedToNavbar: Boolean!, navbarPosition: Int): Boolean!
+}
+
+# ============================================================
+# Core types
+# ============================================================
+
+type Post {
+  id: ID!
+  title: String!
+  postType: String!
+  url: String
+  thumbnailUrl: String
+  body: String!
+  bodyHTML: String!
+  creatorId: ID!
+  boardId: ID!
+  isRemoved: Boolean!
+  isLocked: Boolean!
+  createdAt: String!
+  isDeleted: Boolean!
+  isNSFW: Boolean!
+  updatedAt: String!
+  image: String
+  isFeaturedBoard: Boolean!
+  isFeaturedLocal: Boolean!
+  altText: String
+  embedTitle: String
+  embedDescription: String
+  embedVideoUrl: String
+  sourceUrl: String
+  slug: String!
+  approvalStatus: String!
+  commentCount: Int!
+  score: Int!
+  upvotes: Int!
+  downvotes: Int!
+  newestCommentTime: String!
+  hotRank: Int!
+  urlPath: String!
+  creator: User
+  board: Board
+  myVote: Int!
+}
+
+type Comment {
+  id: ID!
+  creatorId: ID!
+  postId: ID!
+  parentId: String
+  body: String!
+  bodyHTML: String!
+  isRemoved: Boolean!
+  isLocked: Boolean!
+  isDeleted: Boolean!
+  isPinned: Boolean!
+  createdAt: String!
+  level: Int!
+  updatedAt: String!
+  boardId: ID!
+  slug: String!
+  approvalStatus: String!
+  replies: [Comment!]
+  score: Int!
+  upvotes: Int!
+  downvotes: Int!
+  replyCount: Int!
+  creator: User
+  board: Board
+  post: Post!
+  myVote: Int!
+}
+
+type Board {
+  id: ID!
+  name: String!
+  title: String!
+  description: String
+  sidebar: String
+  sidebarHTML: String
+  icon: String
+  banner: String
+  primaryColor: String!
+  secondaryColor: String!
+  hoverColor: String!
+  isNSFW: Boolean!
+  isHidden: Boolean!
+  isRemoved: Boolean!
+  isBanned: Boolean!
+  isPostingRestrictedToMods: Boolean!
+  excludeFromAll: Boolean!
+  publicBanReason: String
+  wikiEnabled: Boolean!
+  createdAt: String!
+  updatedAt: String!
+  subscribers: Int!
+  posts: Int!
+  comments: Int!
+  usersActiveDay: Int!
+  usersActiveWeek: Int!
+  usersActiveMonth: Int!
+  usersActiveHalfYear: Int!
+}
+
+type User {
+  id: ID!
+  name: String!
+  displayName: String
+  bio: String
+  bioHTML: String
+  avatar: String
+  avatarFrame: String
+  banner: String
+  profileBackground: String
+  signature: String
+  profileMusic: String
+  profileMusicYoutube: String
+  isBanned: Boolean!
+  isAdmin: Boolean!
+  adminLevel: Int!
+  isBotAccount: Boolean!
+  createdAt: String!
+  lastSeenAt: String!
+  unbanDate: String
+  postCount: Int!
+  postScore: Int!
+  commentCount: Int!
+  commentScore: Int!
+}
+
+# ============================================================
+# Auth responses (login/register moved to REST)
+# ============================================================
+
+type MeResponse {
+  user: User!
+  unreadNotificationsCount: Int!
+}
+
+# ============================================================
+# Site
+# ============================================================
+
+type LocalSite {
+  id: ID!
+  name: String!
+  description: String
+  icon: String
+  homepageBanner: String
+  primaryColor: String!
+  secondaryColor: String!
+  hoverColor: String!
+  legalInformation: String
+  defaultTheme: String!
+  defaultPostListingType: String!
+  defaultAvatar: String
+  registrationMode: String!
+  applicationQuestion: String
+  isSiteSetup: Boolean!
+  isPrivate: Boolean!
+  requireEmailVerification: Boolean!
+  captchaEnabled: Boolean!
+  captchaDifficulty: String!
+  enableDownvotes: Boolean!
+  enableNSFW: Boolean!
+  enableNSFWTagging: Boolean!
+  hideModlogModNames: Boolean!
+  boardsEnabled: Boolean!
+  boardCreationAdminOnly: Boolean!
+  boardCreationMode: String!
+  allowedPostTypes: String
+  wordFilterEnabled: Boolean!
+  filteredWords: String
+  createdAt: String!
+  updatedAt: String!
+  welcomeMessage: String
+}
+
+type SiteStats {
+  users: Int!
+  posts: Int!
+  comments: Int!
+  boards: Int!
+  usersActiveDay: Int!
+  usersActiveWeek: Int!
+  usersActiveMonth: Int!
+  usersActiveHalfYear: Int!
+}
+
+# ============================================================
+# Notifications / Messages
+# ============================================================
+
+type Notification {
+  id: ID!
+  type: String!
+  isRead: Boolean!
+  createdAt: String!
+  commentId: ID
+  postId: ID
+  messageId: ID
+}
+
+type UnreadNotificationCount {
+  total: Int!
+  replies: Int!
+  mentions: Int!
+  privateMessages: Int!
+  activity: Int!
+}
+
+type Conversation {
+  otherUser: User!
+  lastMessage: PrivateMessage!
+  unreadCount: Int!
+  lastActivity: String!
+}
+
+type PrivateMessage {
+  id: ID!
+  creatorId: ID!
+  recipientId: ID
+  subject: String
+  body: String!
+  isRead: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type MarkNotificationsReadResponse {
+  success: Boolean!
+  markedCount: Int!
+}
+
+type DeleteNotificationResponse {
+  success: Boolean!
+}
+
+# ============================================================
+# Search
+# ============================================================
+
+type SearchResult {
+  posts: [Post!]!
+  comments: [Comment!]!
+  users: [User!]!
+  boards: [Board!]!
+}
+
+# ============================================================
+# Moderation
+# ============================================================
+
+type BoardModerator {
+  id: ID!
+  boardId: ID!
+  user: User!
+  createdAt: String!
+  permissions: Int!
+  rank: Int!
+  isInviteAccepted: Boolean!
+}
+
+type BoardSettings {
+  board: Board!
+  isOwner: Boolean!
+  moderatorPermissions: Int
+}
+
+type BoardBannedUser {
+  id: ID!
+  user: User!
+  boardId: ID!
+  banDate: String!
+  expires: String
+}
+
+type BannedUsersResponse {
+  users: [User!]!
+  totalCount: Int!
+}
+
+type PostReportView {
+  id: ID!
+  creatorId: ID!
+  postId: ID!
+  originalPostTitle: String!
+  originalPostUrl: String
+  originalPostBody: String
+  reason: String!
+  status: String!
+  resolverId: ID
+  createdAt: String!
+  updatedAt: String!
+}
+
+type CommentReportView {
+  id: ID!
+  creatorId: ID!
+  commentId: ID!
+  originalCommentText: String!
+  reason: String!
+  status: String!
+  resolverId: ID
+  createdAt: String!
+  updatedAt: String!
+}
+
+type RegistrationApplication {
+  id: ID!
+  userId: ID!
+  answer: String!
+  adminId: ID
+  denyReason: String
+  createdAt: String!
+}
+
+type SiteInviteGql {
+  id: ID!
+  verificationCode: String!
+  createdAt: String!
+}
+
+type UserSettings {
+  id: ID!
+  name: String!
+  email: String
+  showNSFW: Boolean!
+  showBots: Boolean!
+  theme: String!
+  defaultSortType: String!
+  defaultListingType: String!
+  interfaceLanguage: String!
+  isEmailNotificationsEnabled: Boolean!
+  editorMode: String!
+  updatedAt: String!
+}
+
+type CreateBoardResponse {
+  board: Board!
+}
+
+type SendMessageResponse {
+  message: PrivateMessage!
+}
+
+# ============================================================
+# Enums
+# ============================================================
+
+enum SortType {
+  active
+  hot
+  new
+  old
+  topDay
+  topWeek
+  topMonth
+  topYear
+  topAll
+  mostComments
+  newComments
+  controversial
+}
+
+enum CommentSortType {
+  hot
+  top
+  new
+  old
+}
+
+enum ListingType {
+  all
+  subscribed
+  local
+  moderated
+}
+
+enum SearchType {
+  all
+  posts
+  comments
+  users
+  boards
+}
+
+# ============================================================
+# Input types
+# ============================================================
+
+input CreateBoardInput {
+  name: String!
+  title: String!
+  description: String
+  isNsfw: Boolean
+  primaryColor: String
+  secondaryColor: String
+  hoverColor: String
+  icon: String
+  banner: String
+}
+
+input UpdateBoardSettingsInput {
+  boardId: ID!
+  title: String
+  description: String
+  isNsfw: Boolean
+  primaryColor: String
+  secondaryColor: String
+  hoverColor: String
+  sidebar: String
+  postingRestrictedToMods: Boolean
+  isHidden: Boolean
+  excludeFromAll: Boolean
+  icon: String
+  banner: String
+  wikiEnabled: Boolean
+}
+
+input UpdateSettingsInput {
+  email: String
+  showNsfw: Boolean
+  showBots: Boolean
+  theme: String
+  defaultSortType: String
+  defaultListingType: String
+  interfaceLanguage: String
+  isEmailNotificationsEnabled: Boolean
+  editorMode: String
+}
+
+input UpdateProfileInput {
+  displayName: String
+  bio: String
+  avatar: String
+  banner: String
+}
+
+input SendMessageInput {
+  recipientId: ID!
+  subject: String
+  body: String!
+}
+
+input UpdateSiteConfigInput {
+  name: String
+  description: String
+  icon: String
+  homepageBanner: String
+  primaryColor: String
+  secondaryColor: String
+  hoverColor: String
+  welcomeMessage: String
+  legalInformation: String
+  defaultTheme: String
+  applicationQuestion: String
+  captchaEnabled: Boolean
+  captchaDifficulty: String
+  enableDownvotes: Boolean
+  enableNsfw: Boolean
+  enableNsfwTagging: Boolean
+  hideModlogModNames: Boolean
+  reportsEmailAdmins: Boolean
+  applicationEmailAdmins: Boolean
+  isPrivate: Boolean
+  requireEmailVerification: Boolean
+  boardsEnabled: Boolean
+  boardCreationAdminOnly: Boolean
+  boardCreationMode: String
+  emojiEnabled: Boolean
+  boardEmojisEnabled: Boolean
+  wordFilterEnabled: Boolean
+  filteredWords: String
+  linkFilterEnabled: Boolean
+  bannedDomains: String
+}
+
+input BanUserInput {
+  userId: ID!
+  reason: String
+  expiresDays: Int
+}
+
+input UpdateNotificationSettingsInput {
+  emailEnabled: Boolean
+  commentRepliesEnabled: Boolean
+  postRepliesEnabled: Boolean
+  mentionsEnabled: Boolean
+  privateMessagesEnabled: Boolean
+  boardInvitesEnabled: Boolean
+  moderatorActionsEnabled: Boolean
+  systemNotificationsEnabled: Boolean
+}
+
+# ============================================================
+# Additional response types
+# ============================================================
+
+type BanUserResponse {
+  success: Boolean!
+  banId: ID!
+  message: String!
+}
+
+type UnbanUserResponse {
+  success: Boolean!
+  message: String!
+}
+
+type BoardBanResponse {
+  success: Boolean!
+  banId: ID!
+  message: String!
+}
+
+type BoardUnbanResponse {
+  success: Boolean!
+  message: String!
+}
+
+input BoardBanUserInput {
+  userId: ID!
+  boardId: ID!
+  reason: String
+  expiresDays: Int
+}
+
+type ReportResponse {
+  success: Boolean!
+  reportId: ID!
+}
+
+type ResolveReportResponse {
+  success: Boolean!
+}
+
+input EditMessageInput {
+  messageId: ID!
+  subject: String
+  body: String
+}
+
+type EditMessageResponse {
+  message: PrivateMessage!
+}
+
+type NotificationSettings {
+  emailEnabled: Boolean!
+  commentRepliesEnabled: Boolean!
+  postRepliesEnabled: Boolean!
+  mentionsEnabled: Boolean!
+  privateMessagesEnabled: Boolean!
+  boardInvitesEnabled: Boolean!
+  moderatorActionsEnabled: Boolean!
+  systemNotificationsEnabled: Boolean!
+}
+
+type UpdateNotificationSettingsResponse {
+  success: Boolean!
+  settings: NotificationSettings!
+}
+
+type UpdateBoardSettingsResponse {
+  board: Board!
+}
+
+type AddModeratorResponse {
+  success: Boolean!
+  board: Board!
+}
+
+type RemoveModeratorResponse {
+  success: Boolean!
+  message: String!
+}
+
+# ============================================================
+# Wiki types
+# ============================================================
+
+type WikiPage {
+  id: ID!
+  boardId: ID!
+  slug: String!
+  title: String!
+  body: String!
+  bodyHTML: String
+  viewPermission: String!
+  editPermission: String!
+  displayOrder: Int!
+  parentId: ID
+  createdAt: String!
+  updatedAt: String!
+  creator: User
+}
+
+input CreateWikiPageInput {
+  slug: String!
+  title: String!
+  body: String!
+  viewPermission: String
+  editPermission: String
+  displayOrder: Int
+  parentId: ID
+}
+
+input EditWikiPageInput {
+  body: String
+  title: String
+  editSummary: String
+  isLocked: Boolean
+  displayOrder: Int
+}
+
+# ============================================================
+# Flair types
+# ============================================================
+
+enum FlairType {
+  Post
+  User
+}
+
+type FlairTemplate {
+  id: ID!
+  boardId: ID!
+  flairType: FlairType!
+  templateName: String!
+  textDisplay: String
+  textColor: String!
+  backgroundColor: String!
+  isModOnly: Boolean!
+  isEditable: Boolean!
+  isActive: Boolean!
+  displayOrder: Int!
+  createdAt: String!
+}
+
+type PostFlair {
+  id: ID!
+  postId: ID!
+  flairTemplateId: ID!
+  customText: String
+  customTextColor: String
+  customBackgroundColor: String
+}
+
+input CreateFlairTemplateInput {
+  boardId: ID!
+  flairType: FlairType!
+  templateName: String!
+  textDisplay: String
+  textColor: String
+  backgroundColor: String
+  isModOnly: Boolean
+  isEditable: Boolean
+  displayOrder: Int
+}
+
+input UpdateFlairTemplateInput {
+  templateName: String
+  textDisplay: String
+  textColor: String
+  backgroundColor: String
+  isModOnly: Boolean
+  isEditable: Boolean
+  isActive: Boolean
+  displayOrder: Int
+}
+
+input AssignPostFlairInput {
+  postId: ID!
+  flairTemplateId: ID!
+  customText: String
+  customTextColor: String
+  customBackgroundColor: String
+}
+
+# ============================================================
+# Stream types
+# ============================================================
+
+enum StreamSortType {
+  New
+  Popular
+  Trending
+}
+
+type Stream {
+  id: ID!
+  name: String!
+  description: String
+  slug: String!
+  icon: String
+  color: String
+  creatorId: ID!
+  isPublic: Boolean!
+  isDiscoverable: Boolean!
+  sortType: String!
+  timeRange: String
+  showNsfw: Boolean!
+  maxPostsPerBoard: Int
+  shareToken: String
+  lastViewedAt: String
+  createdAt: String!
+  updatedAt: String!
+  creator: User
+  boardSubscriptions: [StreamBoardSubscription!]
+  flairSubscriptions: [StreamFlairSubscription!]
+  followerCount: Int
+  boardSubscriptionCount: Int
+  isFollowing: Boolean
+}
+
+type StreamBoardSubscription {
+  id: ID!
+  streamId: ID!
+  boardId: ID!
+  board: Board
+  includeAllPosts: Boolean!
+  createdAt: String!
+}
+
+type StreamFlairSubscription {
+  id: ID!
+  streamId: ID!
+  boardId: ID!
+  flairId: Int!
+  createdAt: String!
+}
+
+type StreamFollower {
+  id: ID!
+  userId: ID!
+  streamId: ID!
+  addedToNavbar: Boolean!
+  navbarPosition: Int
+  createdAt: String!
+}
+
+input CreateStreamInput {
+  name: String!
+  description: String
+  isPublic: Boolean
+  isDiscoverable: Boolean
+  sortType: String
+  showNsfw: Boolean
+  maxPostsPerBoard: Int
+}
+
+input UpdateStreamInput {
+  name: String
+  description: String
+  isPublic: Boolean
+  isDiscoverable: Boolean
+  sortType: String
+  showNsfw: Boolean
+  maxPostsPerBoard: Int
+}
+
+input AddBoardSubscriptionsInput {
+  streamId: ID!
+  boardIds: [ID!]!
+}
+
+input AddFlairSubscriptionsInput {
+  streamId: ID!
+  boardId: ID!
+  flairIds: [Int!]!
+}
+
+# ============================================================
+# Emoji types
+# ============================================================
+
+type EmojiObject {
+  id: ID!
+  shortcode: String!
+  imageUrl: String!
+  altText: String!
+  category: String!
+  scope: String!
+  boardId: ID
+  createdBy: ID!
+  isActive: Boolean!
+  usageCount: Int!
+  createdAt: String!
+  updatedAt: String!
+}
+
+input CreateEmojiInput {
+  shortcode: String!
+  imageUrl: String!
+  altText: String!
+  category: String!
+  boardId: ID
+  scope: EmojiScope
+  keywords: [String!]
+}
+
+input ListEmojisInput {
+  boardId: ID
+  scope: EmojiScope
+  category: String
+  search: String
+  limit: Int
+  offset: Int
+}
+
+enum EmojiScope {
+  Site
+  Board
+}
+
+# ============================================================
+# Wiki revision types
+# ============================================================
+
+type WikiRevision {
+  id: ID!
+  body: String!
+  editSummary: String
+  revisionNumber: Int!
+  createdAt: String!
+  creator: User
+}
+
+# ============================================================
+# Moderation log types
+# ============================================================
+
+type ModerationLogEntry {
+  id: ID!
+  moderatorId: ID!
+  moderatorName: String!
+  actionType: String!
+  targetType: String!
+  targetId: ID!
+  boardId: ID
+  reason: String
+  metadata: String
+  createdAt: String!
+  expiresAt: String
+}
+
+type ModerationLogResponse {
+  entries: [ModerationLogEntry!]!
+  totalCount: Int!
+}

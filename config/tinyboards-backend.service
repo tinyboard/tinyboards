@@ -1,0 +1,27 @@
+[Unit]
+Description=TinyBoards Backend (Rust/Actix)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/tinyboards
+ExecStart=/opt/tinyboards/tinyboards_server
+EnvironmentFile=/opt/tinyboards/.env
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tinyboards-backend
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/app/media
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

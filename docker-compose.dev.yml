@@ -1,0 +1,18 @@
+# Development override — builds images from local source instead of pulling
+# from Docker Hub.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+services:
+  backend:
+    image: tinyboard/tinyboards-backend:dev
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+
+  frontend:
+    image: tinyboard/tinyboards-frontend:dev
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile

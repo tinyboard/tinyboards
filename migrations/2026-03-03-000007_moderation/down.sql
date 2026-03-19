@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS comment_reports CASCADE;
+DROP TABLE IF EXISTS post_reports CASCADE;
+DROP TABLE IF EXISTS moderation_log CASCADE;

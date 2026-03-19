@@ -1,0 +1,92 @@
+# =============================================================================
+# Rust / Backend
+# =============================================================================
+backend/target/
+backend/config.hjson
+backend/docker/volumes/*
+backend/docker/nginx/nginx-certbot.env
+backend/app/media/*
+!backend/app/media/default_pfp.png
+backend/media/*
+backend/docker/media/*
+backend/docker/logs/*
+
+# =============================================================================
+# Node / Frontend
+# =============================================================================
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage
+*.lcov
+.nyc_output
+
+# Dependencies
+frontend/node_modules/
+node_modules/
+
+# Build output
+frontend/.output
+frontend/.nuxt
+frontend/dist
+frontend/.next
+frontend/out
+
+# Generated files (build artifacts)
+frontend/types/generated.ts
+
+# TypeScript
+*.tsbuildinfo
+
+# Package lock
+frontend/package-lock.json
+
+# Cache
+.cache
+.parcel-cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# =============================================================================
+# Environment and secrets
+# =============================================================================
+.env
+.env.local
+tinyboards.hjson
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =============================================================================
+# IDE and editor
+# =============================================================================
+.vscode/*
+.idea
+
+# =============================================================================
+# OS files
+# =============================================================================
+.DS_Store
+Thumbs.db
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.tgz
+.grunt
+bower_components
