@@ -41,8 +41,8 @@ only needs Docker — no git clone, no compilers, no Node.js.
 mkdir tinyboards && cd tinyboards
 
 # 2. Download the compose file and config template
-curl -LO https://raw.githubusercontent.com/tinyboard/tinyboards-rewrite/main/docker-compose.yml
-curl -LO https://raw.githubusercontent.com/tinyboard/tinyboards-rewrite/main/tinyboards.example.hjson
+curl -LO https://raw.githubusercontent.com/tinyboard/tinyboards/main/docker-compose.yml
+curl -LO https://raw.githubusercontent.com/tinyboard/tinyboards/main/tinyboards.example.hjson
 cp tinyboards.example.hjson tinyboards.hjson
 ```
 
@@ -51,10 +51,10 @@ You will also need the nginx config, postgres tuning file, and the configuration
 ```bash
 mkdir -p nginx deploy/postgres
 curl -L -o nginx/default.conf \
-  https://raw.githubusercontent.com/tinyboard/tinyboards-rewrite/main/nginx/default.conf
+  https://raw.githubusercontent.com/tinyboard/tinyboards/main/nginx/default.conf
 curl -L -o deploy/postgres/postgresql-1gb.conf \
-  https://raw.githubusercontent.com/tinyboard/tinyboards-rewrite/main/deploy/postgres/postgresql-1gb.conf
-curl -LO https://raw.githubusercontent.com/tinyboard/tinyboards-rewrite/main/configure.sh
+  https://raw.githubusercontent.com/tinyboard/tinyboards/main/deploy/postgres/postgresql-1gb.conf
+curl -LO https://raw.githubusercontent.com/tinyboard/tinyboards/main/configure.sh
 chmod +x configure.sh
 ```
 
@@ -141,7 +141,7 @@ sudo chown -R tinyboards:tinyboards /opt/tinyboards
 
 ```bash
 cd /opt/tinyboards
-sudo -u tinyboards git clone https://github.com/tinyboard/tinyboards-rewrite.git .
+sudo -u tinyboards git clone https://github.com/tinyboard/tinyboards.git .
 cd backend
 cargo build --release
 
