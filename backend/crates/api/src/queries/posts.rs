@@ -305,18 +305,25 @@ impl QueryPosts {
             query = query.filter(posts::is_removed.eq(true));
         }
 
-        // Sort
+        // Sort — featured/pinned posts always appear first.
+        // Board view: prioritize board-level pins. Home feed: prioritize site-wide pins.
+        if board_uuid.is_some() {
+            query = query.order(post_aggregates::is_featured_board.desc());
+        } else {
+            query = query.order(post_aggregates::is_featured_local.desc());
+        }
+
         query = match sort {
-            SortType::New => query.order(posts::created_at.desc()),
-            SortType::Old => query.order(posts::created_at.asc()),
-            SortType::Hot => query.order(post_aggregates::hot_rank.desc()),
-            SortType::Active => query.order(post_aggregates::hot_rank_active.desc()),
+            SortType::New => query.then_order_by(posts::created_at.desc()),
+            SortType::Old => query.then_order_by(posts::created_at.asc()),
+            SortType::Hot => query.then_order_by(post_aggregates::hot_rank.desc()),
+            SortType::Active => query.then_order_by(post_aggregates::hot_rank_active.desc()),
             SortType::TopDay | SortType::TopWeek | SortType::TopMonth | SortType::TopYear | SortType::TopAll => {
-                query.order(post_aggregates::score.desc())
+                query.then_order_by(post_aggregates::score.desc())
             }
-            SortType::MostComments => query.order(post_aggregates::comments.desc()),
-            SortType::NewComments => query.order(post_aggregates::newest_comment_time.desc()),
-            SortType::Controversial => query.order(post_aggregates::controversy_rank.desc()),
+            SortType::MostComments => query.then_order_by(post_aggregates::comments.desc()),
+            SortType::NewComments => query.then_order_by(post_aggregates::newest_comment_time.desc()),
+            SortType::Controversial => query.then_order_by(post_aggregates::controversy_rank.desc()),
         };
 
         // Time filter for top sorts
