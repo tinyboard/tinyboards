@@ -89,7 +89,7 @@ impl Stream {
             .await
             .ok();
 
-        Ok(user.map(|u| User::from(u)))
+        Ok(user.map(|u| User::from_db(u, None)))
     }
 
     /// Follower count from aggregates
