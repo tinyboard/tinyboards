@@ -170,8 +170,8 @@ async function deletePost (): Promise<void> {
           </template>
         </div>
 
-        <!-- Reactions -->
-        <div class="mt-3">
+        <!-- Reactions (threads only) -->
+        <div v-if="post.isThread" class="mt-3">
           <CommonReactionBar target-type="post" :target-id="post.id" />
         </div>
 

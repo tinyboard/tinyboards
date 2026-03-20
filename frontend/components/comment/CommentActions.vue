@@ -89,18 +89,18 @@ async function vote (score: number): Promise<void> {
 
 async function handleRemove (): Promise<void> {
   acting.value = true
-  await removeComment(props.comment.id, removeReason.value || undefined)
+  const success = await removeComment(props.comment.id, removeReason.value || undefined)
   showRemoveDialog.value = false
   removeReason.value = ''
   acting.value = false
-  emit('updated')
+  if (success) emit('updated')
 }
 
 async function handleRestore (): Promise<void> {
   acting.value = true
-  await restoreComment(props.comment.id)
+  const success = await restoreComment(props.comment.id)
   acting.value = false
-  emit('updated')
+  if (success) emit('updated')
 }
 
 async function submitReport (): Promise<void> {
