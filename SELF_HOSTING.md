@@ -326,7 +326,8 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ### nginx (HTTPS)
 
-Use `nginx/ssl.conf` instead. See the [SSL/TLS](#ssltls) section.
+Set `tls_enabled: true` in `tinyboards.hjson` and run `./configure.sh` — it generates
+`nginx/ssl.conf` from the template automatically. See the [SSL/TLS](#ssltls) section.
 
 ### Caddy (automatic HTTPS)
 
@@ -368,34 +369,26 @@ If using Caddy outside Docker, replace `backend:8536` with `127.0.0.1:8536` and 
 # Install certbot
 sudo apt install certbot
 
-# Obtain certificate (nginx must be running on port 80)
+# Obtain certificate (nginx must be running on port 80 first)
 sudo certbot certonly --webroot -w /var/www/certbot -d forum.example.com
-
-# Copy SSL config
-sed 's|/live/DOMAIN/|/live/forum.example.com/|g' nginx/ssl.conf > nginx/ssl-active.conf
-```
-
-For Docker, update `docker-compose.yml` to mount the SSL config and certificates:
-
-```yaml
-nginx:
-  volumes:
-    - ./nginx/ssl-active.conf:/etc/nginx/conf.d/default.conf:ro
-    - /etc/letsencrypt:/etc/letsencrypt:ro
-    - /var/www/certbot:/var/www/certbot:ro
 ```
 
 Then update `tinyboards.hjson`:
 
 ```hjson
-# In tinyboards.hjson:
+hostname: "forum.example.com"
 tls_enabled: true
 frontend: {
   use_https: true
 }
 ```
 
-Then regenerate the `.env` and restart: `./configure.sh && docker compose up -d`
+Then regenerate and restart — `configure.sh` automatically generates `nginx/ssl.conf`
+from the template with your domain substituted:
+
+```bash
+./configure.sh && docker compose up -d
+```
 
 ### Option 2: Caddy (automatic)
 
@@ -407,7 +400,8 @@ Caddy handles certificate provisioning and renewal automatically. No additional 
 sudo ./deploy/scripts/setup-ssl.sh forum.example.com admin@example.com
 ```
 
-This installs certbot, obtains a certificate, and generates `nginx/ssl-active.conf`.
+This installs certbot, obtains a certificate, and configures SSL. After running,
+update `tls_enabled: true` in `tinyboards.hjson` and run `./configure.sh`.
 
 ---
 
