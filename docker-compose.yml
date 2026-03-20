@@ -93,12 +93,13 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/ssl.conf:/etc/nginx/conf.d/default.conf:ro
+      # NGINX_CONF is set by configure.sh: nginx/default.conf (HTTP) or nginx/ssl.conf (HTTPS)
+      - ./${NGINX_CONF:-nginx/default.conf}:/etc/nginx/conf.d/default.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - certbot_webroot:/var/www/certbot:ro
       - media_data:/app/media:ro
     healthcheck:
-      test: ["CMD-SHELL", "curl -sfk https://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "curl -sf http://localhost/ || curl -sfk https://localhost/ || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3

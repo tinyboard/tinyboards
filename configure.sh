@@ -68,16 +68,23 @@ extract_from() {
   done <<< "$cleaned"
 }
 
-# Extract a top-level value (not inside any section).
+# Extract a top-level value (not inside any named section).
 # Usage: extract_top <key>
+# Note: hjson wraps everything in outer {}. Top-level keys are at depth 1.
+# Named sections (e.g. "database: {") push to depth 2. We match at depth 1.
 extract_top() {
   local key="$1"
   local depth=0
 
   while IFS= read -r line; do
-    # Track brace depth to skip sections
+    # Lines that open a named section ("key: {") increase depth
     if [[ "$line" =~ \{ ]]; then
       ((depth++)) || true
+      # If this is a named section (not the outer brace), skip the line
+      if [[ "$line" =~ ^[[:space:]]*[a-zA-Z_]+[[:space:]]*:[[:space:]]*\{ ]]; then
+        continue
+      fi
+      # Outer brace — continue to next line
       continue
     fi
     if [[ "$line" =~ \} ]]; then
@@ -85,7 +92,9 @@ extract_top() {
       continue
     fi
 
-    if [[ $depth -eq 0 ]]; then
+    # Top-level keys live at depth 1 (inside the outer {})
+    # but NOT inside a named section (depth 2+)
+    if [[ $depth -eq 1 ]]; then
       if [[ "$line" =~ ^[[:space:]]*${key}[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
         echo "${BASH_REMATCH[1]}"
         return
@@ -120,6 +129,22 @@ else
 fi
 
 # ---------------------------------------------------------------------------
+# Generate nginx configuration
+# ---------------------------------------------------------------------------
+DOMAIN="${HOSTNAME:-localhost}"
+
+if [[ "${HTTPS_FLAG}" == "true" ]]; then
+  NGINX_CONF="nginx/ssl.conf"
+  # Generate ssl.conf from the template, substituting the domain.
+  # Only DOMAIN is replaced — nginx variables ($host, $scheme, etc.) are preserved.
+  sed "s/\${DOMAIN}/${DOMAIN}/g" nginx/ssl.conf.template > nginx/ssl.conf
+  echo "Generated nginx/ssl.conf for domain: ${DOMAIN}"
+else
+  NGINX_CONF="nginx/default.conf"
+  echo "Using HTTP-only nginx config (TLS not enabled)"
+fi
+
+# ---------------------------------------------------------------------------
 # Write .env
 # ---------------------------------------------------------------------------
 cat > .env <<EOF
@@ -132,13 +157,16 @@ POSTGRES_PASSWORD=${DB_PASS}
 POSTGRES_DB=${DB_NAME:-tinyboards}
 
 # Domain
-DOMAIN=${HOSTNAME:-localhost}
+DOMAIN=${DOMAIN}
 USE_HTTPS=${HTTPS_FLAG}
 TLS_ENABLED=${HTTPS_FLAG}
 
+# Nginx config file (default.conf for HTTP, ssl.conf for HTTPS)
+NGINX_CONF=${NGINX_CONF}
+
 # Frontend public URLs
-NUXT_PUBLIC_SITE_URL=${PROTOCOL}://${HOSTNAME:-localhost}
-NUXT_PUBLIC_DOMAIN=${HOSTNAME:-localhost}
+NUXT_PUBLIC_SITE_URL=${PROTOCOL}://${DOMAIN}
+NUXT_PUBLIC_DOMAIN=${DOMAIN}
 NUXT_PUBLIC_USE_HTTPS=${HTTPS_FLAG}
 
 # Logging
@@ -149,10 +177,12 @@ TINYBOARDS_TAG=${IMAGE_TAG:-latest}
 COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT:-tinyboards}
 EOF
 
+echo ""
 echo "Generated .env from $CONFIG"
 echo "  POSTGRES_USER=${DB_USER:-tinyboards}"
 echo "  POSTGRES_DB=${DB_NAME:-tinyboards}"
-echo "  DOMAIN=${HOSTNAME:-localhost}"
+echo "  DOMAIN=${DOMAIN}"
 echo "  TLS_ENABLED=${HTTPS_FLAG}"
+echo "  NGINX_CONF=${NGINX_CONF}"
 echo ""
 echo "Run: docker compose up -d"
