@@ -68,6 +68,9 @@ frontend/package-lock.json
 .env
 .env.local
 tinyboards.hjson
+
+# Generated nginx SSL config (created by configure.sh from ssl.conf.template)
+nginx/ssl.conf
 .env.development.local
 .env.test.local
 .env.production.local
