@@ -5,8 +5,8 @@
     user: "tinyboards"
     # Password to connect to postgres
     password: "tinyboards"
-    # Host where postgres is running
-    host: "127.0.0.1"
+    # Host where postgres is running (use "postgres" for Docker Compose)
+    host: "postgres"
     # Port where postgres can be accessed
     port: 5432
     # Name of the postgres database for tinyboards
