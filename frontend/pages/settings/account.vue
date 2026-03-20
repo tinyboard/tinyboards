@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useAuth } from '~/composables/useAuth'
+import { useUIStore, type ThemeMode } from '~/stores/ui'
 
 definePageMeta({ layout: 'settings', middleware: 'guards' })
 useHead({ title: 'Account Settings' })
 
 const { logout } = useAuth()
+const uiStore = useUIStore()
 
 const GET_SETTINGS_QUERY = `
   query GetUserSettings {
@@ -99,6 +101,11 @@ async function saveSettings (): Promise<void> {
   if (mutError.value) {
     saveError.value = mutError.value.message
   } else {
+    // Apply theme change to UI immediately
+    if (settings.value) {
+      const themeValue = settings.value.theme === 'default' ? 'light' : settings.value.theme
+      uiStore.setTheme(themeValue as ThemeMode)
+    }
     success.value = true
     setTimeout(() => { success.value = false }, 3000)
   }
@@ -142,8 +149,12 @@ async function deleteAccount (): Promise<void> {
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Theme</label>
           <select v-model="settings.theme" class="form-input">
-            <option value="default">Default</option>
+            <option value="default">Default (Light)</option>
             <option value="dark">Dark</option>
+            <option value="ocean">Ocean</option>
+            <option value="forest">Forest</option>
+            <option value="sunset">Sunset</option>
+            <option value="purple">Purple</option>
           </select>
         </div>
 
