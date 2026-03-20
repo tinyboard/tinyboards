@@ -19,36 +19,34 @@ const acting = ref(false)
 
 async function handleLockToggle (): Promise<void> {
   acting.value = true
-  if (props.post.isLocked) {
-    await unlockPost(props.post.id)
-  } else {
-    await lockPost(props.post.id)
-  }
+  const success = props.post.isLocked
+    ? await unlockPost(props.post.id)
+    : await lockPost(props.post.id)
   acting.value = false
-  emit('updated')
+  if (success) emit('updated')
 }
 
 async function handleFeatureToggle (): Promise<void> {
   acting.value = true
-  await featurePost(props.post.id, !props.post.isFeaturedBoard, 'board')
+  const success = await featurePost(props.post.id, !props.post.isFeaturedBoard, 'board')
   acting.value = false
-  emit('updated')
+  if (success) emit('updated')
 }
 
 async function handleRemove (): Promise<void> {
   acting.value = true
-  await removePost(props.post.id, removeReason.value || undefined)
+  const success = await removePost(props.post.id, removeReason.value || undefined)
   showRemoveDialog.value = false
   removeReason.value = ''
   acting.value = false
-  emit('updated')
+  if (success) emit('updated')
 }
 
 async function handleRestore (): Promise<void> {
   acting.value = true
-  await restorePost(props.post.id)
+  const success = await restorePost(props.post.id)
   acting.value = false
-  emit('updated')
+  if (success) emit('updated')
 }
 </script>
 

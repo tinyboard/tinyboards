@@ -46,8 +46,10 @@ const THREAD_QUERY = `
       downvotes
       commentCount
       myVote
+      isSaved
+      thumbnailUrl
       board { id name title icon }
-      creator { id name displayName avatar }
+      creator { id name displayName avatar isAdmin }
     }
   }
 `

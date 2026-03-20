@@ -134,67 +134,85 @@ export function useModeration () {
     }
   }
 
-  async function removePost (postId: string, reason?: string): Promise<void> {
+  async function removePost (postId: string, reason?: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(REMOVE_POST_MUTATION, { variables: { postId, reason: reason ?? null } })
-    if (result) { toast.success('Post removed') } else { toast.error('Failed to remove post') }
+    if (result) { toast.success('Post removed'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to remove post')
+    return false
   }
 
-  async function restorePost (postId: string): Promise<void> {
+  async function restorePost (postId: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(RESTORE_POST_MUTATION, { variables: { postId } })
-    if (result) { toast.success('Post restored') } else { toast.error('Failed to restore post') }
+    if (result) { toast.success('Post restored'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to restore post')
+    return false
   }
 
-  async function removeComment (commentId: string, reason?: string): Promise<void> {
+  async function removeComment (commentId: string, reason?: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(REMOVE_COMMENT_MUTATION, { variables: { commentId, reason: reason ?? null } })
-    if (result) { toast.success('Comment removed') } else { toast.error('Failed to remove comment') }
+    if (result) { toast.success('Comment removed'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to remove comment')
+    return false
   }
 
-  async function restoreComment (commentId: string): Promise<void> {
+  async function restoreComment (commentId: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(RESTORE_COMMENT_MUTATION, { variables: { commentId } })
-    if (result) { toast.success('Comment restored') } else { toast.error('Failed to restore comment') }
+    if (result) { toast.success('Comment restored'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to restore comment')
+    return false
   }
 
-  async function lockPost (postId: string): Promise<void> {
+  async function lockPost (postId: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(LOCK_POST_MUTATION, { variables: { postId } })
-    if (result) { toast.success('Post locked') } else { toast.error('Failed to lock post') }
+    if (result) { toast.success('Post locked'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to lock post')
+    return false
   }
 
-  async function unlockPost (postId: string): Promise<void> {
+  async function unlockPost (postId: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(UNLOCK_POST_MUTATION, { variables: { postId } })
-    if (result) { toast.success('Post unlocked') } else { toast.error('Failed to unlock post') }
+    if (result) { toast.success('Post unlocked'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to unlock post')
+    return false
   }
 
-  async function featurePost (postId: string, featured: boolean, featureType?: string): Promise<void> {
+  async function featurePost (postId: string, featured: boolean, featureType?: string): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(FEATURE_POST_MUTATION, { variables: { postId, featured, featureType } })
-    if (result) { toast.success(featured ? 'Post featured' : 'Post unfeatured') } else { toast.error('Failed to update feature status') }
+    if (result) { toast.success(featured ? 'Post featured' : 'Post unfeatured'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to update feature status')
+    return false
   }
 
-  async function resolveReport (reportId: string, reportType: 'post' | 'comment'): Promise<void> {
+  async function resolveReport (reportId: string, reportType: 'post' | 'comment'): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(RESOLVE_REPORT_MUTATION, { variables: { reportId, reportType } })
-    if (result) { toast.success('Report resolved') } else { toast.error('Failed to resolve report') }
+    if (result) { toast.success('Report resolved'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to resolve report')
+    return false
   }
 
-  async function dismissReport (reportId: string, reportType: 'post' | 'comment'): Promise<void> {
+  async function dismissReport (reportId: string, reportType: 'post' | 'comment'): Promise<boolean> {
     const toast = useToast()
-    const { execute: exec } = useGraphQL()
+    const { execute: exec, error: mutError } = useGraphQL()
     const result = await exec(DISMISS_REPORT_MUTATION, { variables: { reportId, reportType } })
-    if (result) { toast.success('Report dismissed') } else { toast.error('Failed to dismiss report') }
+    if (result) { toast.success('Report dismissed'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to dismiss report')
+    return false
   }
 
   return {

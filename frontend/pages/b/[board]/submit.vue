@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
+import { useFileUpload } from '~/composables/useFileUpload'
 import type { Post } from '~/types/generated'
 import { postUrl } from '~/utils/slug'
 
@@ -11,8 +12,18 @@ const boardName = route.params.board as string
 useHead({ title: `Create Post - ${boardName}` })
 
 const CREATE_POST_MUTATION = `
-  mutation CreatePost($title: String!, $board: String, $body: String, $url: String) {
-    createPost(title: $title, board: $board, body: $body, url: $url) {
+  mutation CreatePost($title: String!, $board: String, $body: String, $link: String, $isNSFW: Boolean, $altText: String, $postType: String) {
+    createPost(title: $title, board: $board, body: $body, link: $link, isNSFW: $isNSFW, altText: $altText, postType: $postType) {
+      id
+      slug
+      board { name }
+    }
+  }
+`
+
+const CREATE_POST_WITH_FILE_MUTATION = `
+  mutation CreatePostWithFile($title: String!, $board: String, $body: String, $link: String, $isNSFW: Boolean, $altText: String, $file: Upload, $postType: String) {
+    createPost(title: $title, board: $board, body: $body, link: $link, isNSFW: $isNSFW, altText: $altText, file: $file, postType: $postType) {
       id
       slug
       board { name }
@@ -25,18 +36,32 @@ interface CreatePostResponse {
 }
 
 const { execute, loading, error } = useGraphQL<CreatePostResponse>()
+const { executeWithFile, uploading: fileUploading, error: uploadError } = useFileUpload()
 
 async function handleSubmit (data: { title: string; body: string; url: string; file: File | null; altText: string }): Promise<void> {
   if (!data.title.trim()) return
 
-  const result = await execute(CREATE_POST_MUTATION, {
-    variables: {
-      title: data.title,
-      body: data.body || undefined,
-      url: data.url || undefined,
-      board: boardName,
-    },
-  })
+  let result: CreatePostResponse | null = null
+
+  const baseVars = {
+    title: data.title,
+    body: data.body || undefined,
+    link: data.url || undefined,
+    board: boardName,
+    altText: data.altText || undefined,
+  }
+
+  if (data.file) {
+    const uploadResult = await executeWithFile(
+      CREATE_POST_WITH_FILE_MUTATION,
+      baseVars as Record<string, unknown>,
+      'file',
+      data.file,
+    )
+    result = uploadResult as CreatePostResponse | null
+  } else {
+    result = await execute(CREATE_POST_MUTATION, { variables: baseVars })
+  }
 
   if (result?.createPost) {
     await navigateTo(postUrl(result.createPost))
@@ -69,9 +94,10 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
 
       <div class="p-4">
         <CommonErrorDisplay v-if="error" :message="error.message" class="mb-4" />
+        <CommonErrorDisplay v-if="uploadError" :message="uploadError.message" class="mb-4" />
         <PostForm
           :board-name="boardName"
-          :submit-label="loading ? 'Posting...' : 'Create Post'"
+          :submit-label="loading || fileUploading ? 'Posting...' : 'Create Post'"
           @submit="handleSubmit"
         />
       </div>

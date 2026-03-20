@@ -107,8 +107,14 @@ const hasLinkPreview = computed(() => {
         <NuxtLink
           v-if="post.creator"
           :to="`/@${post.creator.name}`"
-          class="text-xs text-gray-400 no-underline hover:text-primary shrink-0 hidden sm:inline"
+          class="text-xs text-gray-400 no-underline hover:text-primary shrink-0 hidden sm:inline-flex items-center gap-1"
         >
+          <CommonAvatar
+            :src="post.creator.avatar ?? undefined"
+            :name="post.creator.name"
+            size="xs"
+            class="w-4 h-4"
+          />
           {{ post.creator.name }}
         </NuxtLink>
         <time :datetime="post.createdAt" class="text-xs text-gray-400 shrink-0">{{ timeAgo(post.createdAt) }}</time>

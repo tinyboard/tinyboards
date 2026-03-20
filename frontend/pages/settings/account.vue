@@ -75,6 +75,8 @@ async function fetchSettings (): Promise<void> {
   }
 }
 
+onMounted(() => { fetchSettings() })
+
 async function saveSettings (): Promise<void> {
   if (!settings.value) { return }
   saving.value = true
@@ -119,7 +121,6 @@ async function deleteAccount (): Promise<void> {
   await logout()
 }
 
-await fetchSettings()
 </script>
 
 <template>
