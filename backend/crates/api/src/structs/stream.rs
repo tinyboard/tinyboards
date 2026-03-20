@@ -85,7 +85,7 @@ impl Stream {
         use tinyboards_db::schema::users;
         let user = users::table
             .find(self.uuid_creator_id)
-            .first::<tinyboards_db::models::user::users::User>(conn)
+            .first::<tinyboards_db::models::user::user::User>(conn)
             .await
             .ok();
 

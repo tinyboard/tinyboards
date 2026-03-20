@@ -112,6 +112,8 @@ pub async fn upload_emoji_file(
         upload_url: upload_url.to_string(),
         size_bytes: size,
         thumbnail_url: None,
+        optimized_url: None,
+        processing_status: None,
     };
 
     diesel::insert_into(uploads::table)
