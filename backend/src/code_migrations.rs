@@ -198,6 +198,12 @@ async fn initialize_site_and_admin_user(
             .await
             .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to insert site aggregates"))?;
 
+        // Initialize default rate limits for the site
+        sql_query("INSERT INTO rate_limits (id, site_id) SELECT gen_random_uuid(), id FROM site LIMIT 1 ON CONFLICT DO NOTHING")
+            .execute(&mut conn)
+            .await
+            .map_err(|e| TinyBoardsError::from_error_message(e, 500, "Failed to insert rate limits"))?;
+
         // Seed welcome posts so the home page isn't empty on first launch
         seed_welcome_posts(pool, &inserted_admin.id, board_name).await;
 

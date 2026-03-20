@@ -1,32 +1,9 @@
--- Seed data: default site config, languages, rate limits, JWT secret
-
--- ============================================================
--- JWT secret
--- ============================================================
-
-INSERT INTO secrets (jwt_secret)
-VALUES (encode(gen_random_bytes(64), 'hex'));
-
--- ============================================================
--- Default site configuration
--- ============================================================
-
-INSERT INTO site (name, is_site_setup)
-VALUES ('tinyboards', false);
-
--- ============================================================
--- Site aggregates for the default site
--- ============================================================
-
-INSERT INTO site_aggregates (site_id)
-SELECT id FROM site LIMIT 1;
-
--- ============================================================
--- Default rate limits
--- ============================================================
-
-INSERT INTO rate_limits (site_id)
-SELECT id FROM site LIMIT 1;
+-- Seed data: languages
+--
+-- Site configuration, JWT secret, aggregates, and rate limits are
+-- initialized at runtime by code_migrations.rs using values from
+-- tinyboards.hjson (setup block). This migration only seeds the
+-- static language list.
 
 -- ============================================================
 -- Languages
