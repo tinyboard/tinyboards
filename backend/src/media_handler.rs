@@ -1,11 +1,13 @@
 use actix_web::{web, HttpRequest, HttpResponse, Result};
+use actix_web::http::header;
 use tinyboards_api::context::TinyBoardsContext;
 use tinyboards_utils::error::TinyBoardsError;
 use std::path::PathBuf;
 use tokio::fs;
 
-/// Serves media files from the configured storage backend
-/// First checks local filesystem for backwards compatibility, then falls back to storage backend
+/// Serves media files from the configured storage backend.
+/// First checks local filesystem for backwards compatibility, then falls back to storage backend.
+/// Supports HTTP Range requests for video seeking.
 pub async fn serve_media(
     context: web::Data<TinyBoardsContext>,
     req: HttpRequest,
@@ -22,36 +24,85 @@ pub async fn serve_media(
     let media_path = context.settings().get_media_path();
     let local_path = PathBuf::from(&media_path).join(storage_key);
 
-    if local_path.exists() {
+    let data = if local_path.exists() {
         tracing::debug!("Found file locally at: {:?}", local_path);
         match fs::read(&local_path).await {
-            Ok(data) => {
-                let content_type = get_content_type(storage_key);
-                return Ok(HttpResponse::Ok()
-                    .content_type(content_type)
-                    .body(data));
-            }
+            Ok(data) => data,
             Err(e) => {
                 tracing::warn!("File exists but failed to read locally: {:?}", e);
                 // Fall through to storage backend
+                context.storage().read(storage_key).await
+                    .map_err(|e| {
+                        tracing::error!("Failed to read file from storage backend: {:?}", e);
+                        TinyBoardsError::from_message(404, "File not found")
+                    })?
+            }
+        }
+    } else {
+        // Try the configured storage backend
+        tracing::debug!("File not found locally, checking storage backend");
+        context.storage().read(storage_key).await
+            .map_err(|e| {
+                tracing::error!("Failed to read file from storage backend: {:?}", e);
+                TinyBoardsError::from_message(404, "File not found")
+            })?
+    };
+
+    let content_type = get_content_type(storage_key);
+    let total_len = data.len();
+
+    // Parse Range header for partial content (needed for video seeking)
+    if let Some(range_header) = req.headers().get(header::RANGE) {
+        if let Ok(range_str) = range_header.to_str() {
+            if let Some(range) = parse_range(range_str, total_len) {
+                let (start, end) = range;
+                let slice = data[start..=end].to_vec();
+                return Ok(HttpResponse::PartialContent()
+                    .content_type(content_type)
+                    .insert_header((header::CONTENT_LENGTH, (end - start + 1).to_string()))
+                    .insert_header((header::ACCEPT_RANGES, "bytes"))
+                    .insert_header((
+                        header::CONTENT_RANGE,
+                        format!("bytes {}-{}/{}", start, end, total_len),
+                    ))
+                    .body(slice));
             }
         }
     }
 
-    // If not found locally, try the configured storage backend
-    tracing::debug!("File not found locally, checking storage backend");
-    let data = context.storage().read(storage_key).await
-        .map_err(|e| {
-            tracing::error!("Failed to read file from storage backend: {:?}", e);
-            TinyBoardsError::from_message(404, "File not found")
-        })?;
-
-    // Determine content type from file extension
-    let content_type = get_content_type(storage_key);
-
     Ok(HttpResponse::Ok()
         .content_type(content_type)
+        .insert_header((header::CONTENT_LENGTH, total_len.to_string()))
+        .insert_header((header::ACCEPT_RANGES, "bytes"))
         .body(data))
+}
+
+/// Parse a simple "bytes=start-end" range header.
+/// Returns (start, end) inclusive, or None if the range is invalid.
+fn parse_range(range_str: &str, total: usize) -> Option<(usize, usize)> {
+    let range_str = range_str.strip_prefix("bytes=")?;
+    let mut parts = range_str.splitn(2, '-');
+    let start_str = parts.next()?.trim();
+    let end_str = parts.next()?.trim();
+
+    if start_str.is_empty() {
+        // Suffix range: bytes=-500 means last 500 bytes
+        let suffix_len: usize = end_str.parse().ok()?;
+        let start = total.saturating_sub(suffix_len);
+        Some((start, total - 1))
+    } else {
+        let start: usize = start_str.parse().ok()?;
+        let end = if end_str.is_empty() {
+            total - 1
+        } else {
+            end_str.parse::<usize>().ok()?.min(total - 1)
+        };
+        if start <= end && start < total {
+            Some((start, end))
+        } else {
+            None
+        }
+    }
 }
 
 /// Determine content type from file extension

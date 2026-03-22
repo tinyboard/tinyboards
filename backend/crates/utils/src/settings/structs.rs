@@ -153,7 +153,7 @@ pub struct EmailConfig {
 #[serde(default)]
 pub struct MediaConfig {
   /// media file path to which uploads will be stored and served from
-  #[default("/app/tinyboards/media")]
+  #[default("/app/media")]
   pub media_path: String,
   /// maximum file size in megabytes for uploads (general default)
   #[default(50)]
