@@ -97,7 +97,7 @@ const hasLinkPreview = computed(() => {
           <a
             v-if="post.url"
             :href="post.url"
-            class="text-gray-900 no-underline group-hover:text-primary transition-colors font-normal"
+            class="text-gray-900 no-underline group-hover:text-primary transition-colors font-semibold"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -106,11 +106,11 @@ const hasLinkPreview = computed(() => {
           <NuxtLink
             v-else
             :to="postUrl(post)"
-            class="text-gray-900 no-underline group-hover:text-primary transition-colors font-normal"
+            class="text-gray-900 no-underline group-hover:text-primary transition-colors font-semibold"
           >
             {{ post.title }}
           </NuxtLink>
-          <span v-if="post.url" class="text-xs text-gray-400 ml-1">({{ linkHostname }})</span>
+          <span v-if="post.url" class="text-xs text-gray-400 ml-1 font-normal">({{ linkHostname }})</span>
         </h3>
 
         <!-- Badges -->
@@ -158,7 +158,7 @@ const hasLinkPreview = computed(() => {
         <NuxtLink
           v-if="post.board"
           :to="`/b/${post.board.name}`"
-          class="text-xs font-medium text-gray-500 no-underline hover:text-primary shrink-0 hidden sm:inline"
+          class="text-xs font-medium text-primary/80 no-underline hover:text-primary shrink-0 hidden sm:inline"
         >
           b/{{ post.board.name }}
         </NuxtLink>
@@ -169,10 +169,10 @@ const hasLinkPreview = computed(() => {
     <template v-else>
       <div class="flex">
         <!-- Vote column (only for non-thread posts) -->
-        <PostActions v-if="!isThread" :post="post" layout="vertical" class="px-2 py-3 border-r border-gray-100 bg-gray-50/50 rounded-l-lg" />
+        <PostActions v-if="!isThread" :post="post" layout="vertical" class="w-12 shrink-0 px-2 py-3 border-r border-gray-100 bg-gray-50/50 rounded-l-lg" />
 
         <!-- Content -->
-        <div class="flex-1 min-w-0 p-3">
+        <div class="flex-1 min-w-0 p-3 lg:p-4">
           <!-- Author line with avatar -->
           <div class="flex items-center gap-2 mb-1.5">
             <CommonAvatar
@@ -215,11 +215,11 @@ const hasLinkPreview = computed(() => {
           </div>
 
           <!-- Title -->
-          <h3 class="text-base leading-snug mb-0.5">
+          <h3 class="text-base leading-snug mb-1">
             <a
               v-if="post.url"
               :href="post.url"
-              class="text-gray-900 no-underline group-hover:text-primary transition-colors font-normal"
+              class="text-gray-900 no-underline group-hover:text-primary transition-colors font-semibold"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -228,7 +228,7 @@ const hasLinkPreview = computed(() => {
             <NuxtLink
               v-else
               :to="postUrl(post)"
-              class="text-gray-900 no-underline group-hover:text-primary transition-colors font-normal"
+              class="text-gray-900 no-underline group-hover:text-primary transition-colors font-semibold"
             >
               {{ post.title }}
             </NuxtLink>
@@ -354,7 +354,7 @@ const hasLinkPreview = computed(() => {
             <NuxtLink
               v-if="post.board"
               :to="`/b/${post.board.name}`"
-              class="ml-auto inline-flex items-center gap-1 font-medium text-gray-500 no-underline hover:text-primary transition-colors"
+              class="ml-auto inline-flex items-center gap-1 font-medium text-primary/80 no-underline hover:text-primary transition-colors"
             >
               b/{{ post.board.name }}
             </NuxtLink>

@@ -23,10 +23,10 @@ const currentSection = computed<SidebarSection>(() => {
 
 <template>
   <aside
-    class="w-[290px] shrink-0 overflow-y-auto"
+    class="w-80 shrink-0"
     :class="{ 'hidden lg:block': !uiStore.sidebarOpen }"
   >
-    <div class="p-4">
+    <div class="sticky top-4 space-y-0 max-h-[calc(100vh-5rem)] overflow-y-auto py-4 pr-1">
       <SidebarHomeSidebar v-if="currentSection === 'home'" />
       <SidebarAllSidebar v-else-if="currentSection === 'all'" />
       <SidebarBoardPageSidebar v-else-if="currentSection === 'board'" />

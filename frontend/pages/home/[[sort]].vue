@@ -34,7 +34,7 @@ await fetchPosts()
 <template>
   <div>
     <!-- Welcome banner for anonymous users -->
-    <div v-if="!authStore.isLoggedIn" class="max-w-5xl mx-auto px-4 pt-4">
+    <div v-if="!authStore.isLoggedIn" class="pt-4">
       <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div class="h-24 bg-gradient-to-br from-primary to-primary-hover" />
         <div class="px-6 py-4 -mt-6">
@@ -69,7 +69,7 @@ await fetchPosts()
     </div>
 
     <!-- Sort bar -->
-    <div class="max-w-5xl mx-auto px-4 pt-4">
+    <div class="pt-4">
       <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
         <CommonSortSelector v-model="sort" @update:model-value="setSort" />
         <CommonViewToggle />
@@ -77,7 +77,7 @@ await fetchPosts()
     </div>
 
     <!-- Content area -->
-    <div class="max-w-5xl mx-auto px-4 pb-4">
+    <div class="pb-4">
       <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchPosts" />
 
       <PostList :posts="posts" :loading="loading" />

@@ -31,14 +31,14 @@ await fetchPosts()
 <template>
   <div>
     <!-- Sort bar -->
-    <div class="max-w-5xl mx-auto px-4 pt-4">
+    <div class="pt-4">
       <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
         <CommonSortSelector v-model="sort" @update:model-value="setSort" />
         <CommonViewToggle />
       </div>
     </div>
 
-    <div class="max-w-5xl mx-auto px-4 pb-4">
+    <div class="pb-4">
       <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchPosts" />
 
       <PostList :posts="posts" :loading="loading" />
