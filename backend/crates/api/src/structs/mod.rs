@@ -7,6 +7,5 @@ pub mod message;
 pub mod post;
 pub mod reaction;
 pub mod site;
-pub mod stream;
 pub mod user;
 pub mod wiki;

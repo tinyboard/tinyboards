@@ -1,0 +1,3 @@
+-- This is intentionally empty.
+-- The streams feature has been removed and would need the full
+-- 2026-03-03-000010_streams/up.sql to be re-applied to restore it.

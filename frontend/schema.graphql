@@ -126,13 +126,6 @@ type Query {
   # Moderation log
   getModerationLog(boardId: ID, actionType: String, moderatorId: ID, limit: Int, offset: Int): ModerationLogResponse!
 
-  # Streams
-  stream(id: ID, slug: String): Stream
-  myStreams(limit: Int, offset: Int): [Stream!]!
-  discoverStreams(sortBy: StreamSortType, limit: Int, offset: Int): [Stream!]!
-  followedStreams(limit: Int, offset: Int): [Stream!]!
-  navbarStreams: [Stream!]!
-  searchStreams(query: String!, limit: Int, offset: Int): [Stream!]!
 }
 
 type Mutation {
@@ -253,19 +246,6 @@ type Mutation {
   banUserFromBoard(input: BoardBanUserInput!): BoardBanResponse!
   unbanUserFromBoard(boardId: ID!, userId: ID!): BoardUnbanResponse!
 
-  # Streams
-  createStream(input: CreateStreamInput!): Stream!
-  updateStream(streamId: ID!, input: UpdateStreamInput!): Stream!
-  deleteStream(streamId: ID!): Boolean!
-  regenerateShareToken(streamId: ID!): String!
-  addBoardSubscriptions(input: AddBoardSubscriptionsInput!): [StreamBoardSubscription!]!
-  removeBoardSubscription(streamId: ID!, boardId: ID!): Boolean!
-  addFlairSubscriptions(input: AddFlairSubscriptionsInput!): [StreamFlairSubscription!]!
-  removeFlairSubscription(streamId: ID!, boardId: ID!, flairId: Int!): Boolean!
-  clearStreamSubscriptions(streamId: ID!): Boolean!
-  followStream(streamId: ID!): Boolean!
-  unfollowStream(streamId: ID!): Boolean!
-  updateStreamNavbarSettings(streamId: ID!, addedToNavbar: Boolean!, navbarPosition: Int): Boolean!
 }
 
 # ============================================================
@@ -942,99 +922,6 @@ input AssignPostFlairInput {
   customText: String
   customTextColor: String
   customBackgroundColor: String
-}
-
-# ============================================================
-# Stream types
-# ============================================================
-
-enum StreamSortType {
-  New
-  Popular
-  Trending
-}
-
-type Stream {
-  id: ID!
-  name: String!
-  description: String
-  slug: String!
-  icon: String
-  color: String
-  creatorId: ID!
-  isPublic: Boolean!
-  isDiscoverable: Boolean!
-  sortType: String!
-  timeRange: String
-  showNsfw: Boolean!
-  maxPostsPerBoard: Int
-  shareToken: String
-  lastViewedAt: String
-  createdAt: String!
-  updatedAt: String!
-  creator: User
-  boardSubscriptions: [StreamBoardSubscription!]
-  flairSubscriptions: [StreamFlairSubscription!]
-  followerCount: Int
-  boardSubscriptionCount: Int
-  isFollowing: Boolean
-}
-
-type StreamBoardSubscription {
-  id: ID!
-  streamId: ID!
-  boardId: ID!
-  board: Board
-  includeAllPosts: Boolean!
-  createdAt: String!
-}
-
-type StreamFlairSubscription {
-  id: ID!
-  streamId: ID!
-  boardId: ID!
-  flairId: Int!
-  createdAt: String!
-}
-
-type StreamFollower {
-  id: ID!
-  userId: ID!
-  streamId: ID!
-  addedToNavbar: Boolean!
-  navbarPosition: Int
-  createdAt: String!
-}
-
-input CreateStreamInput {
-  name: String!
-  description: String
-  isPublic: Boolean
-  isDiscoverable: Boolean
-  sortType: String
-  showNsfw: Boolean
-  maxPostsPerBoard: Int
-}
-
-input UpdateStreamInput {
-  name: String
-  description: String
-  isPublic: Boolean
-  isDiscoverable: Boolean
-  sortType: String
-  showNsfw: Boolean
-  maxPostsPerBoard: Int
-}
-
-input AddBoardSubscriptionsInput {
-  streamId: ID!
-  boardIds: [ID!]!
-}
-
-input AddFlairSubscriptionsInput {
-  streamId: ID!
-  boardId: ID!
-  flairIds: [Int!]!
 }
 
 # ============================================================

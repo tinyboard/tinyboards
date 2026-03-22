@@ -2,7 +2,6 @@
 import { useAuthStore } from '~/stores/auth'
 import { useSiteStore } from '~/stores/site'
 import { useGraphQL } from '~/composables/useGraphQL'
-import { useStreams } from '~/composables/useStreams'
 import type { Board } from '~/types/generated'
 
 const authStore = useAuthStore()
@@ -27,8 +26,6 @@ interface TrendingResponse {
 
 const { execute, loading } = useGraphQL<TrendingResponse>()
 const trendingBoards = ref<Board[]>([])
-const { navbarStreamsList, fetchNavbarStreams } = useStreams()
-
 async function fetchTrending (): Promise<void> {
   const result = await execute(TRENDING_BOARDS_QUERY, {
     variables: { limit: 5, sort: 'active' },
@@ -39,10 +36,6 @@ async function fetchTrending (): Promise<void> {
 }
 
 await fetchTrending()
-
-if (authStore.isLoggedIn) {
-  fetchNavbarStreams()
-}
 </script>
 
 <template>
@@ -87,26 +80,6 @@ if (authStore.isLoggedIn) {
             />
             <span class="truncate flex-1">{{ board.title }}</span>
             <span class="text-[10px] text-gray-400 tabular-nums">{{ board.subscribers }}</span>
-          </NuxtLink>
-        </li>
-      </ul>
-    </div>
-
-    <!-- Navbar streams -->
-    <div v-if="authStore.isLoggedIn && navbarStreamsList.length > 0">
-      <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">
-        Your Streams
-      </h4>
-      <ul class="space-y-0.5">
-        <li v-for="s in navbarStreamsList" :key="s.id">
-          <NuxtLink
-            :to="`/streams/${s.id}`"
-            class="flex items-center gap-2.5 px-2 py-1.5 text-sm text-gray-700 rounded-md hover:bg-gray-100 no-underline transition-colors"
-          >
-            <svg class="w-4 h-4 shrink-0" :class="s.color ? '' : 'text-gray-400'" :style="s.color ? { color: s.color } : {}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            <span class="truncate flex-1">{{ s.name }}</span>
           </NuxtLink>
         </li>
       </ul>
@@ -158,14 +131,6 @@ if (authStore.isLoggedIn) {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             All Posts
-          </NuxtLink>
-        </li>
-        <li>
-          <NuxtLink to="/streams" class="flex items-center gap-2.5 px-2 py-1.5 text-sm text-gray-600 rounded-md hover:bg-gray-100 hover:text-gray-900 no-underline transition-colors">
-            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            Streams
           </NuxtLink>
         </li>
         <li>

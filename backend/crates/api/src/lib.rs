@@ -21,11 +21,6 @@ use crate::mutations::{
     moderation_unified::ModerationMutations,
     notifications::NotificationMutations,
     reactions::ReactionMutations,
-    stream::{
-        manage::StreamManageMutations,
-        subscriptions::StreamSubscriptionMutations,
-        follow::StreamFollowMutations,
-    },
     user::{actions::UserActions, profile_management::ProfileManagement, settings::UpdateSettings},
     comment::{
         actions::*, edit::EditComment, moderation::CommentModeration, submit_comment::SubmitComment,
@@ -55,7 +50,6 @@ use queries::{
     registration_applications::RegistrationApplicationQueries,
     reports::ReportQueries,
     search::QuerySearch,
-    streams::StreamQueries,
     wiki::QueryWiki,
 };
 use tinyboards_db::{models::user::user::User, utils::DbPool};
@@ -119,7 +113,6 @@ pub struct Query(
     FlairQueries,
     ReportQueries,
     ModerationQueries,
-    StreamQueries,
     QueryWiki,
 );
 
@@ -157,9 +150,6 @@ pub struct Mutation(
     FlairFilterMutations,
     MutationFlairCategories,
     ModerationMutations,
-    StreamManageMutations,
-    StreamSubscriptionMutations,
-    StreamFollowMutations,
     mutations::file_upload::FileUploadMutation,
     CreateWikiPage,
     WikiPageActions,

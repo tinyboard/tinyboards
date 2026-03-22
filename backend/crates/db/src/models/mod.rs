@@ -12,7 +12,6 @@ pub mod post;
 pub mod reaction;
 pub mod site;
 pub mod social;
-pub mod stream;
 pub mod upload;
 pub mod user;
 pub mod wiki;
