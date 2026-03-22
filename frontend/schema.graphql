@@ -14,6 +14,9 @@ type Query {
   user(username: String!): User!
   listUsers(searchTerm: String, page: Int, limit: Int): [User!]!
   searchUsernames(query: String!, limit: Int): [String!]!
+  userFollowers(userId: ID!): [User!]!
+  userFollowing(userId: ID!): [User!]!
+  isFollowingUser(userId: ID!): Boolean!
 
   # Boards
   board(name: String!): Board!
