@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useToast } from '~/composables/useToast'
+import { useAuthStore } from '~/stores/auth'
 import type { User } from '~/types/generated'
 
 const props = defineProps<{
@@ -9,15 +10,28 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
+const authStore = useAuthStore()
 
 const FOLLOW_MUTATION = `mutation FollowUser($userId: ID!) { followUser(userId: $userId) }`
 const UNFOLLOW_MUTATION = `mutation UnfollowUser($userId: ID!) { unfollowUser(userId: $userId) }`
 const BLOCK_MUTATION = `mutation BlockUser($userId: ID!) { blockUser(userId: $userId) }`
 const UNBLOCK_MUTATION = `mutation UnblockUser($userId: ID!) { unblockUser(userId: $userId) }`
+const IS_FOLLOWING_QUERY = `query IsFollowing($userId: ID!) { isFollowingUser(userId: $userId) }`
 
 const isFollowing = ref(false)
 const isBlocked = ref(false)
 const acting = ref(false)
+
+interface IsFollowingResponse { isFollowingUser: boolean }
+
+onMounted(async () => {
+  if (!authStore.user) return
+  const { execute } = useGraphQL<IsFollowingResponse>()
+  const result = await execute(IS_FOLLOWING_QUERY, { variables: { userId: props.user.id } })
+  if (result) {
+    isFollowing.value = result.isFollowingUser
+  }
+})
 
 async function toggleFollow (): Promise<void> {
   acting.value = true

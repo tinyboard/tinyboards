@@ -3,9 +3,7 @@ import { useGraphQL } from '~/composables/useGraphQL'
 import type { Post } from '~/types/generated'
 
 const route = useRoute()
-const username = (route.params.username as string)
-
-useHead({ title: `Posts - @${username}` })
+const username = computed(() => route.params.username as string)
 
 const USER_POSTS_QUERY = `
   query UserPosts($userName: String, $sort: SortType, $page: Int, $limit: Int) {
@@ -46,7 +44,7 @@ const hasMore = ref(false)
 
 async function fetchPosts (): Promise<void> {
   const result = await execute(USER_POSTS_QUERY, {
-    variables: { userName: username, sort: sort.value, page: page.value, limit: limit + 1 },
+    variables: { userName: username.value, sort: sort.value, page: page.value, limit: limit + 1 },
   })
   if (result?.listPosts) {
     hasMore.value = result.listPosts.length > limit
@@ -68,11 +66,15 @@ async function prevPage (): Promise<void> {
   if (page.value > 1) { page.value--; await fetchPosts() }
 }
 
+watch(username, () => {
+  page.value = 1
+  fetchPosts()
+})
 await fetchPosts()
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto px-4 py-4">
+  <div>
     <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
       <h2 class="text-sm font-semibold text-gray-900">
         Posts by @{{ username }}
