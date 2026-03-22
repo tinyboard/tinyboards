@@ -1049,13 +1049,48 @@ export type MutationVoteOnPostArgs = {
 
 export type Notification = {
   __typename?: 'Notification';
+  actor?: Maybe<NotificationActor>;
+  comment?: Maybe<NotificationCommentContext>;
   commentId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   isRead: Scalars['Boolean']['output'];
+  message?: Maybe<NotificationMessageContext>;
   messageId?: Maybe<Scalars['ID']['output']>;
+  post?: Maybe<NotificationPostContext>;
   postId?: Maybe<Scalars['ID']['output']>;
   type: Scalars['String']['output'];
+};
+
+export type NotificationActor = {
+  __typename?: 'NotificationActor';
+  avatar?: Maybe<Scalars['String']['output']>;
+  displayName?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+export type NotificationCommentContext = {
+  __typename?: 'NotificationCommentContext';
+  boardName: Scalars['String']['output'];
+  body: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  postId: Scalars['ID']['output'];
+  postTitle: Scalars['String']['output'];
+};
+
+export type NotificationMessageContext = {
+  __typename?: 'NotificationMessageContext';
+  body: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+};
+
+export type NotificationPostContext = {
+  __typename?: 'NotificationPostContext';
+  boardId: Scalars['ID']['output'];
+  boardName: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  title: Scalars['String']['output'];
 };
 
 export type NotificationSettings = {

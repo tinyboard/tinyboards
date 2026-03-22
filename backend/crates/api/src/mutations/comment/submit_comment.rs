@@ -160,11 +160,12 @@ impl SubmitComment {
 
         // Send notifications for mentions and replies
         use crate::helpers::notifications::{
-            create_comment_reply_notification, extract_mentions, get_user_ids_for_mentions,
+            create_comment_reply_notification, create_post_reply_notification,
+            extract_mentions, get_user_ids_for_mentions,
             create_comment_mention_notification,
         };
 
-        // Notify parent comment author if this is a reply
+        // Notify parent comment author if this is a reply to a comment
         if let Some(parent_uuid) = parent_uuid {
             let parent: DbComment = comments::table
                 .find(parent_uuid)
@@ -172,9 +173,15 @@ impl SubmitComment {
                 .await
                 .map_err(|_| TinyBoardsError::NotFound("Parent comment not found".into()))?;
             if parent.creator_id != v.id {
-                let _ = create_comment_reply_notification(pool, parent.creator_id, comment_id)
+                let _ = create_comment_reply_notification(pool, parent.creator_id, comment_id, v.id)
                     .await;
             }
+        }
+
+        // Notify post author if this is a top-level comment on their post
+        if parent_uuid.is_none() && post.creator_id != v.id {
+            let _ = create_post_reply_notification(pool, post.creator_id, post_uuid, comment_id, v.id)
+                .await;
         }
 
         // Send mention notifications
@@ -184,7 +191,7 @@ impl SubmitComment {
                 for mentioned_user_id in mentioned_user_ids {
                     if mentioned_user_id != v.id {
                         let _ =
-                            create_comment_mention_notification(pool, mentioned_user_id, comment_id)
+                            create_comment_mention_notification(pool, mentioned_user_id, comment_id, v.id)
                                 .await;
                     }
                 }

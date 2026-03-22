@@ -14,6 +14,7 @@ pub async fn create_comment_reply_notification(
     pool: &DbPool,
     recipient_user_id: Uuid,
     comment_id: Uuid,
+    actor_user_id: Uuid,
 ) -> Result<(), TinyBoardsError> {
     let conn = &mut get_conn(pool).await?;
 
@@ -24,6 +25,7 @@ pub async fn create_comment_reply_notification(
         post_id: None,
         message_id: None,
         is_read: false,
+        actor_user_id: Some(actor_user_id),
     };
 
     diesel::insert_into(notifications::table)
@@ -39,6 +41,7 @@ pub async fn create_comment_mention_notification(
     pool: &DbPool,
     recipient_user_id: Uuid,
     comment_id: Uuid,
+    actor_user_id: Uuid,
 ) -> Result<(), TinyBoardsError> {
     let conn = &mut get_conn(pool).await?;
 
@@ -49,6 +52,7 @@ pub async fn create_comment_mention_notification(
         post_id: None,
         message_id: None,
         is_read: false,
+        actor_user_id: Some(actor_user_id),
     };
 
     diesel::insert_into(notifications::table)
@@ -64,6 +68,7 @@ pub async fn create_post_mention_notification(
     pool: &DbPool,
     recipient_user_id: Uuid,
     post_id: Uuid,
+    actor_user_id: Uuid,
 ) -> Result<(), TinyBoardsError> {
     let conn = &mut get_conn(pool).await?;
 
@@ -74,6 +79,7 @@ pub async fn create_post_mention_notification(
         post_id: Some(post_id),
         message_id: None,
         is_read: false,
+        actor_user_id: Some(actor_user_id),
     };
 
     diesel::insert_into(notifications::table)
@@ -90,6 +96,7 @@ pub async fn create_post_reply_notification(
     recipient_user_id: Uuid,
     post_id: Uuid,
     comment_id: Uuid,
+    actor_user_id: Uuid,
 ) -> Result<(), TinyBoardsError> {
     let conn = &mut get_conn(pool).await?;
 
@@ -100,6 +107,7 @@ pub async fn create_post_reply_notification(
         post_id: Some(post_id),
         message_id: None,
         is_read: false,
+        actor_user_id: Some(actor_user_id),
     };
 
     diesel::insert_into(notifications::table)
