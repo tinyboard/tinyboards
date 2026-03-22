@@ -1,13 +1,40 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Post } from '~/types/generated'
 import { timeAgo } from '~/utils/date'
 import { postUrl } from '~/utils/slug'
+import { useGraphQL } from '~/composables/useGraphQL'
+import { useAuthStore } from '~/stores/auth'
+import { useToast } from '~/composables/useToast'
 
 const props = defineProps<{
   post: Post
   compact?: boolean
 }>()
+
+const authStore = useAuthStore()
+const toast = useToast()
+
+const saved = ref(props.post.isSaved ?? false)
+const savePending = ref(false)
+
+watch(() => props.post.isSaved, (v) => { saved.value = v ?? false })
+
+const SAVE_MUTATION = `mutation SavePost($postId: ID!) { savePost(postId: $postId) { id isSaved } }`
+const UNSAVE_MUTATION = `mutation UnsavePost($postId: ID!) { unsavePost(postId: $postId) { id isSaved } }`
+
+async function toggleSave (): Promise<void> {
+  if (!authStore.isLoggedIn) { navigateTo('/login'); return }
+  savePending.value = true
+  const { execute } = useGraphQL()
+  const mutation = saved.value ? UNSAVE_MUTATION : SAVE_MUTATION
+  const result = await execute(mutation, { variables: { postId: props.post.id } })
+  if (result) {
+    saved.value = !saved.value
+    toast.success(saved.value ? 'Post saved' : 'Post unsaved')
+  }
+  savePending.value = false
+}
 
 const isThread = computed(() => props.post.isThread)
 
@@ -292,11 +319,16 @@ const hasLinkPreview = computed(() => {
               {{ post.commentCount }} {{ post.commentCount === 1 ? 'Comment' : 'Comments' }}
             </NuxtLink>
 
-            <button class="inline-flex items-center gap-1 text-gray-500 hover:text-gray-700 transition-colors">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button
+              class="inline-flex items-center gap-1 transition-colors"
+              :class="saved ? 'text-primary font-medium' : 'text-gray-500 hover:text-gray-700'"
+              :disabled="savePending"
+              @click="toggleSave"
+            >
+              <svg class="w-3.5 h-3.5" :fill="saved ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
-              Save
+              {{ saved ? 'Saved' : 'Save' }}
             </button>
 
             <!-- Board name (shown in combined feed views) -->

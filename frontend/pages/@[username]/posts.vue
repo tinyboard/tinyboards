@@ -25,6 +25,7 @@ const USER_POSTS_QUERY = `
       downvotes
       commentCount
       myVote
+      isSaved
       board { id name title icon }
       creator { id name displayName avatar }
     }

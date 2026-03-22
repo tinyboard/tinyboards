@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
 import type { Post, Comment } from '~/types/generated'
+import { timeAgo } from '~/utils/date'
 
 const route = useRoute()
 const username = computed(() => route.params.username as string)
@@ -17,6 +18,7 @@ const RECENT_POSTS_QUERY = `
       score
       commentCount
       myVote
+      isSaved
       board { id name title icon }
       creator { id name displayName avatar }
     }
@@ -30,12 +32,12 @@ const RECENT_COMMENTS_QUERY = `
       body
       createdAt
       score
-      upvotes
-      downvotes
       replyCount
       postId
       boardId
       creator { id name displayName avatar }
+      post { id title slug board { id name } }
+      board { id name title }
     }
   }
 `
@@ -121,14 +123,44 @@ await loadContent(username.value)
         <div
           v-for="comment in recentComments"
           :key="comment.id"
-          class="bg-white border border-gray-200 rounded-lg p-3"
+          class="bg-white border border-gray-200 rounded-lg overflow-hidden"
         >
-          <div class="flex items-center gap-2 text-xs text-gray-500 mb-1">
-            <span>{{ comment.score }} points</span>
-            <span>&middot;</span>
-            <span>{{ comment.createdAt }}</span>
+          <!-- Context header -->
+          <div v-if="comment.post || comment.board" class="px-3 py-2 bg-gray-50 border-b border-gray-100 flex items-center gap-1.5 text-xs text-gray-500">
+            <svg class="w-3.5 h-3.5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+            <span class="text-gray-400">commented on</span>
+            <NuxtLink
+              v-if="comment.post"
+              :to="`/b/${comment.post.board?.name || comment.board?.name || 'unknown'}/feed/${comment.postId}/${comment.post.slug || ''}`"
+              class="font-medium text-gray-700 no-underline hover:text-primary truncate"
+            >
+              {{ comment.post.title }}
+            </NuxtLink>
+            <span v-if="comment.board || comment.post?.board" class="text-gray-400 shrink-0">in</span>
+            <NuxtLink
+              v-if="comment.board || comment.post?.board"
+              :to="`/b/${comment.post?.board?.name || comment.board?.name}`"
+              class="font-medium text-primary no-underline hover:underline shrink-0"
+            >
+              b/{{ comment.post?.board?.name || comment.board?.name }}
+            </NuxtLink>
           </div>
-          <p class="text-sm text-gray-800 line-clamp-3">{{ comment.body }}</p>
+          <!-- Comment body -->
+          <div class="p-3">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-1.5">
+              <span class="inline-flex items-center gap-1" :class="comment.score > 0 ? 'text-primary' : comment.score < 0 ? 'text-red-400' : ''">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                </svg>
+                {{ comment.score }} {{ comment.score === 1 ? 'point' : 'points' }}
+              </span>
+              <span>&middot;</span>
+              <time :datetime="comment.createdAt" :title="comment.createdAt">{{ timeAgo(comment.createdAt) }}</time>
+            </div>
+            <p class="text-sm text-gray-800 line-clamp-3 leading-relaxed">{{ comment.body }}</p>
+          </div>
         </div>
       </div>
       <div v-else-if="!commentsLoading" class="bg-white rounded-lg border border-gray-200 py-8 text-center">

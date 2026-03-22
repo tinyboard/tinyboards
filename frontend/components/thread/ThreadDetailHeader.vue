@@ -5,6 +5,7 @@ import { sanitizeHtml } from '~/utils/sanitize'
 import { useAuthStore } from '~/stores/auth'
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useModeration } from '~/composables/useModeration'
+import { useToast } from '~/composables/useToast'
 
 const props = defineProps<{
   post: Post
@@ -18,25 +19,22 @@ const emit = defineEmits<{
 }>()
 
 const authStore = useAuthStore()
-const { removePost: doRemovePost } = useModeration()
+const toast = useToast()
+const { removePost: doRemovePost, restorePost: doRestorePost, lockPost: doLockPost, unlockPost: doUnlockPost, featurePost: doFeaturePost } = useModeration()
 
-const SAVE_MUTATION = `
-  mutation SavePost($postId: ID!) { savePost(postId: $postId) { id isSaved } }
-`
-const UNSAVE_MUTATION = `
-  mutation UnsavePost($postId: ID!) { unsavePost(postId: $postId) { id isSaved } }
-`
-const DELETE_MUTATION = `
-  mutation DeletePost($postId: ID!) { deletePost(postId: $postId) { id } }
-`
-const REPORT_MUTATION = `
-  mutation ReportPost($postId: ID!, $reason: String!) { reportPost(postId: $postId, reason: $reason) { success } }
-`
+const SAVE_MUTATION = `mutation SavePost($postId: ID!) { savePost(postId: $postId) { id isSaved } }`
+const UNSAVE_MUTATION = `mutation UnsavePost($postId: ID!) { unsavePost(postId: $postId) { id isSaved } }`
+const DELETE_MUTATION = `mutation DeletePost($postId: ID!) { deletePost(postId: $postId) { id } }`
+const REPORT_MUTATION = `mutation ReportPost($postId: ID!, $reason: String!) { reportPost(postId: $postId, reason: $reason) { success } }`
 
 const saved = ref(props.post.isSaved ?? false)
 const showReport = ref(false)
 const reportReason = ref('')
 const showDeleteConfirm = ref(false)
+const showModMenu = ref(false)
+const showRemoveDialog = ref(false)
+const removeReason = ref('')
+const acting = ref(false)
 
 watch(() => props.post.isSaved, (v) => { saved.value = v ?? false })
 
@@ -56,27 +54,72 @@ async function toggleSave (): Promise<void> {
   const { execute } = useGraphQL()
   const mutation = saved.value ? UNSAVE_MUTATION : SAVE_MUTATION
   const result = await execute(mutation, { variables: { postId: props.post.id } })
-  if (result) saved.value = !saved.value
+  if (result) {
+    saved.value = !saved.value
+    toast.success(saved.value ? 'Post saved' : 'Post unsaved')
+  }
 }
 
 async function submitReport (): Promise<void> {
   if (!reportReason.value.trim()) return
   const { execute } = useGraphQL()
-  await execute(REPORT_MUTATION, { variables: { postId: props.post.id, reason: reportReason.value } })
+  const result = await execute(REPORT_MUTATION, { variables: { postId: props.post.id, reason: reportReason.value } })
   showReport.value = false
   reportReason.value = ''
+  if (result) toast.success('Report submitted')
 }
 
 async function deletePost (): Promise<void> {
   const { execute } = useGraphQL()
-  await execute(DELETE_MUTATION, { variables: { postId: props.post.id } })
+  const result = await execute(DELETE_MUTATION, { variables: { postId: props.post.id } })
   showDeleteConfirm.value = false
-  emit('deleted')
+  if (result) {
+    toast.success('Post deleted')
+    emit('deleted')
+  }
 }
 
 function handleQuoteOP (): void {
   const body = props.post.body ?? ''
   emit('quote', displayName.value, body)
+}
+
+async function handleLockToggle (): Promise<void> {
+  acting.value = true
+  showModMenu.value = false
+  const success = props.post.isLocked ? await doUnlockPost(props.post.id) : await doLockPost(props.post.id)
+  acting.value = false
+  if (success) emit('post-updated')
+}
+
+async function handleFeatureToggle (): Promise<void> {
+  acting.value = true
+  showModMenu.value = false
+  const success = await doFeaturePost(props.post.id, !props.post.isFeaturedBoard, 'board')
+  acting.value = false
+  if (success) emit('post-updated')
+}
+
+async function handleRemove (): Promise<void> {
+  acting.value = true
+  const success = await doRemovePost(props.post.id, removeReason.value || undefined)
+  showRemoveDialog.value = false
+  removeReason.value = ''
+  acting.value = false
+  if (success) emit('post-updated')
+}
+
+async function handleRestore (): Promise<void> {
+  acting.value = true
+  showModMenu.value = false
+  const success = await doRestorePost(props.post.id)
+  acting.value = false
+  if (success) emit('post-updated')
+}
+
+function openRemoveDialog (): void {
+  showModMenu.value = false
+  showRemoveDialog.value = true
 }
 </script>
 
@@ -202,7 +245,7 @@ function handleQuoteOP (): void {
       </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Footer: unified actions -->
     <div class="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
       <!-- Left: reactions -->
       <CommonReactionBar target-type="post" :target-id="post.id" />
@@ -212,8 +255,8 @@ function handleQuoteOP (): void {
         <button
           v-if="authStore.isLoggedIn"
           class="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-200 hover:text-gray-700 transition-colors"
-          @click="handleQuoteOP"
           title="Quote this post"
+          @click="handleQuoteOP"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -223,34 +266,112 @@ function handleQuoteOP (): void {
 
         <template v-if="authStore.isLoggedIn">
           <button
-            class="px-2 py-1 rounded hover:bg-gray-200 hover:text-gray-700 transition-colors"
+            class="inline-flex items-center gap-1 px-2 py-1 rounded transition-colors"
+            :class="saved ? 'text-primary bg-primary/10' : 'hover:bg-gray-200 hover:text-gray-700'"
             @click="toggleSave"
           >
-            {{ saved ? 'Unsave' : 'Save' }}
+            <svg class="w-3.5 h-3.5" :fill="saved ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            {{ saved ? 'Saved' : 'Save' }}
           </button>
 
           <button
             v-if="!isOwnPost"
-            class="px-2 py-1 rounded hover:bg-red-50 hover:text-red-500 transition-colors"
+            class="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-red-50 hover:text-red-500 transition-colors"
             @click="showReport = true"
           >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+            </svg>
             Report
           </button>
 
           <button
             v-if="isOwnPost"
-            class="px-2 py-1 rounded hover:bg-red-50 hover:text-red-500 transition-colors"
+            class="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-red-50 hover:text-red-500 transition-colors"
             @click="showDeleteConfirm = true"
           >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             Delete
           </button>
         </template>
 
-        <CommonReactionBar target-type="post" :target-id="post.id" />
-
+        <!-- Mod actions menu -->
         <template v-if="canModerate">
           <div class="w-px h-4 bg-gray-300 mx-1" />
-          <PostModActions :post="post" @updated="emit('post-updated')" />
+          <div class="relative">
+            <button
+              class="inline-flex items-center gap-1 px-2 py-1 rounded transition-colors"
+              :class="showModMenu ? 'bg-gray-200 text-gray-700' : 'hover:bg-gray-200 hover:text-gray-700'"
+              @click="showModMenu = !showModMenu"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Mod
+            </button>
+
+            <Teleport to="body">
+              <div v-if="showModMenu" class="fixed inset-0 z-40" @click="showModMenu = false" />
+            </Teleport>
+            <div
+              v-if="showModMenu"
+              class="absolute right-0 top-full mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
+            >
+              <div class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+                Moderation
+              </div>
+              <button
+                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                :disabled="acting"
+                @click="handleLockToggle"
+              >
+                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path v-if="post.isLocked" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                {{ post.isLocked ? 'Unlock' : 'Lock' }}
+              </button>
+              <button
+                class="w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors"
+                :class="post.isFeaturedBoard ? 'text-green-700 hover:bg-green-50' : 'text-gray-700 hover:bg-gray-50'"
+                :disabled="acting"
+                @click="handleFeatureToggle"
+              >
+                <svg class="w-4 h-4" :class="post.isFeaturedBoard ? 'text-green-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                {{ post.isFeaturedBoard ? 'Unpin' : 'Pin' }}
+              </button>
+              <div class="border-t border-gray-100 my-1" />
+              <button
+                v-if="!post.isRemoved"
+                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                :disabled="acting"
+                @click="openRemoveDialog"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+                Remove
+              </button>
+              <button
+                v-else
+                class="w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50 transition-colors"
+                :disabled="acting"
+                @click="handleRestore"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Restore
+              </button>
+            </div>
+          </div>
         </template>
       </div>
     </div>
@@ -281,6 +402,26 @@ function handleQuoteOP (): void {
           <div class="flex gap-2 justify-end">
             <button class="button white button-sm" @click="showDeleteConfirm = false">Cancel</button>
             <button class="button button-sm bg-red-600 text-white hover:bg-red-700" @click="deletePost">Delete</button>
+          </div>
+        </div>
+      </template>
+    </CommonModal>
+
+    <!-- Remove reason dialog -->
+    <CommonModal v-if="showRemoveDialog" @close="showRemoveDialog = false">
+      <template #title>Remove Post</template>
+      <template #default>
+        <div class="space-y-3">
+          <p class="text-sm text-gray-600">Are you sure you want to remove this post?</p>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Reason (optional)</label>
+            <input v-model="removeReason" type="text" class="form-input" placeholder="Reason for removal..." />
+          </div>
+          <div class="flex gap-2 justify-end">
+            <button class="button white button-sm" @click="showRemoveDialog = false">Cancel</button>
+            <button class="button button-sm bg-red-600 text-white hover:bg-red-700" :disabled="acting" @click="handleRemove">
+              {{ acting ? 'Removing...' : 'Remove Post' }}
+            </button>
           </div>
         </div>
       </template>
