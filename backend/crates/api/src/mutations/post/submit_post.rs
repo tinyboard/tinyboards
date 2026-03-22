@@ -344,6 +344,7 @@ impl SubmitPost {
                             pool,
                             mentioned_user_id,
                             post_id,
+                            v.id,
                         )
                         .await;
                     }

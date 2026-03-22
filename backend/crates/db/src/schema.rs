@@ -552,6 +552,7 @@ diesel::table! {
         message_id -> Nullable<Uuid>,
         is_read -> Bool,
         created_at -> Timestamptz,
+        actor_user_id -> Nullable<Uuid>,
     }
 }
 

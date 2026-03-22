@@ -16,6 +16,7 @@ pub struct Notification {
     pub message_id: Option<Uuid>,
     pub is_read: bool,
     pub created_at: DateTime<Utc>,
+    pub actor_user_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Insertable)]
@@ -27,4 +28,5 @@ pub struct NotificationInsertForm {
     pub post_id: Option<Uuid>,
     pub message_id: Option<Uuid>,
     pub is_read: bool,
+    pub actor_user_id: Option<Uuid>,
 }

@@ -145,6 +145,7 @@ impl SendMessageMutations {
             post_id: None,
             message_id: Some(message.id),
             is_read: false,
+            actor_user_id: Some(user.id),
         };
 
         diesel::insert_into(notifications::table)

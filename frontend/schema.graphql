@@ -442,6 +442,33 @@ type SiteStats {
 # Notifications / Messages
 # ============================================================
 
+type NotificationActor {
+  id: ID!
+  name: String!
+  displayName: String
+  avatar: String
+}
+
+type NotificationPostContext {
+  id: ID!
+  title: String!
+  boardName: String!
+  boardId: ID!
+}
+
+type NotificationCommentContext {
+  id: ID!
+  body: String!
+  postId: ID!
+  postTitle: String!
+  boardName: String!
+}
+
+type NotificationMessageContext {
+  id: ID!
+  body: String!
+}
+
 type Notification {
   id: ID!
   type: String!
@@ -450,6 +477,10 @@ type Notification {
   commentId: ID
   postId: ID
   messageId: ID
+  actor: NotificationActor
+  post: NotificationPostContext
+  comment: NotificationCommentContext
+  message: NotificationMessageContext
 }
 
 type UnreadNotificationCount {
