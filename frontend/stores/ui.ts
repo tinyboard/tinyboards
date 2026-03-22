@@ -42,6 +42,10 @@ export const useUIStore = defineStore('ui', () => {
     sidebarOpen.value = !sidebarOpen.value
   }
 
+  function closeSidebar (): void {
+    sidebarOpen.value = false
+  }
+
   function setPostViewMode (mode: PostViewMode): void {
     postViewMode.value = mode
   }
@@ -79,6 +83,7 @@ export const useUIStore = defineStore('ui', () => {
     toasts,
     setTheme,
     toggleSidebar,
+    closeSidebar,
     setPostViewMode,
     openModal,
     closeModal,

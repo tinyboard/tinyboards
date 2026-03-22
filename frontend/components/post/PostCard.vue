@@ -167,12 +167,17 @@ const hasLinkPreview = computed(() => {
 
     <!-- Expanded mode -->
     <template v-else>
-      <div class="flex">
-        <!-- Vote column (only for non-thread posts) -->
-        <PostActions v-if="!isThread" :post="post" layout="vertical" class="w-12 shrink-0 px-2 py-3 border-r border-gray-100 bg-gray-50/50 rounded-l-lg" />
+      <div class="flex sm:flex-row flex-col">
+        <!-- Vote column: hidden on mobile, visible on sm+ -->
+        <PostActions
+          v-if="!isThread"
+          :post="post"
+          layout="vertical"
+          class="hidden sm:flex w-12 shrink-0 px-2 py-3 border-r border-gray-100 bg-gray-50/50 rounded-l-lg"
+        />
 
         <!-- Content -->
-        <div class="flex-1 min-w-0 p-3 lg:p-4">
+        <div class="flex-1 min-w-0 p-3 sm:p-3 lg:p-4">
           <!-- Author line with avatar -->
           <div class="flex items-center gap-2 mb-1.5">
             <CommonAvatar
@@ -239,7 +244,7 @@ const hasLinkPreview = computed(() => {
 
           <!-- Video embed (YouTube or direct video) -->
           <ClientOnly>
-            <div v-if="isYouTubeEmbed" class="mt-2 rounded-lg overflow-hidden aspect-video max-w-lg">
+            <div v-if="isYouTubeEmbed" class="mt-2 rounded-lg overflow-hidden aspect-video max-w-full sm:max-w-lg">
               <iframe
                 :src="post.embedVideoUrl!"
                 class="w-full h-full"
@@ -249,7 +254,7 @@ const hasLinkPreview = computed(() => {
                 loading="lazy"
               />
             </div>
-            <div v-else-if="isDirectVideo" class="mt-2 max-w-lg">
+            <div v-else-if="isDirectVideo" class="mt-2 max-w-full sm:max-w-lg">
               <video
                 :src="post.embedVideoUrl!"
                 class="w-full rounded-lg"
@@ -264,12 +269,12 @@ const hasLinkPreview = computed(() => {
             v-if="!post.embedVideoUrl && post.thumbnailUrl"
             :src="post.thumbnailUrl"
             :alt="post.title"
-            class="mt-2 max-w-sm max-h-64 rounded-lg object-cover"
+            class="mt-2 max-w-full sm:max-w-sm max-h-64 rounded-lg object-cover"
             loading="lazy"
           />
 
           <!-- Post video (uploaded video file) -->
-          <div v-if="isImageVideo" class="mt-2 max-w-lg">
+          <div v-if="isImageVideo" class="mt-2 max-w-full sm:max-w-lg">
             <video
               :src="post.image!"
               class="w-full rounded-lg"
@@ -284,7 +289,7 @@ const hasLinkPreview = computed(() => {
             v-if="post.image && !post.thumbnailUrl && !isImageVideo"
             :src="post.image"
             :alt="post.altText || post.title"
-            class="mt-2 max-w-sm max-h-64 rounded-lg object-cover"
+            class="mt-2 max-w-full sm:max-w-sm max-h-64 rounded-lg object-cover"
             loading="lazy"
           />
 
@@ -294,7 +299,7 @@ const hasLinkPreview = computed(() => {
             :href="post.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="mt-2 block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors no-underline max-w-lg"
+            class="mt-2 block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors no-underline max-w-full sm:max-w-lg"
           >
             <div class="px-3 py-2">
               <p v-if="post.embedTitle" class="text-sm font-medium text-gray-800 line-clamp-1">
@@ -326,8 +331,16 @@ const hasLinkPreview = computed(() => {
             </span>
           </div>
 
-          <!-- Action bar -->
+          <!-- Action bar: votes (mobile) + comments + save + board -->
           <div class="mt-2 flex items-center gap-3 text-xs text-gray-500">
+            <!-- Mobile inline votes -->
+            <PostActions
+              v-if="!isThread"
+              :post="post"
+              layout="horizontal"
+              class="sm:hidden"
+            />
+
             <NuxtLink
               :to="postUrl(post)"
               class="inline-flex items-center gap-1 no-underline text-gray-500 hover:text-gray-700 transition-colors"

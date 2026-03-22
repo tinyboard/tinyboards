@@ -121,9 +121,10 @@ function onClickOutsideMenu (e: Event): void {
 </script>
 
 <template>
-  <article class="bg-white border border-gray-200 rounded p-4">
-    <div class="flex gap-3">
-      <PostActions :post="post" layout="vertical" />
+  <article class="bg-white border border-gray-200 rounded p-3 sm:p-4">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <!-- Vote column: hidden on mobile, shown on sm+ -->
+      <PostActions :post="post" layout="vertical" class="hidden sm:flex" />
 
       <div class="flex-1 min-w-0">
         <h1 class="text-xl font-bold text-gray-900 leading-snug">
@@ -208,6 +209,11 @@ function onClickOutsideMenu (e: Event): void {
           {{ post.body }}
         </div>
 
+        <!-- Mobile inline votes -->
+        <div class="sm:hidden mt-3">
+          <PostActions :post="post" layout="horizontal" />
+        </div>
+
         <!-- Action bar: unified user + mod actions -->
         <div class="flex items-center gap-1 mt-3 text-xs text-gray-500 flex-wrap">
           <!-- Comments count -->
@@ -280,7 +286,7 @@ function onClickOutsideMenu (e: Event): void {
                 </Teleport>
                 <div
                   v-if="showMoreMenu"
-                  class="absolute left-0 top-full mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
+                  class="absolute right-0 sm:right-auto sm:left-0 top-full mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
                 >
                   <div class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                     Moderation

@@ -393,6 +393,32 @@ img.emoji {
   animation: dropdown-enter 120ms ease-out;
 }
 
+/* Mobile sidebar drawer transitions */
+.sidebar-overlay-enter-active,
+.sidebar-overlay-leave-active {
+  transition: opacity 200ms ease;
+}
+.sidebar-overlay-enter-from,
+.sidebar-overlay-leave-to {
+  opacity: 0;
+}
+
+.sidebar-drawer-enter-active {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sidebar-drawer-leave-active {
+  transition: transform 200ms ease-in;
+}
+.sidebar-drawer-enter-from,
+.sidebar-drawer-leave-to {
+  transform: translateX(-100%);
+}
+
+/* Mobile bottom nav safe area */
+.has-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* Focus ring for keyboard navigation */
 :focus-visible {
   outline: 2px solid rgb(var(--color-primary) / 0.5);

@@ -31,7 +31,7 @@ async function handleLogout () {
 </script>
 
 <template>
-  <header class="bg-primary sticky top-0 z-40 shadow-md">
+  <header class="bg-primary sticky top-0 z-50 shadow-md">
     <div class="max-w-8xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
       <!-- Left: Logo + Nav -->
       <div class="flex items-center gap-4 min-w-0 flex-1">
@@ -135,7 +135,7 @@ async function handleLogout () {
             <!-- Backdrop (click to close) -->
             <div
               v-if="userMenuOpen"
-              class="fixed inset-0 z-40"
+              class="fixed inset-0 z-[60]"
               @click="closeUserMenu"
             />
 
@@ -150,7 +150,7 @@ async function handleLogout () {
             >
               <div
                 v-if="userMenuOpen"
-                class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black/5 z-50 py-1"
+                class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black/5 z-[70] py-1"
               >
                 <div class="px-3 py-2 border-b border-gray-100">
                   <p class="text-sm font-medium text-gray-900 truncate">{{ authStore.user?.displayName || authStore.user?.name }}</p>
