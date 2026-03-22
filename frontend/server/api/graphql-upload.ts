@@ -1,4 +1,5 @@
 import { defineEventHandler, getCookie, setCookie, createError, getHeader, readMultipartFormData } from 'h3'
+import { withRefreshLock } from '~/server/utils/refreshLock'
 
 /**
  * BFF proxy for GraphQL file uploads (multipart/form-data).
@@ -33,51 +34,20 @@ export default defineEventHandler(async (event) => {
   }
 
   // Reconstruct multipart form data for the backend
-  const formData = new FormData()
-
-  for (const part of parts) {
-    const fieldName = part.name ?? ''
-
-    if (part.filename) {
-      // File field — create a Blob with proper content type
-      const blob = new Blob([part.data], { type: part.type || 'application/octet-stream' })
-      formData.append(fieldName, blob, part.filename)
-    } else {
-      // Text field (operations, map, etc.)
-      formData.append(fieldName, part.data.toString('utf-8'))
-    }
-  }
+  const formData = buildFormData(parts)
 
   const accessToken = getCookie(event, 'tb_access')
 
-  const headers: Record<string, string> = {}
-  if (accessToken) {
-    headers.Cookie = `tb_access=${accessToken}`
-  }
-
   try {
-    const response = await fetch(gqlEndpoint, {
-      method: 'POST',
-      headers,
-      body: formData,
-    })
+    const { status, data } = await forwardUpload(gqlEndpoint, formData, accessToken)
 
-    const data = await response.json()
-
-    if (response.status === 401 || hasAuthError(data)) {
-      const refreshed = await attemptTokenRefresh(event, config.internalApiHost)
-      if (refreshed) {
-        const newAccessToken = getCookie(event, 'tb_access')
-        const retryHeaders: Record<string, string> = {}
-        if (newAccessToken) {
-          retryHeaders.Cookie = `tb_access=${newAccessToken}`
-        }
-        const retryResponse = await fetch(gqlEndpoint, {
-          method: 'POST',
-          headers: retryHeaders,
-          body: formData,
-        })
-        return await retryResponse.json()
+    if (status === 401 || hasAuthError(data as { errors?: Array<{ message: string; extensions?: Record<string, unknown> }> })) {
+      const newAccessToken = await attemptTokenRefresh(event, config.internalApiHost)
+      if (newAccessToken) {
+        // Rebuild form data for retry (original may have been consumed)
+        const retryFormData = buildFormData(parts)
+        const retry = await forwardUpload(gqlEndpoint, retryFormData, newAccessToken)
+        return retry.data
       }
 
       clearAuthCookies(event)
@@ -92,6 +62,40 @@ export default defineEventHandler(async (event) => {
   }
 })
 
+function buildFormData (parts: { name?: string; filename?: string; data: Buffer; type?: string }[]): FormData {
+  const formData = new FormData()
+  for (const part of parts) {
+    const fieldName = part.name ?? ''
+    if (part.filename) {
+      const blob = new Blob([new Uint8Array(part.data)], { type: part.type || 'application/octet-stream' })
+      formData.append(fieldName, blob, part.filename)
+    } else {
+      formData.append(fieldName, part.data.toString('utf-8'))
+    }
+  }
+  return formData
+}
+
+async function forwardUpload (
+  endpoint: string,
+  formData: FormData,
+  accessToken?: string | null,
+): Promise<{ status: number; data: unknown }> {
+  const headers: Record<string, string> = {}
+  if (accessToken) {
+    headers.Cookie = `tb_access=${accessToken}`
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: formData,
+  })
+
+  const data = await response.json()
+  return { status: response.status, data }
+}
+
 function hasAuthError (response: { errors?: Array<{ message: string; extensions?: Record<string, unknown> }> }): boolean {
   if (!response.errors) { return false }
   return response.errors.some(
@@ -105,34 +109,43 @@ function hasAuthError (response: { errors?: Array<{ message: string; extensions?
 async function attemptTokenRefresh (
   event: Parameters<Parameters<typeof defineEventHandler>[0]>[0],
   internalApiHost: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const refreshToken = getCookie(event, 'tb_refresh')
   const accessToken = getCookie(event, 'tb_access')
-  if (!refreshToken) { return false }
+  if (!refreshToken) { return null }
 
   const refreshEndpoint = `${internalApiHost}/api/v2/auth/refresh`
 
-  try {
-    const response = await fetch(refreshEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        Cookie: `tb_access=${accessToken ?? ''}; tb_refresh=${refreshToken}`,
-      },
-    })
+  return withRefreshLock(async () => {
+    try {
+      const response = await fetch(refreshEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          Cookie: `tb_access=${accessToken ?? ''}; tb_refresh=${refreshToken}`,
+        },
+      })
 
-    if (!response.ok) { return false }
+      if (!response.ok) { return null }
 
-    const setCookieHeaders = response.headers.getSetCookie?.() ?? []
-    for (const cookieHeader of setCookieHeaders) {
-      event.node.res.appendHeader('Set-Cookie', cookieHeader)
+      const setCookieHeaders = response.headers.getSetCookie?.() ?? []
+      for (const cookieHeader of setCookieHeaders) {
+        event.node.res.appendHeader('Set-Cookie', cookieHeader)
+      }
+
+      for (const header of setCookieHeaders) {
+        const match = header.match(/tb_access=([^;]+)/)
+        if (match) {
+          return match[1]
+        }
+      }
+
+      return null
+    } catch {
+      return null
     }
-
-    return setCookieHeaders.length > 0
-  } catch {
-    return false
-  }
+  })
 }
 
 function clearAuthCookies (

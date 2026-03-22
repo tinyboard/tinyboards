@@ -24,6 +24,10 @@ export default defineNuxtRouteMiddleware(async () => {
       if (authContext.subscribedBoards) {
         authStore.setSubscribedBoards(authContext.subscribedBoards)
       }
+
+      if (typeof authContext.unreadNotificationsCount === 'number') {
+        authStore.setUnreadNotificationCount(authContext.unreadNotificationsCount)
+      }
     }
   }
 })

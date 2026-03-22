@@ -1,4 +1,5 @@
 import { defineEventHandler, readBody, getCookie, setCookie, createError, getHeader } from 'h3'
+import { withRefreshLock } from '~/server/utils/refreshLock'
 
 interface GraphQLRequest {
   query: string
@@ -15,7 +16,7 @@ interface GraphQLResponse {
  * BFF proxy for all GraphQL traffic.
  * - Reads httpOnly auth cookie server-side (tb_access)
  * - Forwards requests to the backend GraphQL endpoint
- * - Handles 401 → refresh → retry flow
+ * - Handles 401 → refresh → retry flow (with deduplication)
  * - Validates X-Requested-With header (CSRF protection)
  *
  * Auth mutations (login/register) are no longer handled here.
@@ -49,10 +50,9 @@ export default defineEventHandler(async (event) => {
 
   // Check for authentication errors (HTTP 401 or GraphQL-level auth errors)
   if (result.httpStatus === 401 || hasAuthError(result.data)) {
-    const refreshed = await attemptTokenRefresh(event, config.internalApiHost)
-    if (refreshed) {
-      // Retry original request with new token
-      const newAccessToken = getCookie(event, 'tb_access')
+    const newAccessToken = await attemptTokenRefresh(event, config.internalApiHost)
+    if (newAccessToken) {
+      // Retry original request with the new token
       const retry = await forwardGraphQLRequest(gqlEndpoint, body, newAccessToken)
       return retry.data
     }
@@ -72,7 +72,7 @@ interface ForwardResult {
 async function forwardGraphQLRequest (
   endpoint: string,
   body: GraphQLRequest,
-  accessToken?: string,
+  accessToken?: string | null,
 ): Promise<ForwardResult> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -112,43 +112,58 @@ function hasAuthError (response: GraphQLResponse): boolean {
   )
 }
 
+/**
+ * Attempt to refresh the access token, using a lock to prevent concurrent
+ * refreshes from invalidating each other's tokens (thundering herd).
+ * Returns the new access token string on success, or null on failure.
+ */
 async function attemptTokenRefresh (
   event: Parameters<Parameters<typeof defineEventHandler>[0]>[0],
   internalApiHost: string,
-): Promise<boolean> {
+): Promise<string | null> {
   const refreshToken = getCookie(event, 'tb_refresh')
   const accessToken = getCookie(event, 'tb_access')
-  if (!refreshToken) { return false }
+  if (!refreshToken) { return null }
 
-  // Call the backend refresh endpoint directly with both cookies.
   const refreshEndpoint = `${internalApiHost}/api/v2/auth/refresh`
 
-  try {
-    const response = await fetch(refreshEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest',
-        Cookie: `tb_access=${accessToken ?? ''}; tb_refresh=${refreshToken}`,
-      },
-    })
+  const newAccessToken = await withRefreshLock(async () => {
+    try {
+      const response = await fetch(refreshEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          Cookie: `tb_access=${accessToken ?? ''}; tb_refresh=${refreshToken}`,
+        },
+      })
 
-    if (!response.ok) {
-      return false
+      if (!response.ok) {
+        return null
+      }
+
+      // Forward Set-Cookie headers from the backend response to the client
+      const setCookieHeaders = response.headers.getSetCookie?.() ?? []
+      for (const cookieHeader of setCookieHeaders) {
+        event.node.res.appendHeader('Set-Cookie', cookieHeader)
+      }
+
+      // Extract the new access token from Set-Cookie headers so we can use
+      // it immediately for the retry (the h3 cookie jar won't reflect it yet)
+      for (const header of setCookieHeaders) {
+        const match = header.match(/tb_access=([^;]+)/)
+        if (match) {
+          return match[1]
+        }
+      }
+
+      return null
+    } catch {
+      return null
     }
+  })
 
-    // Forward Set-Cookie headers from the backend response to the client
-    const setCookieHeaders = response.headers.getSetCookie?.() ?? []
-    for (const cookieHeader of setCookieHeaders) {
-      event.node.res.appendHeader('Set-Cookie', cookieHeader)
-    }
-
-    return setCookieHeaders.length > 0
-  } catch {
-    // Refresh failed — caller will handle cleanup
-  }
-
-  return false
+  return newAccessToken
 }
 
 function clearAuthCookies (

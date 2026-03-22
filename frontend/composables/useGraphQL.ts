@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import type { Ref } from 'vue'
 import type { ApiResponse, ApiError } from '~/types/api'
+import { useAuthStore } from '~/stores/auth'
 
 interface GraphQLRequestOptions {
   variables?: Record<string, unknown>
@@ -57,6 +58,17 @@ export function useGraphQL<T = unknown> (): UseGraphQLReturn<T> {
       if (response.errors && response.errors.length > 0) {
         error.value = response.errors[0]
         data.value = null
+
+        // If the BFF returned an auth error, the refresh already failed server-side
+        // and cookies were cleared. Sync the client-side store so the UI reflects
+        // the logged-out state instead of showing stale auth.
+        if (import.meta.client && isAuthError(response.errors)) {
+          const authStore = useAuthStore()
+          if (authStore.isLoggedIn) {
+            authStore.clearUser()
+          }
+        }
+
         return null
       }
 
@@ -81,4 +93,13 @@ export function useGraphQL<T = unknown> (): UseGraphQLReturn<T> {
  */
 export function useGraphQLMutation<T = unknown> (): UseGraphQLReturn<T> {
   return useGraphQL<T>()
+}
+
+function isAuthError (errors: ApiError[]): boolean {
+  return errors.some(
+    err =>
+      err.message?.toLowerCase().includes('unauthorized') ||
+      err.message?.toLowerCase().includes('not authenticated') ||
+      err.extensions?.code === 'UNAUTHENTICATED',
+  )
 }
