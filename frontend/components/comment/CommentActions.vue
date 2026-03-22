@@ -246,7 +246,7 @@ function openRemoveDialog (): void {
         </Teleport>
         <div
           v-if="showModMenu"
-          class="absolute left-0 top-full mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
+          class="absolute right-0 sm:right-auto sm:left-0 top-full mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
         >
           <div class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
             Moderation

@@ -70,12 +70,15 @@ async function vote (score: number): Promise<void> {
 
 <template>
   <div
-    class="flex items-center gap-0.5 text-sm"
-    :class="layout === 'vertical' ? 'flex-col' : 'flex-row'"
+    class="flex items-center text-sm"
+    :class="layout === 'vertical' ? 'flex-col gap-0.5' : 'flex-row gap-1'"
   >
     <button
-      class="upvote p-1.5 rounded-md hover:bg-primary/10 flex items-center justify-center transition-colors"
-      :class="localMyVote === 1 ? 'upvoted text-primary' : 'text-gray-400 hover:text-primary'"
+      class="upvote rounded-md hover:bg-primary/10 flex items-center justify-center transition-colors"
+      :class="[
+        localMyVote === 1 ? 'upvoted text-primary' : 'text-gray-400 hover:text-primary',
+        layout === 'vertical' ? 'p-1.5' : 'p-1.5 sm:p-1'
+      ]"
       aria-label="Upvote"
       @click="vote(1)"
     >
@@ -97,8 +100,11 @@ async function vote (score: number): Promise<void> {
 
     <button
       v-if="siteStore.enableDownvotes"
-      class="downvote p-1.5 rounded-md hover:bg-secondary/10 flex items-center justify-center transition-colors"
-      :class="localMyVote === -1 ? 'downvoted text-secondary' : 'text-gray-400 hover:text-secondary'"
+      class="downvote rounded-md hover:bg-secondary/10 flex items-center justify-center transition-colors"
+      :class="[
+        localMyVote === -1 ? 'downvoted text-secondary' : 'text-gray-400 hover:text-secondary',
+        layout === 'vertical' ? 'p-1.5' : 'p-1.5 sm:p-1'
+      ]"
       aria-label="Downvote"
       @click="vote(-1)"
     >

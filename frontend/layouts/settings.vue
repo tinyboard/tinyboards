@@ -16,22 +16,29 @@ const mobileNavOpen = ref(false)
     <LayoutAppHeader />
 
     <!-- Mobile settings nav toggle -->
-    <div class="md:hidden bg-white border-b border-gray-200 px-4 py-2">
+    <div class="lg:hidden bg-white border-b border-gray-200 px-4 py-2">
       <button
-        class="flex items-center gap-2 text-sm font-medium text-gray-700"
+        class="flex items-center gap-2 text-sm font-medium text-gray-700 w-full"
         @click="mobileNavOpen = !mobileNavOpen"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
         </svg>
         Settings Menu
+        <svg
+          class="w-4 h-4 ml-auto transition-transform"
+          :class="{ 'rotate-180': mobileNavOpen }"
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
       </button>
       <nav v-if="mobileNavOpen" class="mt-2 pb-1">
         <NuxtLink
           v-for="item in settingsNav"
           :key="item.to"
           :to="item.to"
-          class="block px-3 py-2 text-sm rounded no-underline text-gray-700 hover:bg-gray-50"
+          class="block px-3 py-2.5 text-sm rounded no-underline text-gray-700 hover:bg-gray-50"
           active-class="bg-primary/5 text-primary font-medium"
           @click="mobileNavOpen = false"
         >
@@ -40,11 +47,11 @@ const mobileNavOpen = ref(false)
       </nav>
     </div>
 
-    <div class="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+    <div class="flex-1 max-w-5xl mx-auto w-full px-3 sm:px-4 py-4 sm:py-6 pb-20 lg:pb-6">
       <div class="flex gap-6">
         <!-- Settings sidebar nav (desktop) -->
-        <nav class="w-52 shrink-0 hidden md:block">
-          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <nav class="w-52 shrink-0 hidden lg:block">
+          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden sticky top-20">
             <div class="px-4 py-3 bg-primary text-white">
               <h2 class="font-semibold text-sm">Settings</h2>
             </div>
@@ -64,13 +71,14 @@ const mobileNavOpen = ref(false)
 
         <!-- Content area -->
         <main class="flex-1 min-w-0">
-          <div class="bg-white rounded-lg border border-gray-200 p-6">
+          <div class="bg-white rounded-lg border border-gray-200 p-4 sm:p-6">
             <slot />
           </div>
         </main>
       </div>
     </div>
 
-    <LayoutAppFooter />
+    <LayoutAppFooter class="hidden lg:block" />
+    <LayoutMobileBottomNav class="lg:hidden" />
   </div>
 </template>
