@@ -25,7 +25,7 @@ const isCompact = computed(() => uiStore.postViewMode === 'compact')
       <p class="text-xs text-gray-400">Be the first to start a conversation!</p>
     </div>
 
-    <div v-else :class="isCompact ? 'space-y-1' : 'space-y-2'" class="relative">
+    <div v-else :class="isCompact ? 'space-y-1' : 'space-y-3'" class="relative">
       <div v-if="loading" class="absolute inset-0 bg-white/50 z-10 flex items-start justify-center pt-8 rounded-lg">
         <CommonLoadingSpinner size="md" />
       </div>

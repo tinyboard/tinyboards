@@ -85,7 +85,7 @@ async function vote (score: number): Promise<void> {
     </button>
 
     <span
-      class="font-bold text-xs min-w-[2ch] text-center tabular-nums select-none transition-colors"
+      class="font-semibold text-sm min-w-[2ch] text-center tabular-nums select-none transition-colors"
       :class="[
         localMyVote === 1 ? 'text-primary' : localMyVote === -1 ? 'text-secondary' : 'text-gray-700',
         scorePop ? 'score-pop' : ''
