@@ -28,6 +28,7 @@ const POSTS_QUERY = `
       downvotes
       commentCount
       myVote
+      isSaved
       image
       altText
       embedTitle

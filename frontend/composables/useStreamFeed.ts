@@ -6,7 +6,7 @@ const STREAM_FEED_QUERY = `
   query GetStreamFeed($boardName: String, $sort: SortType, $page: Int, $limit: Int) {
     listPosts(boardName: $boardName, sort: $sort, page: $page, limit: $limit) {
       id title body url createdAt updatedAt isDeleted isRemoved isLocked isFeaturedBoard isNSFW slug
-      score upvotes downvotes commentCount myVote
+      score upvotes downvotes commentCount myVote isSaved
       board { id name title icon }
       creator { id name displayName avatar }
     }
