@@ -17,15 +17,21 @@ export type Scalars = {
   Upload: { input: File; output: File; }
 };
 
-export type AddBoardSubscriptionsInput = {
-  boardIds: Array<Scalars['ID']['input']>;
-  streamId: Scalars['ID']['input'];
-};
-
 export type AddModeratorResponse = {
   __typename?: 'AddModeratorResponse';
   board: Board;
   success: Scalars['Boolean']['output'];
+};
+
+export type AddReactionInput = {
+  commentId?: InputMaybe<Scalars['ID']['input']>;
+  emoji: Scalars['String']['input'];
+  postId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type AddReactionResponse = {
+  __typename?: 'AddReactionResponse';
+  reaction: Reaction;
 };
 
 export type AssignPostFlairInput = {
@@ -34,6 +40,15 @@ export type AssignPostFlairInput = {
   customTextColor?: InputMaybe<Scalars['String']['input']>;
   flairTemplateId: Scalars['ID']['input'];
   postId: Scalars['ID']['input'];
+};
+
+export type AssignUserFlairInput = {
+  boardId: Scalars['ID']['input'];
+  customBackgroundColor?: InputMaybe<Scalars['String']['input']>;
+  customText?: InputMaybe<Scalars['String']['input']>;
+  customTextColor?: InputMaybe<Scalars['String']['input']>;
+  flairTemplateId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 export type BanUserInput = {
@@ -70,11 +85,13 @@ export type Board = {
   isNSFW: Scalars['Boolean']['output'];
   isPostingRestrictedToMods: Scalars['Boolean']['output'];
   isRemoved: Scalars['Boolean']['output'];
+  isSubscribed: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   posts: Scalars['Int']['output'];
   primaryColor: Scalars['String']['output'];
   publicBanReason?: Maybe<Scalars['String']['output']>;
   secondaryColor: Scalars['String']['output'];
+  sectionConfig: Scalars['Int']['output'];
   sidebar?: Maybe<Scalars['String']['output']>;
   sidebarHTML?: Maybe<Scalars['String']['output']>;
   subscribers: Scalars['Int']['output'];
@@ -121,6 +138,14 @@ export type BoardModerator = {
   user: User;
 };
 
+export type BoardReactionSettings = {
+  __typename?: 'BoardReactionSettings';
+  boardId: Scalars['ID']['output'];
+  emojiWeights: Scalars['JSON']['output'];
+  id: Scalars['ID']['output'];
+  reactionsEnabled: Scalars['Boolean']['output'];
+};
+
 export type BoardSettings = {
   __typename?: 'BoardSettings';
   board: Board;
@@ -150,11 +175,15 @@ export type Comment = {
   isLocked: Scalars['Boolean']['output'];
   isPinned: Scalars['Boolean']['output'];
   isRemoved: Scalars['Boolean']['output'];
+  isSaved: Scalars['Boolean']['output'];
   level: Scalars['Int']['output'];
+  myReaction?: Maybe<Reaction>;
   myVote: Scalars['Int']['output'];
   parentId?: Maybe<Scalars['String']['output']>;
   post: Post;
   postId: Scalars['ID']['output'];
+  quotedCommentId?: Maybe<Scalars['ID']['output']>;
+  reactionCounts?: Maybe<Array<ReactionAggregate>>;
   replies?: Maybe<Array<Comment>>;
   replyCount: Scalars['Int']['output'];
   score: Scalars['Int']['output'];
@@ -217,26 +246,30 @@ export type CreateEmojiInput = {
   shortcode: Scalars['String']['input'];
 };
 
+export type CreateFlairCategoryInput = {
+  boardId: Scalars['ID']['input'];
+  color?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  name: Scalars['String']['input'];
+};
+
 export type CreateFlairTemplateInput = {
   backgroundColor?: InputMaybe<Scalars['String']['input']>;
   boardId: Scalars['ID']['input'];
+  categoryId?: InputMaybe<Scalars['ID']['input']>;
   displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  emojiIds?: InputMaybe<Array<Scalars['Int']['input']>>;
   flairType: FlairType;
   isEditable?: InputMaybe<Scalars['Boolean']['input']>;
   isModOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  isRequiresApproval?: InputMaybe<Scalars['Boolean']['input']>;
+  maxEmojiCount?: InputMaybe<Scalars['Int']['input']>;
+  maxTextLength?: InputMaybe<Scalars['Int']['input']>;
+  styleConfig?: InputMaybe<FlairStyleInput>;
   templateName: Scalars['String']['input'];
   textColor?: InputMaybe<Scalars['String']['input']>;
   textDisplay?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type CreateStreamInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isDiscoverable?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  maxPostsPerBoard?: InputMaybe<Scalars['Int']['input']>;
-  name: Scalars['String']['input'];
-  showNsfw?: InputMaybe<Scalars['Boolean']['input']>;
-  sortType?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type CreateWikiPageInput = {
@@ -268,9 +301,11 @@ export type EditMessageResponse = {
 export type EditWikiPageInput = {
   body?: InputMaybe<Scalars['String']['input']>;
   displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  editPermission?: InputMaybe<Scalars['String']['input']>;
   editSummary?: InputMaybe<Scalars['String']['input']>;
   isLocked?: InputMaybe<Scalars['Boolean']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
+  viewPermission?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type EmojiObject = {
@@ -293,20 +328,95 @@ export type EmojiScope =
   | 'Board'
   | 'Site';
 
+export type FilterMode =
+  | 'exclude'
+  | 'include';
+
+export type FlairCategory = {
+  __typename?: 'FlairCategory';
+  boardId: Scalars['ID']['output'];
+  color?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['String']['output'];
+  createdBy: Scalars['ID']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  displayOrder: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+};
+
+export type FlairStyle = {
+  __typename?: 'FlairStyle';
+  animationDuration?: Maybe<Scalars['Int']['output']>;
+  animationType?: Maybe<Scalars['String']['output']>;
+  backgroundColor?: Maybe<Scalars['String']['output']>;
+  borderColor?: Maybe<Scalars['String']['output']>;
+  borderRadius?: Maybe<Scalars['Int']['output']>;
+  borderStyle?: Maybe<Scalars['String']['output']>;
+  borderWidth?: Maybe<Scalars['Int']['output']>;
+  customCss?: Maybe<Scalars['String']['output']>;
+  fontSize?: Maybe<Scalars['String']['output']>;
+  fontWeight?: Maybe<Scalars['String']['output']>;
+  gradientDirection?: Maybe<Scalars['String']['output']>;
+  gradientEnd?: Maybe<Scalars['String']['output']>;
+  gradientStart?: Maybe<Scalars['String']['output']>;
+  iconUrl?: Maybe<Scalars['String']['output']>;
+  margin?: Maybe<Scalars['String']['output']>;
+  padding?: Maybe<Scalars['String']['output']>;
+  shadowBlur?: Maybe<Scalars['Int']['output']>;
+  shadowColor?: Maybe<Scalars['String']['output']>;
+  shadowOffsetX?: Maybe<Scalars['Int']['output']>;
+  shadowOffsetY?: Maybe<Scalars['Int']['output']>;
+  textColor?: Maybe<Scalars['String']['output']>;
+};
+
+export type FlairStyleInput = {
+  animationDuration?: InputMaybe<Scalars['Int']['input']>;
+  animationType?: InputMaybe<Scalars['String']['input']>;
+  backgroundColor?: InputMaybe<Scalars['String']['input']>;
+  borderColor?: InputMaybe<Scalars['String']['input']>;
+  borderRadius?: InputMaybe<Scalars['Int']['input']>;
+  borderStyle?: InputMaybe<Scalars['String']['input']>;
+  borderWidth?: InputMaybe<Scalars['Int']['input']>;
+  customCss?: InputMaybe<Scalars['String']['input']>;
+  fontSize?: InputMaybe<Scalars['String']['input']>;
+  fontWeight?: InputMaybe<Scalars['String']['input']>;
+  gradientDirection?: InputMaybe<Scalars['String']['input']>;
+  gradientEnd?: InputMaybe<Scalars['String']['input']>;
+  gradientStart?: InputMaybe<Scalars['String']['input']>;
+  margin?: InputMaybe<Scalars['String']['input']>;
+  padding?: InputMaybe<Scalars['String']['input']>;
+  shadowBlur?: InputMaybe<Scalars['Int']['input']>;
+  shadowColor?: InputMaybe<Scalars['String']['input']>;
+  shadowOffsetX?: InputMaybe<Scalars['Int']['input']>;
+  shadowOffsetY?: InputMaybe<Scalars['Int']['input']>;
+  textColor?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type FlairTemplate = {
   __typename?: 'FlairTemplate';
   backgroundColor: Scalars['String']['output'];
   boardId: Scalars['ID']['output'];
+  categoryId?: Maybe<Scalars['ID']['output']>;
   createdAt: Scalars['String']['output'];
+  createdBy: Scalars['ID']['output'];
   displayOrder: Scalars['Int']['output'];
-  flairType: FlairType;
+  emojiIds: Array<Maybe<Scalars['Int']['output']>>;
+  flairType: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   isActive: Scalars['Boolean']['output'];
   isEditable: Scalars['Boolean']['output'];
   isModOnly: Scalars['Boolean']['output'];
+  isRequiresApproval: Scalars['Boolean']['output'];
+  maxEmojiCount: Scalars['Int']['output'];
+  maxTextLength: Scalars['Int']['output'];
+  styleConfig: Scalars['String']['output'];
+  templateKey?: Maybe<Scalars['String']['output']>;
   templateName: Scalars['String']['output'];
   textColor: Scalars['String']['output'];
-  textDisplay?: Maybe<Scalars['String']['output']>;
+  textDisplay: Scalars['String']['output'];
+  updatedAt: Scalars['String']['output'];
+  usageCount: Scalars['Int']['output'];
 };
 
 export type FlairType =
@@ -399,9 +509,17 @@ export type ModerationLogResponse = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  addBoardSubscriptions: Array<StreamBoardSubscription>;
   addModerator: AddModeratorResponse;
+  addReaction: AddReactionResponse;
+  adminAddSelfAsMod: Board;
+  adminBanBoard: Board;
+  adminBannedBoards: Array<Board>;
+  adminRemoveSelfAsMod: Board;
+  adminUnbanBoard: Board;
+  approveApplication: Scalars['Boolean']['output'];
+  approveUserFlair: UserFlair;
   assignPostFlair: PostFlair;
+  assignUserFlair: UserFlair;
   banUserFromBoard: BoardBanResponse;
   banUserFromSite: BanUserResponse;
   blockBoard: Scalars['Boolean']['output'];
@@ -409,43 +527,50 @@ export type Mutation = {
   createBoard: CreateBoardResponse;
   createComment: Comment;
   createEmoji: EmojiObject;
+  createFlairCategory: FlairCategory;
   createFlairTemplate: FlairTemplate;
   createInvite: Scalars['String']['output'];
   createPost: Post;
-  createStream: Stream;
   createWikiPage: WikiPage;
   deleteAccount: Scalars['Boolean']['output'];
   deleteEmoji: Scalars['Boolean']['output'];
+  deleteFlairCategory: Scalars['Boolean']['output'];
   deleteFlairTemplate: Scalars['Boolean']['output'];
+  deleteInvite: Scalars['Boolean']['output'];
   deleteMessage: Scalars['Boolean']['output'];
   deleteNotification: DeleteNotificationResponse;
-  deleteStream: Scalars['Boolean']['output'];
   deleteWikiPage: Scalars['Boolean']['output'];
+  denyApplication: Scalars['Boolean']['output'];
   dismissReport: ResolveReportResponse;
   editComment: Comment;
   editMessage: EditMessageResponse;
   editPost: Post;
   editWikiPage: WikiPage;
+  excludeBoardFromAll: Board;
   featurePost: Post;
   followUser: Scalars['Boolean']['output'];
   hidePost: Post;
   lockPost: Post;
   markAllNotificationsAsRead: MarkNotificationsReadResponse;
   markNotificationsRead: MarkNotificationsReadResponse;
+  pinComment: Comment;
   removeBoardModerator: RemoveModeratorResponse;
-  removeBoardSubscription: Scalars['Boolean']['output'];
   removeComment: Comment;
   removePost: Post;
   removePostFlair: Scalars['Boolean']['output'];
+  removeReaction: RemoveReactionResponse;
+  removeUserFlair: Scalars['Boolean']['output'];
   reportComment: ReportResponse;
   reportPost: ReportResponse;
   resolveReport: ResolveReportResponse;
   restoreComment: Comment;
   restorePost: Post;
+  revertWikiPage: WikiPage;
   saveComment: Comment;
   savePost: Post;
   sendMessage: SendMessageResponse;
   subscribeToBoard: Scalars['Boolean']['output'];
+  transferBoardOwnership: TransferOwnershipResponse;
   unbanUserFromBoard: BoardUnbanResponse;
   unbanUserFromSite: UnbanUserResponse;
   unblockBoard: Scalars['Boolean']['output'];
@@ -456,21 +581,19 @@ export type Mutation = {
   unsaveComment: Comment;
   unsavePost: Post;
   unsubscribeFromBoard: Scalars['Boolean']['output'];
+  updateBoardReactionSettings: UpdateBoardReactionSettingsResponse;
   updateBoardSettings: UpdateBoardSettingsResponse;
+  updateEmoji: EmojiObject;
+  updateFlairCategory: FlairCategory;
   updateFlairTemplate: FlairTemplate;
   updateNotificationSettings: UpdateNotificationSettingsResponse;
   updateProfile: User;
   updateSettings: UserSettings;
   updateSiteConfig: LocalSite;
-  updateStream: Stream;
+  updateUserBoardCreationApproval: User;
   uploadFile: Scalars['String']['output'];
   voteOnComment: Comment;
   voteOnPost: Post;
-};
-
-
-export type MutationAddBoardSubscriptionsArgs = {
-  input: AddBoardSubscriptionsInput;
 };
 
 
@@ -481,8 +604,52 @@ export type MutationAddModeratorArgs = {
 };
 
 
+export type MutationAddReactionArgs = {
+  input: AddReactionInput;
+};
+
+
+export type MutationAdminAddSelfAsModArgs = {
+  boardId: Scalars['ID']['input'];
+  modPerms?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type MutationAdminBanBoardArgs = {
+  adminNotes?: InputMaybe<Scalars['String']['input']>;
+  boardId: Scalars['ID']['input'];
+  publicReason: Scalars['String']['input'];
+};
+
+
+export type MutationAdminRemoveSelfAsModArgs = {
+  boardId: Scalars['ID']['input'];
+};
+
+
+export type MutationAdminUnbanBoardArgs = {
+  boardId: Scalars['ID']['input'];
+};
+
+
+export type MutationApproveApplicationArgs = {
+  applicationId: Scalars['ID']['input'];
+};
+
+
+export type MutationApproveUserFlairArgs = {
+  approved: Scalars['Boolean']['input'];
+  flairId: Scalars['ID']['input'];
+};
+
+
 export type MutationAssignPostFlairArgs = {
   input: AssignPostFlairInput;
+};
+
+
+export type MutationAssignUserFlairArgs = {
+  input: AssignUserFlairInput;
 };
 
 
@@ -525,6 +692,11 @@ export type MutationCreateEmojiArgs = {
 };
 
 
+export type MutationCreateFlairCategoryArgs = {
+  input: CreateFlairCategoryInput;
+};
+
+
 export type MutationCreateFlairTemplateArgs = {
   input: CreateFlairTemplateInput;
 };
@@ -542,11 +714,6 @@ export type MutationCreatePostArgs = {
 };
 
 
-export type MutationCreateStreamArgs = {
-  input: CreateStreamInput;
-};
-
-
 export type MutationCreateWikiPageArgs = {
   boardId: Scalars['ID']['input'];
   input: CreateWikiPageInput;
@@ -558,8 +725,18 @@ export type MutationDeleteEmojiArgs = {
 };
 
 
+export type MutationDeleteFlairCategoryArgs = {
+  categoryId: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteFlairTemplateArgs = {
   templateId: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteInviteArgs = {
+  inviteId: Scalars['ID']['input'];
 };
 
 
@@ -573,13 +750,14 @@ export type MutationDeleteNotificationArgs = {
 };
 
 
-export type MutationDeleteStreamArgs = {
-  streamId: Scalars['ID']['input'];
+export type MutationDeleteWikiPageArgs = {
+  pageId: Scalars['ID']['input'];
 };
 
 
-export type MutationDeleteWikiPageArgs = {
-  pageId: Scalars['ID']['input'];
+export type MutationDenyApplicationArgs = {
+  applicationId: Scalars['ID']['input'];
+  reason?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -613,6 +791,12 @@ export type MutationEditWikiPageArgs = {
 };
 
 
+export type MutationExcludeBoardFromAllArgs = {
+  boardId: Scalars['ID']['input'];
+  exclude: Scalars['Boolean']['input'];
+};
+
+
 export type MutationFeaturePostArgs = {
   featureType?: InputMaybe<Scalars['String']['input']>;
   featured: Scalars['Boolean']['input'];
@@ -640,15 +824,14 @@ export type MutationMarkNotificationsReadArgs = {
 };
 
 
-export type MutationRemoveBoardModeratorArgs = {
-  boardId: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
+export type MutationPinCommentArgs = {
+  commentId: Scalars['ID']['input'];
 };
 
 
-export type MutationRemoveBoardSubscriptionArgs = {
+export type MutationRemoveBoardModeratorArgs = {
   boardId: Scalars['ID']['input'];
-  streamId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -666,6 +849,17 @@ export type MutationRemovePostArgs = {
 
 export type MutationRemovePostFlairArgs = {
   postId: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveReactionArgs = {
+  input: RemoveReactionInput;
+};
+
+
+export type MutationRemoveUserFlairArgs = {
+  boardId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -697,6 +891,12 @@ export type MutationRestorePostArgs = {
 };
 
 
+export type MutationRevertWikiPageArgs = {
+  pageId: Scalars['ID']['input'];
+  revisionId: Scalars['ID']['input'];
+};
+
+
 export type MutationSaveCommentArgs = {
   commentId: Scalars['ID']['input'];
 };
@@ -714,6 +914,12 @@ export type MutationSendMessageArgs = {
 
 export type MutationSubscribeToBoardArgs = {
   boardId: Scalars['ID']['input'];
+};
+
+
+export type MutationTransferBoardOwnershipArgs = {
+  boardId: Scalars['ID']['input'];
+  newOwnerId: Scalars['ID']['input'];
 };
 
 
@@ -769,10 +975,27 @@ export type MutationUnsubscribeFromBoardArgs = {
 };
 
 
+export type MutationUpdateBoardReactionSettingsArgs = {
+  input: UpdateBoardReactionSettingsInput;
+};
+
+
 export type MutationUpdateBoardSettingsArgs = {
   bannerFile?: InputMaybe<Scalars['Upload']['input']>;
   iconFile?: InputMaybe<Scalars['Upload']['input']>;
   input: UpdateBoardSettingsInput;
+};
+
+
+export type MutationUpdateEmojiArgs = {
+  emojiId: Scalars['ID']['input'];
+  input: UpdateEmojiInput;
+};
+
+
+export type MutationUpdateFlairCategoryArgs = {
+  categoryId: Scalars['ID']['input'];
+  input: UpdateFlairCategoryInput;
 };
 
 
@@ -802,9 +1025,9 @@ export type MutationUpdateSiteConfigArgs = {
 };
 
 
-export type MutationUpdateStreamArgs = {
-  input: UpdateStreamInput;
-  streamId: Scalars['ID']['input'];
+export type MutationUpdateUserBoardCreationApprovalArgs = {
+  approved: Scalars['Boolean']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -856,6 +1079,7 @@ export type Post = {
   body: Scalars['String']['output'];
   bodyHTML: Scalars['String']['output'];
   commentCount: Scalars['Int']['output'];
+  controversyRank: Scalars['Float']['output'];
   createdAt: Scalars['String']['output'];
   creator?: Maybe<User>;
   creatorId: Scalars['ID']['output'];
@@ -863,7 +1087,9 @@ export type Post = {
   embedDescription?: Maybe<Scalars['String']['output']>;
   embedTitle?: Maybe<Scalars['String']['output']>;
   embedVideoUrl?: Maybe<Scalars['String']['output']>;
+  flairs?: Maybe<Array<PostFlair>>;
   hotRank: Scalars['Int']['output'];
+  hotRankActive: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   image?: Maybe<Scalars['String']['output']>;
   isDeleted: Scalars['Boolean']['output'];
@@ -872,10 +1098,15 @@ export type Post = {
   isLocked: Scalars['Boolean']['output'];
   isNSFW: Scalars['Boolean']['output'];
   isRemoved: Scalars['Boolean']['output'];
+  isSaved: Scalars['Boolean']['output'];
   isThread: Scalars['Boolean']['output'];
+  lastCrawlDate?: Maybe<Scalars['String']['output']>;
+  myModPermissions?: Maybe<Scalars['Int']['output']>;
+  myReaction?: Maybe<Reaction>;
   myVote: Scalars['Int']['output'];
   newestCommentTime: Scalars['String']['output'];
   postType: Scalars['String']['output'];
+  reactionCounts?: Maybe<Array<ReactionAggregate>>;
   score: Scalars['Int']['output'];
   slug: Scalars['String']['output'];
   sourceUrl?: Maybe<Scalars['String']['output']>;
@@ -915,10 +1146,15 @@ export type PostReportView = {
 export type PrivateMessage = {
   __typename?: 'PrivateMessage';
   body: Scalars['String']['output'];
+  bodyHTML: Scalars['String']['output'];
   createdAt: Scalars['String']['output'];
+  creator?: Maybe<User>;
   creatorId: Scalars['ID']['output'];
   id: Scalars['ID']['output'];
+  isDeleted: Scalars['Boolean']['output'];
   isRead: Scalars['Boolean']['output'];
+  isSenderHidden: Scalars['Boolean']['output'];
+  recipient?: Maybe<User>;
   recipientId?: Maybe<Scalars['ID']['output']>;
   subject?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['String']['output'];
@@ -930,7 +1166,6 @@ export type Query = {
   boardFlairs: Array<FlairTemplate>;
   comment: Comment;
   comments: Array<Comment>;
-  discoverStreams: Array<Stream>;
   flairTemplate?: Maybe<FlairTemplate>;
   getAllEmojisAdmin: Array<EmojiObject>;
   getBoardBannedUsers: Array<BoardBannedUser>;
@@ -946,6 +1181,7 @@ export type Query = {
   getUnreadMessageCount: Scalars['Int']['output'];
   getUnreadNotificationCount: UnreadNotificationCount;
   getUserSettings: UserSettings;
+  isFollowingUser: Scalars['Boolean']['output'];
   listBannedUsers: BannedUsersResponse;
   listBoards: Array<Board>;
   listConversations: Array<Conversation>;
@@ -957,14 +1193,14 @@ export type Query = {
   listWikiPages: Array<WikiPage>;
   manageBoardFlairs: Array<FlairTemplate>;
   me: MeResponse;
-  myStreams: Array<Stream>;
   post: Post;
   searchContent: SearchResult;
   searchUsernames: Array<Scalars['String']['output']>;
   site: LocalSite;
   siteStats: SiteStats;
-  stream?: Maybe<Stream>;
   user: User;
+  userFollowers: Array<User>;
+  userFollowing: Array<User>;
   wikiPage?: Maybe<WikiPage>;
   wikiPageHistory: Array<WikiRevision>;
 };
@@ -998,13 +1234,6 @@ export type QueryCommentsArgs = {
   sort?: InputMaybe<CommentSortType>;
   userId?: InputMaybe<Scalars['ID']['input']>;
   userName?: InputMaybe<Scalars['String']['input']>;
-};
-
-
-export type QueryDiscoverStreamsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-  sortBy?: InputMaybe<StreamSortType>;
 };
 
 
@@ -1081,6 +1310,11 @@ export type QueryGetPostReportsArgs = {
 };
 
 
+export type QueryIsFollowingUserArgs = {
+  userId: Scalars['ID']['input'];
+};
+
+
 export type QueryListBannedUsersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
@@ -1143,12 +1377,6 @@ export type QueryManageBoardFlairsArgs = {
 };
 
 
-export type QueryMyStreamsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  offset?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
 export type QueryPostArgs = {
   id: Scalars['ID']['input'];
 };
@@ -1171,14 +1399,18 @@ export type QuerySearchUsernamesArgs = {
 };
 
 
-export type QueryStreamArgs = {
-  id?: InputMaybe<Scalars['ID']['input']>;
-  slug?: InputMaybe<Scalars['String']['input']>;
+export type QueryUserArgs = {
+  username: Scalars['String']['input'];
 };
 
 
-export type QueryUserArgs = {
-  username: Scalars['String']['input'];
+export type QueryUserFollowersArgs = {
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryUserFollowingArgs = {
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -1190,6 +1422,26 @@ export type QueryWikiPageArgs = {
 
 export type QueryWikiPageHistoryArgs = {
   pageId: Scalars['ID']['input'];
+};
+
+export type Reaction = {
+  __typename?: 'Reaction';
+  commentId?: Maybe<Scalars['ID']['output']>;
+  createdAt: Scalars['String']['output'];
+  emoji: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  postId?: Maybe<Scalars['ID']['output']>;
+  score: Scalars['Int']['output'];
+  userId: Scalars['ID']['output'];
+};
+
+export type ReactionAggregate = {
+  __typename?: 'ReactionAggregate';
+  commentId?: Maybe<Scalars['ID']['output']>;
+  count: Scalars['Int']['output'];
+  emoji: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  postId?: Maybe<Scalars['ID']['output']>;
 };
 
 export type RegistrationApplication = {
@@ -1205,6 +1457,17 @@ export type RegistrationApplication = {
 export type RemoveModeratorResponse = {
   __typename?: 'RemoveModeratorResponse';
   message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
+export type RemoveReactionInput = {
+  commentId?: InputMaybe<Scalars['ID']['input']>;
+  emoji: Scalars['String']['input'];
+  postId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+export type RemoveReactionResponse = {
+  __typename?: 'RemoveReactionResponse';
   success: Scalars['Boolean']['output'];
 };
 
@@ -1278,35 +1541,11 @@ export type SortType =
   | 'topWeek'
   | 'topYear';
 
-export type Stream = {
-  __typename?: 'Stream';
-  boardSubscriptions?: Maybe<Array<StreamBoardSubscription>>;
-  createdAt: Scalars['String']['output'];
-  creator?: Maybe<User>;
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  isDiscoverable: Scalars['Boolean']['output'];
-  isPublic: Scalars['Boolean']['output'];
-  maxPostsPerBoard?: Maybe<Scalars['Int']['output']>;
-  name: Scalars['String']['output'];
-  showNsfw: Scalars['Boolean']['output'];
-  slug: Scalars['String']['output'];
-  sortType: Scalars['String']['output'];
-  updatedAt: Scalars['String']['output'];
+export type TransferOwnershipResponse = {
+  __typename?: 'TransferOwnershipResponse';
+  message: Scalars['String']['output'];
+  success: Scalars['Boolean']['output'];
 };
-
-export type StreamBoardSubscription = {
-  __typename?: 'StreamBoardSubscription';
-  board?: Maybe<Board>;
-  boardId: Scalars['ID']['output'];
-  includeAllPosts: Scalars['Boolean']['output'];
-  streamId: Scalars['ID']['output'];
-};
-
-export type StreamSortType =
-  | 'New'
-  | 'Popular'
-  | 'Trending';
 
 export type UnbanUserResponse = {
   __typename?: 'UnbanUserResponse';
@@ -1323,9 +1562,21 @@ export type UnreadNotificationCount = {
   total: Scalars['Int']['output'];
 };
 
+export type UpdateBoardReactionSettingsInput = {
+  boardId: Scalars['ID']['input'];
+  emojiWeights?: InputMaybe<Scalars['JSON']['input']>;
+  isReactionsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+export type UpdateBoardReactionSettingsResponse = {
+  __typename?: 'UpdateBoardReactionSettingsResponse';
+  settings: BoardReactionSettings;
+};
+
 export type UpdateBoardSettingsInput = {
   banner?: InputMaybe<Scalars['String']['input']>;
   boardId: Scalars['ID']['input'];
+  defaultSection?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   excludeFromAll?: InputMaybe<Scalars['Boolean']['input']>;
   hoverColor?: InputMaybe<Scalars['String']['input']>;
@@ -1335,6 +1586,8 @@ export type UpdateBoardSettingsInput = {
   postingRestrictedToMods?: InputMaybe<Scalars['Boolean']['input']>;
   primaryColor?: InputMaybe<Scalars['String']['input']>;
   secondaryColor?: InputMaybe<Scalars['String']['input']>;
+  sectionConfig?: InputMaybe<Scalars['Int']['input']>;
+  sectionOrder?: InputMaybe<Scalars['String']['input']>;
   sidebar?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   wikiEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1345,12 +1598,34 @@ export type UpdateBoardSettingsResponse = {
   board: Board;
 };
 
+export type UpdateEmojiInput = {
+  altText?: InputMaybe<Scalars['String']['input']>;
+  category?: InputMaybe<Scalars['String']['input']>;
+  imageUrl?: InputMaybe<Scalars['String']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  keywords?: InputMaybe<Array<Scalars['String']['input']>>;
+  shortcode?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateFlairCategoryInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateFlairTemplateInput = {
   backgroundColor?: InputMaybe<Scalars['String']['input']>;
+  categoryId?: InputMaybe<Scalars['ID']['input']>;
   displayOrder?: InputMaybe<Scalars['Int']['input']>;
+  emojiIds?: InputMaybe<Array<Scalars['Int']['input']>>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   isEditable?: InputMaybe<Scalars['Boolean']['input']>;
   isModOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  isRequiresApproval?: InputMaybe<Scalars['Boolean']['input']>;
+  maxEmojiCount?: InputMaybe<Scalars['Int']['input']>;
+  maxTextLength?: InputMaybe<Scalars['Int']['input']>;
+  styleConfig?: InputMaybe<FlairStyleInput>;
   templateName?: InputMaybe<Scalars['String']['input']>;
   textColor?: InputMaybe<Scalars['String']['input']>;
   textDisplay?: InputMaybe<Scalars['String']['input']>;
@@ -1375,9 +1650,14 @@ export type UpdateNotificationSettingsResponse = {
 
 export type UpdateProfileInput = {
   avatar?: InputMaybe<Scalars['String']['input']>;
+  avatarFrame?: InputMaybe<Scalars['String']['input']>;
   banner?: InputMaybe<Scalars['String']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
   displayName?: InputMaybe<Scalars['String']['input']>;
+  profileBackground?: InputMaybe<Scalars['String']['input']>;
+  profileMusic?: InputMaybe<Scalars['String']['input']>;
+  profileMusicYoutube?: InputMaybe<Scalars['String']['input']>;
+  signature?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateSettingsInput = {
@@ -1418,21 +1698,12 @@ export type UpdateSiteConfigInput = {
   linkFilterEnabled?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   primaryColor?: InputMaybe<Scalars['String']['input']>;
+  registrationMode?: InputMaybe<Scalars['String']['input']>;
   reportsEmailAdmins?: InputMaybe<Scalars['Boolean']['input']>;
   requireEmailVerification?: InputMaybe<Scalars['Boolean']['input']>;
   secondaryColor?: InputMaybe<Scalars['String']['input']>;
   welcomeMessage?: InputMaybe<Scalars['String']['input']>;
   wordFilterEnabled?: InputMaybe<Scalars['Boolean']['input']>;
-};
-
-export type UpdateStreamInput = {
-  description?: InputMaybe<Scalars['String']['input']>;
-  isDiscoverable?: InputMaybe<Scalars['Boolean']['input']>;
-  isPublic?: InputMaybe<Scalars['Boolean']['input']>;
-  maxPostsPerBoard?: InputMaybe<Scalars['Int']['input']>;
-  name?: InputMaybe<Scalars['String']['input']>;
-  showNsfw?: InputMaybe<Scalars['Boolean']['input']>;
-  sortType?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type User = {
@@ -1456,7 +1727,26 @@ export type User = {
   postCount: Scalars['Int']['output'];
   postScore: Scalars['Int']['output'];
   profileBackground?: Maybe<Scalars['String']['output']>;
+  profileMusic?: Maybe<Scalars['String']['output']>;
+  profileMusicYoutube?: Maybe<Scalars['String']['output']>;
+  signature?: Maybe<Scalars['String']['output']>;
   unbanDate?: Maybe<Scalars['String']['output']>;
+};
+
+export type UserFlair = {
+  __typename?: 'UserFlair';
+  approvedAt?: Maybe<Scalars['String']['output']>;
+  approvedBy?: Maybe<Scalars['ID']['output']>;
+  boardId: Scalars['ID']['output'];
+  createdAt: Scalars['String']['output'];
+  customBackgroundColor?: Maybe<Scalars['String']['output']>;
+  customText?: Maybe<Scalars['String']['output']>;
+  customTextColor?: Maybe<Scalars['String']['output']>;
+  flairTemplateId: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  isApproved: Scalars['Boolean']['output'];
+  isSelfAssigned: Scalars['Boolean']['output'];
+  userId: Scalars['ID']['output'];
 };
 
 export type UserSettings = {
@@ -1481,10 +1771,13 @@ export type WikiPage = {
   body: Scalars['String']['output'];
   bodyHTML?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
-  creator?: Maybe<User>;
+  creatorId: Scalars['ID']['output'];
   displayOrder: Scalars['Int']['output'];
   editPermission: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  isDeleted: Scalars['Boolean']['output'];
+  isLocked: Scalars['Boolean']['output'];
+  lastEditedBy?: Maybe<Scalars['ID']['output']>;
   parentId?: Maybe<Scalars['ID']['output']>;
   slug: Scalars['String']['output'];
   title: Scalars['String']['output'];

@@ -1,6 +1,6 @@
 use crate::schema::{
     board_aggregates, comment_aggregates, flair_aggregates, post_aggregates, reaction_aggregates,
-    site_aggregates, stream_aggregates, user_aggregates,
+    site_aggregates, user_aggregates,
 };
 use bigdecimal::BigDecimal;
 use chrono::{DateTime, Utc};
@@ -99,24 +99,6 @@ pub struct SiteAggregates {
     pub users_active_month: i64,
     pub users_active_half_year: i64,
     pub created_at: DateTime<Utc>,
-}
-
-/// Aggregated statistics for a stream.
-/// Field order matches schema.rs column order exactly.
-#[derive(Debug, Clone, Serialize, Deserialize, Queryable, Identifiable)]
-#[diesel(table_name = stream_aggregates)]
-pub struct StreamAggregates {
-    pub id: Uuid,
-    pub stream_id: Uuid,
-    pub flair_subscription_count: i32,
-    pub board_subscription_count: i32,
-    pub total_subscription_count: i32,
-    pub follower_count: i32,
-    pub posts_last_day: i32,
-    pub posts_last_week: i32,
-    pub posts_last_month: i32,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
 }
 
 /// Aggregated statistics for a flair template.

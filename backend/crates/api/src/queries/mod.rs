@@ -17,5 +17,4 @@ pub mod posts;
 pub mod registration_applications;
 pub mod reports;
 pub mod search;
-pub mod streams;
 pub mod wiki;

@@ -29,7 +29,7 @@ it from "Code Complete" or "Not Yet Implemented."
 
 **tinyboards** is a self-hosted social media platform — a Reddit-like forum with
 boards, posts, comments, voting, moderation, private messaging, notifications,
-user profiles, flairs, custom emoji, wiki pages, content streams, and a full
+user profiles, flairs, custom emoji, wiki pages, and a full
 admin panel.
 
 A single operator deploys the instance, configures registration modes
@@ -220,7 +220,7 @@ pages (account, profile, notifications, security, privacy, appearance),
 full admin panel (dashboard, site settings, users, bans, invites, content,
 reports, mod queue), board settings (general, moderation, appearance),
 board mod tools (bans, queue, log), wiki (list, view, create, edit,
-revisions), flairs (management + post assignment), streams (CRUD + feed),
+revisions), flairs (management + post assignment),
 toast notifications, SEO (useSeoMeta + JSON-LD + robots.txt + sitemap),
 notification polling, thread system, rich user profiles (background,
 avatar frame, karma, signature), link preview rendering (YouTube embeds,
@@ -274,10 +274,9 @@ video, thumbnails).
 `getBoardSettings`, `getBoardBannedUsers`, `listBannedUsers`,
 `getPostReports`, `getCommentReports`, `listRegistrationApplications`,
 `listInvites`, `getWikiPage`, `listWikiPages`, `wikiPageHistory`,
-`getBoardFlairs`, `getFlairTemplate`, `stream`, `myStreams`,
-`discoverStreams`, `getModerationLog`
+`getBoardFlairs`, `getFlairTemplate`, `getModerationLog`
 
-### Mutations (50+)
+### Mutations (38+)
 **Posts:** create, edit, vote, save/unsave, hide/unhide, lock/unlock, feature, remove, restore
 **Comments:** create, edit, vote, save/unsave, remove, restore
 **Boards:** create, updateSettings
@@ -289,7 +288,6 @@ video, thumbnails).
 **Moderation:** banUserFromBoard, unbanUserFromBoard, addModerator, removeModerator
 **Wiki:** createWikiPage, editWikiPage, deleteWikiPage
 **Flairs:** createFlairTemplate, updateFlairTemplate, deleteFlairTemplate, assignPostFlair, removePostFlair
-**Streams:** createStream, updateStream, deleteStream, addBoardSubscriptions, removeBoardSubscription
 **Files:** uploadFile
 
 ---
@@ -362,14 +360,13 @@ infallible `unwrap()` on date/time values.
 11. Registration applications admin flow (untested)
 12. Wiki deletion + revert UI
 13. Advanced flair features (user assignment, categories, filters)
-14. Stream social features (follow/unfollow, navbar pinning)
 
 ### Tier 4: Polish
-15. Loading skeletons (currently only spinners)
-16. Error boundaries for SSR failures
-17. Help/legal pages
-18. Mobile experience (responsive sidebar, bottom nav)
-19. Micro-interactions (vote animations, page transitions)
+14. Loading skeletons (currently only spinners)
+15. Error boundaries for SSR failures
+16. Help/legal pages
+17. Mobile experience (responsive sidebar, bottom nav)
+18. Micro-interactions (vote animations, page transitions)
 
 ---
 
@@ -434,11 +431,9 @@ infallible `unwrap()` on date/time values.
 - Flairs: management page + post flair selector on submit + flair edit page
 - Board mod tools: ban management, mod queue, mod log
 - Board appearance: icon/banner upload, color pickers
-- Streams: full CRUD (create, view, edit/delete) + user stream page
 - Fixed wiki and flair composables to match backend schema field names
 
-### 2026-03-19 — Session 7: Gap Closing (Streams, SEO, Notifications, Threads, Profiles, Link Previews, Deployment)
-- Streams: rewrote useStreams composable (20+ methods), added ComplexObject to backend Stream struct, discovery page with tabs, follow/unfollow, navbar pinning, share tokens, flair subscriptions
+### 2026-03-19 — Session 7: Gap Closing (SEO, Notifications, Threads, Profiles, Link Previews, Deployment)
 - SEO: useSeoMeta on all key pages, JSON-LD structured data, dynamic robots.txt + sitemap.xml
 - Notification polling: 30s interval, tab visibility aware, header badge
 - Thread system: forum-style thread list layout
@@ -452,6 +447,15 @@ infallible `unwrap()` on date/time values.
 
 ### 2026-03-19 — Loose Ends Cleanup (Pre-Phase 7)
 - **Partition discrepancy resolved**: Confirmed post_votes and comment_votes are NOT partitioned (standard tables per 003_content.sql). Only notifications uses range partitioning. scheduled_tasks.rs correctly handles only notifications partitions — no changes needed.
-- **Root schema.graphql synced to Rust implementation**: Added missing User fields (signature, profileMusic, profileMusicYoutube), Stream fields (icon, color, creatorId, timeRange, shareToken, lastViewedAt, followerCount, boardSubscriptionCount, isFollowing, flairSubscriptions), StreamBoardSubscription fields (id, createdAt), Post fields (isThread, hotRankActive, controversyRank, isSaved, reactionCounts, myReaction, flairs, myModPermissions, lastCrawlDate), Comment fields (quotedCommentId, isSaved, reactionCounts, myReaction), PrivateMessage fields (bodyHTML, isSenderHidden, isDeleted, creator, recipient), WikiPage fields (creatorId, lastEditedBy, isLocked, isDeleted), UpdateProfileInput fields (profileBackground, avatarFrame, profileMusic, profileMusicYoutube, signature), UpdateStreamInput fields (icon, color, timeRange), CreateStreamInput (timeRange), EditWikiPageInput (viewPermission, editPermission), FlairStyle output type, NavbarSettings type.
+- **Root schema.graphql synced to Rust implementation**: Added missing User fields (signature, profileMusic, profileMusicYoutube), Post fields (isThread, hotRankActive, controversyRank, isSaved, reactionCounts, myReaction, flairs, myModPermissions, lastCrawlDate), Comment fields (quotedCommentId, isSaved, reactionCounts, myReaction), PrivateMessage fields (bodyHTML, isSenderHidden, isDeleted, creator, recipient), WikiPage fields (creatorId, lastEditedBy, isLocked, isDeleted), UpdateProfileInput fields (profileBackground, avatarFrame, profileMusic, profileMusicYoutube, signature), EditWikiPageInput (viewPermission, editPermission), FlairStyle output type.
 - **Frontend vs root schema intentional differences**: Frontend schema omits admin-only mutations (approveApplication, denyApplication, adminBanBoard, adminUnbanBoard, excludeBoardFromAll, transferBoardOwnership, revertWikiPage, user flair ops, flair categories, reactions, updateEmoji, deleteInvite). Frontend Board type omits isSubscribed and sectionConfig. Frontend FlairTemplate is simplified (fewer fields). These are intentional — frontend only includes what it consumes.
 - **Upload API docs clarified**: Added inline comments to upload handler explaining synchronous processing model and future async path. Added column comment to 015_image_processing migration. Added image processing config reference to deploy/.env.example.
+
+### 2026-03-22 — Session 8: Remove Streams Feature
+- Removed the entire streams feature (too complex for initial small-community focus; board directory + home feed is sufficient)
+- Deleted: 6 frontend pages, 4 components, 2 composables, all backend resolvers (queries + mutations + helpers), DB models, stream tables from schema.rs
+- Added migration 000018_remove_streams to drop all 9 stream-related tables and their triggers
+- Cleaned both GraphQL schema files (root + frontend) of all stream types, queries, and mutations
+- Removed stream references from AppNav, AppSidebar, HomeSidebar, AllSidebar
+- Removed streams user guide documentation
+- Updated CLAUDE.md: project overview, feature status, GraphQL API lists, remaining work, session log

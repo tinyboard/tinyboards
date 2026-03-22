@@ -849,121 +849,6 @@ diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::*;
 
-    streams (id) {
-        id -> Uuid,
-        creator_id -> Uuid,
-        #[max_length = 100]
-        name -> Varchar,
-        #[max_length = 100]
-        slug -> Varchar,
-        description -> Nullable<Text>,
-        #[max_length = 255]
-        icon -> Nullable<Varchar>,
-        #[max_length = 25]
-        color -> Nullable<Varchar>,
-        is_public -> Bool,
-        is_discoverable -> Bool,
-        #[max_length = 64]
-        share_token -> Nullable<Varchar>,
-        sort_type -> SortType,
-        #[max_length = 20]
-        time_range -> Nullable<Varchar>,
-        show_nsfw -> Bool,
-        max_posts_per_board -> Nullable<Int4>,
-        last_viewed_at -> Nullable<Timestamptz>,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_board_subscriptions (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        board_id -> Uuid,
-        include_all_posts -> Bool,
-        created_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_flair_subscriptions (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        board_id -> Uuid,
-        flair_id -> Int4,
-        created_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_followers (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        user_id -> Uuid,
-        added_to_navbar -> Bool,
-        navbar_position -> Nullable<Int4>,
-        created_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_excluded_boards (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        board_id -> Uuid,
-        created_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_excluded_users (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        user_id -> Uuid,
-        created_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_tags (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        #[max_length = 50]
-        tag -> Varchar,
-        created_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_view_history (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        user_id -> Nullable<Uuid>,
-        viewed_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    stream_aggregates (id) {
-        id -> Uuid,
-        stream_id -> Uuid,
-        flair_subscription_count -> Int4,
-        board_subscription_count -> Int4,
-        total_subscription_count -> Int4,
-        follower_count -> Int4,
-        posts_last_day -> Int4,
-        posts_last_week -> Int4,
-        posts_last_month -> Int4,
-        created_at -> Timestamptz,
-        updated_at -> Timestamptz,
-    }
-}
-
-diesel::table! {
-    use diesel::sql_types::*;
-    use super::sql_types::*;
-
     wiki_pages (id) {
         id -> Uuid,
         board_id -> Uuid,
@@ -1152,21 +1037,6 @@ diesel::joinable!(registration_applications -> users (user_id));
 diesel::joinable!(site_aggregates -> site (site_id));
 diesel::joinable!(site_languages -> languages (language_id));
 diesel::joinable!(site_languages -> site (site_id));
-diesel::joinable!(stream_aggregates -> streams (stream_id));
-diesel::joinable!(stream_board_subscriptions -> boards (board_id));
-diesel::joinable!(stream_board_subscriptions -> streams (stream_id));
-diesel::joinable!(stream_excluded_boards -> boards (board_id));
-diesel::joinable!(stream_excluded_boards -> streams (stream_id));
-diesel::joinable!(stream_excluded_users -> streams (stream_id));
-diesel::joinable!(stream_excluded_users -> users (user_id));
-diesel::joinable!(stream_flair_subscriptions -> boards (board_id));
-diesel::joinable!(stream_flair_subscriptions -> streams (stream_id));
-diesel::joinable!(stream_followers -> streams (stream_id));
-diesel::joinable!(stream_followers -> users (user_id));
-diesel::joinable!(stream_tags -> streams (stream_id));
-diesel::joinable!(stream_view_history -> streams (stream_id));
-diesel::joinable!(stream_view_history -> users (user_id));
-diesel::joinable!(streams -> users (creator_id));
 diesel::joinable!(uploads -> users (user_id));
 diesel::joinable!(user_aggregates -> users (user_id));
 diesel::joinable!(user_flair_filters -> boards (board_id));
@@ -1228,15 +1098,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     site_aggregates,
     site_invites,
     site_languages,
-    stream_aggregates,
-    stream_board_subscriptions,
-    stream_excluded_boards,
-    stream_excluded_users,
-    stream_flair_subscriptions,
-    stream_followers,
-    stream_tags,
-    stream_view_history,
-    streams,
     uploads,
     user_aggregates,
     user_bans,

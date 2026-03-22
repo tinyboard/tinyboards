@@ -4,7 +4,7 @@ import { useUIStore } from '~/stores/ui'
 const uiStore = useUIStore()
 const route = useRoute()
 
-type SidebarSection = 'home' | 'all' | 'board' | 'user' | 'boards' | 'search' | 'streams' | 'members' | 'default'
+type SidebarSection = 'home' | 'all' | 'board' | 'user' | 'boards' | 'search' | 'members' | 'default'
 
 const currentSection = computed<SidebarSection>(() => {
   const path = route.path
@@ -15,7 +15,6 @@ const currentSection = computed<SidebarSection>(() => {
   if (path === '/all' || path.startsWith('/all/')) return 'all'
   if (path === '/boards' || path.startsWith('/boards/')) return 'boards'
   if (path === '/search') return 'search'
-  if (path === '/streams' || path.startsWith('/streams/')) return 'streams'
   if (path === '/members' || path.startsWith('/members/')) return 'members'
 
   return 'home'
@@ -34,7 +33,6 @@ const currentSection = computed<SidebarSection>(() => {
       <SidebarUserProfileSidebar v-else-if="currentSection === 'user'" />
       <SidebarBoardsDirectorySidebar v-else-if="currentSection === 'boards'" />
       <SidebarSearchSidebar v-else-if="currentSection === 'search'" />
-      <SidebarStreamsSidebar v-else-if="currentSection === 'streams'" />
       <SidebarMembersSidebar v-else-if="currentSection === 'members'" />
       <SidebarHomeSidebar v-else />
     </div>
