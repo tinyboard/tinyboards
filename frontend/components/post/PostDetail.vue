@@ -40,6 +40,10 @@ watch(() => props.post.isSaved, (v) => { saved.value = v ?? false })
 
 const isOwnPost = computed(() => authStore.user?.id === props.post.creator?.id)
 const canModerate = computed(() => props.isModerator || authStore.isAdmin)
+const isImageVideo = computed(() => {
+  const url = props.post.image
+  return !!url && /\.(mp4|webm|ogg|mov)$/i.test(url)
+})
 
 async function toggleSave (): Promise<void> {
   const { execute } = useGraphQL()
@@ -137,8 +141,18 @@ function onClickOutsideMenu (e: Event): void {
           {{ post.url }}
         </a>
 
+        <!-- Video display (uploaded video file) -->
+        <div v-if="post.image && isImageVideo" class="mt-3">
+          <video
+            :src="post.image"
+            class="max-w-full max-h-[600px] rounded-lg border border-gray-200"
+            controls
+            preload="metadata"
+          />
+        </div>
+
         <!-- Image display -->
-        <div v-if="post.image" class="mt-3">
+        <div v-if="post.image && !isImageVideo" class="mt-3">
           <img
             :src="post.image"
             :alt="post.altText || post.title"

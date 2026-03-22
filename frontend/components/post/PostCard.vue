@@ -58,10 +58,18 @@ const isYouTubeEmbed = computed(() => {
   }
 })
 
+const VIDEO_EXT_RE = /\.(mp4|webm|ogg|mov)$/i
+
 const isDirectVideo = computed(() => {
   const url = props.post.embedVideoUrl
   if (!url || isYouTubeEmbed.value) return false
-  return /\.(mp4|webm|ogg)$/i.test(url)
+  return VIDEO_EXT_RE.test(url)
+})
+
+const isImageVideo = computed(() => {
+  const url = props.post.image
+  if (!url) return false
+  return VIDEO_EXT_RE.test(url)
 })
 
 const hasLinkPreview = computed(() => {
@@ -260,9 +268,20 @@ const hasLinkPreview = computed(() => {
             loading="lazy"
           />
 
+          <!-- Post video (uploaded video file) -->
+          <div v-if="isImageVideo" class="mt-2 max-w-lg">
+            <video
+              :src="post.image!"
+              class="w-full rounded-lg"
+              controls
+              preload="metadata"
+              :alt="post.altText || post.title"
+            />
+          </div>
+
           <!-- Post image -->
           <img
-            v-if="post.image && !post.thumbnailUrl"
+            v-if="post.image && !post.thumbnailUrl && !isImageVideo"
             :src="post.image"
             :alt="post.altText || post.title"
             class="mt-2 max-w-sm max-h-64 rounded-lg object-cover"

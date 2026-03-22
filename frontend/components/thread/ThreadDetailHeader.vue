@@ -40,6 +40,10 @@ watch(() => props.post.isSaved, (v) => { saved.value = v ?? false })
 
 const isOwnPost = computed(() => authStore.user?.id === props.post.creator?.id)
 const canModerate = computed(() => props.isModerator || authStore.isAdmin)
+const isImageVideo = computed(() => {
+  const url = props.post.image
+  return !!url && /\.(mp4|webm|ogg|mov)$/i.test(url)
+})
 
 const displayName = computed(() => {
   if (!props.post.creator) return '[deleted]'
@@ -213,8 +217,18 @@ function openRemoveDialog (): void {
           {{ post.url }}
         </a>
 
+        <!-- Video (uploaded video file) -->
+        <div v-if="post.image && isImageVideo" class="mb-3">
+          <video
+            :src="post.image"
+            class="max-w-full max-h-[600px] rounded-lg border border-gray-200"
+            controls
+            preload="metadata"
+          />
+        </div>
+
         <!-- Image -->
-        <div v-if="post.image" class="mb-3">
+        <div v-if="post.image && !isImageVideo" class="mb-3">
           <img
             :src="post.image"
             :alt="post.altText || post.title"
