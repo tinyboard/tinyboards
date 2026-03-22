@@ -164,6 +164,7 @@ type Mutation {
   voteOnComment(commentId: ID!, direction: Int!): Comment!
   saveComment(commentId: ID!): Comment!
   unsaveComment(commentId: ID!): Comment!
+  pinComment(commentId: ID!): Comment!
   removeComment(commentId: ID!, reason: String): Comment!
   restoreComment(commentId: ID!): Comment!
 
@@ -285,6 +286,8 @@ type Post {
   newestCommentTime: String!
   hotRank: Int!
   urlPath: String!
+  isThread: Boolean!
+  isSaved: Boolean!
   creator: User
   board: Board
   myVote: Int!
@@ -316,6 +319,7 @@ type Comment {
   board: Board
   post: Post!
   myVote: Int!
+  isSaved: Boolean!
 }
 
 type Board {
