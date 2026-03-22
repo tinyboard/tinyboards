@@ -1,4 +1,4 @@
-import { defineEventHandler, getCookie, getHeader } from 'h3'
+import { defineEventHandler, getCookie, setCookie, getHeader } from 'h3'
 
 const ME_QUERY = `
   query Me {
@@ -35,11 +35,15 @@ const SUBSCRIBED_BOARDS_QUERY = `
  * Server middleware that reads the auth cookie and fetches user data from the
  * backend during SSR. The result is stored in event.context.auth so the Nuxt
  * route middleware can populate the Pinia store without a second round-trip.
+ *
+ * If the access token is expired but a valid refresh token exists, this
+ * middleware will refresh the session automatically.
  */
 export default defineEventHandler(async (event) => {
   const accessToken = getCookie(event, 'tb_access')
+  const refreshToken = getCookie(event, 'tb_refresh')
 
-  if (!accessToken) {
+  if (!accessToken && !refreshToken) {
     event.context.auth = { isAuthenticated: false, user: null, subscribedBoards: null }
     return
   }
@@ -47,8 +51,40 @@ export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
   const gqlEndpoint = config.internalGqlHost
 
+  // Try fetching user data with the current access token
+  if (accessToken) {
+    const result = await fetchUserData(gqlEndpoint, accessToken)
+    if (result) {
+      event.context.auth = result
+      return
+    }
+  }
+
+  // Access token missing or expired — attempt refresh
+  if (refreshToken) {
+    const newAccessToken = await attemptTokenRefresh(event, config.internalApiHost, accessToken, refreshToken)
+    if (newAccessToken) {
+      const result = await fetchUserData(gqlEndpoint, newAccessToken)
+      if (result) {
+        event.context.auth = result
+        return
+      }
+    }
+  }
+
+  event.context.auth = { isAuthenticated: false, user: null, subscribedBoards: null }
+})
+
+async function fetchUserData (
+  gqlEndpoint: string,
+  accessToken: string,
+): Promise<{
+  isAuthenticated: boolean
+  user: unknown
+  unreadNotificationsCount?: number
+  subscribedBoards: unknown
+} | null> {
   try {
-    // Fetch user data directly from the backend GraphQL endpoint
     const meResponse = await $fetch<{ data?: { me?: { user: unknown; unreadNotificationsCount: number } }; errors?: unknown[] }>(gqlEndpoint, {
       method: 'POST',
       headers: {
@@ -58,34 +94,75 @@ export default defineEventHandler(async (event) => {
       body: { query: ME_QUERY },
     })
 
-    if (meResponse?.data?.me?.user) {
-      // Fetch subscribed boards in parallel with the user data already confirmed
-      let subscribedBoards = null
-      try {
-        const boardsResponse = await $fetch<{ data?: { listBoards?: unknown[] } }>(gqlEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Cookie: `tb_access=${accessToken}`,
-          },
-          body: { query: SUBSCRIBED_BOARDS_QUERY },
-        })
-        subscribedBoards = boardsResponse?.data?.listBoards ?? null
-      } catch {
-        // Non-critical — sidebar just won't have subscribed boards on first render
-      }
+    if (!meResponse?.data?.me?.user) {
+      return null
+    }
 
-      event.context.auth = {
-        isAuthenticated: true,
-        user: meResponse.data.me.user,
-        unreadNotificationsCount: meResponse.data.me.unreadNotificationsCount,
-        subscribedBoards,
-      }
-      return
+    // Fetch subscribed boards
+    let subscribedBoards = null
+    try {
+      const boardsResponse = await $fetch<{ data?: { listBoards?: unknown[] } }>(gqlEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `tb_access=${accessToken}`,
+        },
+        body: { query: SUBSCRIBED_BOARDS_QUERY },
+      })
+      subscribedBoards = boardsResponse?.data?.listBoards ?? null
+    } catch {
+      // Non-critical — sidebar just won't have subscribed boards on first render
+    }
+
+    return {
+      isAuthenticated: true,
+      user: meResponse.data.me.user,
+      unreadNotificationsCount: meResponse.data.me.unreadNotificationsCount,
+      subscribedBoards,
     }
   } catch {
-    // Token is invalid or expired — the user will see unauthenticated state
+    return null
+  }
+}
+
+async function attemptTokenRefresh (
+  event: Parameters<Parameters<typeof defineEventHandler>[0]>[0],
+  internalApiHost: string,
+  accessToken: string | undefined,
+  refreshToken: string,
+): Promise<string | null> {
+  const refreshEndpoint = `${internalApiHost}/api/v2/auth/refresh`
+
+  try {
+    const response = await fetch(refreshEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        Cookie: `tb_access=${accessToken ?? ''}; tb_refresh=${refreshToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    // Forward Set-Cookie headers from the backend to the client
+    const setCookieHeaders = response.headers.getSetCookie?.() ?? []
+    for (const cookieHeader of setCookieHeaders) {
+      event.node.res.appendHeader('Set-Cookie', cookieHeader)
+    }
+
+    // Extract the new access token from Set-Cookie headers
+    for (const header of setCookieHeaders) {
+      const match = header.match(/tb_access=([^;]+)/)
+      if (match) {
+        return match[1]
+      }
+    }
+  } catch {
+    // Refresh failed
   }
 
-  event.context.auth = { isAuthenticated: false, user: null, subscribedBoards: null }
-})
+  return null
+}

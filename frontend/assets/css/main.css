@@ -33,9 +33,10 @@ img.emoji {
   }
 
   .dark {
-    --color-primary: 96 165 250;
-    --color-primary-hover: 147 197 253;
-    --color-secondary: 134 239 172;
+    --color-primary: 129 140 248;
+    --color-primary-hover: 165 180 252;
+    --color-secondary: 52 211 153;
+    --color-danger: 248 112 96;
   }
 
   .ocean {
@@ -78,9 +79,30 @@ img.emoji {
   }
 
   body.dark {
-    background-color: #1e293b;
+    background-color: #0f172a;
     color: rgb(229 231 235);
   }
+
+  /* Dark mode overrides for common Tailwind utilities */
+  .dark .bg-gray-100 { background-color: #1e293b; }
+  .dark .bg-gray-50 { background-color: #1e293b; }
+  .dark .bg-white { background-color: #1e293b; }
+
+  .dark .text-gray-900 { color: rgb(243 244 246); }
+  .dark .text-gray-800 { color: rgb(229 231 235); }
+  .dark .text-gray-700 { color: rgb(209 213 219); }
+  .dark .text-gray-600 { color: rgb(186 190 199); }
+  .dark .text-gray-500 { color: rgb(156 163 175); }
+
+  .dark .border-gray-200 { border-color: #334155; }
+  .dark .border-gray-300 { border-color: #475569; }
+  .dark .border { border-color: #334155; }
+
+  .dark .hover\:bg-gray-50:hover { background-color: #334155; }
+  .dark .hover\:bg-gray-100:hover { background-color: #334155; }
+
+  .dark .shadow-inner-xs { box-shadow: none; }
+  .dark .shadow-inner-white { box-shadow: none; }
 
   #__nuxt {
     display: flex;
@@ -194,10 +216,69 @@ img.emoji {
   }
 }
 
+/* Dark mode component overrides */
+.dark .form-input {
+  background-color: #0f172a;
+  border-color: #475569;
+  color: rgb(229 231 235);
+}
+
+.dark .form-input:focus {
+  background-color: #1e293b;
+}
+
+.dark .form-input::placeholder {
+  color: rgb(100 116 139);
+}
+
+.dark select.form-input {
+  background-color: #0f172a;
+  color: rgb(229 231 235);
+}
+
+.dark .button.white {
+  background-color: #334155;
+  border-color: #475569;
+  color: rgb(209 213 219);
+}
+
+.dark .button.white:hover {
+  background-color: #475569;
+  color: rgb(243 244 246);
+}
+
+.dark .button.gray {
+  background-color: #334155;
+  border-color: #475569;
+  color: rgb(209 213 219);
+}
+
+.dark .button.gray:hover {
+  background-color: #475569;
+}
+
+.dark pre,
+.dark .pre {
+  background-color: #0f172a;
+  border-color: #475569;
+  color: rgb(244 114 182);
+}
+
+.dark .badge {
+  border-color: #475569;
+}
+
+.dark .hover\:bg-primary\/5:hover { background-color: rgba(129, 140, 248, 0.1); }
+.dark .bg-primary\/5 { background-color: rgba(129, 140, 248, 0.1); }
+
 /* Forum-style quote blocks in rendered comment HTML */
 .prose blockquote {
   @apply border-l-4 border-primary/30 bg-gray-50 rounded-r px-3 py-2 my-2;
   font-style: normal;
+}
+
+.dark .prose blockquote {
+  background-color: #0f172a;
 }
 
 .prose blockquote p {

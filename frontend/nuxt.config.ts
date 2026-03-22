@@ -57,6 +57,7 @@ export default defineNuxtConfig({
 
   routeRules: {
     '/': { redirect: '/home' },
+    '/settings': { redirect: '/settings/account' },
   },
 
   runtimeConfig: {
