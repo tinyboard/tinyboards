@@ -294,6 +294,13 @@ img.emoji {
   padding: 10px 14px;
   margin: 8px 0;
   font-style: normal;
+  quotes: none;
+}
+
+/* Remove Tailwind prose quotation marks from forum quotes */
+.prose .forum-quote p:first-of-type::before,
+.prose .forum-quote p:last-of-type::after {
+  content: none;
 }
 
 .dark .prose .forum-quote,
@@ -312,16 +319,13 @@ img.emoji {
   color: #9ca3af;
 }
 
-.forum-quote-header strong {
+.forum-quote-header a.forum-quote-author {
   color: rgb(var(--color-primary));
-}
-
-.forum-quote-header a {
-  color: rgb(var(--color-primary));
+  font-weight: 600;
   text-decoration: none;
 }
 
-.forum-quote-header a:hover {
+.forum-quote-header a.forum-quote-author:hover {
   text-decoration: underline;
 }
 

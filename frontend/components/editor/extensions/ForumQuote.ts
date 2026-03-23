@@ -61,10 +61,8 @@ export const ForumQuote = Node.create<ForumQuoteOptions>({
       [
         'div',
         { class: 'forum-quote-header', contenteditable: 'false' },
-        ['strong', {}, `@${author}`],
-        ` said (`,
-        ['a', { href: `#post-${postNumber}` }, `#${postNumber}`],
-        `):`,
+        ['a', { href: `#post-${postNumber}`, class: 'forum-quote-author' }, `@${author}`],
+        ' said:',
       ],
       ['div', { class: 'forum-quote-body' }, 0],
     ]

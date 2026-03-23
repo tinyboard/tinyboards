@@ -237,15 +237,30 @@ function handleCustomEmojiSelect (shortcode: string, _imageUrl: string) {
 function insertQuoteBlock (author: string, htmlContent: string, postNumber: number): void {
   const clean = sanitizeHtml(htmlContent)
 
-  // Strip nested forum quotes to prevent deeply nested rendering issues.
-  // Replace inner <blockquote> blocks (forum quotes and regular) with a
-  // simple italic note so the quote stays readable without breaking TipTap.
-  const stripped = clean
-    .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, '<p><em>[quoted text]</em></p>')
+  // Remove TipTap-generated forum-quote-header divs — the ForumQuote
+  // extension will regenerate them from data attributes when parsed.
+  let processed = clean
+    .replace(/<div\s+class="forum-quote-header"[^>]*>[\s\S]*?<\/div>/gi, '')
 
-  // Build the full HTML for insertion — TipTap's ForumQuote extension
-  // will parse the outer blockquote, and the inner content stays clean.
-  const quoteHtml = `<blockquote class="forum-quote" data-author="${author}" data-post-number="${postNumber}"><p>${stripped.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || ' '}</p></blockquote><p></p>`
+  // Unwrap forum-quote-body wrapper divs, keeping their inner content
+  processed = processed.replace(/<div\s+class="forum-quote-body"[^>]*>([\s\S]*?)<\/div>/gi, '$1')
+
+  // Limit nesting depth: collapse quotes deeper than 2 levels to a summary.
+  // This prevents deeply nested rendering issues in TipTap.
+  let depth = 0
+  processed = processed.replace(/<\/?blockquote[^>]*>/gi, (match) => {
+    if (match.startsWith('</')) {
+      const wasDeep = depth > 2
+      depth = Math.max(0, depth - 1)
+      return wasDeep ? '' : match
+    } else {
+      depth++
+      return depth > 2 ? '' : match
+    }
+  })
+
+  // Wrap in a new forum-quote blockquote with author attribution
+  const quoteHtml = `<blockquote class="forum-quote" data-author="${author}" data-post-number="${postNumber}">${processed || '<p> </p>'}</blockquote><p></p>`
 
   editor.value?.chain().focus().insertContent(quoteHtml).run()
 }
@@ -624,13 +639,14 @@ defineExpose({ insertQuoteBlock, clearContent })
   margin-bottom: 6px;
 }
 
-.editor-content :deep(.tiptap .forum-quote-header strong) {
+.editor-content :deep(.tiptap .forum-quote-header a.forum-quote-author) {
   color: rgb(var(--color-primary, 99 102 241));
+  font-weight: 600;
+  text-decoration: none;
 }
 
-.editor-content :deep(.tiptap .forum-quote-header a) {
-  color: rgb(var(--color-primary, 99 102 241));
-  text-decoration: none;
+.editor-content :deep(.tiptap .forum-quote-header a.forum-quote-author:hover) {
+  text-decoration: underline;
 }
 
 .editor-content :deep(.tiptap .forum-quote .forum-quote) {
