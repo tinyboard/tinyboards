@@ -50,6 +50,8 @@ export function sanitizeHtml (dirty: string): string {
       'data-author', 'data-post-number',
       // YouTube iframe
       'allowfullscreen', 'frameborder', 'allow',
+      // Spoiler/details
+      'open',
       // Code block language
       'data-language',
     ],

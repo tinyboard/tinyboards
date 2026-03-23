@@ -356,6 +356,45 @@ img.emoji {
   background: #334155;
 }
 
+/* Spoiler / collapsible blocks */
+.prose details,
+.prose .spoiler-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 8px 0;
+  background: #f9fafb;
+}
+
+.dark .prose details,
+.dark .prose .spoiler-block {
+  border-color: #334155;
+  background: #0f172a;
+}
+
+.prose summary,
+.prose .spoiler-summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #374151;
+  user-select: none;
+}
+
+.dark .prose summary,
+.dark .prose .spoiler-summary {
+  color: #d1d5db;
+}
+
+.prose .spoiler-content {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.dark .prose .spoiler-content {
+  border-top-color: #334155;
+}
+
 /* Syntax highlighting for rendered code blocks (highlight.js classes) */
 .prose pre code .hljs-comment,
 .prose pre code .hljs-quote { color: #6b7280; }
