@@ -84,8 +84,9 @@ async function deletePost (): Promise<void> {
 }
 
 function handleQuoteOP (): void {
-  const body = props.post.body ?? ''
-  emit('quote', displayName.value, body)
+  // Use bodyHTML for proper formatted content in quotes, falling back to body
+  const content = props.post.bodyHTML ?? props.post.body ?? ''
+  emit('quote', displayName.value, content)
 }
 
 async function handleLockToggle (): Promise<void> {

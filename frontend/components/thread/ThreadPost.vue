@@ -54,8 +54,9 @@ const avatarInitial = computed(() => {
 })
 
 function handleQuote (): void {
-  const body = props.comment.body ?? ''
-  emit('quote', displayName.value, body, props.postNumber)
+  // Use bodyHTML for proper formatted content in quotes, falling back to body
+  const content = props.comment.bodyHTML ?? props.comment.body ?? ''
+  emit('quote', displayName.value, content, props.postNumber)
 }
 
 async function handleRemove (): Promise<void> {

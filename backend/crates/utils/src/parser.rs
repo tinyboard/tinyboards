@@ -1,5 +1,7 @@
 use pulldown_cmark::{html, Options, Parser};
-use ammonia::clean;
+// ammonia Builder used in sanitize_html
+use regex::Regex;
+use once_cell::sync::Lazy;
 
 /// Parse markdown to HTML with full CommonMark + GitHub Flavored Markdown support
 pub fn parse_markdown(text: &str) -> String {
@@ -26,32 +28,68 @@ pub fn parse_markdown_opt(text: &str) -> Option<String> {
     Some(parse_markdown(text))
 }
 
-/// Sanitize HTML content using ammonia library
-/// This provides comprehensive XSS protection while allowing safe HTML
-pub fn sanitize_html(html: &str) -> String {
-    // Use ammonia's default settings which are secure by default
-    // Allows safe HTML tags and attributes while removing dangerous ones
-    clean(html)
+/// Regex to validate safe CSS property values (color and background-color only)
+static SAFE_STYLE_RE: Lazy<Regex> = Lazy::new(|| {
+    Regex::new(r"(?i)^\s*(color|background-color)\s*:\s*[#\w\s,().%]+\s*$").unwrap()
+});
+
+/// Sanitize an inline style attribute, keeping only safe CSS properties.
+/// Returns the filtered style string, or empty string if nothing is safe.
+fn sanitize_style(style: &str) -> String {
+    style
+        .split(';')
+        .filter(|prop| SAFE_STYLE_RE.is_match(prop.trim()))
+        .map(|s| s.trim())
+        .collect::<Vec<_>>()
+        .join("; ")
 }
 
-/// Extended sanitization with custom rules for TinyBoards
-/// Allows additional safe tags and attributes as needed
-pub fn sanitize_html_extended(html: &str) -> String {
+/// Sanitize HTML content using ammonia with TinyBoards-specific rules.
+/// Allows safe formatting tags, forum quote attributes, inline color styles,
+/// and code block language markers.
+pub fn sanitize_html(html_input: &str) -> String {
     use ammonia::Builder;
     use maplit::hashset;
 
-    Builder::default()
-        // Allow additional safe tags
+    let result = Builder::default()
+        // Allow additional safe tags for forum content
         .add_tags(hashset![
-            "abbr", "details", "summary", "mark", "kbd", "sub", "sup"
+            "abbr", "details", "summary", "mark", "kbd", "sub", "sup",
+            "u", "div", "iframe"
         ])
-        // Allow additional safe attributes
-        .add_generic_attributes(hashset!["class", "id"])
-        // Allow data attributes for custom functionality
+        // Allow class (for forum-quote, hljs, etc.) and id (for anchors)
+        .add_generic_attributes(hashset!["class", "id", "style"])
+        // Allow data- attributes for forum quotes and code blocks
         .add_generic_attribute_prefixes(hashset!["data-"])
-        // Clean the HTML
-        .clean(html)
-        .to_string()
+        // Allow width/height on images
+        .add_tag_attributes("img", hashset!["width", "height", "loading"])
+        // Allow iframe attributes for YouTube embeds
+        .add_tag_attributes("iframe", hashset![
+            "src", "width", "height", "frameborder", "allow", "allowfullscreen"
+        ])
+        .clean(html_input)
+        .to_string();
+
+    // Post-process: sanitize style attributes to only allow safe CSS
+    // Ammonia lets style through, but we restrict it to color properties only
+    static STYLE_ATTR_RE: Lazy<Regex> = Lazy::new(|| {
+        Regex::new(r#"style="([^"]*)""#).unwrap()
+    });
+
+    STYLE_ATTR_RE.replace_all(&result, |caps: &regex::Captures| {
+        let style_value = &caps[1];
+        let safe = sanitize_style(style_value);
+        if safe.is_empty() {
+            String::new()
+        } else {
+            format!(r#"style="{}""#, safe)
+        }
+    }).to_string()
+}
+
+/// Extended sanitization with custom rules for TinyBoards (legacy wrapper)
+pub fn sanitize_html_extended(html_input: &str) -> String {
+    sanitize_html(html_input)
 }
 
 #[cfg(test)]
