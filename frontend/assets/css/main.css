@@ -285,6 +285,126 @@ img.emoji {
   margin: 0;
 }
 
+/* Forum-style attributed quote blocks */
+.prose .forum-quote,
+.forum-quote {
+  border-left: 4px solid rgb(var(--color-primary) / 0.3);
+  background: #f9fafb;
+  border-radius: 0 6px 6px 0;
+  padding: 10px 14px;
+  margin: 8px 0;
+  font-style: normal;
+}
+
+.dark .prose .forum-quote,
+.dark .forum-quote {
+  background: #0f172a;
+  border-left-color: rgb(var(--color-primary) / 0.4);
+}
+
+.forum-quote-header {
+  font-size: 0.85em;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.dark .forum-quote-header {
+  color: #9ca3af;
+}
+
+.forum-quote-header strong {
+  color: rgb(var(--color-primary));
+}
+
+.forum-quote-header a {
+  color: rgb(var(--color-primary));
+  text-decoration: none;
+}
+
+.forum-quote-header a:hover {
+  text-decoration: underline;
+}
+
+.forum-quote-body {
+  /* Inherits prose styling from parent */
+}
+
+.forum-quote-body p {
+  margin: 0 0 0.25em;
+}
+
+.forum-quote-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* Nested quotes get progressively lighter */
+.forum-quote .forum-quote {
+  border-left-color: rgb(var(--color-primary) / 0.15);
+  background: #f3f4f6;
+}
+
+.dark .forum-quote .forum-quote {
+  background: #1e293b;
+}
+
+.forum-quote .forum-quote .forum-quote {
+  border-left-color: rgb(var(--color-primary) / 0.1);
+  background: #e5e7eb;
+}
+
+.dark .forum-quote .forum-quote .forum-quote {
+  background: #334155;
+}
+
+/* Syntax highlighting for rendered code blocks (highlight.js classes) */
+.prose pre code .hljs-comment,
+.prose pre code .hljs-quote { color: #6b7280; }
+.prose pre code .hljs-keyword,
+.prose pre code .hljs-selector-tag { color: #c084fc; }
+.prose pre code .hljs-string,
+.prose pre code .hljs-addition { color: #86efac; }
+.prose pre code .hljs-number,
+.prose pre code .hljs-literal { color: #fbbf24; }
+.prose pre code .hljs-built_in,
+.prose pre code .hljs-type { color: #67e8f9; }
+.prose pre code .hljs-title,
+.prose pre code .hljs-section { color: #93c5fd; }
+.prose pre code .hljs-attr,
+.prose pre code .hljs-attribute { color: #fca5a5; }
+.prose pre code .hljs-variable,
+.prose pre code .hljs-template-variable { color: #fca5a5; }
+.prose pre code .hljs-deletion { color: #fca5a5; background: rgba(239, 68, 68, 0.15); }
+.prose pre code .hljs-meta { color: #a5b4fc; }
+
+/* Code block container with language label */
+.prose pre {
+  position: relative;
+  background: #1f2937;
+  color: #e5e7eb;
+  padding: 16px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-family: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', Menlo, Monaco, 'Courier New', monospace;
+}
+
+/* YouTube embeds in rendered content */
+.prose iframe {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+  margin: 8px 0;
+  border: none;
+}
+
 /* Scrollbar hiding */
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;

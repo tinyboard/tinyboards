@@ -386,6 +386,40 @@ export function useEditorAutocomplete () {
     emitUpdate()
   }
 
+  // Apply a selected suggestion using a TipTap editor instance.
+  // The editor parameter should have chain().focus().insertContent() etc.
+  function applyToTipTap (
+    suggestion: AutocompleteSuggestion,
+    tiptapEditor: { view: { state: { selection: { from: number } }; dom: HTMLElement }; chain: () => any },
+  ): void {
+    const selection = window.getSelection()
+    if (!selection || selection.rangeCount === 0) return
+
+    const range = selection.getRangeAt(0)
+    const node = range.startContainer
+    if (node.nodeType !== Node.TEXT_NODE) return
+
+    const text = node.textContent ?? ''
+    const replacement = getReplacementText(suggestion)
+    const { triggerStart, triggerEnd } = state.value
+
+    // Replace the trigger text with the suggestion
+    node.textContent = text.substring(0, triggerStart) + replacement + text.substring(triggerEnd)
+
+    // Set cursor position
+    const newOffset = triggerStart + replacement.length
+    const newRange = document.createRange()
+    newRange.setStart(node, Math.min(newOffset, node.textContent.length))
+    newRange.collapse(true)
+    selection.removeAllRanges()
+    selection.addRange(newRange)
+
+    // Force TipTap to sync with DOM changes
+    tiptapEditor.view.dom.dispatchEvent(new Event('input', { bubbles: true }))
+
+    deactivate()
+  }
+
   // Handle keyboard events — returns true if the event was consumed
   function handleKeyDown (e: KeyboardEvent): boolean {
     if (!isActive.value) return false
@@ -428,6 +462,7 @@ export function useEditorAutocomplete () {
     handleKeyDown,
     applyToTextarea,
     applyToContentEditable,
+    applyToTipTap,
     getSelected,
     deactivate,
   }

@@ -40,8 +40,8 @@ function insertQuotes (): void {
   if (quotedPosts.value.length === 0) return
 
   for (const q of quotedPosts.value) {
-    const cleanBody = q.body.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-    editorRef.value?.insertQuoteBlock(q.author, cleanBody, q.postNumber)
+    // Body is now sanitized HTML (bodyHTML) — pass directly to the editor's ForumQuote extension
+    editorRef.value?.insertQuoteBlock(q.author, q.body, q.postNumber)
   }
   quotedPosts.value = []
 }
