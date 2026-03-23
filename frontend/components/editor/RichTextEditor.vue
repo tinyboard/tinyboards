@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeUnmount, nextTick } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -13,13 +13,12 @@ import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
-import Subscript from '@tiptap/extension-subscript'
-import Superscript from '@tiptap/extension-superscript'
 import Youtube from '@tiptap/extension-youtube'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
 import { common, createLowlight } from 'lowlight'
 import { VueNodeViewRenderer } from '@tiptap/vue-3'
 import ForumQuote from './extensions/ForumQuote'
+import { SpoilerBlock, SpoilerSummary, SpoilerContent } from './extensions/Spoiler'
 import ImageResize from './extensions/ImageResize'
 import ImageUpload from './extensions/ImageUpload'
 import CodeBlockComponent from './CodeBlockComponent.vue'
@@ -45,8 +44,6 @@ const autocomplete = useEditorAutocomplete()
 const showTextColor = ref(false)
 const showHighlight = ref(false)
 const showEmojiPicker = ref(false)
-const isSourceMode = ref(false)
-const sourceContent = ref('')
 const fileInput = ref<HTMLInputElement | null>(null)
 
 // Create lowlight instance with common languages
@@ -74,8 +71,6 @@ const editor = useEditor({
     TableHeader,
     Placeholder.configure({ placeholder: props.placeholder ?? 'Start writing...' }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    Subscript,
-    Superscript,
     Youtube.configure({ inline: false, ccLanguage: 'en' }),
     CodeBlockLowlight.extend({
       addNodeView () {
@@ -83,6 +78,9 @@ const editor = useEditor({
       },
     }).configure({ lowlight }),
     ForumQuote,
+    SpoilerBlock,
+    SpoilerSummary,
+    SpoilerContent,
     ImageUpload.configure({
       uploadFn: doUpload,
       onUploadStart: () => {},
@@ -90,9 +88,7 @@ const editor = useEditor({
     }),
   ],
   onUpdate: ({ editor: e }) => {
-    if (!isSourceMode.value) {
-      emit('update:modelValue', e.getHTML())
-    }
+    emit('update:modelValue', e.getHTML())
     // Trigger autocomplete detection on content changes
     const dom = e.view.dom as HTMLElement
     autocomplete.handleContentEditableInput(dom)
@@ -120,9 +116,6 @@ const editor = useEditor({
 watch(() => props.modelValue, (val) => {
   if (editor.value && val !== editor.value.getHTML()) {
     editor.value.commands.setContent(val, false)
-  }
-  if (isSourceMode.value) {
-    sourceContent.value = val
   }
 })
 
@@ -221,7 +214,7 @@ function insertTable () {
 }
 
 function insertSpoiler () {
-  editor.value?.chain().focus().insertContent('<details><summary>Spoiler</summary><p>Hidden content here</p></details><p></p>').run()
+  editor.value?.chain().focus().setSpoiler().run()
 }
 
 function handleEmojiSelect (emoji: string) {
@@ -240,27 +233,21 @@ function handleCustomEmojiSelect (shortcode: string, _imageUrl: string) {
   showEmojiPicker.value = false
 }
 
-function toggleSourceMode () {
-  if (isSourceMode.value) {
-    editor.value?.commands.setContent(sourceContent.value, false)
-    emit('update:modelValue', sourceContent.value)
-    isSourceMode.value = false
-  } else {
-    sourceContent.value = editor.value?.getHTML() ?? ''
-    isSourceMode.value = true
-  }
-}
-
-function handleSourceInput () {
-  emit('update:modelValue', sourceContent.value)
-}
-
 // Quote insertion for thread replies
 function insertQuoteBlock (author: string, htmlContent: string, postNumber: number): void {
   const clean = sanitizeHtml(htmlContent)
-  editor.value?.chain().focus().insertContent(
-    `<blockquote class="forum-quote" data-author="${author}" data-post-number="${postNumber}"><div class="forum-quote-header"><strong>@${author}</strong> said (<a href="#post-${postNumber}">#${postNumber}</a>):</div><div class="forum-quote-body">${clean}</div></blockquote><p></p>`,
-  ).run()
+
+  // Strip nested forum quotes to prevent deeply nested rendering issues.
+  // Replace inner <blockquote> blocks (forum quotes and regular) with a
+  // simple italic note so the quote stays readable without breaking TipTap.
+  const stripped = clean
+    .replace(/<blockquote[^>]*>[\s\S]*?<\/blockquote>/gi, '<p><em>[quoted text]</em></p>')
+
+  // Build the full HTML for insertion — TipTap's ForumQuote extension
+  // will parse the outer blockquote, and the inner content stays clean.
+  const quoteHtml = `<blockquote class="forum-quote" data-author="${author}" data-post-number="${postNumber}"><p>${stripped.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() || ' '}</p></blockquote><p></p>`
+
+  editor.value?.chain().focus().insertContent(quoteHtml).run()
 }
 
 function clearContent (): void {
@@ -432,17 +419,6 @@ defineExpose({ insertQuoteBlock, clearContent })
         </div>
       </div>
 
-      <!-- Source mode toggle -->
-      <div class="ml-auto">
-        <button
-          type="button"
-          class="px-2 py-1 text-xs rounded font-medium transition-colors"
-          :class="isSourceMode ? 'bg-primary text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'"
-          @click="toggleSourceMode"
-        >
-          {{ isSourceMode ? 'Visual' : 'Source' }}
-        </button>
-      </div>
     </div>
 
     <!-- Autocomplete dropdown -->
@@ -465,20 +441,9 @@ defineExpose({ insertQuoteBlock, clearContent })
 
     <!-- TipTap editor -->
     <EditorContent
-      v-show="!isSourceMode"
       :editor="editor"
       class="editor-content"
       :style="{ minHeight: minHeight ?? '150px' }"
-    />
-
-    <!-- Source mode -->
-    <textarea
-      v-show="isSourceMode"
-      v-model="sourceContent"
-      class="w-full p-4 text-sm border-0 focus:ring-0 resize-y font-mono"
-      :style="{ minHeight: minHeight ?? '150px' }"
-      placeholder="HTML source..."
-      @input="handleSourceInput"
     />
   </div>
 </template>
@@ -736,17 +701,27 @@ defineExpose({ insertQuoteBlock, clearContent })
   cursor: pointer;
 }
 
-.editor-content :deep(.tiptap details) {
+.editor-content :deep(.tiptap details),
+.editor-content :deep(.tiptap .spoiler-block) {
   border: 1px solid #e5e7eb;
   border-radius: 6px;
   padding: 8px 12px;
   margin: 8px 0;
+  background: #f9fafb;
 }
 
-.editor-content :deep(.tiptap summary) {
+.editor-content :deep(.tiptap summary),
+.editor-content :deep(.tiptap .spoiler-summary) {
   cursor: pointer;
   font-weight: 600;
   color: #374151;
+  user-select: none;
+}
+
+.editor-content :deep(.tiptap .spoiler-content) {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #e5e7eb;
 }
 
 .editor-content :deep(.tiptap mark) {
