@@ -31,6 +31,7 @@ watch(() => props.comment.myVote, (v) => { localMyVote.value = v ?? 0 })
 
 const showRemoveDialog = ref(false)
 const showReportDialog = ref(false)
+const showDeleteConfirm = ref(false)
 const showModMenu = ref(false)
 const removeReason = ref('')
 const reportReason = ref('')
@@ -53,6 +54,12 @@ const REPORT_MUTATION = `
 const PIN_MUTATION = `
   mutation PinComment($commentId: ID!) {
     pinComment(commentId: $commentId) { id isPinned }
+  }
+`
+
+const DELETE_COMMENT_MUTATION = `
+  mutation DeleteComment($commentId: ID!) {
+    deleteComment(commentId: $commentId) { id }
   }
 `
 
@@ -101,6 +108,16 @@ async function toggleSaveComment (): Promise<void> {
   if (result) {
     commentSaved.value = !commentSaved.value
     toast.success(commentSaved.value ? 'Comment saved' : 'Comment unsaved')
+  }
+}
+
+async function deleteComment (): Promise<void> {
+  const { execute } = useGraphQL()
+  const result = await execute(DELETE_COMMENT_MUTATION, { variables: { commentId: props.comment.id } })
+  showDeleteConfirm.value = false
+  if (result) {
+    toast.success('Comment deleted')
+    emit('updated')
   }
 }
 
@@ -220,6 +237,18 @@ function openRemoveDialog (): void {
       Report
     </button>
 
+    <!-- Delete (own comments) -->
+    <button
+      v-if="authStore.isLoggedIn && isOwnComment"
+      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-gray-100 hover:text-red-500 transition-colors"
+      @click="showDeleteConfirm = true"
+    >
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+      </svg>
+      Delete
+    </button>
+
     <!-- Mod actions menu -->
     <template v-if="canModerate">
       <span class="text-gray-200 mx-0.5">|</span>
@@ -307,6 +336,20 @@ function openRemoveDialog (): void {
           <div class="flex gap-2 justify-end">
             <button class="button white button-sm" @click="showRemoveDialog = false">Cancel</button>
             <button class="button button-sm bg-red-600 text-white hover:bg-red-700" :disabled="acting" @click="handleRemove">Remove</button>
+          </div>
+        </div>
+      </template>
+    </CommonModal>
+
+    <!-- Delete confirmation -->
+    <CommonModal v-if="showDeleteConfirm" @close="showDeleteConfirm = false">
+      <template #title>Delete Comment</template>
+      <template #default>
+        <div class="space-y-3">
+          <p class="text-sm text-gray-600">Are you sure you want to delete this comment? This cannot be undone.</p>
+          <div class="flex gap-2 justify-end">
+            <button class="button white button-sm" @click="showDeleteConfirm = false">Cancel</button>
+            <button class="button button-sm bg-red-600 text-white hover:bg-red-700" @click="deleteComment">Delete</button>
           </div>
         </div>
       </template>

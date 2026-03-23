@@ -25,9 +25,16 @@ const { removeComment, restoreComment } = useModeration()
 
 const showRemoveDialog = ref(false)
 const showReportDialog = ref(false)
+const showDeleteConfirm = ref(false)
 const removeReason = ref('')
 const reportReason = ref('')
 const acting = ref(false)
+
+const DELETE_COMMENT_MUTATION = `
+  mutation DeleteComment($commentId: ID!) {
+    deleteComment(commentId: $commentId) { id }
+  }
+`
 
 const REPORT_MUTATION = `
   mutation ReportComment($commentId: ID!, $reason: String!) {
@@ -81,6 +88,13 @@ async function submitReport (): Promise<void> {
   await execute(REPORT_MUTATION, { variables: { commentId: props.comment.id, reason: reportReason.value } })
   showReportDialog.value = false
   reportReason.value = ''
+}
+
+async function deleteComment (): Promise<void> {
+  const { execute } = useGraphQL()
+  const result = await execute(DELETE_COMMENT_MUTATION, { variables: { commentId: props.comment.id } })
+  showDeleteConfirm.value = false
+  if (result) emit('updated')
 }
 
 async function togglePin (): Promise<void> {
@@ -177,6 +191,15 @@ async function togglePin (): Promise<void> {
           Report
         </button>
 
+        <!-- Delete (own comment) -->
+        <button
+          v-if="authStore.isLoggedIn && isOwnComment"
+          class="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-red-50 hover:text-red-500 transition-colors"
+          @click="showDeleteConfirm = true"
+        >
+          Delete
+        </button>
+
         <!-- Mod actions -->
         <template v-if="canModerate">
           <div class="w-px h-4 bg-gray-300 mx-1" />
@@ -221,6 +244,20 @@ async function togglePin (): Promise<void> {
           <div class="flex gap-2 justify-end">
             <button class="button white button-sm" @click="showRemoveDialog = false">Cancel</button>
             <button class="button button-sm bg-red-600 text-white hover:bg-red-700" :disabled="acting" @click="handleRemove">Remove</button>
+          </div>
+        </div>
+      </template>
+    </CommonModal>
+
+    <!-- Delete confirmation -->
+    <CommonModal v-if="showDeleteConfirm" @close="showDeleteConfirm = false">
+      <template #title>Delete Comment</template>
+      <template #default>
+        <div class="space-y-3">
+          <p class="text-sm text-gray-600">Are you sure you want to delete this comment? This cannot be undone.</p>
+          <div class="flex gap-2 justify-end">
+            <button class="button white button-sm" @click="showDeleteConfirm = false">Cancel</button>
+            <button class="button button-sm bg-red-600 text-white hover:bg-red-700" @click="deleteComment">Delete</button>
           </div>
         </div>
       </template>
