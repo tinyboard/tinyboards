@@ -155,6 +155,7 @@ type Mutation {
   lockPost(postId: ID!): Post!
   unlockPost(postId: ID!): Post!
   featurePost(postId: ID!, featured: Boolean!, featureType: String): Post!
+  deletePost(postId: ID!): Post!
   removePost(postId: ID!, reason: String): Post!
   restorePost(postId: ID!): Post!
 
@@ -164,6 +165,7 @@ type Mutation {
   voteOnComment(commentId: ID!, direction: Int!): Comment!
   saveComment(commentId: ID!): Comment!
   unsaveComment(commentId: ID!): Comment!
+  deleteComment(commentId: ID!): Comment!
   removeComment(commentId: ID!, reason: String): Comment!
   restoreComment(commentId: ID!): Comment!
   pinComment(commentId: ID!): Comment!

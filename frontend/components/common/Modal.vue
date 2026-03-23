@@ -8,10 +8,11 @@ import {
 } from '@headlessui/vue'
 
 withDefaults(defineProps<{
-  open: boolean
+  open?: boolean
   title?: string
   size?: 'sm' | 'md' | 'lg'
 }>(), {
+  open: true,
   title: undefined,
   size: 'md',
 })
@@ -59,8 +60,8 @@ const sizeClasses = {
               class="w-full rounded-lg bg-white shadow-xl p-6"
               :class="sizeClasses[size]"
             >
-              <DialogTitle v-if="title" class="text-lg font-semibold text-gray-900 mb-4">
-                {{ title }}
+              <DialogTitle v-if="title || $slots.title" class="text-lg font-semibold text-gray-900 mb-4">
+                <slot name="title">{{ title }}</slot>
               </DialogTitle>
               <slot />
             </DialogPanel>
