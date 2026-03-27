@@ -216,7 +216,7 @@ async fn initialize_site_and_admin_user(
     }
 }
 
-/// Creates a few welcome posts in the default board so new instances don't look empty
+/// Creates a welcome post in the default board so new instances don't look empty
 async fn seed_welcome_posts(
     pool: &DbPool,
     admin_id: &Uuid,
@@ -225,58 +225,203 @@ async fn seed_welcome_posts(
     let mut conn = match pool.get().await {
         Ok(c) => c,
         Err(e) => {
-            info!("Could not get DB connection for seed posts: {:?}", e);
+            info!("Could not get DB connection for seed post: {:?}", e);
             return;
         }
     };
     let conn = &mut *conn;
-    let welcome_posts = [
-        (
-            "Welcome to TinyBoards!",
-            "This is your new community platform. TinyBoards is a self-hosted social media platform where you can create boards, share posts, and build communities.\n\nFeel free to explore, create new boards, and invite others to join!",
-            "<p>This is your new community platform. TinyBoards is a self-hosted social media platform where you can create boards, share posts, and build communities.</p>\n<p>Feel free to explore, create new boards, and invite others to join!</p>",
-            true, // pin this one
-        ),
-        (
-            "Getting Started Guide",
-            "Here are some tips to get you started:\n\n1. **Create a board** — Boards are topic-based communities. Visit the Boards page to create your first one.\n2. **Customize your profile** — Click your username to update your avatar, bio, and display name.\n3. **Invite your friends** — Share the link to your instance and grow your community.\n4. **Check the admin panel** — If you're the admin, head to the settings to configure your site.",
-            "<p>Here are some tips to get you started:</p>\n<ol>\n<li><strong>Create a board</strong> — Boards are topic-based communities. Visit the Boards page to create your first one.</li>\n<li><strong>Customize your profile</strong> — Click your username to update your avatar, bio, and display name.</li>\n<li><strong>Invite your friends</strong> — Share the link to your instance and grow your community.</li>\n<li><strong>Check the admin panel</strong> — If you're the admin, head to the settings to configure your site.</li>\n</ol>",
-            false,
-        ),
-        (
-            "What can you do on TinyBoards?",
-            "TinyBoards supports:\n\n- **Text posts and link sharing** — Share articles, discussions, and links\n- **Nested comments** — Have threaded conversations on any post\n- **Voting** — Upvote and downvote posts and comments\n- **Multiple boards** — Organize content into topic-specific communities\n- **User profiles** — Customize your identity with avatars and bios\n- **Moderation tools** — Keep your communities healthy with built-in mod features",
-            "<p>TinyBoards supports:</p>\n<ul>\n<li><strong>Text posts and link sharing</strong> — Share articles, discussions, and links</li>\n<li><strong>Nested comments</strong> — Have threaded conversations on any post</li>\n<li><strong>Voting</strong> — Upvote and downvote posts and comments</li>\n<li><strong>Multiple boards</strong> — Organize content into topic-specific communities</li>\n<li><strong>User profiles</strong> — Customize your identity with avatars and bios</li>\n<li><strong>Moderation tools</strong> — Keep your communities healthy with built-in mod features</li>\n</ul>",
-            false,
-        ),
-    ];
 
-    for (title, body, body_html, is_featured) in welcome_posts {
-        let result = sql_query(format!(
-            "INSERT INTO posts (id, title, body, body_html, creator_id, board_id, is_featured_board) \
-             SELECT gen_random_uuid(), $1, $2, $3, '{admin_id}', b.id, {featured} \
-             FROM boards b WHERE b.name = '{board_name}' \
-             AND NOT EXISTS (SELECT 1 FROM posts p WHERE p.title = $1 AND p.board_id = b.id)",
-            admin_id = admin_id,
-            featured = is_featured,
-            board_name = board_name,
-        ));
+    let title = "Welcome to TinyBoards — Admin Setup Guide";
 
-        // Use bind params for the text content to avoid SQL injection issues
-        use diesel::sql_types::Text;
-        match result
-            .bind::<Text, _>(title)
-            .bind::<Text, _>(body)
-            .bind::<Text, _>(body_html)
-            .execute(conn)
-            .await
-        {
-            Ok(_) => info!("Seed post '{}' created", title),
-            Err(e) => info!("Seed post '{}' may already exist: {:?}", title, e),
-        }
+    let body = r#"Welcome to your new TinyBoards instance! This pinned post walks you through everything you need to configure before opening your site to users. You can edit or delete this post at any time.
+
+---
+
+## 1. Configure Site Settings
+
+Head to **/admin/settings** to set up the basics:
+
+- **Site name and description** — appears in the header and search results
+- **Registration mode** — choose between open registration, invite-only, application-required, or closed
+- **Enable/disable downvotes** — decide whether your community uses downvotes
+- **NSFW content** — toggle whether NSFW content is allowed site-wide
+
+## 2. Customize Appearance
+
+Visit **/admin/appearance** to brand your site:
+
+- **Site icon and banner** — upload your logo and header image
+- **Theme colors** — set primary, secondary, and hover colors
+- **Default theme** — choose which of the 6 built-in themes new users see
+- **Custom CSS** — add your own styles at **/admin/css**
+
+## 3. Set Up Boards
+
+Boards are the topic-based communities where content lives. You can:
+
+- **Create new boards** from the Boards directory page
+- **Configure each board** with its own icon, banner, description, and rules
+- **Assign moderators** to help manage individual boards
+- **Control board creation** — in site settings, decide if all users or only admins can create boards
+
+## 4. Security Checklist
+
+Before going live, make sure you've handled these:
+
+- [ ] Change the default admin password to something strong
+- [ ] Set a unique `salt_suffix` in your `tinyboards.hjson` config file
+- [ ] Enable TLS (HTTPS) — set `tls_enabled: true` once your reverse proxy handles SSL
+- [ ] Update `cors.allowed_origins` to match your actual domain
+- [ ] Review rate limits in your config file and adjust for your expected traffic
+- [ ] Consider enabling CAPTCHA for registration at **/admin/security**
+
+## 5. Content & Moderation
+
+Set up your moderation workflow:
+
+- **Content filtering** — configure word filters and content rules at **/admin/filtering**
+- **Reports queue** — review user-submitted reports at **/admin/reports**
+- **Mod queue** — review flagged content at **/admin/queue**
+- **Site bans** — manage site-wide bans at **/admin/bans**
+
+## 6. Optional: Email (SMTP)
+
+Email is needed for password resets and email verification. Add an `email` block to your `tinyboards.hjson`:
+
+```
+email: {
+  smtp_server: "smtp.example.com:587"
+  smtp_login: "your-login"
+  smtp_password: "your-password"
+  smtp_from_address: "noreply@yourdomain.com"
+  tls_type: "starttls"
+}
+```
+
+Until email is configured, password reset and email verification will not function.
+
+## 7. Optional: Cloud Storage
+
+By default, uploads are stored on the local filesystem. To use S3-compatible storage (AWS S3, MinIO, DigitalOcean Spaces, Cloudflare R2), Azure Blob Storage, or Google Cloud Storage, update the `storage` block in your `tinyboards.hjson`.
+
+## 8. Inviting Users
+
+Depending on your registration mode:
+
+- **Open** — share your site URL and anyone can register
+- **Invite-only** — generate invite codes at **/admin/invites** and distribute them
+- **Application-required** — users submit applications; review them at **/admin/applications**
+
+## 9. Ongoing Administration
+
+Useful admin pages to bookmark:
+
+- **/admin** — dashboard overview with site statistics
+- **/admin/users** — manage users, roles, and permissions
+- **/admin/admins** — add or remove site administrators
+- **/admin/emojis** — add custom emoji for your community
+
+---
+
+Once you've completed setup, feel free to unpin or delete this post. Happy community building!"#;
+
+    let body_html = r#"<p>Welcome to your new TinyBoards instance! This pinned post walks you through everything you need to configure before opening your site to users. You can edit or delete this post at any time.</p>
+<hr>
+<h2>1. Configure Site Settings</h2>
+<p>Head to <strong>/admin/settings</strong> to set up the basics:</p>
+<ul>
+<li><strong>Site name and description</strong> — appears in the header and search results</li>
+<li><strong>Registration mode</strong> — choose between open registration, invite-only, application-required, or closed</li>
+<li><strong>Enable/disable downvotes</strong> — decide whether your community uses downvotes</li>
+<li><strong>NSFW content</strong> — toggle whether NSFW content is allowed site-wide</li>
+</ul>
+<h2>2. Customize Appearance</h2>
+<p>Visit <strong>/admin/appearance</strong> to brand your site:</p>
+<ul>
+<li><strong>Site icon and banner</strong> — upload your logo and header image</li>
+<li><strong>Theme colors</strong> — set primary, secondary, and hover colors</li>
+<li><strong>Default theme</strong> — choose which of the 6 built-in themes new users see</li>
+<li><strong>Custom CSS</strong> — add your own styles at <strong>/admin/css</strong></li>
+</ul>
+<h2>3. Set Up Boards</h2>
+<p>Boards are the topic-based communities where content lives. You can:</p>
+<ul>
+<li><strong>Create new boards</strong> from the Boards directory page</li>
+<li><strong>Configure each board</strong> with its own icon, banner, description, and rules</li>
+<li><strong>Assign moderators</strong> to help manage individual boards</li>
+<li><strong>Control board creation</strong> — in site settings, decide if all users or only admins can create boards</li>
+</ul>
+<h2>4. Security Checklist</h2>
+<p>Before going live, make sure you've handled these:</p>
+<ul>
+<li>Change the default admin password to something strong</li>
+<li>Set a unique <code>salt_suffix</code> in your <code>tinyboards.hjson</code> config file</li>
+<li>Enable TLS (HTTPS) — set <code>tls_enabled: true</code> once your reverse proxy handles SSL</li>
+<li>Update <code>cors.allowed_origins</code> to match your actual domain</li>
+<li>Review rate limits in your config file and adjust for your expected traffic</li>
+<li>Consider enabling CAPTCHA for registration at <strong>/admin/security</strong></li>
+</ul>
+<h2>5. Content &amp; Moderation</h2>
+<p>Set up your moderation workflow:</p>
+<ul>
+<li><strong>Content filtering</strong> — configure word filters and content rules at <strong>/admin/filtering</strong></li>
+<li><strong>Reports queue</strong> — review user-submitted reports at <strong>/admin/reports</strong></li>
+<li><strong>Mod queue</strong> — review flagged content at <strong>/admin/queue</strong></li>
+<li><strong>Site bans</strong> — manage site-wide bans at <strong>/admin/bans</strong></li>
+</ul>
+<h2>6. Optional: Email (SMTP)</h2>
+<p>Email is needed for password resets and email verification. Add an <code>email</code> block to your <code>tinyboards.hjson</code>:</p>
+<pre><code>email: {
+  smtp_server: "smtp.example.com:587"
+  smtp_login: "your-login"
+  smtp_password: "your-password"
+  smtp_from_address: "noreply@yourdomain.com"
+  tls_type: "starttls"
+}
+</code></pre>
+<p>Until email is configured, password reset and email verification will not function.</p>
+<h2>7. Optional: Cloud Storage</h2>
+<p>By default, uploads are stored on the local filesystem. To use S3-compatible storage (AWS S3, MinIO, DigitalOcean Spaces, Cloudflare R2), Azure Blob Storage, or Google Cloud Storage, update the <code>storage</code> block in your <code>tinyboards.hjson</code>.</p>
+<h2>8. Inviting Users</h2>
+<p>Depending on your registration mode:</p>
+<ul>
+<li><strong>Open</strong> — share your site URL and anyone can register</li>
+<li><strong>Invite-only</strong> — generate invite codes at <strong>/admin/invites</strong> and distribute them</li>
+<li><strong>Application-required</strong> — users submit applications; review them at <strong>/admin/applications</strong></li>
+</ul>
+<h2>9. Ongoing Administration</h2>
+<p>Useful admin pages to bookmark:</p>
+<ul>
+<li><strong>/admin</strong> — dashboard overview with site statistics</li>
+<li><strong>/admin/users</strong> — manage users, roles, and permissions</li>
+<li><strong>/admin/admins</strong> — add or remove site administrators</li>
+<li><strong>/admin/emojis</strong> — add custom emoji for your community</li>
+</ul>
+<hr>
+<p>Once you've completed setup, feel free to unpin or delete this post. Happy community building!</p>"#;
+
+    use diesel::sql_types::Text;
+    let result = sql_query(format!(
+        "INSERT INTO posts (id, title, body, body_html, creator_id, board_id, is_featured_board) \
+         SELECT gen_random_uuid(), $1, $2, $3, '{admin_id}', b.id, true \
+         FROM boards b WHERE b.name = '{board_name}' \
+         AND NOT EXISTS (SELECT 1 FROM posts p WHERE p.title = $1 AND p.board_id = b.id)",
+        admin_id = admin_id,
+        board_name = board_name,
+    ));
+
+    match result
+        .bind::<Text, _>(title)
+        .bind::<Text, _>(body)
+        .bind::<Text, _>(body_html)
+        .execute(conn)
+        .await
+    {
+        Ok(_) => info!("Welcome post created"),
+        Err(e) => info!("Welcome post may already exist: {:?}", e),
     }
 
-    // Auto-upvote the seed posts by the admin
+    // Auto-upvote the welcome post by the admin
     let _ = sql_query(format!(
         "INSERT INTO post_votes (id, post_id, user_id, score) \
          SELECT gen_random_uuid(), p.id, '{admin_id}', 1 \
@@ -290,5 +435,5 @@ async fn seed_welcome_posts(
     .execute(conn)
     .await;
 
-    info!("Welcome posts seeded successfully");
+    info!("Welcome post seeded successfully");
 }
