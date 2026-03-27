@@ -241,6 +241,7 @@ impl CreateBoard {
             wiki_require_approval: None,
             wiki_default_view_permission: DbWikiPermission::Public,
             wiki_default_edit_permission: DbWikiPermission::ModsOnly,
+            custom_css: None,
         };
 
         // All remaining DB work uses one connection
