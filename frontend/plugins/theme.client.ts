@@ -53,6 +53,24 @@ export default defineNuxtPlugin(() => {
     }
   }
 
+  // Custom CSS injection
+  let siteStyleEl: HTMLStyleElement | null = null
+
+  function applySiteCustomCss () {
+    if (siteStore.customCssEnabled && siteStore.customCss) {
+      if (!siteStyleEl) {
+        siteStyleEl = document.createElement('style')
+        siteStyleEl.id = 'tb-site-custom-css'
+        siteStyleEl.setAttribute('data-source', 'site-admin')
+        document.head.appendChild(siteStyleEl)
+      }
+      siteStyleEl.textContent = siteStore.customCss
+    } else if (siteStyleEl) {
+      siteStyleEl.textContent = ''
+    }
+  }
+
   // Apply on load and watch for changes
   watch(() => [siteStore.primaryColor, siteStore.secondaryColor, siteStore.hoverColor], applyThemeColors, { immediate: true })
+  watch(() => [siteStore.customCss, siteStore.customCssEnabled], applySiteCustomCss, { immediate: true })
 })

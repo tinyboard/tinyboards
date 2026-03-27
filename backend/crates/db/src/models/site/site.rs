@@ -64,6 +64,8 @@ pub struct Site {
     pub image_strip_exif: bool,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub custom_css: Option<String>,
+    pub custom_css_enabled: bool,
 }
 
 /// Form for inserting a new site row.
@@ -117,6 +119,8 @@ pub struct SiteInsertForm {
     pub max_emojis_per_comment: Option<i32>,
     pub emoji_max_file_size_mb: i32,
     pub board_emojis_enabled: bool,
+    pub custom_css: Option<String>,
+    pub custom_css_enabled: bool,
 }
 
 /// Form for updating an existing site row. All fields are optional so only
@@ -171,4 +175,6 @@ pub struct SiteUpdateForm {
     pub max_emojis_per_comment: Option<Option<i32>>,
     pub emoji_max_file_size_mb: Option<i32>,
     pub board_emojis_enabled: Option<bool>,
+    pub custom_css: Option<Option<String>>,
+    pub custom_css_enabled: Option<bool>,
 }

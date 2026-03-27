@@ -40,6 +40,7 @@ pub struct Board {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
+    pub custom_css: Option<String>,
 }
 
 /// Form for inserting a new board.
@@ -73,6 +74,7 @@ pub struct BoardInsertForm {
     pub wiki_require_approval: Option<bool>,
     pub wiki_default_view_permission: DbWikiPermission,
     pub wiki_default_edit_permission: DbWikiPermission,
+    pub custom_css: Option<String>,
 }
 
 /// Form for updating an existing board. All fields optional so only
@@ -108,4 +110,5 @@ pub struct BoardUpdateForm {
     pub wiki_default_view_permission: Option<DbWikiPermission>,
     pub wiki_default_edit_permission: Option<DbWikiPermission>,
     pub deleted_at: Option<Option<DateTime<Utc>>>,
+    pub custom_css: Option<Option<String>>,
 }

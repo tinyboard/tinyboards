@@ -29,6 +29,7 @@ const BOARD_QUERY = `
       isSubscribed
       sectionConfig
       wikiEnabled
+      customCss
     }
   }
 `

@@ -7,6 +7,7 @@ pub mod utils;
 pub mod version;
 pub mod email;
 pub mod content_filter;
+pub mod css_sanitizer;
 pub mod slug;
 
 pub use error::TinyBoardsError;

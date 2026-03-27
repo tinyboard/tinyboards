@@ -102,6 +102,7 @@ export type Board = {
   usersActiveMonth: Scalars['Int']['output'];
   usersActiveWeek: Scalars['Int']['output'];
   wikiEnabled: Scalars['Boolean']['output'];
+  customCss?: Maybe<Scalars['String']['output']>;
 };
 
 export type BoardBanResponse = {
@@ -473,6 +474,8 @@ export type LocalSite = {
   updatedAt: Scalars['String']['output'];
   welcomeMessage?: Maybe<Scalars['String']['output']>;
   wordFilterEnabled: Scalars['Boolean']['output'];
+  customCss?: Maybe<Scalars['String']['output']>;
+  customCssEnabled: Scalars['Boolean']['output'];
 };
 
 export type MarkNotificationsReadResponse = {
@@ -1628,6 +1631,7 @@ export type UpdateBoardSettingsInput = {
   sidebar?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   wikiEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  customCss?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateBoardSettingsResponse = {
@@ -1741,6 +1745,8 @@ export type UpdateSiteConfigInput = {
   secondaryColor?: InputMaybe<Scalars['String']['input']>;
   welcomeMessage?: InputMaybe<Scalars['String']['input']>;
   wordFilterEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  customCss?: InputMaybe<Scalars['String']['input']>;
+  customCssEnabled?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type User = {

@@ -39,6 +39,7 @@ pub struct Board {
     pub users_active_half_year: i64,
     pub is_subscribed: bool,
     pub section_config: i32,
+    pub custom_css: Option<String>,
 }
 
 impl Board {
@@ -83,6 +84,7 @@ impl Board {
             users_active_half_year,
             is_subscribed,
             section_config,
+            custom_css: board.custom_css,
         }
     }
 }

@@ -8,6 +8,7 @@ use tinyboards_db::{
     schema::site,
     utils::{get_conn, DbPool},
 };
+use tinyboards_utils::css_sanitizer::{sanitize_css, MAX_SITE_CSS_BYTES};
 
 use crate::{helpers::permissions, structs::site::LocalSite};
 
@@ -47,6 +48,8 @@ pub struct UpdateSiteConfigInput {
     pub link_filter_enabled: Option<bool>,
     pub banned_domains: Option<String>,
     pub registration_mode: Option<String>,
+    pub custom_css: Option<String>,
+    pub custom_css_enabled: Option<bool>,
 }
 
 #[Object]
@@ -64,6 +67,17 @@ impl SiteConfig {
         // Get existing site row
         let existing: DbSite = site::table.first(conn).await
             .map_err(|e| tinyboards_utils::TinyBoardsError::Database(format!("Site not found: {}", e)))?;
+
+        // Sanitize custom CSS if provided
+        let sanitized_css = match input.custom_css {
+            Some(ref css) if !css.trim().is_empty() => {
+                let result = sanitize_css(css, MAX_SITE_CSS_BYTES)
+                    .map_err(|e| tinyboards_utils::TinyBoardsError::BadRequest(e))?;
+                Some(Some(result.css))
+            }
+            Some(_) => Some(None), // Empty string clears the CSS
+            None => None,          // Not provided, leave unchanged
+        };
 
         let form = SiteUpdateForm {
             name: input.name,
@@ -96,6 +110,8 @@ impl SiteConfig {
             filtered_words: input.filtered_words.map(Some),
             link_filter_enabled: input.link_filter_enabled,
             banned_domains: input.banned_domains.map(Some),
+            custom_css: sanitized_css,
+            custom_css_enabled: input.custom_css_enabled,
             // Fields not in the input are left None (unchanged)
             default_post_listing_type: None,
             default_avatar: None,

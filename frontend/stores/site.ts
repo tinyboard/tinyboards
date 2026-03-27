@@ -35,6 +35,10 @@ export const useSiteStore = defineStore('site', () => {
   const hoverColor = computed(() => site.value?.hoverColor ?? null)
   const defaultTheme = computed(() => site.value?.defaultTheme ?? 'light')
 
+  // Custom CSS
+  const customCss = computed(() => site.value?.customCss ?? null)
+  const customCssEnabled = computed(() => site.value?.customCssEnabled ?? false)
+
   function setSite (newSite: LocalSite): void {
     site.value = newSite
     loaded.value = true
@@ -63,6 +67,8 @@ export const useSiteStore = defineStore('site', () => {
     secondaryColor,
     hoverColor,
     defaultTheme,
+    customCss,
+    customCssEnabled,
     setSite,
     clearSite,
   }
