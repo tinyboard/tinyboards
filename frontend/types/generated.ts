@@ -169,6 +169,7 @@ export type Comment = {
   createdAt: Scalars['String']['output'];
   creator?: Maybe<User>;
   creatorId: Scalars['ID']['output'];
+  distinguishedAs?: Maybe<Scalars['String']['output']>;
   downvotes: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   isDeleted: Scalars['Boolean']['output'];
@@ -1115,6 +1116,7 @@ export type Post = {
   bodyHTML: Scalars['String']['output'];
   commentCount: Scalars['Int']['output'];
   controversyRank: Scalars['Float']['output'];
+  distinguishedAs?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['String']['output'];
   creator?: Maybe<User>;
   creatorId: Scalars['ID']['output'];

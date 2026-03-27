@@ -54,6 +54,7 @@ pub struct Post {
     pub slug: String,
     pub is_thread: bool,
     pub approval_status: String,
+    pub distinguished_as: Option<String>,
     // Internal UUID fields for dataloaders
     #[graphql(skip)]
     pub(crate) uuid_id: Uuid,
@@ -282,6 +283,7 @@ impl From<(DbPost, DbPostAggregates)> for Post {
             slug: post.slug.clone(),
             is_thread: post.is_thread,
             approval_status: format!("{:?}", post.approval_status).to_lowercase(),
+            distinguished_as: post.distinguished_as.clone(),
             uuid_id: post.id,
             uuid_creator_id: post.creator_id,
             uuid_board_id: post.board_id,

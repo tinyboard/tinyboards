@@ -90,7 +90,7 @@ async fn initialize_site_and_admin_user(
             is_email_verified: true,
             is_banned: false,
             is_admin: true,
-            admin_level: 256,
+            admin_level: 7,
             is_bot_account: false,
             is_board_creation_approved: true,
             is_application_accepted: true,

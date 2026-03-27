@@ -24,11 +24,13 @@ const COMMENTS_QUERY = `
       downvotes
       replyCount
       myVote
+      distinguishedAs
       creator {
         id
         name
         displayName
         avatar
+        isAdmin
       }
     }
   }
@@ -47,11 +49,13 @@ const CREATE_COMMENT_MUTATION = `
       upvotes
       downvotes
       myVote
+      distinguishedAs
       creator {
         id
         name
         displayName
         avatar
+        isAdmin
       }
     }
   }

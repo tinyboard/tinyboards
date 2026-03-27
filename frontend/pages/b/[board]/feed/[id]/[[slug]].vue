@@ -50,6 +50,7 @@ const POST_QUERY = `
       isSaved
       thumbnailUrl
       board { id name title icon }
+      distinguishedAs
       creator { id name displayName avatar isAdmin }
     }
   }

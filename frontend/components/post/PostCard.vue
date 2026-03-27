@@ -193,8 +193,11 @@ const hasLinkPreview = computed(() => {
             >
               {{ post.creator.displayName ?? post.creator.name }}
             </NuxtLink>
-            <span v-if="post.creator?.isAdmin" class="inline-flex items-center px-1 py-0 rounded text-[10px] font-medium bg-green-100 text-green-700 border border-green-200 leading-4">
+            <span v-if="post.distinguishedAs === 'admin'" class="inline-flex items-center px-1 py-0 rounded text-[10px] font-medium bg-green-100 text-green-700 border border-green-200 leading-4">
               Admin
+            </span>
+            <span v-else-if="post.distinguishedAs === 'mod'" class="inline-flex items-center px-1 py-0 rounded text-[10px] font-medium bg-blue-100 text-blue-700 border border-blue-200 leading-4">
+              Mod
             </span>
             <span class="text-gray-300">&middot;</span>
             <time :datetime="post.createdAt" class="text-xs text-gray-400">{{ timeAgo(post.createdAt) }}</time>

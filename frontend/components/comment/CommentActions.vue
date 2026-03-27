@@ -20,7 +20,7 @@ const emit = defineEmits<{
 const authStore = useAuthStore()
 const siteStore = useSiteStore()
 const toast = useToast()
-const { removeComment, restoreComment } = useModeration()
+const { removeComment, restoreComment, distinguishComment } = useModeration()
 
 // Local reactive state so vote updates are immediately visible
 const localScore = ref(props.comment.score)
@@ -159,6 +159,14 @@ async function togglePin (): Promise<void> {
   }
 }
 
+async function handleDistinguish (): Promise<void> {
+  acting.value = true
+  showModMenu.value = false
+  const success = await distinguishComment(props.comment.id)
+  acting.value = false
+  if (success) emit('updated')
+}
+
 function openRemoveDialog (): void {
   showModMenu.value = false
   showRemoveDialog.value = true
@@ -292,6 +300,20 @@ function openRemoveDialog (): void {
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
             {{ comment.isPinned ? 'Unpin' : 'Pin' }}
+          </button>
+
+          <!-- Distinguish (own comments only) -->
+          <button
+            v-if="isOwnComment"
+            class="w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors"
+            :class="comment.distinguishedAs ? 'text-green-700 hover:bg-green-50' : 'text-gray-700 hover:bg-gray-50'"
+            :disabled="acting"
+            @click="handleDistinguish"
+          >
+            <svg class="w-4 h-4" :class="comment.distinguishedAs ? 'text-green-500' : 'text-gray-400'" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            {{ comment.distinguishedAs ? 'Undistinguish' : 'Distinguish' }}
           </button>
 
           <div class="border-t border-gray-100 my-1" />

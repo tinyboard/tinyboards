@@ -158,6 +158,7 @@ type Mutation {
   deletePost(postId: ID!): Post!
   removePost(postId: ID!, reason: String): Post!
   restorePost(postId: ID!): Post!
+  distinguishPost(postId: ID!): Post!
 
   # Comments
   createComment(postId: ID!, body: String!, parentId: ID): Comment!
@@ -169,6 +170,7 @@ type Mutation {
   pinComment(commentId: ID!): Comment!
   removeComment(commentId: ID!, reason: String): Comment!
   restoreComment(commentId: ID!): Comment!
+  distinguishComment(commentId: ID!): Comment!
 
   # Boards
   createBoard(input: CreateBoardInput!, iconFile: Upload, bannerFile: Upload): CreateBoardResponse!
@@ -282,6 +284,7 @@ type Post {
   sourceUrl: String
   slug: String!
   approvalStatus: String!
+  distinguishedAs: String
   commentCount: Int!
   score: Int!
   upvotes: Int!
@@ -313,6 +316,7 @@ type Comment {
   boardId: ID!
   slug: String!
   approvalStatus: String!
+  distinguishedAs: String
   replies: [Comment!]
   score: Int!
   upvotes: Int!

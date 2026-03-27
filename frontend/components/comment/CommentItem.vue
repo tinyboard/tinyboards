@@ -55,6 +55,12 @@ function submitReply (): void {
         {{ comment.creator.displayName ?? comment.creator.name }}
       </NuxtLink>
       <span v-else class="text-gray-400 italic">[deleted]</span>
+      <span v-if="comment.distinguishedAs === 'admin'" class="inline-flex items-center px-1 py-0 rounded text-[10px] font-medium bg-green-100 text-green-700 border border-green-200 leading-4">
+        Admin
+      </span>
+      <span v-else-if="comment.distinguishedAs === 'mod'" class="inline-flex items-center px-1 py-0 rounded text-[10px] font-medium bg-blue-100 text-blue-700 border border-blue-200 leading-4">
+        Mod
+      </span>
       <span>&middot;</span>
       <time :datetime="comment.createdAt">{{ timeAgo(comment.createdAt) }}</time>
       <span v-if="comment.isPinned" class="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800 ml-1">
