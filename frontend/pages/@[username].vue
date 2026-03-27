@@ -40,6 +40,12 @@ provide('profileIsOwnProfile', isOwnProfile)
 
       <div class="max-w-5xl mx-auto px-4 py-4">
         <UserActions v-if="!isOwnProfile" :user="user" class="mb-4" />
+        <UserAdminActions
+          v-if="!isOwnProfile && authStore.user?.isAdmin"
+          :user="user"
+          class="mb-4"
+          @updated="fetchUser(username)"
+        />
         <NuxtPage />
       </div>
     </template>

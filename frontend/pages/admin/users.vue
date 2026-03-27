@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useGraphQL, useGraphQLMutation } from '~/composables/useGraphQL'
+import { useGraphQL } from '~/composables/useGraphQL'
+import { useToast } from '~/composables/useToast'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'admin' })
 useHead({ title: 'Admin - Users' })
@@ -22,16 +24,16 @@ interface ListUsersResponse {
   listUsers: User[]
 }
 
-interface BanUserResponse {
-  banUserFromSite: { success: boolean; message: string }
-}
+const toast = useToast()
+const authStore = useAuthStore()
+const myAdminLevel = authStore.user?.adminLevel ?? 0
 
 const searchTerm = ref('')
 const page = ref(1)
 const limit = 20
 
 const { execute, data, loading, error } = useGraphQL<ListUsersResponse>()
-const { execute: executeBan, loading: banLoading } = useGraphQLMutation<BanUserResponse>()
+const { execute: executeMutation, loading: mutationLoading } = useGraphQL()
 
 const LIST_USERS_QUERY = `
   query ListUsers($searchTerm: String, $page: Int, $limit: Int) {
@@ -60,16 +62,39 @@ async function fetchUsers () {
   })
 }
 
-async function banUser (userId: string) {
-  if (!confirm('Are you sure you want to ban this user?')) return
+async function banUser (user: User) {
+  if (!confirm(`Are you sure you want to ban ${user.displayName || user.name}?`)) return
 
-  await executeBan(`
+  const result = await executeMutation(`
     mutation BanUserFromSite($input: BanUserInput!) {
       banUserFromSite(input: $input) { success message }
     }
-  `, { variables: { input: { userId } } })
+  `, { variables: { input: { userId: user.id } } })
 
-  await fetchUsers()
+  if (result) {
+    toast.success(`${user.name} has been banned`)
+    await fetchUsers()
+  }
+}
+
+async function unbanUser (user: User) {
+  if (!confirm(`Unban ${user.displayName || user.name}?`)) return
+
+  const result = await executeMutation(`
+    mutation UnbanUserFromSite($userId: ID!, $reason: String) {
+      unbanUserFromSite(userId: $userId, reason: $reason) { success message }
+    }
+  `, { variables: { userId: user.id } })
+
+  if (result) {
+    toast.success(`${user.name} has been unbanned`)
+    await fetchUsers()
+  }
+}
+
+function canManage (user: User): boolean {
+  if (user.isAdmin && user.adminLevel >= myAdminLevel) return false
+  return true
 }
 
 async function onSearch () {
@@ -146,9 +171,9 @@ function formatDate (dateStr: string): string {
                     size="sm"
                   />
                   <div>
-                    <div class="font-medium text-gray-900">
+                    <NuxtLink :to="`/@${user.name}`" class="font-medium text-gray-900 hover:underline">
                       {{ user.displayName || user.name }}
-                    </div>
+                    </NuxtLink>
                     <div class="text-xs text-gray-500">
                       @{{ user.name }}
                     </div>
@@ -185,14 +210,30 @@ function formatDate (dateStr: string): string {
                 {{ formatDate(user.createdAt) }}
               </td>
               <td class="py-3 px-4">
-                <button
-                  v-if="!user.isBanned && !user.isAdmin"
-                  class="button button-sm white text-red-600 hover:text-red-800"
-                  :disabled="banLoading"
-                  @click="banUser(user.id)"
-                >
-                  Ban
-                </button>
+                <div v-if="canManage(user)" class="flex items-center gap-2">
+                  <button
+                    v-if="user.isBanned"
+                    class="button button-sm text-green-600 hover:text-green-800 hover:bg-green-50"
+                    :disabled="mutationLoading"
+                    @click="unbanUser(user)"
+                  >
+                    Unban
+                  </button>
+                  <button
+                    v-else
+                    class="button button-sm text-red-600 hover:text-red-800 hover:bg-red-50"
+                    :disabled="mutationLoading"
+                    @click="banUser(user)"
+                  >
+                    Ban
+                  </button>
+                  <NuxtLink
+                    :to="`/@${user.name}`"
+                    class="button button-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 no-underline"
+                  >
+                    Profile
+                  </NuxtLink>
+                </div>
               </td>
             </tr>
           </tbody>

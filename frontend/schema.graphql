@@ -209,6 +209,7 @@ type Mutation {
   # Site moderation
   banUserFromSite(input: BanUserInput!): BanUserResponse!
   unbanUserFromSite(userId: ID!, reason: String): UnbanUserResponse!
+  setUserAdminLevel(userId: ID!, adminLevel: Int!): User!
 
   # Report moderation
   resolveReport(reportId: ID!, reportType: String!): ResolveReportResponse!

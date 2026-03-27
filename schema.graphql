@@ -211,6 +211,8 @@ type Mutation {
   # Site admin
   updateSiteConfig(input: UpdateSiteConfigInput!): LocalSite!
   updateUserBoardCreationApproval(userId: ID!, approved: Boolean!): User!
+  setUserAdminLevel(userId: ID!, adminLevel: Int!): User!
+  deleteAccount(userId: ID!): Boolean!
 
   # Site moderation
   banUserFromSite(input: BanUserInput!): BanUserResponse!
@@ -237,9 +239,6 @@ type Mutation {
   # Invites
   createInvite: String!
   deleteInvite(inviteId: ID!): Boolean!
-
-  # Account
-  deleteAccount: Boolean!
 
   # File upload
   uploadFile(file: Upload!): String!
