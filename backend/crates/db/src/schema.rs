@@ -124,6 +124,8 @@ diesel::table! {
         image_strip_exif -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        custom_css -> Nullable<Text>,
+        custom_css_enabled -> Bool,
     }
 }
 
@@ -214,6 +216,7 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         deleted_at -> Nullable<Timestamptz>,
+        custom_css -> Nullable<Text>,
     }
 }
 

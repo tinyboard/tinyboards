@@ -88,11 +88,14 @@ pub struct LocalSite {
     pub max_emojis_per_comment: Option<i32>,
     pub emoji_max_file_size_mb: i32,
     pub board_emojis_enabled: bool,
+    pub custom_css_enabled: bool,
     pub created_at: String,
     pub updated_at: String,
-    // Hidden field — only admins can see
+    // Hidden fields — only admins can see
     #[graphql(skip)]
     pub welcome_message_: Option<String>,
+    #[graphql(skip)]
+    pub custom_css_: Option<String>,
 }
 
 #[ComplexObject]
@@ -103,6 +106,22 @@ impl LocalSite {
         match user {
             Some(u) if u.has_permission(tinyboards_db::models::user::user::AdminPerms::Config) => {
                 self.welcome_message_.clone()
+            }
+            _ => None,
+        }
+    }
+
+    /// Custom CSS for the site. Returned to all users when custom_css_enabled is true,
+    /// so the frontend can inject it into a <style> tag. Admins always see it (for editing).
+    pub async fn custom_css(&self, ctx: &Context<'_>) -> Option<String> {
+        if self.custom_css_enabled {
+            return self.custom_css_.clone();
+        }
+        // If disabled, only admins can see it (so they can edit it before enabling)
+        let user = permissions::optional_auth(ctx);
+        match user {
+            Some(u) if u.has_permission(tinyboards_db::models::user::user::AdminPerms::Config) => {
+                self.custom_css_.clone()
             }
             _ => None,
         }
@@ -168,9 +187,11 @@ impl From<DbSite> for LocalSite {
             max_emojis_per_comment: v.max_emojis_per_comment,
             emoji_max_file_size_mb: v.emoji_max_file_size_mb,
             board_emojis_enabled: v.board_emojis_enabled,
+            custom_css_enabled: v.custom_css_enabled,
             created_at: v.created_at.to_rfc3339(),
             updated_at: v.updated_at.to_rfc3339(),
             welcome_message_: v.welcome_message,
+            custom_css_: v.custom_css,
         }
     }
 }

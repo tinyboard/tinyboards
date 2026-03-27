@@ -16,7 +16,12 @@ use tinyboards_db::{
     schema::{board_aggregates, boards},
     utils::{get_conn, DbPool},
 };
-use tinyboards_utils::{parser::parse_markdown_opt, utils::custom_body_parsing, TinyBoardsError};
+use tinyboards_utils::{
+    css_sanitizer::{sanitize_css, MAX_BOARD_CSS_BYTES},
+    parser::parse_markdown_opt,
+    utils::custom_body_parsing,
+    TinyBoardsError,
+};
 use url::Url;
 use uuid::Uuid;
 
@@ -39,6 +44,7 @@ pub struct UpdateBoardSettingsInput {
     pub section_order: Option<String>,
     pub default_section: Option<String>,
     pub wiki_enabled: Option<bool>,
+    pub custom_css: Option<String>,
 }
 
 #[derive(SimpleObject)]
@@ -132,6 +138,17 @@ impl UpdateBoardSettings {
             None => None,
         };
 
+        // Sanitize custom CSS if provided
+        let sanitized_css = match input.custom_css {
+            Some(ref css) if !css.trim().is_empty() => {
+                let result = sanitize_css(css, MAX_BOARD_CSS_BYTES)
+                    .map_err(|e| TinyBoardsError::BadRequest(e))?;
+                Some(Some(result.css))
+            }
+            Some(_) => Some(None), // Empty string clears the CSS
+            None => None,
+        };
+
         // Build the update form — only fields that were provided are set, preserving existing data
         let board_form = BoardUpdateForm {
             title: input.title,
@@ -151,6 +168,7 @@ impl UpdateBoardSettings {
             section_order: input.section_order.map(Some),
             wiki_enabled: input.wiki_enabled,
             default_section: input.default_section.map(Some),
+            custom_css: sanitized_css,
             ..Default::default()
         };
 

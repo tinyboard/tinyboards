@@ -345,6 +345,7 @@ type Board {
   excludeFromAll: Boolean!
   publicBanReason: String
   wikiEnabled: Boolean!
+  customCss: String
   createdAt: String!
   updatedAt: String!
   subscribers: Int!
@@ -428,6 +429,8 @@ type LocalSite {
   createdAt: String!
   updatedAt: String!
   welcomeMessage: String
+  customCss: String
+  customCssEnabled: Boolean!
 }
 
 type SiteStats {
@@ -701,6 +704,7 @@ input UpdateBoardSettingsInput {
   icon: String
   banner: String
   wikiEnabled: Boolean
+  customCss: String
 }
 
 input UpdateSettingsInput {
@@ -759,6 +763,8 @@ input UpdateSiteConfigInput {
   filteredWords: String
   linkFilterEnabled: Boolean
   bannedDomains: String
+  customCss: String
+  customCssEnabled: Boolean
 }
 
 input BanUserInput {

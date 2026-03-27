@@ -3,6 +3,8 @@ import { useGraphQL, useGraphQLMutation } from '~/composables/useGraphQL'
 import { useFileUpload } from '~/composables/useFileUpload'
 import { useToast } from '~/composables/useToast'
 import { useAuth } from '~/composables/useAuth'
+import { validateCss, CSS_SNIPPET_CATEGORIES } from '~/utils/css-validator'
+import type { CssSnippet } from '~/utils/css-validator'
 
 definePageMeta({ middleware: 'guards' })
 
@@ -20,18 +22,19 @@ interface BoardData {
   primaryColor: string
   secondaryColor: string
   hoverColor: string
+  customCss: string | null
 }
 
 const BOARD_QUERY = `
   query GetBoard($name: String!) {
-    board(name: $name) { id icon banner primaryColor secondaryColor hoverColor }
+    board(name: $name) { id icon banner primaryColor secondaryColor hoverColor customCss }
   }
 `
 
 const UPDATE_BOARD_SETTINGS = `
   mutation UpdateBoardSettings($input: UpdateBoardSettingsInput!) {
     updateBoardSettings(input: $input) {
-      board { id icon banner primaryColor secondaryColor hoverColor }
+      board { id icon banner primaryColor secondaryColor hoverColor customCss }
     }
   }
 `
@@ -48,6 +51,14 @@ const form = reactive({
   icon: null as string | null,
   banner: null as string | null,
 })
+
+const cssCode = ref('')
+const showCssEditor = ref(false)
+const showCssWizard = ref(false)
+const expandedCategory = ref<string | null>(null)
+
+const cssValidation = computed(() => validateCss(cssCode.value, 25 * 1024))
+const cssCharCount = computed(() => new Blob([cssCode.value]).size)
 
 const iconPreview = ref<string | null>(null)
 const bannerPreview = ref<string | null>(null)
@@ -66,6 +77,10 @@ onMounted(async () => {
   form.hoverColor = board.hoverColor
   form.icon = board.icon
   form.banner = board.banner
+  cssCode.value = board.customCss ?? ''
+  if (board.customCss) {
+    showCssEditor.value = true
+  }
   iconPreview.value = board.icon
   bannerPreview.value = board.banner
 })
@@ -108,8 +123,27 @@ function removeBanner () {
   pendingBannerFile.value = null
 }
 
+function insertSnippet (snippet: CssSnippet) {
+  if (cssCode.value && !cssCode.value.endsWith('\n')) {
+    cssCode.value += '\n'
+  }
+  cssCode.value += `\n/* ${snippet.name} */\n${snippet.css}\n`
+  showCssWizard.value = false
+  showCssEditor.value = true
+  toast.success(`Inserted: ${snippet.name}`)
+}
+
+function toggleCategory (name: string) {
+  expandedCategory.value = expandedCategory.value === name ? null : name
+}
+
 async function saveSettings () {
   if (!boardId.value) return
+
+  if (cssCode.value && !cssValidation.value.valid) {
+    toast.error('Please fix CSS errors before saving')
+    return
+  }
 
   uploading.value = true
 
@@ -141,6 +175,7 @@ async function saveSettings () {
         hoverColor: form.hoverColor,
         icon: form.icon,
         banner: form.banner,
+        customCss: cssCode.value || '',
       },
     },
   })
@@ -274,6 +309,82 @@ async function saveSettings () {
             >
               Hover
             </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom CSS section -->
+      <div class="border-t border-gray-200 pt-6">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="text-sm font-medium text-gray-900">Custom CSS</h3>
+            <p class="text-xs text-gray-500 mt-0.5">Add custom styles that apply only to this board. Overrides site-level CSS.</p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              v-if="!showCssWizard"
+              type="button"
+              class="button white button-sm"
+              @click="showCssWizard = true; showCssEditor = true"
+            >
+              Style Wizard
+            </button>
+            <button
+              type="button"
+              class="button white button-sm"
+              @click="showCssEditor = !showCssEditor"
+            >
+              {{ showCssEditor ? 'Hide Editor' : 'Show Editor' }}
+            </button>
+          </div>
+        </div>
+
+        <!-- CSS Wizard (compact version) -->
+        <div v-if="showCssWizard" class="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+          <div class="px-3 py-2 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+            <span class="text-xs font-medium text-gray-700">Quick Snippets</span>
+            <button type="button" class="text-xs text-gray-400 hover:text-gray-600" @click="showCssWizard = false">Close</button>
+          </div>
+          <div class="max-h-64 overflow-y-auto divide-y divide-gray-100">
+            <div v-for="category in CSS_SNIPPET_CATEGORIES" :key="category.name">
+              <button
+                type="button"
+                class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 text-xs"
+                @click="toggleCategory(category.name)"
+              >
+                <span class="font-medium text-gray-700 flex-1">{{ category.name }}</span>
+                <span class="text-gray-400" :class="expandedCategory === category.name ? 'rotate-90' : ''">&#9656;</span>
+              </button>
+              <div v-if="expandedCategory === category.name" class="bg-gray-50 divide-y divide-gray-100">
+                <div v-for="snippet in category.snippets" :key="snippet.name" class="px-3 py-2 flex items-center justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="text-xs font-medium text-gray-800 truncate">{{ snippet.name }}</div>
+                    <div class="text-xs text-gray-500 truncate">{{ snippet.description }}</div>
+                  </div>
+                  <button type="button" class="shrink-0 text-xs text-primary hover:underline" @click="insertSnippet(snippet)">Insert</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CSS Editor -->
+        <div v-if="showCssEditor" class="space-y-3">
+          <textarea
+            v-model="cssCode"
+            class="w-full h-48 font-mono text-xs bg-gray-900 text-green-400 rounded-lg p-3 border border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary resize-y leading-relaxed"
+            placeholder="/* Board-specific CSS — overrides site CSS */
+.post-card { border-radius: 12px; }"
+            spellcheck="false"
+          />
+          <div class="flex items-center justify-between text-xs">
+            <div>
+              <span v-if="cssCode && cssValidation.valid" class="text-green-600">&#10003; Valid CSS</span>
+              <span v-else-if="cssCode && !cssValidation.valid" class="text-red-600">
+                &#10007; {{ cssValidation.errors[0] }}
+              </span>
+            </div>
+            <span class="text-gray-400">{{ (cssCharCount / 1024).toFixed(1) }} KB / 25 KB</span>
           </div>
         </div>
       </div>

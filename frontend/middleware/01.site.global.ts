@@ -30,6 +30,8 @@ const SITE_QUERY = `
       enableNSFWTagging
       wordFilterEnabled
       welcomeMessage
+      customCss
+      customCssEnabled
     }
   }
 `

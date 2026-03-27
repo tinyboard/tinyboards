@@ -51,6 +51,7 @@ onMounted(async () => {
     <CommonErrorDisplay v-else-if="error" :message="error.message" @retry="fetchBoard(boardName)" />
 
     <template v-else-if="board">
+      <CommonBoardCssInjector :css="board.customCss" />
       <BoardHeader :board="board" :is-subscribed="isSubscribed" @subscribe="subscribe" @unsubscribe="unsubscribe" />
       <BoardTabs
         :board-name="board.name"
