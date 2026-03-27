@@ -224,7 +224,8 @@ revisions), flairs (management + post assignment),
 toast notifications, SEO (useSeoMeta + JSON-LD + robots.txt + sitemap),
 notification polling, thread system, rich user profiles (background,
 avatar frame, karma, signature), link preview rendering (YouTube embeds,
-video, thumbnails).
+video, thumbnails), distinguish feature (admin/mod badges on posts and
+comments with toggle).
 
 ### Not Yet Implemented
 - Email sending (SMTP) — blocks password reset & verification
@@ -277,8 +278,8 @@ video, thumbnails).
 `getBoardFlairs`, `getFlairTemplate`, `getModerationLog`
 
 ### Mutations (38+)
-**Posts:** create, edit, vote, save/unsave, hide/unhide, lock/unlock, feature, remove, restore
-**Comments:** create, edit, vote, save/unsave, remove, restore
+**Posts:** create, edit, vote, save/unsave, hide/unhide, lock/unlock, feature, remove, restore, distinguish
+**Comments:** create, edit, vote, save/unsave, remove, restore, distinguish
 **Boards:** create, updateSettings
 **Users:** follow/unfollow, block/unblock, updateSettings, updateProfile
 **Messages:** send, edit, delete
@@ -459,3 +460,9 @@ infallible `unwrap()` on date/time values.
 - Removed stream references from AppNav, AppSidebar, HomeSidebar, AllSidebar
 - Removed streams user guide documentation
 - Updated CLAUDE.md: project overview, feature status, GraphQL API lists, remaining work, session log
+
+### 2026-03-27 — Session 9: Admin Level Fix + Distinguish Feature
+- **Fixed initial admin level**: Changed from 256 to 7 (Owner) in code_migrations.rs. Level 256 was outside the valid 0-7 range and broke admin management.
+- **Owner-level admin promotion**: Updated set_user_admin_level and delete_account mutations so level 7 (Owner) admins can promote other users to Owner level and manage peer owners. Non-owner admins still cannot promote to their own level.
+- **Distinguish feature (admin/mod badges)**: Added `distinguished_as` nullable column to posts and comments tables (migration 000020). Values: NULL (not distinguished), 'admin', 'mod'. Admins and board mods can toggle a distinguish badge on their own posts/comments via `distinguishPost` and `distinguishComment` GraphQL mutations. Badge shows as green "Admin" or blue "Mod" in PostCard, PostDetail, and CommentItem. Toggle button appears in moderation menus for own content only.
+- Updated both GraphQL schema files, generated types, and all relevant frontend queries/composables

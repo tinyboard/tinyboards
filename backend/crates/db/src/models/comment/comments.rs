@@ -31,6 +31,7 @@ pub struct Comment {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
+    pub distinguished_as: Option<String>,
 }
 
 /// Insert form for creating a new comment.
@@ -69,4 +70,5 @@ pub struct CommentUpdateForm {
     pub quoted_comment_id: Option<Option<Uuid>>,
     pub updated_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<Option<DateTime<Utc>>>,
+    pub distinguished_as: Option<Option<String>>,
 }

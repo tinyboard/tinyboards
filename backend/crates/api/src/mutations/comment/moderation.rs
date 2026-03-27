@@ -204,4 +204,76 @@ impl CommentModeration {
             .await
             .map_err(|e| e.into())
     }
+
+    /// Toggle distinguish on a comment (mark as speaking officially as admin or mod).
+    /// Only the comment creator can distinguish, and only if they are an admin or mod of the board.
+    pub async fn distinguish_comment(
+        &self,
+        ctx: &Context<'_>,
+        comment_id: ID,
+    ) -> Result<Comment> {
+        let user = permissions::require_auth_not_banned(ctx)?;
+        let pool = ctx.data::<DbPool>()?;
+        let conn = &mut get_conn(pool).await?;
+
+        let comment_uuid: Uuid = comment_id
+            .parse()
+            .map_err(|_| TinyBoardsError::from_message(400, "Invalid comment ID"))?;
+
+        let comment: DbComment = comments::table
+            .find(comment_uuid)
+            .first(conn)
+            .await
+            .map_err(|_| TinyBoardsError::NotFound("Comment not found".into()))?;
+
+        // Only the comment creator can distinguish their own comments
+        if comment.creator_id != user.id {
+            return Err(
+                TinyBoardsError::from_message(403, "Only the comment creator can distinguish a comment")
+                    .into(),
+            );
+        }
+
+        // Determine the distinguish type based on the user's role
+        let new_distinguished = if comment.distinguished_as.is_some() {
+            // Toggle off
+            None
+        } else if user.is_admin && user.admin_level > 0 {
+            Some("admin".to_string())
+        } else {
+            // Check if user is a mod of this board
+            use tinyboards_db::schema::board_moderators;
+            let is_mod: bool = board_moderators::table
+                .filter(board_moderators::board_id.eq(comment.board_id))
+                .filter(board_moderators::user_id.eq(user.id))
+                .filter(board_moderators::is_invite_accepted.eq(true))
+                .count()
+                .get_result::<i64>(conn)
+                .await
+                .map(|c| c > 0)
+                .unwrap_or(false);
+
+            if is_mod {
+                Some("mod".to_string())
+            } else {
+                return Err(
+                    TinyBoardsError::from_message(403, "Must be an admin or board moderator to distinguish")
+                        .into(),
+                );
+            }
+        };
+
+        diesel::update(comments::table.find(comment_uuid))
+            .set(&CommentUpdateForm {
+                distinguished_as: Some(new_distinguished),
+                ..Default::default()
+            })
+            .execute(conn)
+            .await
+            .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        load_comment_with_counts(conn, comment_uuid)
+            .await
+            .map_err(|e| e.into())
+    }
 }

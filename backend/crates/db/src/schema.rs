@@ -276,6 +276,8 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         deleted_at -> Nullable<Timestamptz>,
+        #[max_length = 10]
+        distinguished_as -> Nullable<Varchar>,
     }
 }
 
@@ -306,6 +308,8 @@ diesel::table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         deleted_at -> Nullable<Timestamptz>,
+        #[max_length = 10]
+        distinguished_as -> Nullable<Varchar>,
     }
 }
 

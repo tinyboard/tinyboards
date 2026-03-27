@@ -98,6 +98,18 @@ const DISMISS_REPORT_MUTATION = `
   }
 `
 
+const DISTINGUISH_POST_MUTATION = `
+  mutation DistinguishPost($postId: ID!) {
+    distinguishPost(postId: $postId) { id distinguishedAs }
+  }
+`
+
+const DISTINGUISH_COMMENT_MUTATION = `
+  mutation DistinguishComment($commentId: ID!) {
+    distinguishComment(commentId: $commentId) { id distinguishedAs }
+  }
+`
+
 export { type PostReportView, type CommentReportView }
 
 export function useModeration () {
@@ -215,6 +227,24 @@ export function useModeration () {
     return false
   }
 
+  async function distinguishPost (postId: string): Promise<boolean> {
+    const toast = useToast()
+    const { execute: exec, error: mutError } = useGraphQL()
+    const result = await exec(DISTINGUISH_POST_MUTATION, { variables: { postId } })
+    if (result) { toast.success('Post distinguish toggled'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to toggle distinguish')
+    return false
+  }
+
+  async function distinguishComment (commentId: string): Promise<boolean> {
+    const toast = useToast()
+    const { execute: exec, error: mutError } = useGraphQL()
+    const result = await exec(DISTINGUISH_COMMENT_MUTATION, { variables: { commentId } })
+    if (result) { toast.success('Comment distinguish toggled'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to toggle distinguish')
+    return false
+  }
+
   return {
     postReports,
     commentReports,
@@ -231,5 +261,7 @@ export function useModeration () {
     featurePost,
     resolveReport,
     dismissReport,
+    distinguishPost,
+    distinguishComment,
   }
 }

@@ -112,8 +112,17 @@ impl UserManagement {
             );
         }
 
-        // Cannot set someone to your own level or higher
-        if admin_level >= admin.admin_level {
+        // Owners (level 7) can promote others up to their own level.
+        // All other admins can only assign levels strictly below their own.
+        if admin.admin_level >= 7 {
+            if admin_level > 7 {
+                return Err(TinyBoardsError::from_message(
+                    403,
+                    "Admin level must be between 0 and 7",
+                )
+                .into());
+            }
+        } else if admin_level >= admin.admin_level {
             return Err(TinyBoardsError::from_message(
                 403,
                 "Cannot grant an admin level equal to or higher than your own",
@@ -127,8 +136,8 @@ impl UserManagement {
             .await
             .map_err(|_| TinyBoardsError::NotFound("User not found".to_string()))?;
 
-        // Cannot modify someone at your level or above
-        if target.is_admin && target.admin_level >= admin.admin_level {
+        // Owners can modify other owners; lower admins cannot modify peers or superiors
+        if target.is_admin && target.admin_level >= admin.admin_level && admin.admin_level < 7 {
             return Err(TinyBoardsError::from_message(
                 403,
                 "Cannot modify an admin with equal or higher permissions",
@@ -214,7 +223,7 @@ impl UserManagement {
             .await
             .map_err(|_| TinyBoardsError::NotFound("User not found".to_string()))?;
 
-        if target.is_admin && target.admin_level >= admin.admin_level {
+        if target.is_admin && target.admin_level >= admin.admin_level && admin.admin_level < 7 {
             return Err(TinyBoardsError::from_message(
                 403,
                 "Cannot delete an admin with equal or higher permissions",

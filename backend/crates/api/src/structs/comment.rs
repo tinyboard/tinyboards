@@ -45,6 +45,7 @@ pub struct Comment {
     pub quoted_comment_id: Option<String>,
     pub slug: String,
     pub approval_status: String,
+    pub distinguished_as: Option<String>,
     pub replies: Option<Vec<Self>>,
     // Internal UUID fields for dataloaders
     #[graphql(skip)]
@@ -180,6 +181,7 @@ impl From<(DbComment, DbCommentAggregates)> for Comment {
             quoted_comment_id: comment.quoted_comment_id.map(|id| id.to_string()),
             slug: comment.slug.clone(),
             approval_status: format!("{:?}", comment.approval_status).to_lowercase(),
+            distinguished_as: comment.distinguished_as.clone(),
             uuid_id: comment.id,
             uuid_creator_id: comment.creator_id,
             uuid_post_id: comment.post_id,

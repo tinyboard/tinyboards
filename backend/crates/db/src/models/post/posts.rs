@@ -40,6 +40,7 @@ pub struct Post {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
+    pub distinguished_as: Option<String>,
 }
 
 /// Insert form for creating a new post.
@@ -98,4 +99,5 @@ pub struct PostUpdateForm {
     pub last_crawl_date: Option<Option<DateTime<Utc>>>,
     pub updated_at: Option<DateTime<Utc>>,
     pub deleted_at: Option<Option<DateTime<Utc>>>,
+    pub distinguished_as: Option<Option<String>>,
 }

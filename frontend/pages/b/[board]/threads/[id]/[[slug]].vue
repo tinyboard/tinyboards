@@ -48,6 +48,7 @@ const THREAD_QUERY = `
       myVote
       isSaved
       thumbnailUrl
+      distinguishedAs
       board { id name title icon }
       creator { id name displayName avatar isAdmin }
     }

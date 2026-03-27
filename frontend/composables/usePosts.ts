@@ -33,6 +33,7 @@ const POSTS_QUERY = `
       altText
       embedTitle
       embedDescription
+      distinguishedAs
       board {
         id
         name
@@ -44,6 +45,7 @@ const POSTS_QUERY = `
         name
         displayName
         avatar
+        isAdmin
       }
     }
   }
