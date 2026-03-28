@@ -54,15 +54,34 @@ export default defineEventHandler(async (event) => {
     if (newAccessToken) {
       // Retry original request with the new token
       const retry = await forwardGraphQLRequest(gqlEndpoint, body, newAccessToken)
-      return retry.data
+      return rewriteMediaUrls(retry.data, config.public.domain as string)
     }
 
     // Refresh failed — clear cookies and return the original error
     clearAuthCookies(event)
   }
 
-  return result.data
+  return rewriteMediaUrls(result.data, config.public.domain as string)
 })
+
+/**
+ * Rewrite absolute media URLs from the backend into relative paths.
+ *
+ * The backend stores URLs like http://localhost/media/file.jpg using
+ * get_protocol_and_hostname(), which omits the port. In production nginx
+ * handles /media/ on port 80/443, but in bare-metal local dev (no nginx)
+ * nothing serves on those ports. Converting to relative /media/ paths lets
+ * the browser resolve them against the current origin, where the Nuxt
+ * server route proxy forwards them to the backend.
+ */
+function rewriteMediaUrls (data: GraphQLResponse, domain: string): GraphQLResponse {
+  if (!data) return data
+  const json = JSON.stringify(data)
+  const escaped = domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = new RegExp(`https?://${escaped}(?::\\d+)?/media/`, 'g')
+  const rewritten = json.replace(pattern, '/media/')
+  return JSON.parse(rewritten)
+}
 
 interface ForwardResult {
   httpStatus: number

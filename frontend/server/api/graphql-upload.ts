@@ -47,13 +47,13 @@ export default defineEventHandler(async (event) => {
         // Rebuild form data for retry (original may have been consumed)
         const retryFormData = buildFormData(parts)
         const retry = await forwardUpload(gqlEndpoint, retryFormData, newAccessToken)
-        return retry.data
+        return rewriteMediaUrls(retry.data, config.public.domain as string)
       }
 
       clearAuthCookies(event)
     }
 
-    return data
+    return rewriteMediaUrls(data, config.public.domain as string)
   } catch (err) {
     throw createError({
       statusCode: 500,
@@ -61,6 +61,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
+
+/**
+ * Rewrite absolute media URLs to relative paths so they resolve correctly
+ * in all deployment configurations (with or without nginx).
+ */
+function rewriteMediaUrls (data: unknown, domain: string): unknown {
+  if (!data) return data
+  const json = JSON.stringify(data)
+  const escaped = domain.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const pattern = new RegExp(`https?://${escaped}(?::\\d+)?/media/`, 'g')
+  return JSON.parse(json.replace(pattern, '/media/'))
+}
 
 function buildFormData (parts: { name?: string; filename?: string; data: Buffer; type?: string }[]): FormData {
   const formData = new FormData()
