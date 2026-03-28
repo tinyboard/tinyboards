@@ -7,7 +7,7 @@
 
 A self-hosted platform for building communities you actually own — on hardware you control, with rules you set.
 
-<!-- Add a screenshot or demo GIF here once available -->
+![Tinyboards Frontpage](https://github.com/user-attachments/assets/990f41b3-38bf-4d25-b7a1-80adf7f0ed9d)
 
 ---
 
