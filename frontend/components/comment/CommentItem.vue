@@ -98,11 +98,6 @@ function submitReply (): void {
         @toggle-reply="showReply = !showReply"
       />
 
-      <!-- Reactions -->
-      <div class="mt-1">
-        <CommonReactionBar target-type="comment" :target-id="comment.id" />
-      </div>
-
       <!-- Reply form -->
       <div v-if="showReply && authStore.isLoggedIn" class="mt-2">
         <EditorMarkdownEditor

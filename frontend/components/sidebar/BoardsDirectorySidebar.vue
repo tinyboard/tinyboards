@@ -47,7 +47,7 @@ const siteStore = useSiteStore()
     </div>
 
     <!-- Create board CTA -->
-    <div v-if="authStore.isLoggedIn && !siteStore.boardCreationAdminOnly">
+    <div v-if="authStore.isLoggedIn && (!siteStore.boardCreationAdminOnly || authStore.isAdmin)">
       <NuxtLink
         to="/boards/create"
         class="button white w-full text-center no-underline flex items-center justify-center gap-2 text-sm"

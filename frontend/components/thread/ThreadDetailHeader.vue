@@ -129,9 +129,9 @@ function openRemoveDialog (): void {
 </script>
 
 <template>
-  <article class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  <article class="bg-white border border-gray-200 rounded-lg">
     <!-- Thread title bar -->
-    <div class="px-4 py-3 bg-primary/5 border-b border-primary/10">
+    <div class="px-4 py-3 bg-primary/5 border-b border-primary/10 rounded-t-lg">
       <div class="flex items-center gap-2 flex-wrap">
         <h1 class="text-lg font-bold text-gray-900 flex-1">
           {{ post.title }}
