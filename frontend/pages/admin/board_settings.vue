@@ -8,6 +8,7 @@ interface BoardSettings {
   boardCreationMode: string
   boardsEnabled: boolean
   boardCreationAdminOnly: boolean
+  defaultBoardMode: string
 }
 
 interface BoardSettingsResponse {
@@ -24,6 +25,7 @@ const { execute: executeSave, loading: saving, error: saveError } = useGraphQLMu
 const boardCreationMode = ref('open')
 const boardsEnabled = ref(true)
 const boardCreationAdminOnly = ref(false)
+const defaultBoardMode = ref('feed')
 const saved = ref(false)
 
 const SETTINGS_QUERY = `
@@ -32,6 +34,7 @@ const SETTINGS_QUERY = `
       boardCreationMode
       boardsEnabled
       boardCreationAdminOnly
+      defaultBoardMode
     }
   }
 `
@@ -42,6 +45,7 @@ const SAVE_SETTINGS = `
       boardCreationMode
       boardsEnabled
       boardCreationAdminOnly
+      defaultBoardMode
     }
   }
 `
@@ -52,6 +56,7 @@ async function loadSettings () {
     boardCreationMode.value = result.site.boardCreationMode
     boardsEnabled.value = result.site.boardsEnabled
     boardCreationAdminOnly.value = result.site.boardCreationAdminOnly
+    defaultBoardMode.value = result.site.defaultBoardMode ?? 'feed'
   }
 }
 
@@ -63,6 +68,7 @@ async function saveSettings () {
         boardCreationMode: boardCreationMode.value,
         boardsEnabled: boardsEnabled.value,
         boardCreationAdminOnly: boardCreationAdminOnly.value,
+        defaultBoardMode: defaultBoardMode.value,
       },
     },
   })
@@ -122,6 +128,48 @@ onMounted(() => {
         <p class="mt-1 text-xs text-gray-500">
           When enabled, only admins can create new boards regardless of the creation mode above.
         </p>
+      </div>
+
+      <!-- Default board mode -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Default Board Mode</label>
+        <p class="text-xs text-gray-500 mb-3">
+          Pre-selected mode when users create a new board. This is a default, not a restriction.
+        </p>
+        <div class="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            class="text-left rounded-lg border-2 p-4 transition-all"
+            :class="defaultBoardMode === 'feed'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-gray-200 bg-white hover:border-gray-300'"
+            @click="defaultBoardMode = 'feed'"
+          >
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">📰</span>
+              <span class="font-semibold text-sm text-gray-900">Feed Board</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Share links, images, and text posts. Members vote on content.
+            </p>
+          </button>
+          <button
+            type="button"
+            class="text-left rounded-lg border-2 p-4 transition-all"
+            :class="defaultBoardMode === 'forum'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-gray-200 bg-white hover:border-gray-300'"
+            @click="defaultBoardMode = 'forum'"
+          >
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">💬</span>
+              <span class="font-semibold text-sm text-gray-900">Forum Board</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Threaded discussions. Great for Q&amp;A, support, or structured topics.
+            </p>
+          </button>
+        </div>
       </div>
 
       <CommonErrorDisplay v-if="saveError" :message="saveError.message" />

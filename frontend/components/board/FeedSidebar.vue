@@ -41,6 +41,16 @@ const siteStore = useSiteStore()
           >
             <CommonAvatar :src="board.icon ?? undefined" :name="board.name" size="xs" />
             <span class="truncate">{{ board.title }}</span>
+            <span
+              v-if="board.mode === 'forum'"
+              class="text-[10px] text-purple-500 shrink-0"
+              title="Forum"
+            >💬</span>
+            <span
+              v-else-if="board.mode === 'feed'"
+              class="text-[10px] text-blue-500 shrink-0"
+              title="Feed"
+            >📰</span>
             <span class="text-xs text-gray-400 ml-auto">{{ board.subscribers }}</span>
           </NuxtLink>
         </li>

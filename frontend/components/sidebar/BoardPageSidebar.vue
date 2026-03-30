@@ -41,21 +41,15 @@ onMounted(async () => {
   }
 })
 
-// Determine the current section from the route to show the right create button
-const currentSection = computed(() => {
-  if (route.path.includes('/threads')) return 'threads'
-  if (route.path.includes('/feed')) return 'feed'
-  return null
-})
-
+// Mode-aware create button
 const createButtonLabel = computed(() => {
-  if (currentSection.value === 'threads') return 'New Thread'
+  if (board.value?.mode === 'forum') return 'New Discussion'
   return 'Create Post'
 })
 
 const createButtonLink = computed(() => {
   if (!board.value) return ''
-  if (currentSection.value === 'threads') return `/b/${board.value.name}/threads/create`
+  if (board.value.mode === 'forum') return `/b/${board.value.name}/submit?type=thread`
   return `/b/${board.value.name}/submit`
 })
 </script>

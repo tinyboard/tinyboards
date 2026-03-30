@@ -42,7 +42,7 @@ const LIST_BOARDS_QUERY = `
       name
       title
       icon
-      sectionConfig
+      mode
     }
   }
 `
@@ -57,29 +57,21 @@ const { flairs, fetchFlairs } = useFlairs()
 
 const boardName = ref((useRoute().query.board as string) ?? '')
 const boardSearch = ref('')
-const boardResults = ref<(Board & { sectionConfig?: number })[]>([])
+const boardResults = ref<(Board & { mode?: string })[]>([])
 const showBoardDropdown = ref(false)
-const selectedBoard = ref<(Board & { sectionConfig?: number }) | null>(null)
+const selectedBoard = ref<(Board & { mode?: string }) | null>(null)
 const isNSFW = ref(false)
-const postType = ref('feed')
 const selectedFlairId = ref<string | null>(null)
 const boardId = ref<string | null>(null)
 
-// Determine available sections from board's sectionConfig
-const hasFeed = computed(() => {
-  if (!selectedBoard.value?.sectionConfig && selectedBoard.value?.sectionConfig !== 0) return true
-  return (selectedBoard.value.sectionConfig & 1) === 1
-})
-const hasThreads = computed(() => {
-  if (!selectedBoard.value?.sectionConfig && selectedBoard.value?.sectionConfig !== 0) return true
-  return (selectedBoard.value.sectionConfig & 2) === 2
+// Derive post type automatically from board mode
+const postType = computed(() => {
+  if (!selectedBoard.value) return 'feed'
+  return selectedBoard.value.mode === 'forum' ? 'thread' : 'feed'
 })
 
-// Auto-select post type based on available sections
-watch([hasFeed, hasThreads], () => {
-  if (hasFeed.value && !hasThreads.value) postType.value = 'feed'
-  else if (!hasFeed.value && hasThreads.value) postType.value = 'thread'
-})
+// Preselect type from query param (e.g. ?type=thread)
+const queryType = useRoute().query.type as string | undefined
 
 // Search boards as user types
 let boardSearchTimeout: ReturnType<typeof setTimeout> | null = null
@@ -91,7 +83,7 @@ watch(boardSearch, (term) => {
     return
   }
   boardSearchTimeout = setTimeout(async () => {
-    const { execute: execSearch } = useGraphQL<{ listBoards: (Board & { sectionConfig?: number })[] }>()
+    const { execute: execSearch } = useGraphQL<{ listBoards: (Board & { mode?: string })[] }>()
     const result = await execSearch(LIST_BOARDS_QUERY, {
       variables: { searchTerm: term.trim(), limit: 10 },
     })
@@ -102,7 +94,7 @@ watch(boardSearch, (term) => {
   }, 300)
 })
 
-async function selectBoard (board: Board & { sectionConfig?: number }) {
+async function selectBoard (board: Board & { mode?: string }) {
   selectedBoard.value = board
   boardName.value = board.name
   boardSearch.value = board.name
@@ -118,7 +110,7 @@ async function selectBoard (board: Board & { sectionConfig?: number }) {
 onMounted(async () => {
   if (boardName.value) {
     boardSearch.value = boardName.value
-    const { execute: execSearch } = useGraphQL<{ listBoards: (Board & { sectionConfig?: number })[] }>()
+    const { execute: execSearch } = useGraphQL<{ listBoards: (Board & { mode?: string })[] }>()
     const result = await execSearch(LIST_BOARDS_QUERY, {
       variables: { searchTerm: boardName.value, limit: 1 },
     })
@@ -127,6 +119,16 @@ onMounted(async () => {
     }
   }
 })
+
+function modeBadgeClass (mode: string | undefined): string {
+  if (mode === 'forum') return 'bg-purple-100 text-purple-700'
+  return 'bg-blue-100 text-blue-700'
+}
+
+function modeBadgeLabel (mode: string | undefined): string {
+  if (mode === 'forum') return '💬 Forum'
+  return '📰 Feed'
+}
 
 async function handleSubmit (data: { title: string; body: string; url: string; file: File | null; altText: string }): Promise<void> {
   let result: CreatePostResponse | null = null
@@ -142,7 +144,6 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
   }
 
   if (data.file) {
-    // Use multipart upload for posts with files
     const uploadResult = await executeWithFile(
       CREATE_POST_WITH_FILE_MUTATION,
       baseVars as Record<string, unknown>,
@@ -156,7 +157,6 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
 
   if (result?.createPost) {
     const post = result.createPost
-
     // Assign flair if selected
     if (selectedFlairId.value && post.id) {
       const { execute: execFlair } = useGraphQL()
@@ -172,11 +172,7 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
 
     const board = post.board?.name ?? boardName.value
     if (board) {
-      if (postType.value === 'thread') {
-        await navigateTo(`/b/${board}/threads/${post.id}/${post.slug}`)
-      } else {
-        await navigateTo(`/b/${board}/feed/${post.id}/${post.slug}`)
-      }
+      await navigateTo(`/b/${board}/${post.id}/${post.slug || ''}`)
     } else {
       await navigateTo('/home')
     }
@@ -216,37 +212,36 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
             @click="selectBoard(b)"
           >
             <CommonAvatar v-if="b.icon" :src="b.icon" :name="b.name" size="sm" />
-            <div>
-              <div class="font-medium text-gray-900">b/{{ b.name }}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-gray-900 flex items-center gap-1.5">
+                b/{{ b.name }}
+                <span
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                  :class="modeBadgeClass(b.mode)"
+                >
+                  {{ modeBadgeLabel(b.mode) }}
+                </span>
+              </div>
               <div v-if="b.title && b.title !== b.name" class="text-xs text-gray-500">{{ b.title }}</div>
             </div>
           </button>
         </div>
       </div>
 
-      <!-- Post type selector -->
-      <div v-if="selectedBoard">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Post Type</label>
-        <div class="flex gap-2">
-          <button
-            v-if="hasFeed"
-            type="button"
-            class="px-3 py-1.5 rounded text-sm font-medium border transition-colors"
-            :class="postType === 'feed' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-            @click="postType = 'feed'"
-          >
-            Feed Post
-          </button>
-          <button
-            v-if="hasThreads"
-            type="button"
-            class="px-3 py-1.5 rounded text-sm font-medium border transition-colors"
-            :class="postType === 'thread' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
-            @click="postType = 'thread'"
-          >
-            Thread
-          </button>
-        </div>
+      <!-- Selected board mode indicator -->
+      <div v-if="selectedBoard" class="flex items-center gap-2 text-sm text-gray-600">
+        <span
+          class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+          :class="modeBadgeClass(selectedBoard.mode)"
+        >
+          {{ modeBadgeLabel(selectedBoard.mode) }}
+        </span>
+        <span v-if="selectedBoard.mode === 'forum'">
+          This is a forum board &mdash; your post will be a discussion thread.
+        </span>
+        <span v-else>
+          This is a feed board &mdash; share links, images, or text.
+        </span>
       </div>
 
       <!-- Post flair selector -->

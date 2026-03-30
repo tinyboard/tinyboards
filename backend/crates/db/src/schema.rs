@@ -53,6 +53,10 @@ pub mod sql_types {
     #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
     #[diesel(postgres_type(name = "report_status"))]
     pub struct ReportStatus;
+
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "board_mode"))]
+    pub struct BoardMode;
 }
 
 diesel::table! {
@@ -122,6 +126,7 @@ diesel::table! {
         image_thumbnail_width -> Int4,
         image_convert_to_webp -> Bool,
         image_strip_exif -> Bool,
+        default_board_mode -> BoardMode,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         custom_css -> Nullable<Text>,
@@ -206,9 +211,7 @@ diesel::table! {
         public_ban_reason -> Nullable<Text>,
         banned_by -> Nullable<Uuid>,
         banned_at -> Nullable<Timestamptz>,
-        section_config -> Int4,
-        section_order -> Nullable<Text>,
-        default_section -> Nullable<Text>,
+        mode -> BoardMode,
         wiki_enabled -> Bool,
         wiki_require_approval -> Nullable<Bool>,
         wiki_default_view_permission -> WikiPermission,

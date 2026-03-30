@@ -28,6 +28,7 @@ const SUBSCRIBED_BOARDS_QUERY = `
       title
       icon
       subscribers
+      mode
     }
   }
 `

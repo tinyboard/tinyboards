@@ -91,7 +91,7 @@ export type Board = {
   primaryColor: Scalars['String']['output'];
   publicBanReason?: Maybe<Scalars['String']['output']>;
   secondaryColor: Scalars['String']['output'];
-  sectionConfig: Scalars['Int']['output'];
+  mode: Scalars['String']['output'];
   sidebar?: Maybe<Scalars['String']['output']>;
   sidebarHTML?: Maybe<Scalars['String']['output']>;
   subscribers: Scalars['Int']['output'];
@@ -231,6 +231,8 @@ export type CreateBoardInput = {
   primaryColor?: InputMaybe<Scalars['String']['input']>;
   secondaryColor?: InputMaybe<Scalars['String']['input']>;
   title: Scalars['String']['input'];
+  mode?: InputMaybe<Scalars['String']['input']>;
+  wikiEnabled?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 export type CreateBoardResponse = {
@@ -474,6 +476,7 @@ export type LocalSite = {
   updatedAt: Scalars['String']['output'];
   welcomeMessage?: Maybe<Scalars['String']['output']>;
   wordFilterEnabled: Scalars['Boolean']['output'];
+  defaultBoardMode: Scalars['String']['output'];
   customCss?: Maybe<Scalars['String']['output']>;
   customCssEnabled: Scalars['Boolean']['output'];
 };
@@ -1616,18 +1619,16 @@ export type UpdateBoardReactionSettingsResponse = {
 export type UpdateBoardSettingsInput = {
   banner?: InputMaybe<Scalars['String']['input']>;
   boardId: Scalars['ID']['input'];
-  defaultSection?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   excludeFromAll?: InputMaybe<Scalars['Boolean']['input']>;
   hoverColor?: InputMaybe<Scalars['String']['input']>;
   icon?: InputMaybe<Scalars['String']['input']>;
   isHidden?: InputMaybe<Scalars['Boolean']['input']>;
   isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
+  mode?: InputMaybe<Scalars['String']['input']>;
   postingRestrictedToMods?: InputMaybe<Scalars['Boolean']['input']>;
   primaryColor?: InputMaybe<Scalars['String']['input']>;
   secondaryColor?: InputMaybe<Scalars['String']['input']>;
-  sectionConfig?: InputMaybe<Scalars['Int']['input']>;
-  sectionOrder?: InputMaybe<Scalars['String']['input']>;
   sidebar?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
   wikiEnabled?: InputMaybe<Scalars['Boolean']['input']>;
@@ -1745,6 +1746,7 @@ export type UpdateSiteConfigInput = {
   secondaryColor?: InputMaybe<Scalars['String']['input']>;
   welcomeMessage?: InputMaybe<Scalars['String']['input']>;
   wordFilterEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  defaultBoardMode?: InputMaybe<Scalars['String']['input']>;
   customCss?: InputMaybe<Scalars['String']['input']>;
   customCssEnabled?: InputMaybe<Scalars['Boolean']['input']>;
 };

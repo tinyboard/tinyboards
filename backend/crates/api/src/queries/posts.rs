@@ -433,11 +433,10 @@ impl QueryPosts {
             return Err(TinyBoardsError::from_message(403, reason).into());
         }
 
-        let has_threads = (board.section_config & 2) == 2;
-        if !has_threads {
+        if board.mode != tinyboards_db::enums::DbBoardMode::Forum {
             return Err(TinyBoardsError::from_message(
                 400,
-                "Threads section is not enabled for this board",
+                "This board is not a Forum board and does not support threads",
             )
             .into());
         }

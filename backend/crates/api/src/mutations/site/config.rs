@@ -2,7 +2,7 @@ use async_graphql::*;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tinyboards_db::{
-    enums::DbRegistrationMode,
+    enums::{DbBoardMode, DbRegistrationMode},
     models::site::site::{Site as DbSite, SiteUpdateForm},
     models::user::user::AdminPerms,
     schema::site,
@@ -48,6 +48,8 @@ pub struct UpdateSiteConfigInput {
     pub link_filter_enabled: Option<bool>,
     pub banned_domains: Option<String>,
     pub registration_mode: Option<String>,
+    /// Default board mode for new boards: "feed" or "forum".
+    pub default_board_mode: Option<String>,
     pub custom_css: Option<String>,
     pub custom_css_enabled: Option<bool>,
 }
@@ -136,6 +138,10 @@ impl SiteConfig {
             max_emojis_per_post: None,
             max_emojis_per_comment: None,
             emoji_max_file_size_mb: None,
+            default_board_mode: input.default_board_mode.map(|s| match s.as_str() {
+                "forum" => DbBoardMode::Forum,
+                _ => DbBoardMode::Feed,
+            }),
         };
 
         let updated: DbSite = diesel::update(site::table.find(existing.id))

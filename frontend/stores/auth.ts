@@ -7,6 +7,7 @@ interface SubscribedBoard {
   title: string
   icon: string | null
   subscribers: number
+  mode?: string
 }
 
 /**

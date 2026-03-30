@@ -348,6 +348,7 @@ type Board {
   isPostingRestrictedToMods: Boolean!
   excludeFromAll: Boolean!
   publicBanReason: String
+  mode: String!
   wikiEnabled: Boolean!
   customCss: String
   createdAt: String!
@@ -433,6 +434,7 @@ type LocalSite {
   createdAt: String!
   updatedAt: String!
   welcomeMessage: String
+  defaultBoardMode: String!
   customCss: String
   customCssEnabled: Boolean!
 }
@@ -691,6 +693,8 @@ input CreateBoardInput {
   hoverColor: String
   icon: String
   banner: String
+  mode: String
+  wikiEnabled: Boolean
 }
 
 input UpdateBoardSettingsInput {
@@ -707,6 +711,7 @@ input UpdateBoardSettingsInput {
   excludeFromAll: Boolean
   icon: String
   banner: String
+  mode: String
   wikiEnabled: Boolean
   customCss: String
 }
@@ -767,6 +772,7 @@ input UpdateSiteConfigInput {
   filteredWords: String
   linkFilterEnabled: Boolean
   bannedDomains: String
+  defaultBoardMode: String
   customCss: String
   customCssEnabled: Boolean
 }

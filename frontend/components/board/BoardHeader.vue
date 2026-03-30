@@ -3,7 +3,7 @@ import type { Board } from '~/types/generated'
 import { useAuthStore } from '~/stores/auth'
 
 defineProps<{
-  board: Board
+  board: Board & { mode?: string }
   isSubscribed?: boolean
 }>()
 
@@ -38,9 +38,18 @@ const authStore = useAuthStore()
           class="border-2 border-white shadow shrink-0"
         />
 
-        <!-- Name + description -->
+        <!-- Name + description + mode badge -->
         <div class="flex-1 min-w-0">
-          <h1 class="text-lg font-bold text-gray-900 truncate">{{ board.title }}</h1>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold text-gray-900 truncate">{{ board.title }}</h1>
+            <span
+              v-if="board.mode"
+              class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0"
+              :class="board.mode === 'forum' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'"
+            >
+              {{ board.mode === 'forum' ? '💬 Forum' : '📰 Feed' }}
+            </span>
+          </div>
           <p class="text-sm text-gray-500">b/{{ board.name }}</p>
         </div>
 

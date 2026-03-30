@@ -4,6 +4,8 @@ import { useAuthStore } from '~/stores/auth'
 import type { Board } from '~/types/generated'
 
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 
 useHead({ title: 'Boards' })
 
@@ -22,22 +24,29 @@ const LIST_BOARDS_QUERY = `
       usersActiveWeek
       isNSFW
       createdAt
+      mode
     }
   }
 `
 
 interface ListBoardsResponse {
-  listBoards: Board[]
+  listBoards: (Board & { mode?: string })[]
 }
 
 const { execute, loading, error } = useGraphQL<ListBoardsResponse>()
 
-const boards = ref<Board[]>([])
+const boards = ref<(Board & { mode?: string })[]>([])
 const page = ref(1)
 const searchTerm = ref('')
 const sort = ref('hot')
+const modeFilter = ref<string>((route.query.mode as string) || 'all')
 const limit = 25
 const hasMore = ref(false)
+
+const filteredBoards = computed(() => {
+  if (modeFilter.value === 'all') return boards.value
+  return boards.value.filter(b => b.mode === modeFilter.value)
+})
 
 async function fetchBoards (): Promise<void> {
   const result = await execute(LIST_BOARDS_QUERY, {
@@ -53,6 +62,19 @@ async function fetchBoards (): Promise<void> {
     hasMore.value = result.listBoards.length > limit
     boards.value = result.listBoards.slice(0, limit)
   }
+}
+
+function setModeFilter (mode: string) {
+  modeFilter.value = mode
+  page.value = 1
+  // Persist filter in URL
+  const query = { ...route.query }
+  if (mode === 'all') {
+    delete query.mode
+  } else {
+    query.mode = mode
+  }
+  router.replace({ query })
 }
 
 async function handleSearch (): Promise<void> {
@@ -117,18 +139,46 @@ await fetchBoards()
       </select>
     </div>
 
+    <!-- Mode filter -->
+    <div class="mb-4 flex gap-1">
+      <button
+        type="button"
+        class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+        :class="modeFilter === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+        @click="setModeFilter('all')"
+      >
+        All
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+        :class="modeFilter === 'feed' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
+        @click="setModeFilter('feed')"
+      >
+        📰 Feed
+      </button>
+      <button
+        type="button"
+        class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+        :class="modeFilter === 'forum' ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'"
+        @click="setModeFilter('forum')"
+      >
+        💬 Forum
+      </button>
+    </div>
+
     <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchBoards" />
     <CommonLoadingSpinner v-else-if="loading && boards.length === 0" size="lg" />
 
-    <div v-else-if="boards.length > 0" class="grid gap-3 sm:grid-cols-2">
-      <BoardCard v-for="board in boards" :key="board.id" :board="board" />
+    <div v-else-if="filteredBoards.length > 0" class="grid gap-3 sm:grid-cols-2">
+      <BoardCard v-for="board in filteredBoards" :key="board.id" :board="board" />
     </div>
     <p v-else class="text-sm text-gray-500 text-center py-8">
       No boards found.
     </p>
 
     <CommonPagination
-      v-if="boards.length > 0"
+      v-if="filteredBoards.length > 0"
       :page="page"
       :has-more="hasMore"
       @prev="prevPage"

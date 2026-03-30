@@ -223,3 +223,13 @@ pg_enum! {
         Dismissed => b"dismissed",
     }
 }
+
+pg_enum! {
+    sql_types::BoardMode,
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, AsExpression, FromSqlRow)]
+    #[diesel(sql_type = sql_types::BoardMode)]
+    pub enum DbBoardMode {
+        Feed => b"feed",
+        Forum => b"forum",
+    }
+}

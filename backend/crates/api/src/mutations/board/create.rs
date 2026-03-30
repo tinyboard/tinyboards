@@ -7,7 +7,7 @@ use chrono::Utc;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tinyboards_db::{
-    enums::DbWikiPermission,
+    enums::{DbBoardMode, DbWikiPermission},
     models::{
         aggregates::BoardAggregates as DbBoardAggregates,
         board::{
@@ -34,6 +34,10 @@ pub struct CreateBoardInput {
     pub hover_color: Option<String>,
     pub icon: Option<String>,
     pub banner: Option<String>,
+    /// Board mode: "feed" or "forum". Defaults to site.default_board_mode if omitted.
+    pub mode: Option<String>,
+    /// Whether to enable the wiki for this board.
+    pub wiki_enabled: Option<bool>,
 }
 
 #[derive(SimpleObject)]
@@ -207,6 +211,20 @@ impl CreateBoard {
         let icon_stored = icon_url.and_then(|s| Url::parse(&s).ok().map(|u| u.to_string()));
         let banner_stored = banner_url.and_then(|s| Url::parse(&s).ok().map(|u| u.to_string()));
 
+        // Determine board mode: use caller's choice, or fall back to site default
+        let board_mode = match input.mode.as_deref() {
+            Some("forum") => DbBoardMode::Forum,
+            Some("feed") => DbBoardMode::Feed,
+            Some(other) => {
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    &format!("Invalid board mode '{}'. Must be 'feed' or 'forum'.", other),
+                )
+                .into());
+            }
+            None => site.default_board_mode,
+        };
+
         let board_form = BoardInsertForm {
             name: input.name,
             title: input.title,
@@ -234,10 +252,8 @@ impl CreateBoard {
             public_ban_reason: None,
             banned_by: None,
             banned_at: None,
-            section_config: 1, // Feed section enabled by default
-            section_order: None,
-            default_section: None,
-            wiki_enabled: false,
+            mode: board_mode,
+            wiki_enabled: input.wiki_enabled.unwrap_or(false),
             wiki_require_approval: None,
             wiki_default_view_permission: DbWikiPermission::Public,
             wiki_default_edit_permission: DbWikiPermission::ModsOnly,

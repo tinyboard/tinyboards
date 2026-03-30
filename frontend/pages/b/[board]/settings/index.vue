@@ -23,7 +23,7 @@ interface BoardData {
   isHidden: boolean
   excludeFromAll: boolean
   wikiEnabled: boolean
-  sectionConfig: number
+  mode: string
 }
 
 interface BoardSettingsResponse {
@@ -43,7 +43,7 @@ const GET_BOARD_SETTINGS = `
     getBoardSettings(boardId: $boardId) {
       board {
         id name title description sidebar icon banner
-        isNSFW isPostingRestrictedToMods isHidden excludeFromAll wikiEnabled sectionConfig
+        isNSFW isPostingRestrictedToMods isHidden excludeFromAll wikiEnabled mode
       }
       isOwner
       moderatorPermissions
@@ -54,7 +54,7 @@ const GET_BOARD_SETTINGS = `
 const UPDATE_BOARD_SETTINGS = `
   mutation UpdateBoardSettings($input: UpdateBoardSettingsInput!) {
     updateBoardSettings(input: $input) {
-      board { id name title description sidebar icon banner isNSFW isPostingRestrictedToMods }
+      board { id name title description sidebar icon banner isNSFW isPostingRestrictedToMods mode }
     }
   }
 `
@@ -70,6 +70,9 @@ const { execute: executeMutation, loading: saving } = useGraphQLMutation<UpdateR
 
 const boardId = ref<string | null>(null)
 const isOwner = ref(false)
+const hasExistingPosts = ref(false)
+const showModeChangeConfirm = ref(false)
+const pendingMode = ref<string | null>(null)
 
 const form = reactive({
   title: '',
@@ -80,17 +83,18 @@ const form = reactive({
   isHidden: false,
   excludeFromAll: false,
   wikiEnabled: false,
-  feedEnabled: true,
-  threadsEnabled: false,
-  defaultSection: 'feed' as 'feed' | 'threads',
+  mode: 'feed',
 })
 
+const originalMode = ref('feed')
+
 onMounted(async () => {
-  const { execute: execBoard } = useGraphQL<{ board: { id: string } }>()
-  const boardResult = await execBoard(BOARD_QUERY, { variables: { name: boardName } })
+  const { execute: execBoard } = useGraphQL<{ board: { id: string; posts: number } }>()
+  const boardResult = await execBoard(`query GetBoard($name: String!) { board(name: $name) { id posts } }`, { variables: { name: boardName } })
   if (!boardResult?.board) return
 
   boardId.value = boardResult.board.id
+  hasExistingPosts.value = (boardResult.board.posts ?? 0) > 0
 
   const result = await execute(GET_BOARD_SETTINGS, { variables: { boardId: boardId.value } })
   if (result?.getBoardSettings) {
@@ -104,16 +108,35 @@ onMounted(async () => {
     form.isHidden = board.isHidden
     form.excludeFromAll = board.excludeFromAll
     form.wikiEnabled = board.wikiEnabled
-    form.feedEnabled = (board.sectionConfig & 1) === 1
-    form.threadsEnabled = (board.sectionConfig & 2) === 2
-    form.defaultSection = form.threadsEnabled && !form.feedEnabled ? 'threads' : 'feed'
+    form.mode = board.mode ?? 'feed'
+    originalMode.value = form.mode
   }
 })
 
+function requestModeChange (newMode: string) {
+  if (hasExistingPosts.value && newMode !== originalMode.value) {
+    pendingMode.value = newMode
+    showModeChangeConfirm.value = true
+  } else {
+    form.mode = newMode
+  }
+}
+
+function confirmModeChange () {
+  if (pendingMode.value) {
+    form.mode = pendingMode.value
+  }
+  showModeChangeConfirm.value = false
+  pendingMode.value = null
+}
+
+function cancelModeChange () {
+  showModeChangeConfirm.value = false
+  pendingMode.value = null
+}
+
 async function saveSettings () {
   if (!boardId.value) return
-
-  const sectionConfig = (form.feedEnabled ? 1 : 0) | (form.threadsEnabled ? 2 : 0)
 
   const result = await executeMutation(UPDATE_BOARD_SETTINGS, {
     variables: {
@@ -127,13 +150,13 @@ async function saveSettings () {
         isHidden: form.isHidden,
         excludeFromAll: form.excludeFromAll,
         wikiEnabled: form.wikiEnabled,
-        sectionConfig: sectionConfig || 1,
-        defaultSection: form.defaultSection,
+        mode: form.mode,
       },
     },
   })
 
   if (result?.updateBoardSettings) {
+    originalMode.value = form.mode
     toast.success('Board settings saved')
   }
 }
@@ -213,44 +236,61 @@ async function saveSettings () {
         </label>
       </div>
 
-      <!-- Section Configuration -->
+      <!-- Board Mode -->
       <div class="bg-white border border-gray-200 rounded-lg p-5">
-        <h3 class="text-sm font-medium text-gray-900 mb-3">Board Sections</h3>
+        <h3 class="text-sm font-medium text-gray-900 mb-2">Board Mode</h3>
         <p class="text-xs text-gray-500 mb-3">
-          Choose which content sections are available on this board. At least one must be enabled.
+          Controls the type of content this board accepts.
         </p>
-
-        <div class="space-y-3 mb-4">
-          <label class="flex items-center gap-2">
-            <input
-              v-model="form.feedEnabled"
-              type="checkbox"
-              class="form-checkbox"
-              :disabled="!form.threadsEnabled"
-            />
-            <span class="text-sm text-gray-700">Feed</span>
-            <span class="text-xs text-gray-400">— Link posts, images, text posts</span>
-          </label>
-
-          <label class="flex items-center gap-2">
-            <input
-              v-model="form.threadsEnabled"
-              type="checkbox"
-              class="form-checkbox"
-              :disabled="!form.feedEnabled"
-            />
-            <span class="text-sm text-gray-700">Threads</span>
-            <span class="text-xs text-gray-400">— Discussion-first threads</span>
-          </label>
+        <div class="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            class="text-left rounded-lg border-2 p-4 transition-all"
+            :class="form.mode === 'feed'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-gray-200 bg-white hover:border-gray-300'"
+            @click="requestModeChange('feed')"
+          >
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">📰</span>
+              <span class="font-semibold text-sm text-gray-900">Feed Board</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Share links, images, and text posts. Members vote on content.
+            </p>
+          </button>
+          <button
+            type="button"
+            class="text-left rounded-lg border-2 p-4 transition-all"
+            :class="form.mode === 'forum'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-gray-200 bg-white hover:border-gray-300'"
+            @click="requestModeChange('forum')"
+          >
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">💬</span>
+              <span class="font-semibold text-sm text-gray-900">Forum Board</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Threaded discussions. Great for Q&amp;A, support, or structured topics.
+            </p>
+          </button>
         </div>
+      </div>
 
-        <div v-if="form.feedEnabled && form.threadsEnabled">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Default Section</label>
-          <select v-model="form.defaultSection" class="form-input w-48">
-            <option value="feed">Feed</option>
-            <option value="threads">Threads</option>
-          </select>
-          <p class="text-xs text-gray-400 mt-1">Which section visitors see first</p>
+      <!-- Mode change confirmation dialog -->
+      <div v-if="showModeChangeConfirm" class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <h4 class="text-sm font-medium text-amber-800 mb-1">Change board mode?</h4>
+        <p class="text-xs text-amber-700 mb-3">
+          This board already has posts. Existing posts will not be affected &mdash; only new posts will follow the new mode.
+        </p>
+        <div class="flex gap-2">
+          <button type="button" class="button button-sm primary" @click="confirmModeChange">
+            Confirm
+          </button>
+          <button type="button" class="button button-sm white" @click="cancelModeChange">
+            Cancel
+          </button>
         </div>
       </div>
 
