@@ -18,7 +18,7 @@ const authStore = useAuthStore()
 <template>
   <div class="bg-white border-b border-gray-200">
     <!-- Banner -->
-    <div class="h-32 sm:h-40 bg-gradient-to-br from-primary to-primary-hover overflow-hidden">
+    <div class="h-24 sm:h-40 bg-gradient-to-br from-primary to-primary-hover overflow-hidden">
       <img
         v-if="board.banner"
         :src="board.banner"
@@ -29,7 +29,7 @@ const authStore = useAuthStore()
 
     <!-- Board info bar -->
     <div class="max-w-5xl mx-auto px-4">
-      <div class="flex items-center gap-4 py-3">
+      <div class="flex items-center gap-3 sm:gap-4 py-3">
         <!-- Avatar -->
         <CommonAvatar
           :src="board.icon ?? undefined"
@@ -41,7 +41,7 @@ const authStore = useAuthStore()
         <!-- Name + description + mode badge -->
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold text-gray-900 truncate">{{ board.title }}</h1>
+            <h1 class="text-base sm:text-lg font-bold text-gray-900 truncate">{{ board.title }}</h1>
             <span
               v-if="board.mode"
               class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium shrink-0"

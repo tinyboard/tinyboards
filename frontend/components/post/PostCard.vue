@@ -81,7 +81,7 @@ const hasLinkPreview = computed(() => {
   <article class="bg-white border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-xs transition-all duration-150 group">
     <!-- Compact mode: tight single row, no vote column -->
     <template v-if="compact">
-      <div class="flex items-center gap-2 px-3 py-2">
+      <div class="flex items-center gap-2 px-3 py-2.5 sm:py-2">
         <!-- Score (not for threads) -->
         <span v-if="!isThread" class="text-xs font-semibold text-gray-500 tabular-nums w-6 text-center shrink-0">
           {{ post.score }}

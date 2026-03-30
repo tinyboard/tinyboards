@@ -42,7 +42,7 @@ function submitReply (): void {
     <!-- Comment header -->
     <div class="flex items-center gap-1 text-xs text-gray-500">
       <button
-        class="text-gray-400 hover:text-gray-600 mr-1"
+        class="text-gray-400 hover:text-gray-600 mr-1 p-1 -m-1 min-w-[28px] text-center"
         @click="collapsed = !collapsed"
       >
         [{{ collapsed ? '+' : '−' }}]

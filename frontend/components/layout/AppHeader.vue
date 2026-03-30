@@ -65,11 +65,11 @@ async function handleLogout () {
       </div>
 
       <!-- Right: Auth actions -->
-      <div class="flex items-center gap-1 sm:gap-2">
+      <div class="flex items-center gap-1.5 sm:gap-2">
         <!-- Search (always visible) -->
         <NuxtLink
           to="/search"
-          class="relative flex items-center justify-center w-9 h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
+          class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
           aria-label="Search"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +80,7 @@ async function handleLogout () {
         <template v-if="authStore.isLoggedIn">
           <NuxtLink
             to="/submit"
-            class="relative flex items-center justify-center w-9 h-9 text-white rounded hover:bg-white/10 transition-colors no-underline"
+            class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white rounded hover:bg-white/10 transition-colors no-underline"
             aria-label="Submit post"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,7 +100,7 @@ async function handleLogout () {
           </NuxtLink>
           <NuxtLink
             to="/inbox"
-            class="relative flex items-center justify-center w-9 h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
+            class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
             aria-label="Inbox"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,7 +150,7 @@ async function handleLogout () {
             >
               <div
                 v-if="userMenuOpen"
-                class="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black/5 z-[70] py-1"
+                class="absolute right-0 mt-1 w-48 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-lg ring-1 ring-black/5 z-[70] py-1"
               >
                 <div class="px-3 py-2 border-b border-gray-100">
                   <p class="text-sm font-medium text-gray-900 truncate">{{ authStore.user?.displayName || authStore.user?.name }}</p>

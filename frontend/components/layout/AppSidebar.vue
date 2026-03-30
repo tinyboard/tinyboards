@@ -63,7 +63,7 @@ watch(() => uiStore.sidebarOpen, (open) => {
     <Transition name="sidebar-drawer">
       <aside
         v-if="uiStore.sidebarOpen"
-        class="fixed top-0 left-0 bottom-0 w-[min(320px,85vw)] bg-white z-50 lg:hidden shadow-xl overflow-y-auto overscroll-contain"
+        class="fixed top-0 left-0 bottom-0 w-[min(320px,80vw)] bg-white z-50 lg:hidden shadow-xl overflow-y-auto overscroll-contain"
       >
         <!-- Drawer header -->
         <div class="sticky top-0 bg-primary text-white px-4 py-3 flex items-center justify-between z-10">
@@ -83,7 +83,7 @@ watch(() => uiStore.sidebarOpen, (open) => {
         <nav class="px-3 py-3 border-b border-gray-200">
           <NuxtLink
             to="/home"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
+            class="flex items-center gap-3 px-3 py-3 sm:py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
             :class="currentSection === 'home' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -93,7 +93,7 @@ watch(() => uiStore.sidebarOpen, (open) => {
           </NuxtLink>
           <NuxtLink
             to="/all"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
+            class="flex items-center gap-3 px-3 py-3 sm:py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
             :class="currentSection === 'all' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +103,7 @@ watch(() => uiStore.sidebarOpen, (open) => {
           </NuxtLink>
           <NuxtLink
             to="/boards"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
+            class="flex items-center gap-3 px-3 py-3 sm:py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
             :class="currentSection === 'boards' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -113,7 +113,7 @@ watch(() => uiStore.sidebarOpen, (open) => {
           </NuxtLink>
           <NuxtLink
             to="/members"
-            class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
+            class="flex items-center gap-3 px-3 py-3 sm:py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
             :class="currentSection === 'members' ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

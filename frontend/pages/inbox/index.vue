@@ -79,11 +79,11 @@ await refresh()
   <div class="max-w-5xl mx-auto px-4 py-4">
     <!-- Header card -->
     <div class="bg-white rounded-lg border border-gray-200 px-4 py-3 mb-4">
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <h1 class="text-lg font-semibold text-gray-900">
           Notifications
         </h1>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <NuxtLink to="/inbox/messages" class="button button-sm white no-underline inline-flex items-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
@@ -106,11 +106,11 @@ await refresh()
 
     <!-- Filter tabs in a card -->
     <div class="bg-white rounded-lg border border-gray-200 px-3 py-1 mb-4">
-      <div class="flex gap-0.5">
+      <div class="flex gap-0.5 overflow-x-auto scrollbar-hidden">
         <button
           v-for="filter in filters"
           :key="filter.value ?? 'all'"
-          class="px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors"
+          class="px-3 py-2 text-sm font-medium border-b-2 -mb-px transition-colors whitespace-nowrap"
           :class="kindFilter === filter.value
             ? 'border-primary text-primary'
             : 'border-transparent text-gray-500 hover:text-gray-700'"

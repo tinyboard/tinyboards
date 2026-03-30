@@ -222,7 +222,7 @@ function openRemoveDialog (): void {
         <div v-if="post.image && isImageVideo" class="mb-3">
           <video
             :src="post.image"
-            class="max-w-full max-h-[600px] rounded-lg border border-gray-200"
+            class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200"
             controls
             preload="metadata"
           />
@@ -233,7 +233,7 @@ function openRemoveDialog (): void {
           <img
             :src="post.image"
             :alt="post.altText || post.title"
-            class="max-w-full max-h-[600px] rounded-lg border border-gray-200 object-contain"
+            class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200 object-contain"
           />
         </div>
 
