@@ -8,7 +8,10 @@ interface BoardSettings {
   boardCreationMode: string
   boardsEnabled: boolean
   boardCreationAdminOnly: boolean
-  defaultBoardMode: string
+  trustedUserMinReputation: number
+  trustedUserMinAccountAgeDays: number
+  trustedUserManualApproval: boolean
+  trustedUserMinPosts: number
 }
 
 interface BoardSettingsResponse {
@@ -22,10 +25,12 @@ interface SaveBoardSettingsResponse {
 const { execute, loading, error, data } = useGraphQL<BoardSettingsResponse>()
 const { execute: executeSave, loading: saving, error: saveError } = useGraphQLMutation<SaveBoardSettingsResponse>()
 
-const boardCreationMode = ref('open')
+const boardCreationMode = ref('AdminOnly')
 const boardsEnabled = ref(true)
-const boardCreationAdminOnly = ref(false)
-const defaultBoardMode = ref('feed')
+const trustedUserMinReputation = ref(0)
+const trustedUserMinAccountAgeDays = ref(0)
+const trustedUserManualApproval = ref(false)
+const trustedUserMinPosts = ref(0)
 const saved = ref(false)
 
 const SETTINGS_QUERY = `
@@ -34,7 +39,10 @@ const SETTINGS_QUERY = `
       boardCreationMode
       boardsEnabled
       boardCreationAdminOnly
-      defaultBoardMode
+      trustedUserMinReputation
+      trustedUserMinAccountAgeDays
+      trustedUserManualApproval
+      trustedUserMinPosts
     }
   }
 `
@@ -45,7 +53,10 @@ const SAVE_SETTINGS = `
       boardCreationMode
       boardsEnabled
       boardCreationAdminOnly
-      defaultBoardMode
+      trustedUserMinReputation
+      trustedUserMinAccountAgeDays
+      trustedUserManualApproval
+      trustedUserMinPosts
     }
   }
 `
@@ -55,8 +66,10 @@ async function loadSettings () {
   if (result?.site) {
     boardCreationMode.value = result.site.boardCreationMode
     boardsEnabled.value = result.site.boardsEnabled
-    boardCreationAdminOnly.value = result.site.boardCreationAdminOnly
-    defaultBoardMode.value = result.site.defaultBoardMode ?? 'feed'
+    trustedUserMinReputation.value = result.site.trustedUserMinReputation
+    trustedUserMinAccountAgeDays.value = result.site.trustedUserMinAccountAgeDays
+    trustedUserManualApproval.value = result.site.trustedUserManualApproval
+    trustedUserMinPosts.value = result.site.trustedUserMinPosts
   }
 }
 
@@ -67,8 +80,12 @@ async function saveSettings () {
       input: {
         boardCreationMode: boardCreationMode.value,
         boardsEnabled: boardsEnabled.value,
-        boardCreationAdminOnly: boardCreationAdminOnly.value,
-        defaultBoardMode: defaultBoardMode.value,
+        ...(boardCreationMode.value === 'TrustedUsers' ? {
+          trustedUserMinReputation: trustedUserMinReputation.value,
+          trustedUserMinAccountAgeDays: trustedUserMinAccountAgeDays.value,
+          trustedUserManualApproval: trustedUserManualApproval.value,
+          trustedUserMinPosts: trustedUserMinPosts.value,
+        } : {}),
       },
     },
   })
@@ -86,7 +103,7 @@ onMounted(() => {
 <template>
   <div>
     <h2 class="text-lg font-semibold text-gray-900 mb-6">
-      Board Defaults
+      Board Settings
     </h2>
 
     <CommonLoadingSpinner v-if="loading" />
@@ -110,25 +127,74 @@ onMounted(() => {
           Board Creation Mode
         </label>
         <select v-model="boardCreationMode" class="form-input w-full">
-          <option value="open">Open (anyone can create)</option>
-          <option value="restricted">Restricted (approval required)</option>
-          <option value="closed">Closed (admin only)</option>
+          <option value="Open">Open (anyone can create)</option>
+          <option value="TrustedUsers">Trusted Users (configurable requirements)</option>
+          <option value="AdminOnly">Admin Only</option>
+          <option value="Disabled">Disabled (no one can create)</option>
         </select>
         <p class="mt-1 text-xs text-gray-500">
           Controls who can create new boards on the site.
         </p>
       </div>
 
-      <!-- Admin-only board creation -->
-      <div>
-        <label class="flex items-center gap-2">
-          <input v-model="boardCreationAdminOnly" type="checkbox" class="form-checkbox" />
-          <span class="text-sm font-medium text-gray-700">Admin-Only Board Creation</span>
-        </label>
-        <p class="mt-1 text-xs text-gray-500">
-          When enabled, only admins can create new boards regardless of the creation mode above.
-        </p>
-      </div>
+      <!-- Trusted Users settings (shown only when TrustedUsers mode is selected) -->
+      <template v-if="boardCreationMode === 'TrustedUsers'">
+        <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-4">
+          <h3 class="text-sm font-semibold text-gray-800">
+            Trusted User Requirements
+          </h3>
+          <p class="text-xs text-gray-500">
+            Users must meet all of these requirements to create boards. Admins always bypass these checks.
+          </p>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Minimum Reputation (post + comment score)
+            </label>
+            <input
+              v-model.number="trustedUserMinReputation"
+              type="number"
+              min="0"
+              class="form-input w-full"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Minimum Account Age (days)
+            </label>
+            <input
+              v-model.number="trustedUserMinAccountAgeDays"
+              type="number"
+              min="0"
+              class="form-input w-full"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Minimum Posts
+            </label>
+            <input
+              v-model.number="trustedUserMinPosts"
+              type="number"
+              min="0"
+              class="form-input w-full"
+            />
+          </div>
+
+          <div>
+            <label class="flex items-center gap-2">
+              <input v-model="trustedUserManualApproval" type="checkbox" class="form-checkbox" />
+              <span class="text-sm font-medium text-gray-700">Require Manual Approval</span>
+            </label>
+            <p class="mt-1 text-xs text-gray-500">
+              When enabled, users must also be manually approved by an admin before they can create boards,
+              even if they meet the automatic requirements above.
+            </p>
+          </div>
+        </div>
+      </template>
 
       <!-- Default board mode -->
       <div>
