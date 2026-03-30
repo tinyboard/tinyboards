@@ -427,6 +427,10 @@ type LocalSite {
   boardsEnabled: Boolean!
   boardCreationAdminOnly: Boolean!
   boardCreationMode: String!
+  trustedUserMinReputation: Int!
+  trustedUserMinAccountAgeDays: Int!
+  trustedUserManualApproval: Boolean!
+  trustedUserMinPosts: Int!
   allowedPostTypes: String
   wordFilterEnabled: Boolean!
   filteredWords: String
@@ -761,6 +765,10 @@ input UpdateSiteConfigInput {
   boardsEnabled: Boolean
   boardCreationAdminOnly: Boolean
   boardCreationMode: String
+  trustedUserMinReputation: Int
+  trustedUserMinAccountAgeDays: Int
+  trustedUserManualApproval: Boolean
+  trustedUserMinPosts: Int
   emojiEnabled: Boolean
   boardEmojisEnabled: Boolean
   wordFilterEnabled: Boolean
