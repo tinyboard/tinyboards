@@ -30,6 +30,7 @@ const SITE_QUERY = `
       enableNSFWTagging
       wordFilterEnabled
       welcomeMessage
+      defaultBoardMode
       customCss
       customCssEnabled
     }

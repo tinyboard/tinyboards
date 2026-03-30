@@ -62,6 +62,7 @@ pub struct Site {
     pub image_thumbnail_width: i32,
     pub image_convert_to_webp: bool,
     pub image_strip_exif: bool,
+    pub default_board_mode: DbBoardMode,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub custom_css: Option<String>,
@@ -119,6 +120,7 @@ pub struct SiteInsertForm {
     pub max_emojis_per_comment: Option<i32>,
     pub emoji_max_file_size_mb: i32,
     pub board_emojis_enabled: bool,
+    pub default_board_mode: DbBoardMode,
     pub custom_css: Option<String>,
     pub custom_css_enabled: bool,
 }
@@ -175,6 +177,7 @@ pub struct SiteUpdateForm {
     pub max_emojis_per_comment: Option<Option<i32>>,
     pub emoji_max_file_size_mb: Option<i32>,
     pub board_emojis_enabled: Option<bool>,
+    pub default_board_mode: Option<DbBoardMode>,
     pub custom_css: Option<Option<String>>,
     pub custom_css_enabled: Option<bool>,
 }

@@ -2,22 +2,11 @@
 const props = defineProps<{
   boardName: string
   isMod?: boolean
-  sectionConfig?: number
+  mode?: string
   wikiEnabled?: boolean
 }>()
 
 const route = useRoute()
-
-// Decode sectionConfig bitmask
-const hasFeed = computed(() => {
-  const config = props.sectionConfig ?? 3
-  return (config & 1) === 1
-})
-
-const hasThreads = computed(() => {
-  const config = props.sectionConfig ?? 3
-  return (config & 2) === 2
-})
 
 interface TabItem {
   label: string
@@ -27,25 +16,19 @@ interface TabItem {
 
 const tabs = computed<TabItem[]>(() => {
   const base: TabItem[] = []
+  const boardMode = props.mode ?? 'feed'
 
-  // Only show the "All" posts tab if both sections are enabled
-  if (hasFeed.value && hasThreads.value) {
-    base.push({ label: 'Posts', to: `/b/${props.boardName}`, icon: 'posts' })
+  if (boardMode === 'feed') {
+    base.push({ label: 'Posts', to: `/b/${props.boardName}`, icon: 'feed' })
+  } else {
+    base.push({ label: 'Discussions', to: `/b/${props.boardName}`, icon: 'threads' })
   }
-
-  if (hasThreads.value) {
-    base.push({ label: 'Threads', to: `/b/${props.boardName}/threads`, icon: 'threads' })
-  }
-
-  if (hasFeed.value) {
-    base.push({ label: 'Feed', to: `/b/${props.boardName}/feed`, icon: 'feed' })
-  }
-
-  base.push({ label: 'Members', to: `/b/${props.boardName}/members`, icon: 'members' })
 
   if (props.wikiEnabled) {
     base.push({ label: 'Wiki', to: `/b/${props.boardName}/wiki`, icon: 'wiki' })
   }
+
+  base.push({ label: 'Members', to: `/b/${props.boardName}/members`, icon: 'members' })
 
   if (props.isMod) {
     base.push(
@@ -88,10 +71,6 @@ function isActive (tab: TabItem): boolean {
         <!-- Feed icon -->
         <svg v-if="tab.icon === 'feed'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-        </svg>
-        <!-- Posts icon -->
-        <svg v-if="tab.icon === 'posts'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
         </svg>
         <!-- Members icon -->
         <svg v-if="tab.icon === 'members'" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

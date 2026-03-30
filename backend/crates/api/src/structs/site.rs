@@ -88,6 +88,7 @@ pub struct LocalSite {
     pub max_emojis_per_comment: Option<i32>,
     pub emoji_max_file_size_mb: i32,
     pub board_emojis_enabled: bool,
+    pub default_board_mode: String,
     pub custom_css_enabled: bool,
     pub created_at: String,
     pub updated_at: String,
@@ -187,6 +188,10 @@ impl From<DbSite> for LocalSite {
             max_emojis_per_comment: v.max_emojis_per_comment,
             emoji_max_file_size_mb: v.emoji_max_file_size_mb,
             board_emojis_enabled: v.board_emojis_enabled,
+            default_board_mode: match v.default_board_mode {
+                tinyboards_db::enums::DbBoardMode::Feed => "feed".to_string(),
+                tinyboards_db::enums::DbBoardMode::Forum => "forum".to_string(),
+            },
             custom_css_enabled: v.custom_css_enabled,
             created_at: v.created_at.to_rfc3339(),
             updated_at: v.updated_at.to_rfc3339(),

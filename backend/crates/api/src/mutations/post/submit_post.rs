@@ -196,25 +196,38 @@ impl SubmitPost {
             None => None,
         };
 
-        // Validate section compatibility
-        let determined_post_type_str = post_type.unwrap_or_else(|| "feed".to_string());
-        if determined_post_type_str == "thread" {
-            let has_threads = (db_board.section_config & 2) == 2;
-            if !has_threads {
-                return Err(TinyBoardsError::from_message(
-                    400,
-                    &format!("Threads section is not enabled for /b/{}", &db_board.name),
-                )
-                .into());
+        // Validate post type against board mode
+        use tinyboards_db::enums::DbBoardMode;
+        let determined_post_type_str = post_type.unwrap_or_else(|| {
+            match db_board.mode {
+                DbBoardMode::Feed => "feed".to_string(),
+                DbBoardMode::Forum => "thread".to_string(),
             }
-        } else if determined_post_type_str == "feed" {
-            let has_feed = (db_board.section_config & 1) == 1;
-            if !has_feed {
-                return Err(TinyBoardsError::from_message(
-                    400,
-                    &format!("Feed section is not enabled for /b/{}", &db_board.name),
-                )
-                .into());
+        });
+        match db_board.mode {
+            DbBoardMode::Feed => {
+                if determined_post_type_str == "thread" {
+                    return Err(TinyBoardsError::from_message(
+                        400,
+                        &format!(
+                            "/b/{} is a Feed board and does not accept thread posts. Submit a feed post instead.",
+                            &db_board.name
+                        ),
+                    )
+                    .into());
+                }
+            }
+            DbBoardMode::Forum => {
+                if determined_post_type_str != "thread" {
+                    return Err(TinyBoardsError::from_message(
+                        400,
+                        &format!(
+                            "/b/{} is a Forum board and only accepts thread posts. Submit a thread instead.",
+                            &db_board.name
+                        ),
+                    )
+                    .into());
+                }
             }
         }
 

@@ -1,4 +1,5 @@
 use async_graphql::*;
+use tinyboards_db::enums::DbBoardMode;
 use tinyboards_db::models::board::boards::Board as DbBoard;
 use tinyboards_db::models::board::board_mods::BoardModerator as DbBoardMod;
 use tinyboards_db::models::aggregates::BoardAggregates as DbBoardAggregates;
@@ -26,6 +27,8 @@ pub struct Board {
     pub is_posting_restricted_to_mods: bool,
     pub exclude_from_all: bool,
     pub public_ban_reason: Option<String>,
+    /// Board mode: "feed" (links/images/text posts) or "forum" (threaded discussions).
+    pub mode: String,
     pub wiki_enabled: bool,
     pub created_at: String,
     pub updated_at: String,
@@ -38,8 +41,14 @@ pub struct Board {
     pub users_active_month: i64,
     pub users_active_half_year: i64,
     pub is_subscribed: bool,
-    pub section_config: i32,
     pub custom_css: Option<String>,
+}
+
+fn board_mode_to_str(mode: DbBoardMode) -> String {
+    match mode {
+        DbBoardMode::Feed => "feed".to_string(),
+        DbBoardMode::Forum => "forum".to_string(),
+    }
 }
 
 impl Board {
@@ -52,7 +61,7 @@ impl Board {
             Some(a) => (a.subscribers, a.posts, a.comments, a.users_active_day, a.users_active_week, a.users_active_month, a.users_active_half_year),
             None => (0, 0, 0, 0, 0, 0, 0),
         };
-        let section_config = board.section_config;
+        let mode = board_mode_to_str(board.mode);
         Self {
             id: ID(board.id.to_string()),
             name: board.name,
@@ -72,6 +81,7 @@ impl Board {
             is_posting_restricted_to_mods: board.is_posting_restricted_to_mods,
             exclude_from_all: board.exclude_from_all,
             public_ban_reason: board.public_ban_reason,
+            mode,
             wiki_enabled: board.wiki_enabled,
             created_at: board.created_at.to_rfc3339(),
             updated_at: board.updated_at.to_rfc3339(),
@@ -83,7 +93,6 @@ impl Board {
             users_active_month,
             users_active_half_year,
             is_subscribed,
-            section_config,
             custom_css: board.custom_css,
         }
     }

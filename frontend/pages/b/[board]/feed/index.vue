@@ -1,26 +1,11 @@
 <script setup lang="ts">
-import { usePosts } from '~/composables/usePosts'
-
+// The /b/[board]/feed/ route is deprecated. All content is now shown at /b/[board]/.
 const route = useRoute()
 const boardName = route.params.board as string
 
-const { posts, loading, error, page, sort, hasMore, fetchPosts, nextPage, prevPage, setSort } = usePosts({
-  boardName,
-  postType: 'feed',
-})
-
-await fetchPosts()
+await navigateTo(`/b/${boardName}`, { replace: true, redirectCode: 301 })
 </script>
 
 <template>
-  <div>
-    <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
-      <CommonSortSelector v-model="sort" @update:model-value="setSort" />
-      <CommonViewToggle />
-    </div>
-
-    <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchPosts" />
-    <PostList :posts="posts" :loading="loading" />
-    <CommonPagination v-if="posts.length > 0" :page="page" :has-more="hasMore" @prev="prevPage" @next="nextPage" />
-  </div>
+  <div />
 </template>

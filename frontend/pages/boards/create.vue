@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useToast } from '~/composables/useToast'
+import { useSiteStore } from '~/stores/site'
 
 definePageMeta({ middleware: 'guards' })
 useHead({ title: 'Create Board' })
 
 const toast = useToast()
+const siteStore = useSiteStore()
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -14,6 +16,8 @@ const form = ref({
   title: '',
   description: '',
   isNsfw: false,
+  mode: (siteStore.site?.defaultBoardMode as string) || 'feed',
+  wikiEnabled: false,
 })
 
 const CREATE_BOARD_MUTATION = `
@@ -22,6 +26,7 @@ const CREATE_BOARD_MUTATION = `
       board {
         id
         name
+        mode
       }
     }
   }
@@ -60,6 +65,8 @@ async function handleSubmit (): Promise<void> {
           title: form.value.title,
           description: form.value.description || null,
           isNsfw: form.value.isNsfw,
+          mode: form.value.mode,
+          wikiEnabled: form.value.wikiEnabled,
         },
       },
     })
@@ -132,15 +139,59 @@ async function handleSubmit (): Promise<void> {
         />
       </div>
 
-      <div class="flex items-center gap-2">
-        <input
-          id="board-nsfw"
-          v-model="form.isNsfw"
-          type="checkbox"
-          class="form-checkbox"
-        >
-        <label for="board-nsfw" class="text-sm text-gray-700">
-          Mark as NSFW
+      <!-- Board Mode Selector -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Board Mode</label>
+        <div class="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            class="text-left rounded-lg border-2 p-4 transition-all"
+            :class="form.mode === 'feed'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-gray-200 bg-white hover:border-gray-300'"
+            @click="form.mode = 'feed'"
+          >
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">📰</span>
+              <span class="font-semibold text-sm text-gray-900">Feed Board</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Share links, images, and text posts. Members vote on content.
+            </p>
+          </button>
+          <button
+            type="button"
+            class="text-left rounded-lg border-2 p-4 transition-all"
+            :class="form.mode === 'forum'
+              ? 'border-blue-600 bg-blue-50 ring-1 ring-blue-600'
+              : 'border-gray-200 bg-white hover:border-gray-300'"
+            @click="form.mode = 'forum'"
+          >
+            <div class="flex items-center gap-2 mb-1.5">
+              <span class="text-lg">💬</span>
+              <span class="font-semibold text-sm text-gray-900">Forum Board</span>
+            </div>
+            <p class="text-xs text-gray-500 leading-relaxed">
+              Threaded discussions. Great for Q&amp;A, support, or structured topics.
+            </p>
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <label class="flex items-center gap-2">
+          <input v-model="form.wikiEnabled" type="checkbox" class="form-checkbox" />
+          <span class="text-sm text-gray-700">Enable wiki for this board</span>
+        </label>
+
+        <label class="flex items-center gap-2">
+          <input
+            id="board-nsfw"
+            v-model="form.isNsfw"
+            type="checkbox"
+            class="form-checkbox"
+          >
+          <span class="text-sm text-gray-700">Mark as NSFW</span>
         </label>
       </div>
 

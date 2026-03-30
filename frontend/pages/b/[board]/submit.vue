@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useFileUpload } from '~/composables/useFileUpload'
+import { useBoard } from '~/composables/useBoard'
 import type { Post } from '~/types/generated'
-import { postUrl } from '~/utils/slug'
 
 definePageMeta({ middleware: 'guards' })
 
@@ -10,6 +10,17 @@ const route = useRoute()
 const boardName = route.params.board as string
 
 useHead({ title: `Create Post - ${boardName}` })
+
+const { board, fetchBoard } = useBoard()
+await fetchBoard(boardName)
+
+// Derive post type from board mode
+const postType = computed(() => {
+  if (board.value?.mode === 'forum') return 'thread'
+  // Also respect query param override
+  if (route.query.type === 'thread') return 'thread'
+  return 'feed'
+})
 
 const CREATE_POST_MUTATION = `
   mutation CreatePost($title: String!, $board: String, $body: String, $link: String, $isNSFW: Boolean, $altText: String, $postType: String) {
@@ -49,6 +60,7 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
     link: data.url || undefined,
     board: boardName,
     altText: data.altText || undefined,
+    postType: postType.value,
   }
 
   if (data.file) {
@@ -64,7 +76,8 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
   }
 
   if (result?.createPost) {
-    await navigateTo(postUrl(result.createPost))
+    const post = result.createPost
+    await navigateTo(`/b/${boardName}/${post.id}/${post.slug || ''}`)
   }
 }
 </script>
@@ -88,7 +101,9 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
         <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
         </svg>
-        <h1 class="text-base font-semibold text-gray-900">Create Post</h1>
+        <h1 class="text-base font-semibold text-gray-900">
+          {{ board?.mode === 'forum' ? 'New Discussion' : 'Create Post' }}
+        </h1>
         <span class="text-xs text-gray-500 ml-auto">in b/{{ boardName }}</span>
       </div>
 
@@ -97,7 +112,7 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
         <CommonErrorDisplay v-if="uploadError" :message="uploadError.message" class="mb-4" />
         <PostForm
           :board-name="boardName"
-          :submit-label="loading || fileUploading ? 'Posting...' : 'Create Post'"
+          :submit-label="loading || fileUploading ? 'Posting...' : (board?.mode === 'forum' ? 'Start Discussion' : 'Create Post')"
           @submit="handleSubmit"
         />
       </div>

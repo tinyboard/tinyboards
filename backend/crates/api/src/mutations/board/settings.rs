@@ -7,6 +7,7 @@ use async_graphql::*;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
 use tinyboards_db::{
+    enums::DbBoardMode,
     models::{
         aggregates::BoardAggregates as DbBoardAggregates,
         board::boards::{Board as DbBoard, BoardUpdateForm},
@@ -40,9 +41,8 @@ pub struct UpdateBoardSettingsInput {
     pub exclude_from_all: Option<bool>,
     pub icon: Option<String>,
     pub banner: Option<String>,
-    pub section_config: Option<i32>,
-    pub section_order: Option<String>,
-    pub default_section: Option<String>,
+    /// Board mode: "feed" or "forum".
+    pub mode: Option<String>,
     pub wiki_enabled: Option<bool>,
     pub custom_css: Option<String>,
 }
@@ -84,16 +84,19 @@ impl UpdateBoardSettings {
 
         let settings = ctx.data::<Settings>()?.as_ref();
 
-        // Validate section_config if provided
-        if let Some(config) = input.section_config {
-            if config <= 0 {
+        // Parse and validate board mode if provided
+        let board_mode = match input.mode.as_deref() {
+            Some("feed") => Some(DbBoardMode::Feed),
+            Some("forum") => Some(DbBoardMode::Forum),
+            Some(other) => {
                 return Err(TinyBoardsError::from_message(
                     400,
-                    "At least one section must be enabled (section_config must be > 0)",
+                    &format!("Invalid board mode '{}'. Must be 'feed' or 'forum'.", other),
                 )
                 .into());
             }
-        }
+            None => None,
+        };
 
         // Handle file uploads
         let icon_url = match icon_file {
@@ -164,10 +167,8 @@ impl UpdateBoardSettings {
             exclude_from_all: input.exclude_from_all,
             icon: icon_url.map(|s| Url::parse(&s).ok().map(|u| u.to_string())),
             banner: banner_url.map(|s| Url::parse(&s).ok().map(|u| u.to_string())),
-            section_config: input.section_config,
-            section_order: input.section_order.map(Some),
+            mode: board_mode,
             wiki_enabled: input.wiki_enabled,
-            default_section: input.default_section.map(Some),
             custom_css: sanitized_css,
             ..Default::default()
         };

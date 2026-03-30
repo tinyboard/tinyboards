@@ -397,7 +397,7 @@ type Board {
   usersActiveMonth: Int!
   usersActiveHalfYear: Int!
   isSubscribed: Boolean!
-  sectionConfig: Int!
+  mode: String!
   customCss: String
 }
 
@@ -477,6 +477,7 @@ type LocalSite {
   createdAt: String!
   updatedAt: String!
   welcomeMessage: String
+  defaultBoardMode: String!
   customCss: String
   customCssEnabled: Boolean!
 }
@@ -740,6 +741,8 @@ input CreateBoardInput {
   hoverColor: String
   icon: String
   banner: String
+  mode: String
+  wikiEnabled: Boolean
 }
 
 input UpdateBoardSettingsInput {
@@ -756,9 +759,7 @@ input UpdateBoardSettingsInput {
   excludeFromAll: Boolean
   icon: String
   banner: String
-  sectionConfig: Int
-  sectionOrder: String
-  defaultSection: String
+  mode: String
   wikiEnabled: Boolean
   customCss: String
 }
@@ -829,6 +830,7 @@ input UpdateSiteConfigInput {
   linkFilterEnabled: Boolean
   bannedDomains: String
   registrationMode: String
+  defaultBoardMode: String
   customCss: String
   customCssEnabled: Boolean
 }

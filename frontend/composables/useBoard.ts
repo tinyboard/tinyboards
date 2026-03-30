@@ -27,7 +27,7 @@ const BOARD_QUERY = `
       usersActiveDay
       usersActiveWeek
       isSubscribed
-      sectionConfig
+      mode
       wikiEnabled
       customCss
     }
@@ -35,11 +35,11 @@ const BOARD_QUERY = `
 `
 
 interface BoardResponse {
-  board: Board & { isSubscribed: boolean; sectionConfig: number; wikiEnabled: boolean }
+  board: Board & { isSubscribed: boolean; mode: string; wikiEnabled: boolean }
 }
 
 interface UseBoardReturn {
-  board: Ref<(Board & { sectionConfig?: number; wikiEnabled?: boolean }) | null>
+  board: Ref<(Board & { mode?: string; wikiEnabled?: boolean }) | null>
   isSubscribed: Ref<boolean>
   loading: Ref<boolean>
   error: Ref<ApiError | null>
@@ -50,7 +50,7 @@ interface UseBoardReturn {
 
 export function useBoard (): UseBoardReturn {
   const { execute, loading, error } = useGraphQL<BoardResponse>()
-  const board = ref<(Board & { sectionConfig?: number; wikiEnabled?: boolean }) | null>(null)
+  const board = ref<(Board & { mode?: string; wikiEnabled?: boolean }) | null>(null)
   const isSubscribed = ref(false)
 
   async function fetchBoard (name: string): Promise<void> {

@@ -56,7 +56,7 @@ onMounted(async () => {
       <BoardTabs
         :board-name="board.name"
         :is-mod="isMod"
-        :section-config="board.sectionConfig ?? 3"
+        :mode="board.mode ?? 'feed'"
         :wiki-enabled="board.wikiEnabled ?? false"
       />
 
