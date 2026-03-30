@@ -50,6 +50,10 @@ pub struct UpdateSiteConfigInput {
     pub registration_mode: Option<String>,
     pub custom_css: Option<String>,
     pub custom_css_enabled: Option<bool>,
+    pub trusted_user_min_reputation: Option<i32>,
+    pub trusted_user_min_account_age_days: Option<i32>,
+    pub trusted_user_manual_approval: Option<bool>,
+    pub trusted_user_min_posts: Option<i32>,
 }
 
 #[Object]
@@ -103,7 +107,16 @@ impl SiteConfig {
             require_email_verification: input.require_email_verification,
             boards_enabled: input.boards_enabled,
             board_creation_admin_only: input.board_creation_admin_only,
-            board_creation_mode: input.board_creation_mode,
+            board_creation_mode: input.board_creation_mode.map(|s| {
+                // Normalize board creation mode to canonical PascalCase values
+                match s.to_lowercase().as_str() {
+                    "disabled" => "Disabled".to_string(),
+                    "adminonly" | "admin_only" | "closed" => "AdminOnly".to_string(),
+                    "trustedusers" | "trusted_users" | "restricted" => "TrustedUsers".to_string(),
+                    "open" => "Open".to_string(),
+                    _ => "Open".to_string(),
+                }
+            }),
             emoji_enabled: input.emoji_enabled,
             board_emojis_enabled: input.board_emojis_enabled,
             word_filter_enabled: input.word_filter_enabled,
@@ -123,10 +136,10 @@ impl SiteConfig {
                 _ => DbRegistrationMode::Open,
             }),
             is_site_setup: None,
-            trusted_user_min_reputation: None,
-            trusted_user_min_account_age_days: None,
-            trusted_user_manual_approval: None,
-            trusted_user_min_posts: None,
+            trusted_user_min_reputation: input.trusted_user_min_reputation,
+            trusted_user_min_account_age_days: input.trusted_user_min_account_age_days,
+            trusted_user_manual_approval: input.trusted_user_manual_approval,
+            trusted_user_min_posts: input.trusted_user_min_posts,
             allowed_post_types: None,
             word_filter_applies_to_posts: None,
             word_filter_applies_to_comments: None,

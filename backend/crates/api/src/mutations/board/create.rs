@@ -71,15 +71,16 @@ impl CreateBoard {
 
         let admin_level = user.admin_level;
 
-        match site.board_creation_mode.as_str() {
-            "Disabled" => {
+        // Normalize to lowercase for case-insensitive matching
+        match site.board_creation_mode.to_lowercase().as_str() {
+            "disabled" => {
                 return Err(TinyBoardsError::from_message(
                     403,
                     "Board creation is currently disabled",
                 )
                 .into());
             }
-            "AdminOnly" => {
+            "adminonly" | "admin_only" | "closed" => {
                 if admin_level == 0 {
                     return Err(TinyBoardsError::from_message(
                         403,
@@ -88,7 +89,7 @@ impl CreateBoard {
                     .into());
                 }
             }
-            "TrustedUsers" => {
+            "trustedusers" | "trusted_users" | "restricted" => {
                 // Admins bypass all checks
                 if admin_level == 0 {
                     // Check manual approval if required
@@ -160,8 +161,17 @@ impl CreateBoard {
                     }
                 }
             }
-            // "Open" or any unrecognised value: no restrictions
-            _ => {}
+            // "open" or any unrecognised value: no restrictions
+            _ => {
+                // Also check the legacy board_creation_admin_only flag
+                if site.board_creation_admin_only && admin_level == 0 {
+                    return Err(TinyBoardsError::from_message(
+                        403,
+                        "Board creation is restricted to admins only",
+                    )
+                    .into());
+                }
+            }
         }
 
         // Validate board name
