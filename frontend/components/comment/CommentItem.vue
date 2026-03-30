@@ -42,7 +42,7 @@ function submitReply (): void {
     <!-- Comment header -->
     <div class="flex items-center gap-1 text-xs text-gray-500">
       <button
-        class="text-gray-400 hover:text-gray-600 mr-1"
+        class="text-gray-400 hover:text-gray-600 mr-1 p-1 -m-1 min-w-[28px] text-center"
         @click="collapsed = !collapsed"
       >
         [{{ collapsed ? '+' : '−' }}]
@@ -97,11 +97,6 @@ function submitReply (): void {
         :is-moderator="isModerator"
         @toggle-reply="showReply = !showReply"
       />
-
-      <!-- Reactions -->
-      <div class="mt-1">
-        <CommonReactionBar target-type="comment" :target-id="comment.id" />
-      </div>
 
       <!-- Reply form -->
       <div v-if="showReply && authStore.isLoggedIn" class="mt-2">

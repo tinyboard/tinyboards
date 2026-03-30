@@ -152,10 +152,16 @@ async fn main() -> Result<(), TinyBoardsError> {
             .supports_credentials()
             .max_age(settings.cors.max_age as usize);
 
+        // Allow up to 100 MB payload for file uploads (default is 256 KB)
+        let payload_config = web::PayloadConfig::new(100 * 1024 * 1024);
+        let json_config = web::JsonConfig::default().limit(100 * 1024 * 1024);
+
         App::new()
             .wrap(actix_web::middleware::Logger::default())
             .wrap(cors_config)
             .wrap(TracingLogger::<QuieterRootSpanBuilder>::new())
+            .app_data(payload_config)
+            .app_data(json_config)
             .app_data(Data::new(context))
             // Share the pool directly for the auth REST handlers
             .app_data(Data::new(pool.clone()))

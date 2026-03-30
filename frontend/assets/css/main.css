@@ -147,7 +147,7 @@ img.emoji {
 
   .button {
     box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
-    @apply block h-[37px] px-4 py-2 rounded transition text-sm leading-5 font-bold duration-100 ease-in-out active:shadow-inner-xs focus:border-secondary focus:ring-2 focus:ring-secondary focus:outline-none focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply block min-h-[44px] sm:min-h-0 sm:h-[37px] px-4 py-2 rounded transition text-sm leading-5 font-bold duration-100 ease-in-out active:shadow-inner-xs focus:border-secondary focus:ring-2 focus:ring-secondary focus:outline-none focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .button-sm {
@@ -180,7 +180,7 @@ img.emoji {
 
   /* Inputs */
   .form-input {
-    @apply block w-full px-3 py-1 sm:py-1.5 transition duration-100 ease-in-out border rounded shadow-inner-xs focus:ring-2 focus:outline-none focus:ring-opacity-50 disabled:opacity-50 text-gray-900 placeholder-gray-400 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary focus:ring-primary;
+    @apply block w-full px-3 py-2 sm:py-1.5 transition duration-100 ease-in-out border rounded shadow-inner-xs focus:ring-2 focus:outline-none focus:ring-opacity-50 disabled:opacity-50 text-gray-900 placeholder-gray-400 bg-gray-50 border-gray-200 focus:bg-white focus:border-primary focus:ring-primary;
   }
 
   /* Badges */

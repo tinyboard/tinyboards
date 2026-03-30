@@ -129,9 +129,9 @@ function openRemoveDialog (): void {
 </script>
 
 <template>
-  <article class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  <article class="bg-white border border-gray-200 rounded-lg">
     <!-- Thread title bar -->
-    <div class="px-4 py-3 bg-primary/5 border-b border-primary/10">
+    <div class="px-4 py-3 bg-primary/5 border-b border-primary/10 rounded-t-lg">
       <div class="flex items-center gap-2 flex-wrap">
         <h1 class="text-lg font-bold text-gray-900 flex-1">
           {{ post.title }}
@@ -222,7 +222,7 @@ function openRemoveDialog (): void {
         <div v-if="post.image && isImageVideo" class="mb-3">
           <video
             :src="post.image"
-            class="max-w-full max-h-[600px] rounded-lg border border-gray-200"
+            class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200"
             controls
             preload="metadata"
           />
@@ -233,7 +233,7 @@ function openRemoveDialog (): void {
           <img
             :src="post.image"
             :alt="post.altText || post.title"
-            class="max-w-full max-h-[600px] rounded-lg border border-gray-200 object-contain"
+            class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200 object-contain"
           />
         </div>
 

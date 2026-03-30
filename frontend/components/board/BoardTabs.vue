@@ -57,7 +57,7 @@ function isActive (tab: TabItem): boolean {
         v-for="tab in tabs"
         :key="tab.to"
         :to="tab.to"
-        class="px-3 py-2.5 text-sm whitespace-nowrap no-underline transition-colors border-b-2 flex items-center gap-1.5"
+        class="px-3 py-3 sm:py-2.5 text-sm whitespace-nowrap no-underline transition-colors border-b-2 flex items-center gap-1.5"
         :class="[
           isActive(tab)
             ? 'border-primary text-primary font-medium'

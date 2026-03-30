@@ -33,7 +33,7 @@ const mobileNavOpen = ref(false)
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
-      <nav v-if="mobileNavOpen" class="mt-2 pb-1">
+      <nav v-if="mobileNavOpen" class="mt-2 pb-1 max-h-[60vh] overflow-y-auto">
         <NuxtLink
           v-for="item in settingsNav"
           :key="item.to"

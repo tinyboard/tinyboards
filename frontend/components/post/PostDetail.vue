@@ -154,7 +154,7 @@ function onClickOutsideMenu (e: Event): void {
         <div v-if="post.image && isImageVideo" class="mt-3">
           <video
             :src="post.image"
-            class="max-w-full max-h-[600px] rounded-lg border border-gray-200"
+            class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200"
             controls
             preload="metadata"
           />
@@ -165,7 +165,7 @@ function onClickOutsideMenu (e: Event): void {
           <img
             :src="post.image"
             :alt="post.altText || post.title"
-            class="max-w-full max-h-[600px] rounded-lg border border-gray-200 object-contain"
+            class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200 object-contain"
           />
         </div>
 

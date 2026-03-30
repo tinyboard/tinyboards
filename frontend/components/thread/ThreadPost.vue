@@ -107,9 +107,9 @@ async function togglePin (): Promise<void> {
 </script>
 
 <template>
-  <article :id="`post-${postNumber}`" class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+  <article :id="`post-${postNumber}`" class="bg-white border border-gray-200 rounded-lg">
     <!-- Post header bar -->
-    <div class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
+    <div class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200 rounded-t-lg">
       <div class="flex items-center gap-3">
         <!-- Avatar -->
         <div v-if="comment.creator?.avatar" class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">

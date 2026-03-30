@@ -46,7 +46,7 @@ const sizeClasses = {
 
       <!-- Modal content -->
       <div class="fixed inset-0 overflow-y-auto">
-        <div class="flex min-h-full items-center justify-center p-4">
+        <div class="flex min-h-full items-center justify-center p-3 sm:p-4">
           <TransitionChild
             as="template"
             enter="ease-out duration-200"
@@ -57,7 +57,7 @@ const sizeClasses = {
             leave-to="opacity-0 scale-95"
           >
             <DialogPanel
-              class="w-full rounded-lg bg-white shadow-xl p-6"
+              class="w-full rounded-lg bg-white shadow-xl p-4 sm:p-6"
               :class="sizeClasses[size]"
             >
               <DialogTitle v-if="title || $slots.title" class="text-lg font-semibold text-gray-900 mb-4">
