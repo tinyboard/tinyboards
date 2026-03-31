@@ -64,18 +64,6 @@ function formatCount (n: number): string {
 
 <template>
   <div class="space-y-4">
-    <!-- New Post button for logged-in users -->
-    <NuxtLink
-      v-if="authStore.isLoggedIn"
-      to="/submit"
-      class="flex items-center justify-center gap-2 w-full rounded-lg bg-primary text-white py-2.5 text-sm font-medium hover:opacity-90 transition-opacity no-underline"
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      New Post
-    </NuxtLink>
-
     <!-- Site welcome card -->
     <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
       <div class="h-16 bg-gradient-to-br from-primary to-primary-hover" />
