@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
           if (!post.board) continue
           const slugPart = post.slug ? `/${post.slug}` : ''
           urls.push({
-            loc: `${baseUrl}/b/${post.board.name}/feed/${post.id}${slugPart}`,
+            loc: `${baseUrl}/b/${post.board.name}/${post.id}${slugPart}`,
             lastmod: post.createdAt ? new Date(post.createdAt).toISOString().split('T')[0] : undefined,
             priority: '0.5',
             changefreq: 'weekly',
