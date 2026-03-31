@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useAuthStore } from '~/stores/auth'
+import { useSiteStore } from '~/stores/site'
 import type { Board } from '~/types/generated'
 
 const authStore = useAuthStore()
+const siteStore = useSiteStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -101,18 +103,9 @@ await fetchBoards()
 
 <template>
   <div class="max-w-4xl mx-auto px-4 py-4">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-lg font-semibold text-gray-900">
-        Board Directory
-      </h1>
-      <NuxtLink
-        v-if="authStore.isLoggedIn"
-        to="/boards/create"
-        class="button button-sm primary no-underline"
-      >
-        Create Board
-      </NuxtLink>
-    </div>
+    <h1 class="text-lg font-semibold text-gray-900 mb-4">
+      Board Directory
+    </h1>
 
     <div class="mb-4 flex flex-col sm:flex-row gap-2">
       <form @submit.prevent="handleSearch" class="flex gap-2 flex-1">
@@ -139,32 +132,41 @@ await fetchBoards()
       </select>
     </div>
 
-    <!-- Mode filter -->
-    <div class="mb-4 flex gap-1">
-      <button
-        type="button"
-        class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
-        :class="modeFilter === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
-        @click="setModeFilter('all')"
+    <!-- Mode filter + Create Board -->
+    <div class="mb-4 flex items-center justify-between">
+      <div class="flex gap-1">
+        <button
+          type="button"
+          class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+          :class="modeFilter === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+          @click="setModeFilter('all')"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+          :class="modeFilter === 'feed' ? 'bg-blue-100 text-blue-800 ring-1 ring-blue-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+          @click="setModeFilter('feed')"
+        >
+          Feed
+        </button>
+        <button
+          type="button"
+          class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
+          :class="modeFilter === 'forum' ? 'bg-purple-100 text-purple-800 ring-1 ring-purple-300' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+          @click="setModeFilter('forum')"
+        >
+          Forum
+        </button>
+      </div>
+      <NuxtLink
+        v-if="authStore.isLoggedIn && (!siteStore.boardCreationAdminOnly || authStore.isAdmin)"
+        to="/boards/create"
+        class="button button-sm primary no-underline"
       >
-        All
-      </button>
-      <button
-        type="button"
-        class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
-        :class="modeFilter === 'feed' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'"
-        @click="setModeFilter('feed')"
-      >
-        📰 Feed
-      </button>
-      <button
-        type="button"
-        class="px-3 py-1 rounded-full text-xs font-medium transition-colors"
-        :class="modeFilter === 'forum' ? 'bg-purple-600 text-white' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'"
-        @click="setModeFilter('forum')"
-      >
-        💬 Forum
-      </button>
+        Create Board
+      </NuxtLink>
     </div>
 
     <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchBoards" />
