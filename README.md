@@ -37,7 +37,6 @@ It's a project being built in the open by people who care about what community s
 
 **Discovery**
 - Full-text search across posts, comments, users, and boards
-- Custom feeds (Streams) — curate multi-board feeds and share them with others
 - Six sort modes: hot, new, top (day/week/month/year/all), controversial, most comments
 
 **Administration**
