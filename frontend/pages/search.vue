@@ -190,7 +190,7 @@ if (query.value) {
             v-for="comment in results.comments"
             :key="comment.id"
             :to="comment.post?.board?.name && comment.post?.slug
-              ? `/b/${comment.post.board.name}/feed/${comment.postId}/${comment.post.slug}`
+              ? `/b/${comment.post.board.name}/${comment.postId}/${comment.post.slug}`
               : '#'"
             class="block bg-white border border-gray-200 rounded p-3 hover:border-gray-300 transition-colors"
           >

@@ -43,7 +43,7 @@ async function handleSubmit (): Promise<void> {
   if (result?.createPost) {
     const post = result.createPost
     const board = post.board?.name ?? boardName
-    await navigateTo(`/b/${board}/threads/${post.id}/${post.slug}`)
+    await navigateTo(`/b/${board}/${post.id}/${post.slug}`)
   }
 }
 </script>
@@ -52,7 +52,7 @@ async function handleSubmit (): Promise<void> {
   <div>
     <div class="mb-4">
       <NuxtLink
-        :to="`/b/${boardName}/threads`"
+        :to="`/b/${boardName}`"
         class="text-xs text-gray-500 hover:text-primary no-underline inline-flex items-center gap-1"
       >
         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +98,7 @@ async function handleSubmit (): Promise<void> {
 
         <div class="flex items-center justify-end gap-3">
           <NuxtLink
-            :to="`/b/${boardName}/threads`"
+            :to="`/b/${boardName}`"
             class="button white button-sm no-underline"
           >
             Cancel

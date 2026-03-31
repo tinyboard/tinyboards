@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 import type { Ref } from 'vue'
 import { useGraphQL } from '~/composables/useGraphQL'
 import type { Board } from '~/types/generated'
@@ -50,8 +49,8 @@ interface UseBoardReturn {
 
 export function useBoard (): UseBoardReturn {
   const { execute, loading, error } = useGraphQL<BoardResponse>()
-  const board = ref<(Board & { mode?: string; wikiEnabled?: boolean }) | null>(null)
-  const isSubscribed = ref(false)
+  const board = useState<(Board & { mode?: string; wikiEnabled?: boolean }) | null>('current-board', () => null)
+  const isSubscribed = useState<boolean>('current-board-subscribed', () => false)
 
   async function fetchBoard (name: string): Promise<void> {
     const result = await execute(BOARD_QUERY, {

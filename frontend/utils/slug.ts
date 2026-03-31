@@ -13,20 +13,20 @@ export function slugify (text: string): string {
 
 interface PostLike {
   id: string
-  title: string
-  isThread?: boolean
+  title?: string | null
+  slug?: string | null
   board?: { name: string } | null
 }
 
 /**
- * Build a post URL path from a post object or explicit components.
- * Uses the post's isThread field, defaulting to 'feed'.
+ * Build a post URL path from a post object.
+ * Canonical format: /b/{board}/{id}/{slug}
  */
-export function postUrl (post: PostLike, postType?: 'feed' | 'threads'): string {
-  const section = postType ?? (post.isThread ? 'threads' : 'feed')
-  const slug = post.title ? `/${slugify(post.title)}` : ''
+export function postUrl (post: PostLike): string {
+  const postSlug = post.slug || (post.title ? slugify(post.title) : '')
+  const slugPart = postSlug ? `/${postSlug}` : ''
   const boardName = post.board?.name ?? 'unknown'
-  return `/b/${boardName}/${section}/${post.id}${slug}`
+  return `/b/${boardName}/${post.id}${slugPart}`
 }
 
 /**

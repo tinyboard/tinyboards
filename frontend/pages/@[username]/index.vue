@@ -133,7 +133,7 @@ await loadContent(username.value)
             <span class="text-gray-400">commented on</span>
             <NuxtLink
               v-if="comment.post"
-              :to="`/b/${comment.post.board?.name || comment.board?.name || 'unknown'}/feed/${comment.postId}/${comment.post.slug || ''}`"
+              :to="`/b/${comment.post.board?.name || comment.board?.name || 'unknown'}/${comment.postId}/${comment.post.slug || ''}`"
               class="font-medium text-gray-700 no-underline hover:text-primary truncate"
             >
               {{ comment.post.title }}
