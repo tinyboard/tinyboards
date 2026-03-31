@@ -19,6 +19,7 @@ export interface NotificationPostContext {
 export interface NotificationCommentContext {
   id: string
   body: string
+  bodyHTML: string | null
   postId: string
   postTitle: string
   boardName: string
@@ -57,7 +58,7 @@ const NOTIFICATIONS_QUERY = `
       id type isRead createdAt commentId postId messageId
       actor { id name displayName avatar }
       post { id title boardName boardId }
-      comment { id body postId postTitle boardName }
+      comment { id body bodyHTML postId postTitle boardName }
       message { id body }
     }
   }

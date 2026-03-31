@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
 import type { Post, Comment, User, Board } from '~/types/generated'
+import { sanitizeHtml } from '~/utils/sanitize'
 
 useHead({ title: 'Search' })
 
@@ -11,6 +12,7 @@ const SEARCH_QUERY = `
         id
         title
         body
+        bodyHTML
         url
         createdAt
         slug
@@ -22,6 +24,7 @@ const SEARCH_QUERY = `
       comments {
         id
         body
+        bodyHTML
         createdAt
         score
         postId
@@ -197,7 +200,8 @@ if (query.value) {
               </span>
               <span>&middot; {{ comment.score }} points</span>
             </div>
-            <p class="text-sm text-gray-800 line-clamp-3">{{ comment.body }}</p>
+            <div v-if="comment.bodyHTML" class="text-sm text-gray-800 line-clamp-3 prose prose-sm max-w-none [&>*]:m-0" v-html="sanitizeHtml(comment.bodyHTML)" />
+            <p v-else class="text-sm text-gray-800 line-clamp-3">{{ comment.body }}</p>
           </NuxtLink>
         </div>
       </div>
