@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NotificationActor, NotificationPostContext, NotificationCommentContext, NotificationMessageContext } from '~/composables/useNotifications'
+import { sanitizeHtml } from '~/utils/sanitize'
 
 const props = defineProps<{
   id: string
@@ -43,6 +44,13 @@ const contextText = computed(() => {
   }
   if (props.message) {
     return props.message.body
+  }
+  return null
+})
+
+const contextHtml = computed(() => {
+  if (props.comment?.bodyHTML) {
+    return sanitizeHtml(props.comment.bodyHTML)
   }
   return null
 })
@@ -178,7 +186,8 @@ function handleClick () {
       </p>
 
       <!-- Snippet: comment body or message body -->
-      <p v-if="contextText" class="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed">
+      <div v-if="contextHtml" class="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed prose prose-xs max-w-none [&>*]:m-0" v-html="contextHtml" />
+      <p v-else-if="contextText" class="text-xs text-gray-600 mt-1 line-clamp-2 leading-relaxed">
         {{ contextText }}
       </p>
 

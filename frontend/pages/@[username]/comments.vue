@@ -2,6 +2,7 @@
 import { useGraphQL } from '~/composables/useGraphQL'
 import type { Comment } from '~/types/generated'
 import { timeAgo } from '~/utils/date'
+import { sanitizeHtml } from '~/utils/sanitize'
 
 const route = useRoute()
 const username = computed(() => route.params.username as string)
@@ -11,6 +12,7 @@ const USER_COMMENTS_QUERY = `
     comments(userName: $userName, sort: $sort, page: $page, limit: $limit) {
       id
       body
+      bodyHTML
       createdAt
       updatedAt
       score
@@ -137,7 +139,8 @@ await fetchComments()
               </span>
             </template>
           </div>
-          <p class="text-sm text-gray-800 leading-relaxed">{{ comment.body }}</p>
+          <div v-if="comment.bodyHTML" class="text-sm text-gray-800 leading-relaxed prose prose-sm max-w-none [&>*]:m-0 line-clamp-3" v-html="sanitizeHtml(comment.bodyHTML)" />
+          <p v-else class="text-sm text-gray-800 leading-relaxed">{{ comment.body }}</p>
         </div>
       </div>
     </div>

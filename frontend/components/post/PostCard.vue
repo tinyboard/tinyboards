@@ -6,6 +6,7 @@ import { postUrl } from '~/utils/slug'
 import { useGraphQL } from '~/composables/useGraphQL'
 import { useAuthStore } from '~/stores/auth'
 import { useToast } from '~/composables/useToast'
+import { sanitizeHtml } from '~/utils/sanitize'
 
 const props = defineProps<{
   post: Post
@@ -316,12 +317,11 @@ const hasLinkPreview = computed(() => {
           </a>
 
           <!-- Body preview (if text post) -->
-          <p
-            v-if="post.body && !post.url"
-            class="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-relaxed"
-          >
-            {{ post.body }}
-          </p>
+          <div
+            v-if="post.bodyHTML && !post.url"
+            class="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-relaxed prose prose-sm max-w-none [&>*]:m-0"
+            v-html="sanitizeHtml(post.bodyHTML)"
+          />
 
           <!-- Flags -->
           <div v-if="post.isNSFW || post.isLocked" class="flex items-center gap-2 mt-1">
