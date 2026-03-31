@@ -34,6 +34,7 @@ const POSTS_QUERY = `
       embedTitle
       embedDescription
       distinguishedAs
+      newestCommentTime
       board {
         id
         name
