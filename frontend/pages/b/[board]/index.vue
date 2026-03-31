@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePosts } from '~/composables/usePosts'
 import { useBoard } from '~/composables/useBoard'
+import { timeAgo, formatDate } from '~/utils/date'
 
 const route = useRoute()
 const boardName = route.params.board as string
@@ -19,15 +20,22 @@ const { posts, loading, error, page, sort, hasMore, fetchPosts, nextPage, prevPa
   postType: postTypeFilter.value,
 })
 
+// Forum boards sort by activity (newest comment) by default
+if (boardMode.value === 'forum') {
+  sort.value = 'newComments'
+}
+
+const pinnedThreads = computed(() => posts.value.filter(p => p.isFeaturedBoard))
+const unpinnedThreads = computed(() => posts.value.filter(p => !p.isFeaturedBoard))
+
 await fetchPosts()
 </script>
 
 <template>
   <div>
-    <!-- Forum mode: thread-style list -->
+    <!-- Forum mode: classic forum thread list -->
     <template v-if="boardMode === 'forum'">
-      <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
-        <CommonSortSelector v-model="sort" @update:model-value="setSort" />
+      <div class="flex items-center justify-end mb-4">
         <NuxtLink
           :to="`/b/${boardName}/submit?type=thread`"
           class="button button-sm primary no-underline"
@@ -38,7 +46,7 @@ await fetchPosts()
 
       <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchPosts" />
 
-      <div v-if="!loading && posts.length === 0" class="bg-white border border-gray-200 rounded-lg py-12 text-center">
+      <div v-if="!loading && posts.length === 0" class="bg-white border border-gray-200 rounded py-12 text-center">
         <div class="inline-flex w-12 h-12 rounded-full bg-primary/10 items-center justify-center mb-3">
           <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
@@ -48,42 +56,92 @@ await fetchPosts()
         <p class="text-xs text-gray-400">Start a discussion!</p>
       </div>
 
-      <div v-else-if="!loading" class="bg-white border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100">
+      <div v-else-if="!loading" class="forum-thread-list">
+        <!-- Table header -->
+        <div class="forum-header">
+          <div class="forum-header-topic">Topic</div>
+          <div class="forum-header-stats">Replies</div>
+          <div class="forum-header-activity">Last Post</div>
+        </div>
+
+        <!-- Pinned threads -->
+        <template v-if="pinnedThreads.length > 0">
+          <NuxtLink
+            v-for="thread in pinnedThreads"
+            :key="thread.id"
+            :to="`/b/${boardName}/${thread.id}/${thread.slug || ''}`"
+            class="forum-thread forum-thread-pinned no-underline"
+          >
+            <div class="forum-thread-avatar">
+              <CommonAvatar
+                :src="thread.creator?.avatar ?? undefined"
+                :name="thread.creator?.displayName || thread.creator?.name || '?'"
+                size="lg"
+              />
+            </div>
+            <div class="forum-thread-content">
+              <div class="forum-thread-title-row">
+                <span class="forum-pin-badge">Pinned</span>
+                <span v-if="thread.isLocked" class="forum-lock-badge" title="Locked">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                </span>
+                <h3 class="forum-thread-title">{{ thread.title }}</h3>
+              </div>
+              <p class="forum-thread-meta">
+                by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
+                &middot;
+                <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
+              </p>
+            </div>
+            <div class="forum-thread-stats">
+              <span class="forum-stat-number">{{ thread.commentCount }}</span>
+              <span class="forum-stat-label">{{ thread.commentCount === 1 ? 'reply' : 'replies' }}</span>
+            </div>
+            <div class="forum-thread-last-post">
+              <template v-if="thread.newestCommentTime && thread.commentCount > 0">
+                <span class="forum-last-post-time">{{ timeAgo(thread.newestCommentTime) }}</span>
+              </template>
+              <span v-else class="forum-last-post-time">&mdash;</span>
+            </div>
+          </NuxtLink>
+        </template>
+
+        <!-- Regular threads -->
         <NuxtLink
-          v-for="thread in posts"
+          v-for="thread in unpinnedThreads"
           :key="thread.id"
           :to="`/b/${boardName}/${thread.id}/${thread.slug || ''}`"
-          class="flex items-center gap-4 px-4 py-3 hover:bg-gray-50 transition-colors no-underline group"
+          class="forum-thread no-underline"
         >
-          <div class="shrink-0">
-            <svg v-if="thread.isLocked" class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <svg v-else class="w-5 h-5 text-gray-300 group-hover:text-primary transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-            </svg>
+          <div class="forum-thread-avatar">
+            <CommonAvatar
+              :src="thread.creator?.avatar ?? undefined"
+              :name="thread.creator?.displayName || thread.creator?.name || '?'"
+              size="lg"
+            />
           </div>
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span
-                v-if="thread.isFeaturedBoard"
-                class="text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded"
-              >
-                Pinned
+          <div class="forum-thread-content">
+            <div class="forum-thread-title-row">
+              <span v-if="thread.isLocked" class="forum-lock-badge" title="Locked">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               </span>
-              <h3 class="text-sm font-medium text-gray-900 group-hover:text-primary truncate transition-colors">
-                {{ thread.title }}
-              </h3>
+              <h3 class="forum-thread-title">{{ thread.title }}</h3>
             </div>
-            <p class="text-xs text-gray-500 mt-0.5">
-              by {{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}
+            <p class="forum-thread-meta">
+              by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
+              &middot;
+              <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
             </p>
           </div>
-          <div class="shrink-0 text-center min-w-[60px]">
-            <div class="text-sm font-semibold text-gray-700">{{ thread.commentCount }}</div>
-            <div class="text-[10px] text-gray-400 uppercase tracking-wider">
-              {{ thread.commentCount === 1 ? 'Reply' : 'Replies' }}
-            </div>
+          <div class="forum-thread-stats">
+            <span class="forum-stat-number">{{ thread.commentCount }}</span>
+            <span class="forum-stat-label">{{ thread.commentCount === 1 ? 'reply' : 'replies' }}</span>
+          </div>
+          <div class="forum-thread-last-post">
+            <template v-if="thread.newestCommentTime && thread.commentCount > 0">
+              <span class="forum-last-post-time">{{ timeAgo(thread.newestCommentTime) }}</span>
+            </template>
+            <span v-else class="forum-last-post-time">&mdash;</span>
           </div>
         </NuxtLink>
       </div>

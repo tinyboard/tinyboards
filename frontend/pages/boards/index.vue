@@ -24,6 +24,7 @@ const LIST_BOARDS_QUERY = `
       comments
       usersActiveDay
       usersActiveWeek
+      banner
       isNSFW
       createdAt
       mode
@@ -49,6 +50,9 @@ const filteredBoards = computed(() => {
   if (modeFilter.value === 'all') return boards.value
   return boards.value.filter(b => b.mode === modeFilter.value)
 })
+
+const feedBoards = computed(() => boards.value.filter(b => b.mode !== 'forum'))
+const forumBoards = computed(() => boards.value.filter(b => b.mode === 'forum'))
 
 async function fetchBoards (): Promise<void> {
   const result = await execute(LIST_BOARDS_QUERY, {
@@ -172,12 +176,34 @@ await fetchBoards()
     <CommonErrorDisplay v-if="error" :message="error.message" @retry="fetchBoards" />
     <CommonLoadingSpinner v-else-if="loading && boards.length === 0" size="lg" />
 
-    <div v-else-if="filteredBoards.length > 0" class="grid gap-3 sm:grid-cols-2">
-      <BoardCard v-for="board in filteredBoards" :key="board.id" :board="board" />
-    </div>
-    <p v-else class="text-sm text-gray-500 text-center py-8">
-      No boards found.
-    </p>
+    <!-- Filtered to feed only: grid -->
+    <template v-else-if="modeFilter === 'feed'">
+      <div v-if="filteredBoards.length > 0" class="grid gap-3 sm:grid-cols-2">
+        <BoardCard v-for="board in filteredBoards" :key="board.id" :board="board" />
+      </div>
+      <p v-else class="text-sm text-gray-500 text-center py-8">No boards found.</p>
+    </template>
+
+    <!-- Filtered to forum only: stacked list -->
+    <template v-else-if="modeFilter === 'forum'">
+      <div v-if="filteredBoards.length > 0" class="space-y-2">
+        <BoardCard v-for="board in filteredBoards" :key="board.id" :board="board" />
+      </div>
+      <p v-else class="text-sm text-gray-500 text-center py-8">No boards found.</p>
+    </template>
+
+    <!-- All: feed boards in grid, then forum boards in list -->
+    <template v-else>
+      <template v-if="filteredBoards.length > 0">
+        <div v-if="feedBoards.length > 0" class="grid gap-3 sm:grid-cols-2">
+          <BoardCard v-for="board in feedBoards" :key="board.id" :board="board" />
+        </div>
+        <div v-if="forumBoards.length > 0" class="space-y-2" :class="{ 'mt-3': feedBoards.length > 0 }">
+          <BoardCard v-for="board in forumBoards" :key="board.id" :board="board" />
+        </div>
+      </template>
+      <p v-else class="text-sm text-gray-500 text-center py-8">No boards found.</p>
+    </template>
 
     <CommonPagination
       v-if="filteredBoards.length > 0"
