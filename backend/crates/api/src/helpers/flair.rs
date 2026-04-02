@@ -247,6 +247,14 @@ pub fn sanitize_css_class(class: &str) -> Result<String> {
         .into());
     }
 
+    if class.is_empty() {
+        return Err(TinyBoardsError::from_message(
+            400,
+            "CSS class cannot be empty",
+        )
+        .into());
+    }
+
     if !class.chars().next().unwrap().is_alphabetic() {
         return Err(TinyBoardsError::from_message(
             400,

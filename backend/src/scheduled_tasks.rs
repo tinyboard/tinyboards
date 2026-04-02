@@ -13,7 +13,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     let mut frequent_scheduler = Scheduler::new();
 
     let mut conn1 = PgConnection::establish(&db_url)
-        .expect("could not establish connection");
+        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
 
     update_banned_when_expired(&mut conn1);
 
@@ -61,7 +61,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn3 = PgConnection::establish(&db_url)
-        .expect("could not establish connection");
+        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
 
     scheduler
     .every(TimeUnits::minutes(10))
@@ -71,7 +71,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn2 = PgConnection::establish(&db_url)
-        .expect("could not establish connection");
+        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
 
     frequent_scheduler
     .every(TimeUnits::minutes(5))
@@ -82,7 +82,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn4 = PgConnection::establish(&db_url)
-        .expect("could not establish connection");
+        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
 
     // Hourly cleanup of expired sessions, password resets, and old notifications
     scheduler
@@ -94,7 +94,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn5 = PgConnection::establish(&db_url)
-        .expect("could not establish connection");
+        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
 
     // On startup, ensure next month's partitions exist
     ensure_partitions(&mut conn5);
@@ -127,8 +127,11 @@ fn reindex_table(conn: &mut PgConnection, table_name: &str, concurrently: bool) 
     let concurrently_str = if concurrently { "concurrently" } else { "" };
     info!("Reindexing table {} {} ...", concurrently_str, table_name);
     let query = format!("reindex table {} {}", concurrently_str, table_name);
-    sql_query(query).execute(conn).expect("reindex table");
-    info!("Done.");
+
+    match sql_query(query).execute(conn) {
+        Ok(_) => info!("Done."),
+        Err(e) => error!("Failed to reindex table {}: {}", table_name, e),
+    }
 }
 
 /// Set banned to false after ban expires
@@ -136,9 +139,12 @@ fn update_banned_when_expired(conn: &mut PgConnection) {
     info!("Updating is_banned column if it expired on the user table...");
     let update_ban_expires_stmt =
         "update users set is_banned = false where is_banned = true and unban_date < now()";
-    sql_query(update_ban_expires_stmt)
-        .execute(conn)
-        .expect("update banned when expires");
+
+    match sql_query(update_ban_expires_stmt).execute(conn) {
+        Ok(_) => info!("Done."),
+        Err(e) => error!("Failed to update banned column {}: {}", table_name, e),
+    }
+
 }
 
 /// Remove expired board-level bans
