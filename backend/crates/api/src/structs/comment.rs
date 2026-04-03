@@ -99,10 +99,10 @@ impl Comment {
         loader
             .load_one(PostIdForComment(self.uuid_post_id))
             .await
-            .map(|post_opt| post_opt.expect(
-                &format!("Failed to load post for comment {}", self.uuid_id)
-            ))
             .map_err(|e| e.into())
+            .and_then(|post_opt| post_opt.ok_or_else(||
+                async_graphql::Error::new(format!("Post not found for comment {}", self.uuid_id))
+            ))
     }
 
     pub async fn my_vote(&self, ctx: &Context<'_>) -> Result<i32> {

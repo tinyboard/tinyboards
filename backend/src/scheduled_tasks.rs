@@ -7,13 +7,13 @@ use std::{thread, time::Duration};
 use tinyboards_utils::error::TinyBoardsError;
 use tracing::{info, error};
 
-/// Schedules various cleanup tasks for tinyboards in a background thread
+/// Schedules various cleanup tasks for Tinyboards in a background thread
 pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     let mut scheduler = Scheduler::new();
     let mut frequent_scheduler = Scheduler::new();
 
     let mut conn1 = PgConnection::establish(&db_url)
-        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
+        .map_err(|e| TinyBoardsError::from_message(500, &e.to_string()))?;
 
     update_banned_when_expired(&mut conn1);
 
@@ -61,7 +61,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn3 = PgConnection::establish(&db_url)
-        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
+        .map_err(|e| TinyBoardsError::from_message(500, &e.to_string()))?;
 
     scheduler
     .every(TimeUnits::minutes(10))
@@ -71,7 +71,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn2 = PgConnection::establish(&db_url)
-        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
+        .map_err(|e| TinyBoardsError::from_message(500, &e.to_string()))?;
 
     frequent_scheduler
     .every(TimeUnits::minutes(5))
@@ -82,7 +82,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn4 = PgConnection::establish(&db_url)
-        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
+        .map_err(|e| TinyBoardsError::from_message(500, &e.to_string()))?;
 
     // Hourly cleanup of expired sessions, password resets, and old notifications
     scheduler
@@ -94,7 +94,7 @@ pub fn setup(db_url: String) -> Result<(), TinyBoardsError> {
     });
 
     let mut conn5 = PgConnection::establish(&db_url)
-        .map_err(|e| TinyboardsError::from_message(500, e.to_string()));
+        .map_err(|e| TinyBoardsError::from_message(500, &e.to_string()))?;
 
     // On startup, ensure next month's partitions exist
     ensure_partitions(&mut conn5);
@@ -142,7 +142,7 @@ fn update_banned_when_expired(conn: &mut PgConnection) {
 
     match sql_query(update_ban_expires_stmt).execute(conn) {
         Ok(_) => info!("Done."),
-        Err(e) => error!("Failed to update banned column {}: {}", table_name, e),
+        Err(e) => error!("Failed to update banned column on the users table: {}", e),
     }
 
 }
