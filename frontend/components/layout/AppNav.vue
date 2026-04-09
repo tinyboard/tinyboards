@@ -1,36 +1,13 @@
 <script setup lang="ts">
-import { useAuthStore } from '~/stores/auth'
-
 const route = useRoute()
-const authStore = useAuthStore()
 
-const baseItems = [
+const navItems = [
   { label: 'Home', to: '/home', icon: 'home' },
   { label: 'All', to: '/all', icon: 'globe' },
   { label: 'Boards', to: '/boards', icon: 'boards' },
 ]
 
-// Derive dynamic nav from subscribed board modes (Step 10)
-const hasMixedModes = computed(() => {
-  if (!authStore.isLoggedIn || authStore.subscribedBoards.length === 0) return false
-  const modes = new Set(authStore.subscribedBoards.map(b => b.mode).filter(Boolean))
-  return modes.has('feed') && modes.has('forum')
-})
-
-const navItems = computed(() => {
-  if (!hasMixedModes.value) return baseItems
-  return [
-    ...baseItems,
-    { label: 'Feed Posts', to: '/home?mode=feed', icon: 'feed' },
-    { label: 'Discussions', to: '/home?mode=forum', icon: 'threads' },
-  ]
-})
-
 function isActive (path: string): boolean {
-  if (path.includes('?')) {
-    const [basePath, query] = path.split('?')
-    return route.path.startsWith(basePath) && route.fullPath.includes(query)
-  }
   return route.path.startsWith(path)
 }
 </script>
@@ -57,14 +34,6 @@ function isActive (path: string): boolean {
       <!-- Boards icon -->
       <svg v-else-if="item.icon === 'boards'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-      </svg>
-      <!-- Feed icon -->
-      <svg v-else-if="item.icon === 'feed'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-      </svg>
-      <!-- Threads icon -->
-      <svg v-else-if="item.icon === 'threads'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
       </svg>
       {{ item.label }}
     </NuxtLink>
