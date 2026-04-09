@@ -19,20 +19,34 @@ useSeoMeta({
 })
 const route = useRoute()
 
-const activeTab = ref<'feed' | 'threads'>('feed')
+// Determine which tabs to show based on subscribed board modes
+const hasFeedBoards = computed(() =>
+  authStore.subscribedBoards.some(b => !b.mode || b.mode === 'feed'),
+)
+const hasForumBoards = computed(() =>
+  authStore.subscribedBoards.some(b => b.mode === 'forum'),
+)
+const showTabs = computed(() => authStore.isLoggedIn && hasFeedBoards.value && hasForumBoards.value)
+
+// Default tab: feed if subscribed to feed boards, otherwise threads
+const activeTab = ref<'feed' | 'threads'>(
+  hasFeedBoards.value ? 'feed' : (hasForumBoards.value ? 'threads' : 'feed'),
+)
 
 // Feed posts composable
 const feedPosts = usePosts({
   listingType: (authStore.isLoggedIn ? 'subscribed' : 'all') as ListingType,
-  postType: 'feed',
+  postType: authStore.isLoggedIn && hasForumBoards.value ? 'feed' : undefined,
   basePath: '/home',
 })
 
-// Thread posts composable
-const threadPosts = usePosts({
-  listingType: (authStore.isLoggedIn ? 'subscribed' : 'all') as ListingType,
-  postType: 'thread',
-})
+// Thread posts composable (only used when logged in with forum boards)
+const threadPosts = authStore.isLoggedIn && hasForumBoards.value
+  ? usePosts({
+      listingType: 'subscribed' as ListingType,
+      postType: 'thread',
+    })
+  : null
 
 // Group threads by board for the threads tab
 interface BoardGroup {
@@ -43,6 +57,7 @@ interface BoardGroup {
 }
 
 const threadsByBoard = computed<BoardGroup[]>(() => {
+  if (!threadPosts) return []
   const map = new Map<string, BoardGroup>()
   for (const post of threadPosts.posts.value) {
     const key = post.board?.name ?? 'unknown'
@@ -65,13 +80,17 @@ if (route.params.sort && typeof route.params.sort === 'string') {
 }
 
 // Fetch initial data
-await feedPosts.fetchPosts()
+if (activeTab.value === 'feed' || !authStore.isLoggedIn) {
+  await feedPosts.fetchPosts()
+} else if (threadPosts) {
+  await threadPosts.fetchPosts()
+}
 
 async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
   activeTab.value = tab
   if (tab === 'feed' && feedPosts.posts.value.length === 0) {
     await feedPosts.fetchPosts()
-  } else if (tab === 'threads' && threadPosts.posts.value.length === 0) {
+  } else if (tab === 'threads' && threadPosts && threadPosts.posts.value.length === 0) {
     threadPosts.sort.value = 'newComments'
     await threadPosts.fetchPosts()
   }
@@ -115,8 +134,8 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
       </div>
     </div>
 
-    <!-- Tab bar -->
-    <div class="pt-4">
+    <!-- Tab bar (only when user has both feed and forum boards) -->
+    <div v-if="showTabs" class="pt-4">
       <div class="flex gap-1 bg-white rounded-lg border border-gray-200 p-1">
         <button
           class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -146,7 +165,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Feed tab content -->
-    <div v-show="activeTab === 'feed'">
+    <div v-show="activeTab === 'feed' || !showTabs">
       <!-- Sort bar -->
       <div class="pt-4">
         <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
@@ -172,7 +191,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Threads tab content -->
-    <div v-show="activeTab === 'threads'">
+    <div v-if="threadPosts" v-show="activeTab === 'threads'">
       <div class="pt-4 pb-4">
         <CommonErrorDisplay v-if="threadPosts.error.value" :message="threadPosts.error.value.message" @retry="threadPosts.fetchPosts" />
 
