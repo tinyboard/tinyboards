@@ -1,6 +1,8 @@
 use async_graphql::*;
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use lazy_static::lazy_static;
+use regex::Regex;
 use tinyboards_db::{
     enums::DbNotificationKind,
     models::notification::{
@@ -113,6 +115,17 @@ fn kind_to_str(kind: &DbNotificationKind) -> &'static str {
     }
 }
 
+lazy_static! {
+    static ref HTML_TAG_RE: Regex = Regex::new(r"<[^>]+>").unwrap();
+}
+
+/// Strip HTML tags and collapse whitespace to produce plain text
+fn strip_html_tags(html: &str) -> String {
+    let text = HTML_TAG_RE.replace_all(html, " ");
+    // Collapse multiple whitespace into single spaces
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 /// Truncate text to a snippet, breaking at word boundaries
 fn truncate_snippet(text: &str, max_len: usize) -> String {
     let text = text.trim();
@@ -222,7 +235,7 @@ impl QueryNotifications {
                 .filter(comments::id.eq_any(&comment_ids))
                 .select((
                     comments::id,
-                    comments::body,
+                    comments::body_html,
                     comments::post_id,
                     posts::title,
                     boards::name,
@@ -251,7 +264,7 @@ impl QueryNotifications {
         let message_data: Vec<(Uuid, String)> = if !message_ids.is_empty() {
             private_messages::table
                 .filter(private_messages::id.eq_any(&message_ids))
-                .select((private_messages::id, private_messages::body))
+                .select((private_messages::id, private_messages::body_html))
                 .load::<(Uuid, String)>(conn)
                 .await
                 .unwrap_or_default()
@@ -273,7 +286,7 @@ impl QueryNotifications {
             let comment = n.comment_id.and_then(|cid| {
                 comment_data.iter().find(|c| c.0 == cid).map(|c| NotificationCommentContext {
                     id: c.0.to_string().into(),
-                    body: truncate_snippet(&c.1, 120),
+                    body: truncate_snippet(&strip_html_tags(&c.1), 120),
                     post_id: c.2.to_string().into(),
                     post_title: c.3.clone(),
                     board_name: c.4.clone(),
@@ -292,7 +305,7 @@ impl QueryNotifications {
             let message = n.message_id.and_then(|mid| {
                 message_data.iter().find(|m| m.0 == mid).map(|m| NotificationMessageContext {
                     id: m.0.to_string().into(),
-                    body: truncate_snippet(&m.1, 120),
+                    body: truncate_snippet(&strip_html_tags(&m.1), 120),
                 })
             });
 
