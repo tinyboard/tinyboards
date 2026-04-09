@@ -19,34 +19,20 @@ useSeoMeta({
 })
 const route = useRoute()
 
-// Determine which tabs to show based on subscribed board modes
-const hasFeedBoards = computed(() =>
-  authStore.subscribedBoards.some(b => !b.mode || b.mode === 'feed'),
-)
-const hasForumBoards = computed(() =>
-  authStore.subscribedBoards.some(b => b.mode === 'forum'),
-)
-const showTabs = computed(() => authStore.isLoggedIn && hasFeedBoards.value && hasForumBoards.value)
-
-// Default tab: feed if subscribed to feed boards, otherwise threads
-const activeTab = ref<'feed' | 'threads'>(
-  hasFeedBoards.value ? 'feed' : (hasForumBoards.value ? 'threads' : 'feed'),
-)
+const activeTab = ref<'feed' | 'threads'>('feed')
 
 // Feed posts composable
 const feedPosts = usePosts({
   listingType: (authStore.isLoggedIn ? 'subscribed' : 'all') as ListingType,
-  postType: authStore.isLoggedIn && hasForumBoards.value ? 'feed' : undefined,
+  postType: 'feed',
   basePath: '/home',
 })
 
-// Thread posts composable (only used when logged in with forum boards)
-const threadPosts = authStore.isLoggedIn && hasForumBoards.value
-  ? usePosts({
-      listingType: 'subscribed' as ListingType,
-      postType: 'thread',
-    })
-  : null
+// Thread posts composable
+const threadPosts = usePosts({
+  listingType: (authStore.isLoggedIn ? 'subscribed' : 'all') as ListingType,
+  postType: 'thread',
+})
 
 // Group threads by board for the threads tab
 interface BoardGroup {
@@ -57,7 +43,6 @@ interface BoardGroup {
 }
 
 const threadsByBoard = computed<BoardGroup[]>(() => {
-  if (!threadPosts) return []
   const map = new Map<string, BoardGroup>()
   for (const post of threadPosts.posts.value) {
     const key = post.board?.name ?? 'unknown'
@@ -80,17 +65,13 @@ if (route.params.sort && typeof route.params.sort === 'string') {
 }
 
 // Fetch initial data
-if (activeTab.value === 'feed' || !authStore.isLoggedIn) {
-  await feedPosts.fetchPosts()
-} else if (threadPosts) {
-  await threadPosts.fetchPosts()
-}
+await feedPosts.fetchPosts()
 
 async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
   activeTab.value = tab
   if (tab === 'feed' && feedPosts.posts.value.length === 0) {
     await feedPosts.fetchPosts()
-  } else if (tab === 'threads' && threadPosts && threadPosts.posts.value.length === 0) {
+  } else if (tab === 'threads' && threadPosts.posts.value.length === 0) {
     threadPosts.sort.value = 'newComments'
     await threadPosts.fetchPosts()
   }
@@ -134,8 +115,8 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
       </div>
     </div>
 
-    <!-- Tab bar (only when user has both feed and forum boards) -->
-    <div v-if="showTabs" class="pt-4">
+    <!-- Tab bar -->
+    <div class="pt-4">
       <div class="flex gap-1 bg-white rounded-lg border border-gray-200 p-1">
         <button
           class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -165,7 +146,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Feed tab content -->
-    <div v-show="activeTab === 'feed' || !authStore.isLoggedIn || (!hasFeedBoards && !hasForumBoards)">
+    <div v-show="activeTab === 'feed'">
       <!-- Sort bar -->
       <div class="pt-4">
         <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
@@ -191,7 +172,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Threads tab content -->
-    <div v-if="threadPosts" v-show="activeTab === 'threads'">
+    <div v-show="activeTab === 'threads'">
       <div class="pt-4 pb-4">
         <CommonErrorDisplay v-if="threadPosts.error.value" :message="threadPosts.error.value.message" @retry="threadPosts.fetchPosts" />
 
@@ -203,8 +184,8 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
           </div>
-          <p class="text-sm font-medium text-gray-600 mb-1">No discussions yet</p>
-          <p class="text-xs text-gray-400">The forum boards you follow haven't had any activity yet.</p>
+          <p class="text-sm font-medium text-gray-600 mb-1">No threads yet</p>
+          <p class="text-xs text-gray-400">No forum boards have any threads yet.</p>
         </div>
 
         <!-- Threads grouped by board -->
