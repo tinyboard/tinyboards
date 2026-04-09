@@ -165,7 +165,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Feed tab content -->
-    <div v-show="activeTab === 'feed' || !showTabs">
+    <div v-show="activeTab === 'feed' || (!showTabs && !hasForumBoards)">
       <!-- Sort bar -->
       <div class="pt-4">
         <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
@@ -191,7 +191,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Threads tab content -->
-    <div v-if="threadPosts" v-show="activeTab === 'threads'">
+    <div v-if="threadPosts" v-show="activeTab === 'threads' || (!showTabs && hasForumBoards)">
       <div class="pt-4 pb-4">
         <CommonErrorDisplay v-if="threadPosts.error.value" :message="threadPosts.error.value.message" @retry="threadPosts.fetchPosts" />
 
