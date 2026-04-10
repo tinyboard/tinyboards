@@ -517,11 +517,44 @@ pub async fn request_password_reset(
 
     session::create_password_reset(&pool, user.id, &token_hash).await?;
 
-    // In production, send an email. For now, log the token.
-    tracing::info!(
-        "Password reset token generated for user {} (id: {}). Token: {}",
-        user.name, user.id, raw_token
-    );
+    // Send the reset email if SMTP is configured, otherwise log the token
+    let settings = &tinyboards_utils::settings::SETTINGS;
+    if settings.email.is_some() {
+        let reset_url = format!(
+            "{}/reset-password?token={}",
+            settings.get_protocol_and_hostname(),
+            raw_token
+        );
+        let site_name = settings.setup.as_ref()
+            .map(|s| s.site_name.as_str())
+            .unwrap_or(&settings.hostname);
+        let html = format!(
+            "<div style=\"font-family:sans-serif;max-width:480px;margin:0 auto\">\
+             <h2>Password Reset</h2>\
+             <p>Hi {},</p>\
+             <p>We received a request to reset your password on {}. Click the link below to set a new password:</p>\
+             <p><a href=\"{}\" style=\"display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:6px\">Reset Password</a></p>\
+             <p>Or copy this link into your browser:</p>\
+             <p style=\"word-break:break-all;color:#666\">{}</p>\
+             <p style=\"color:#999;font-size:13px\">If you didn't request this, you can ignore this email. The link expires in 24 hours.</p>\
+             </div>",
+            user.name, site_name, reset_url, reset_url
+        );
+        if let Err(e) = tinyboards_utils::email::send_email(
+            &format!("Password Reset — {}", site_name),
+            &body.email,
+            &user.name,
+            &html,
+            settings,
+        ) {
+            tracing::error!("Failed to send password reset email: {:?}", e);
+        }
+    } else {
+        tracing::info!(
+            "Password reset token for user {} (id: {}): {} (no SMTP configured)",
+            user.name, user.id, raw_token
+        );
+    }
 
     Ok(success_response)
 }
@@ -661,11 +694,44 @@ pub async fn request_email_verification(
 
     session::create_email_verification(&pool, auth_user.id, &body.email, &token_hash).await?;
 
-    // In production, send an email. For now, log the token.
-    tracing::info!(
-        "Email verification token generated for user {} (id: {}). Token: {}",
-        user.name, auth_user.id, raw_token
-    );
+    // Send the verification email if SMTP is configured, otherwise log the token
+    let settings = &tinyboards_utils::settings::SETTINGS;
+    if settings.email.is_some() {
+        let verify_url = format!(
+            "{}/verify-email?token={}",
+            settings.get_protocol_and_hostname(),
+            raw_token
+        );
+        let site_name = settings.setup.as_ref()
+            .map(|s| s.site_name.as_str())
+            .unwrap_or(&settings.hostname);
+        let html = format!(
+            "<div style=\"font-family:sans-serif;max-width:480px;margin:0 auto\">\
+             <h2>Verify Your Email</h2>\
+             <p>Hi {},</p>\
+             <p>Please verify your email address on {} by clicking the link below:</p>\
+             <p><a href=\"{}\" style=\"display:inline-block;padding:10px 20px;background:#6366f1;color:#fff;text-decoration:none;border-radius:6px\">Verify Email</a></p>\
+             <p>Or copy this link into your browser:</p>\
+             <p style=\"word-break:break-all;color:#666\">{}</p>\
+             <p style=\"color:#999;font-size:13px\">If you didn't create an account, you can ignore this email.</p>\
+             </div>",
+            user.name, site_name, verify_url, verify_url
+        );
+        if let Err(e) = tinyboards_utils::email::send_email(
+            &format!("Verify Your Email — {}", site_name),
+            &body.email,
+            &user.name,
+            &html,
+            settings,
+        ) {
+            tracing::error!("Failed to send verification email: {:?}", e);
+        }
+    } else {
+        tracing::info!(
+            "Email verification token for user {} (id: {}): {} (no SMTP configured)",
+            user.name, auth_user.id, raw_token
+        );
+    }
 
     Ok(HttpResponse::Ok().json(AuthResponse {
         success: true,

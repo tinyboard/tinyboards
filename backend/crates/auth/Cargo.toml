@@ -39,6 +39,9 @@ hex = "0.4"
 # Validation
 regex = { workspace = true }
 
+# Shared utilities (settings, email)
+tinyboards_utils = { path = "../utils" }
+
 # Logging
 tracing = { workspace = true }
 

@@ -130,6 +130,7 @@ pub struct UserSettings {
     pub default_listing_type: String,
     pub interface_language: String,
     pub is_email_notifications_enabled: bool,
+    pub is_email_verified: bool,
     pub editor_mode: String,
     pub updated_at: String,
 }
@@ -147,6 +148,7 @@ impl From<DbUser> for UserSettings {
             default_listing_type: format!("{:?}", u.default_listing_type),
             interface_language: u.interface_language,
             is_email_notifications_enabled: u.is_email_notifications_enabled,
+            is_email_verified: u.is_email_verified,
             editor_mode: format!("{:?}", u.editor_mode),
             updated_at: u.updated_at.to_rfc3339(),
         }

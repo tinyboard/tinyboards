@@ -646,6 +646,7 @@ type UserSettings {
   defaultListingType: String!
   interfaceLanguage: String!
   isEmailNotificationsEnabled: Boolean!
+  isEmailVerified: Boolean!
   editorMode: String!
   updatedAt: String!
 }

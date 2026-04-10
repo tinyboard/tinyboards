@@ -1869,6 +1869,7 @@ export type UserSettings = {
   id: Scalars['ID']['output'];
   interfaceLanguage: Scalars['String']['output'];
   isEmailNotificationsEnabled: Scalars['Boolean']['output'];
+  isEmailVerified: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   showBots: Scalars['Boolean']['output'];
   showNSFW: Scalars['Boolean']['output'];

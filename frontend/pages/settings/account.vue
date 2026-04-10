@@ -22,6 +22,7 @@ const GET_SETTINGS_QUERY = `
       defaultListingType
       interfaceLanguage
       isEmailNotificationsEnabled
+      isEmailVerified
       editorMode
     }
   }
@@ -54,6 +55,7 @@ interface SettingsData {
   theme: string
   interfaceLanguage: string
   isEmailNotificationsEnabled: boolean
+  isEmailVerified: boolean
   email: string | null
 }
 
@@ -69,6 +71,29 @@ const saveError = ref<string | null>(null)
 const success = ref(false)
 const showDeleteConfirm = ref(false)
 const deleting = ref(false)
+const verificationSending = ref(false)
+const verificationSent = ref(false)
+const verificationError = ref<string | null>(null)
+
+async function requestVerification (): Promise<void> {
+  if (!settings.value?.email) return
+  verificationSending.value = true
+  verificationError.value = null
+  verificationSent.value = false
+
+  try {
+    await $fetch('/api/auth/email-request-verification', {
+      method: 'POST',
+      body: { email: settings.value.email },
+    })
+    verificationSent.value = true
+  } catch (err: unknown) {
+    const fetchError = err as { data?: { error?: string }; statusMessage?: string }
+    verificationError.value = fetchError.data?.error ?? fetchError.statusMessage ?? 'Failed to send verification email'
+  } finally {
+    verificationSending.value = false
+  }
+}
 
 async function fetchSettings (): Promise<void> {
   const result = await execute(GET_SETTINGS_QUERY)
@@ -143,7 +168,36 @@ async function deleteAccount (): Promise<void> {
       <form @submit.prevent="saveSettings" class="space-y-4 max-w-md">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <p class="text-sm text-gray-600">{{ settings.email ?? 'Not set' }}</p>
+          <div class="flex items-center gap-2">
+            <p class="text-sm text-gray-600">{{ settings.email ?? 'Not set' }}</p>
+            <span
+              v-if="settings.email && settings.isEmailVerified"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-green-100 text-green-700"
+            >
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              Verified
+            </span>
+            <span
+              v-else-if="settings.email"
+              class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-medium bg-yellow-100 text-yellow-700"
+            >
+              Not verified
+            </span>
+          </div>
+          <div v-if="settings.email && !settings.isEmailVerified" class="mt-1.5">
+            <button
+              v-if="!verificationSent"
+              class="text-sm text-primary hover:underline"
+              :disabled="verificationSending"
+              @click="requestVerification"
+            >
+              {{ verificationSending ? 'Sending...' : 'Send verification email' }}
+            </button>
+            <p v-else class="text-sm text-green-600">Verification email sent. Check your inbox.</p>
+            <p v-if="verificationError" class="text-sm text-red-600 mt-0.5">{{ verificationError }}</p>
+          </div>
         </div>
 
         <div>
