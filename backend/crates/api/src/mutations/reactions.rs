@@ -52,6 +52,10 @@ pub struct UpdateBoardReactionSettingsInput {
     pub board_id: ID,
     pub emoji_weights: Option<Json<serde_json::Value>>,
     pub is_reactions_enabled: Option<bool>,
+    /// JSON array of reaction emoji entries. Each entry:
+    /// `{"type":"unicode","value":"👍"}` or `{"type":"custom","shortcode":"party_parrot","imageUrl":"https://..."}`
+    /// Empty array means "use site defaults".
+    pub reaction_emojis: Option<Json<serde_json::Value>>,
 }
 
 #[derive(SimpleObject)]
@@ -317,6 +321,65 @@ impl ReactionMutations {
             }
         }
 
+        // Validate reaction_emojis if provided
+        if let Some(ref emojis) = input.reaction_emojis {
+            let arr = emojis.0.as_array().ok_or_else(|| {
+                TinyBoardsError::from_message(400, "reaction_emojis must be a JSON array")
+            })?;
+            if arr.len() > 10 {
+                return Err(TinyBoardsError::from_message(
+                    400,
+                    "reaction_emojis can have at most 10 entries",
+                )
+                .into());
+            }
+            for entry in arr {
+                let obj = entry.as_object().ok_or_else(|| {
+                    TinyBoardsError::from_message(400, "Each reaction emoji must be a JSON object")
+                })?;
+                let emoji_type = obj
+                    .get("type")
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        TinyBoardsError::from_message(400, "Each reaction emoji must have a 'type' field (\"unicode\" or \"custom\")")
+                    })?;
+                match emoji_type {
+                    "unicode" => {
+                        if obj.get("value").and_then(|v| v.as_str()).is_none() {
+                            return Err(TinyBoardsError::from_message(
+                                400,
+                                "Unicode reaction emoji must have a 'value' field",
+                            )
+                            .into());
+                        }
+                    }
+                    "custom" => {
+                        if obj.get("shortcode").and_then(|v| v.as_str()).is_none() {
+                            return Err(TinyBoardsError::from_message(
+                                400,
+                                "Custom reaction emoji must have a 'shortcode' field",
+                            )
+                            .into());
+                        }
+                        if obj.get("imageUrl").and_then(|v| v.as_str()).is_none() {
+                            return Err(TinyBoardsError::from_message(
+                                400,
+                                "Custom reaction emoji must have an 'imageUrl' field",
+                            )
+                            .into());
+                        }
+                    }
+                    _ => {
+                        return Err(TinyBoardsError::from_message(
+                            400,
+                            "Reaction emoji type must be \"unicode\" or \"custom\"",
+                        )
+                        .into());
+                    }
+                }
+            }
+        }
+
         // Check if settings already exist
         let existing: Option<DbBoardReactionSettings> = board_reaction_settings::table
             .filter(board_reaction_settings::board_id.eq(board_uuid))
@@ -330,6 +393,7 @@ impl ReactionMutations {
             let update_form = BoardReactionSettingsUpdateForm {
                 emoji_weights: input.emoji_weights.map(|j| j.0),
                 is_reactions_enabled: input.is_reactions_enabled,
+                reaction_emojis: input.reaction_emojis.map(|j| j.0),
             };
 
             diesel::update(
@@ -348,6 +412,10 @@ impl ReactionMutations {
                     .map(|j| j.0)
                     .unwrap_or_else(|| serde_json::json!({})),
                 is_reactions_enabled: input.is_reactions_enabled.unwrap_or(true),
+                reaction_emojis: input
+                    .reaction_emojis
+                    .map(|j| j.0)
+                    .unwrap_or_else(|| serde_json::json!([])),
             };
 
             diesel::insert_into(board_reaction_settings::table)

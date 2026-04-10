@@ -727,6 +727,7 @@ diesel::table! {
         board_id -> Uuid,
         emoji_weights -> Jsonb,
         is_reactions_enabled -> Bool,
+        reaction_emojis -> Jsonb,
     }
 }
 

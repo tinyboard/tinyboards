@@ -152,6 +152,7 @@ export type BoardReactionSettings = {
   boardId: Scalars['ID']['output'];
   emojiWeights: Scalars['JSON']['output'];
   id: Scalars['ID']['output'];
+  reactionEmojis: Scalars['JSON']['output'];
   reactionsEnabled: Scalars['Boolean']['output'];
 };
 
@@ -1261,6 +1262,7 @@ export type Query = {
   getAllEmojisAdmin: Array<EmojiObject>;
   getBoardBannedUsers: Array<BoardBannedUser>;
   getBoardModerators: Array<BoardModerator>;
+  getBoardReactionSettings?: Maybe<BoardReactionSettings>;
   getBoardSettings: BoardSettings;
   getCommentReports: Array<CommentReportView>;
   getConversation: Array<PrivateMessage>;
@@ -1348,6 +1350,11 @@ export type QueryGetBoardBannedUsersArgs = {
 
 
 export type QueryGetBoardModeratorsArgs = {
+  boardId: Scalars['ID']['input'];
+};
+
+
+export type QueryGetBoardReactionSettingsArgs = {
   boardId: Scalars['ID']['input'];
 };
 
@@ -1671,6 +1678,7 @@ export type UpdateBoardReactionSettingsInput = {
   boardId: Scalars['ID']['input'];
   emojiWeights?: InputMaybe<Scalars['JSON']['input']>;
   isReactionsEnabled?: InputMaybe<Scalars['Boolean']['input']>;
+  reactionEmojis?: InputMaybe<Scalars['JSON']['input']>;
 };
 
 export type UpdateBoardReactionSettingsResponse = {

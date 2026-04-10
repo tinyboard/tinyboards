@@ -62,6 +62,8 @@ pub struct BoardReactionSettings {
     pub emoji_weights: Json<serde_json::Value>,
     #[graphql(name = "reactionsEnabled")]
     pub reactions_enabled: bool,
+    #[graphql(name = "reactionEmojis")]
+    pub reaction_emojis: Json<serde_json::Value>,
 }
 
 impl From<DbBoardReactionSettings> for BoardReactionSettings {
@@ -71,6 +73,7 @@ impl From<DbBoardReactionSettings> for BoardReactionSettings {
             board_id: s.board_id.to_string().into(),
             emoji_weights: Json(s.emoji_weights),
             reactions_enabled: s.is_reactions_enabled,
+            reaction_emojis: Json(s.reaction_emojis),
         }
     }
 }

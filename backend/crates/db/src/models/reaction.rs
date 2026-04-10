@@ -41,6 +41,7 @@ pub struct BoardReactionSettings {
     pub board_id: Uuid,
     pub emoji_weights: serde_json::Value,
     pub is_reactions_enabled: bool,
+    pub reaction_emojis: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Insertable)]
@@ -49,6 +50,7 @@ pub struct BoardReactionSettingsInsertForm {
     pub board_id: Uuid,
     pub emoji_weights: serde_json::Value,
     pub is_reactions_enabled: bool,
+    pub reaction_emojis: serde_json::Value,
 }
 
 #[derive(Debug, Clone, AsChangeset)]
@@ -56,4 +58,5 @@ pub struct BoardReactionSettingsInsertForm {
 pub struct BoardReactionSettingsUpdateForm {
     pub emoji_weights: Option<serde_json::Value>,
     pub is_reactions_enabled: Option<bool>,
+    pub reaction_emojis: Option<serde_json::Value>,
 }

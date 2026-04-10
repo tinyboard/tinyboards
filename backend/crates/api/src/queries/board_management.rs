@@ -8,10 +8,11 @@ use tinyboards_db::{
             board_mods::{BoardModerator as DbBoardModerator, ModPerms},
             boards::Board as DbBoard,
         },
+        reaction::BoardReactionSettings as DbBoardReactionSettings,
         social::BoardUserBan,
         user::user::{AdminPerms, User as DbUser},
     },
-    schema::{board_aggregates, board_moderators, board_user_bans, boards, user_aggregates, users},
+    schema::{board_aggregates, board_moderators, board_reaction_settings, board_user_bans, boards, user_aggregates, users},
     utils::{get_conn, DbPool},
 };
 use tinyboards_utils::TinyBoardsError;
@@ -19,7 +20,11 @@ use uuid::Uuid;
 
 use crate::{
     helpers::permissions,
-    structs::{boards::Board as GqlBoard, user::User as GqlUser},
+    structs::{
+        boards::Board as GqlBoard,
+        reaction::BoardReactionSettings as GqlBoardReactionSettings,
+        user::User as GqlUser,
+    },
 };
 
 #[derive(Default)]
@@ -217,5 +222,30 @@ impl QueryBoardManagement {
             .collect();
 
         Ok(boards_out)
+    }
+
+    /// Get board reaction settings (public — no auth required).
+    /// Returns `None` when a board has no custom reaction settings,
+    /// meaning the frontend should use the default emoji set.
+    pub async fn get_board_reaction_settings(
+        &self,
+        ctx: &Context<'_>,
+        board_id: ID,
+    ) -> Result<Option<GqlBoardReactionSettings>> {
+        let pool = ctx.data::<DbPool>()?;
+        let conn = &mut get_conn(pool).await?;
+
+        let board_uuid: Uuid = board_id
+            .parse()
+            .map_err(|_| TinyBoardsError::BadRequest("Invalid board ID".to_string()))?;
+
+        let settings: Option<DbBoardReactionSettings> = board_reaction_settings::table
+            .filter(board_reaction_settings::board_id.eq(board_uuid))
+            .first(conn)
+            .await
+            .optional()
+            .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        Ok(settings.map(GqlBoardReactionSettings::from))
     }
 }

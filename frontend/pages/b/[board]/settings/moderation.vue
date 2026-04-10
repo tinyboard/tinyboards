@@ -202,6 +202,12 @@ function formatDate (dateStr: string): string {
       >
         Moderation
       </NuxtLink>
+      <NuxtLink
+        :to="`/b/${boardName}/settings/emojis`"
+        class="px-3 py-1.5 text-sm font-medium border-b-2 no-underline transition-colors border-transparent text-gray-500 hover:text-gray-700"
+      >
+        Emojis
+      </NuxtLink>
     </div>
 
     <h2 class="text-base font-semibold text-gray-900 mb-4">
