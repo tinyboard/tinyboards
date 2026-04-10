@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use tokio::fs;
 
 /// Serves media files from the configured storage backend.
-/// First checks local filesystem for backwards compatibility, then falls back to storage backend.
+/// Tries the active storage backend first, then falls back to the local filesystem
+/// so that files uploaded before a backend migration are still accessible.
 /// Supports HTTP Range requests for video seeking.
 pub async fn serve_media(
     context: web::Data<TinyBoardsContext>,
@@ -20,32 +21,22 @@ pub async fn serve_media(
 
     tracing::debug!("Serving media file: {}", storage_key);
 
-    // First, check if file exists locally (for backwards compatibility with existing uploads)
-    let media_path = context.settings().get_media_path();
-    let local_path = PathBuf::from(&media_path).join(storage_key);
+    // Try the configured storage backend first
+    let data = match context.storage().read(storage_key).await {
+        Ok(data) => data,
+        Err(_) => {
+            // Storage backend didn't have it — check local filesystem as fallback.
+            // This handles the migration case where old files live on disk but the
+            // active backend has been switched to S3/Wasabi/etc.
+            let media_path = context.settings().get_media_path();
+            let local_path = PathBuf::from(&media_path).join(storage_key);
 
-    let data = if local_path.exists() {
-        tracing::debug!("Found file locally at: {:?}", local_path);
-        match fs::read(&local_path).await {
-            Ok(data) => data,
-            Err(e) => {
-                tracing::warn!("File exists but failed to read locally: {:?}", e);
-                // Fall through to storage backend
-                context.storage().read(storage_key).await
-                    .map_err(|e| {
-                        tracing::error!("Failed to read file from storage backend: {:?}", e);
-                        TinyBoardsError::from_message(404, "File not found")
-                    })?
-            }
-        }
-    } else {
-        // Try the configured storage backend
-        tracing::debug!("File not found locally, checking storage backend");
-        context.storage().read(storage_key).await
-            .map_err(|e| {
-                tracing::error!("Failed to read file from storage backend: {:?}", e);
+            tracing::debug!("File not in storage backend, trying local path: {:?}", local_path);
+            fs::read(&local_path).await.map_err(|_| {
+                tracing::warn!("File not found in storage backend or local filesystem: {}", storage_key);
                 TinyBoardsError::from_message(404, "File not found")
             })?
+        }
     };
 
     let content_type = get_content_type(storage_key);
