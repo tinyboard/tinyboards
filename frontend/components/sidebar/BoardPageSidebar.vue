@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useBoard } from '~/composables/useBoard'
+import { useBoardActivity } from '~/composables/useBoardActivity'
 import { useAuthStore } from '~/stores/auth'
 import { useGraphQL } from '~/composables/useGraphQL'
-import { formatDate } from '~/utils/date'
+import { formatDate, timeAgo } from '~/utils/date'
 import { sanitizeHtml } from '~/utils/sanitize'
 
 const route = useRoute()
@@ -52,6 +53,18 @@ const createButtonLink = computed(() => {
   if (board.value.mode === 'forum') return `/b/${board.value.name}/submit?type=thread`
   return `/b/${board.value.name}/submit`
 })
+
+// Latest activity for forum boards
+const isForumBoard = computed(() => board.value?.mode === 'forum')
+const activityComposable = boardName.value ? useBoardActivity(boardName.value) : null
+const latestActivity = computed(() => activityComposable?.latestActivity.value ?? [])
+const activityLoading = computed(() => activityComposable?.loading.value ?? false)
+
+watch(isForumBoard, async (isForum) => {
+  if (isForum && activityComposable) {
+    await activityComposable.fetchActivity()
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -154,6 +167,48 @@ const createButtonLink = computed(() => {
             <div class="text-sm font-medium text-gray-900">{{ formatDate(board.createdAt) }}</div>
             <div class="text-[11px] text-gray-500">Created</div>
           </div>
+        </div>
+      </div>
+
+      <!-- Latest Activity (forum boards only) -->
+      <div v-if="isForumBoard" class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div class="px-4 py-2 border-b border-gray-200 flex items-center gap-2">
+          <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <h3 class="font-semibold text-sm text-gray-900">Latest Activity</h3>
+        </div>
+        <div v-if="activityLoading" class="p-3 space-y-3">
+          <div v-for="n in 3" :key="n" class="flex items-center gap-2.5">
+            <div class="w-5 h-5 rounded-full bg-gray-200 animate-pulse shrink-0" />
+            <div class="flex-1 space-y-1">
+              <div class="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
+              <div class="h-2.5 bg-gray-100 rounded animate-pulse w-1/3" />
+            </div>
+          </div>
+        </div>
+        <div v-else-if="latestActivity.length === 0" class="p-4 text-center">
+          <p class="text-xs text-gray-400">No recent activity</p>
+        </div>
+        <div v-else class="divide-y divide-gray-100">
+          <NuxtLink
+            v-for="entry in latestActivity"
+            :key="entry.postId"
+            :to="`/b/${board.name}/${entry.postId}/${entry.postSlug || ''}`"
+            class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-gray-50 transition-colors no-underline"
+          >
+            <CommonAvatar
+              :src="entry.commenterAvatar ?? undefined"
+              :name="entry.commenterName"
+              size="xs"
+            />
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-gray-800 font-medium truncate leading-tight">{{ entry.postTitle }}</p>
+              <p class="text-[11px] text-gray-400 leading-tight mt-0.5">
+                {{ entry.commenterName }} &middot; {{ timeAgo(entry.createdAt) }}
+              </p>
+            </div>
+          </NuxtLink>
         </div>
       </div>
     </template>

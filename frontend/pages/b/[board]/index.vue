@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { usePosts } from '~/composables/usePosts'
 import { useBoard } from '~/composables/useBoard'
+import { useBoardActivity } from '~/composables/useBoardActivity'
+import { useAuthStore } from '~/stores/auth'
 import { timeAgo, formatDate } from '~/utils/date'
 
 const route = useRoute()
 const boardName = route.params.board as string
+const authStore = useAuthStore()
 
 const { board } = useBoard()
 
@@ -28,7 +31,67 @@ if (boardMode.value === 'forum') {
 const pinnedThreads = computed(() => posts.value.filter(p => p.isFeaturedBoard))
 const unpinnedThreads = computed(() => posts.value.filter(p => !p.isFeaturedBoard))
 
+// Activity data for forum boards (participant avatars, last reply info)
+const { threadParticipants, threadLastReply, fetchActivity } = useBoardActivity(boardName)
+
 await fetchPosts()
+if (boardMode.value === 'forum') {
+  await fetchActivity()
+}
+
+// --- Thread visit tracking (localStorage) for "New" badge ---
+const VISITS_KEY = 'tb_thread_visits'
+
+function getVisits (): Record<string, string> {
+  if (!import.meta.client) return {}
+  try {
+    return JSON.parse(localStorage.getItem(VISITS_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function pruneOldVisits (visits: Record<string, string>): Record<string, string> {
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+  const pruned: Record<string, string> = {}
+  for (const [id, ts] of Object.entries(visits)) {
+    if (new Date(ts).getTime() > thirtyDaysAgo) {
+      pruned[id] = ts
+    }
+  }
+  return pruned
+}
+
+const threadVisits = ref<Record<string, string>>({})
+
+onMounted(() => {
+  const raw = getVisits()
+  threadVisits.value = pruneOldVisits(raw)
+  if (import.meta.client) {
+    localStorage.setItem(VISITS_KEY, JSON.stringify(threadVisits.value))
+  }
+})
+
+function isThreadNew (thread: { id: string; newestCommentTime: string; commentCount: number }): boolean {
+  if (!authStore.isLoggedIn || thread.commentCount === 0) return false
+  const lastVisit = threadVisits.value[thread.id]
+  if (!lastVisit) return true
+  return thread.newestCommentTime > lastVisit
+}
+
+function markThreadVisited (thread: { id: string; newestCommentTime: string }): void {
+  if (!import.meta.client || !authStore.isLoggedIn) return
+  threadVisits.value[thread.id] = thread.newestCommentTime
+  localStorage.setItem(VISITS_KEY, JSON.stringify(threadVisits.value))
+}
+
+function getParticipants (threadId: string) {
+  return threadParticipants.value.get(threadId) || []
+}
+
+function getLastReply (threadId: string) {
+  return threadLastReply.value.get(threadId)
+}
 </script>
 
 <template>
@@ -71,6 +134,7 @@ await fetchPosts()
             :key="thread.id"
             :to="`/b/${boardName}/${thread.id}/${thread.slug || ''}`"
             class="forum-thread forum-thread-pinned no-underline"
+            @click="markThreadVisited(thread)"
           >
             <div class="forum-thread-avatar">
               <CommonAvatar
@@ -82,23 +146,44 @@ await fetchPosts()
             <div class="forum-thread-content">
               <div class="forum-thread-title-row">
                 <span class="forum-pin-badge">Pinned</span>
+                <span v-if="isThreadNew(thread)" class="forum-new-badge">New</span>
                 <span v-if="thread.isLocked" class="forum-lock-badge" title="Locked">
                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
                 </span>
                 <h3 class="forum-thread-title">{{ thread.title }}</h3>
               </div>
-              <p class="forum-thread-meta">
-                by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
-                &middot;
-                <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
-              </p>
+              <div class="forum-thread-meta-row">
+                <p class="forum-thread-meta">
+                  by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
+                  &middot;
+                  <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
+                </p>
+                <div v-if="getParticipants(thread.id).length > 0" class="forum-thread-participants">
+                  <CommonAvatar
+                    v-for="(p, i) in getParticipants(thread.id).slice(0, 4)"
+                    :key="p.id"
+                    :src="p.avatar ?? undefined"
+                    :name="p.displayName || p.name"
+                    size="xs"
+                    :class="{ '-ml-1.5': i > 0 }"
+                    class="ring-2 ring-white"
+                  />
+                  <span v-if="getParticipants(thread.id).length > 4" class="forum-participants-overflow">
+                    +{{ getParticipants(thread.id).length - 4 }}
+                  </span>
+                </div>
+              </div>
             </div>
             <div class="forum-thread-stats">
               <span class="forum-stat-number">{{ thread.commentCount }}</span>
               <span class="forum-stat-label">{{ thread.commentCount === 1 ? 'reply' : 'replies' }}</span>
             </div>
             <div class="forum-thread-last-post">
-              <template v-if="thread.newestCommentTime && thread.commentCount > 0">
+              <template v-if="getLastReply(thread.id)">
+                <span class="forum-last-post-author">{{ getLastReply(thread.id)!.creatorName }}</span>
+                <span class="forum-last-post-time">{{ timeAgo(getLastReply(thread.id)!.createdAt) }}</span>
+              </template>
+              <template v-else-if="thread.newestCommentTime && thread.commentCount > 0">
                 <span class="forum-last-post-time">{{ timeAgo(thread.newestCommentTime) }}</span>
               </template>
               <span v-else class="forum-last-post-time">&mdash;</span>
@@ -112,6 +197,7 @@ await fetchPosts()
           :key="thread.id"
           :to="`/b/${boardName}/${thread.id}/${thread.slug || ''}`"
           class="forum-thread no-underline"
+          @click="markThreadVisited(thread)"
         >
           <div class="forum-thread-avatar">
             <CommonAvatar
@@ -122,23 +208,44 @@ await fetchPosts()
           </div>
           <div class="forum-thread-content">
             <div class="forum-thread-title-row">
+              <span v-if="isThreadNew(thread)" class="forum-new-badge">New</span>
               <span v-if="thread.isLocked" class="forum-lock-badge" title="Locked">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
               </span>
               <h3 class="forum-thread-title">{{ thread.title }}</h3>
             </div>
-            <p class="forum-thread-meta">
-              by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
-              &middot;
-              <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
-            </p>
+            <div class="forum-thread-meta-row">
+              <p class="forum-thread-meta">
+                by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
+                &middot;
+                <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
+              </p>
+              <div v-if="getParticipants(thread.id).length > 0" class="forum-thread-participants">
+                <CommonAvatar
+                  v-for="(p, i) in getParticipants(thread.id).slice(0, 4)"
+                  :key="p.id"
+                  :src="p.avatar ?? undefined"
+                  :name="p.displayName || p.name"
+                  size="xs"
+                  :class="{ '-ml-1.5': i > 0 }"
+                  class="ring-2 ring-white"
+                />
+                <span v-if="getParticipants(thread.id).length > 4" class="forum-participants-overflow">
+                  +{{ getParticipants(thread.id).length - 4 }}
+                </span>
+              </div>
+            </div>
           </div>
           <div class="forum-thread-stats">
             <span class="forum-stat-number">{{ thread.commentCount }}</span>
             <span class="forum-stat-label">{{ thread.commentCount === 1 ? 'reply' : 'replies' }}</span>
           </div>
           <div class="forum-thread-last-post">
-            <template v-if="thread.newestCommentTime && thread.commentCount > 0">
+            <template v-if="getLastReply(thread.id)">
+              <span class="forum-last-post-author">{{ getLastReply(thread.id)!.creatorName }}</span>
+              <span class="forum-last-post-time">{{ timeAgo(getLastReply(thread.id)!.createdAt) }}</span>
+            </template>
+            <template v-else-if="thread.newestCommentTime && thread.commentCount > 0">
               <span class="forum-last-post-time">{{ timeAgo(thread.newestCommentTime) }}</span>
             </template>
             <span v-else class="forum-last-post-time">&mdash;</span>
