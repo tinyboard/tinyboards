@@ -34,6 +34,7 @@ use async_graphql::*;
 use queries::{
     banned_users::QueryBannedUsers,
     board_management::QueryBoardManagement,
+    board_members::QueryBoardMembers,
     board_moderators::QueryBoardModerators,
     boards::QueryBoards,
     comments::QueryComments,
@@ -100,6 +101,7 @@ pub struct Query(
     QueryComments,
     QueryBoards,
     QueryBoardManagement,
+    QueryBoardMembers,
     QueryUser,
     QuerySite,
     QueryMessages,
