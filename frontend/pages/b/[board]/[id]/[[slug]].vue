@@ -226,6 +226,7 @@ function handleQuoteOP (author: string, body: string): void {
             :post-id="postId"
             :post-number="index + 2"
             :is-moderator="isModerator"
+            :board-id="post.board?.id"
             @quote="handleQuoteFromComment"
           />
         </div>

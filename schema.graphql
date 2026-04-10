@@ -122,6 +122,9 @@ type Query {
   listEmojis(input: ListEmojisInput): [EmojiObject!]!
   getAllEmojisAdmin(boardId: ID): [EmojiObject!]!
 
+  # Board reaction settings (public)
+  getBoardReactionSettings(boardId: ID!): BoardReactionSettings
+
   # Flairs
   boardFlairs(boardId: ID!, flairType: FlairType, activeOnly: Boolean): [FlairTemplate!]!
   manageBoardFlairs(boardId: ID!, flairType: FlairType): [FlairTemplate!]!
@@ -1195,6 +1198,7 @@ type BoardReactionSettings {
   boardId: ID!
   emojiWeights: JSON!
   reactionsEnabled: Boolean!
+  reactionEmojis: JSON!
 }
 
 type AddReactionResponse {
@@ -1225,6 +1229,7 @@ input UpdateBoardReactionSettingsInput {
   boardId: ID!
   emojiWeights: JSON
   isReactionsEnabled: Boolean
+  reactionEmojis: JSON
 }
 
 # ============================================================

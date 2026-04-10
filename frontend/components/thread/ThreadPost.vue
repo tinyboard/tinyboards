@@ -13,6 +13,7 @@ const props = defineProps<{
   postId: string
   postNumber: number
   isModerator?: boolean
+  boardId?: string
 }>()
 
 const emit = defineEmits<{
@@ -165,7 +166,7 @@ async function togglePin (): Promise<void> {
     <!-- Post footer -->
     <div class="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
       <!-- Left: reactions -->
-      <CommonReactionBar target-type="comment" :target-id="comment.id" />
+      <CommonReactionBar target-type="comment" :target-id="comment.id" :board-id="boardId" />
 
       <!-- Right: actions -->
       <div class="flex items-center gap-1 text-xs text-gray-500">

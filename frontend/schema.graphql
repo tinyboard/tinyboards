@@ -122,6 +122,9 @@ type Query {
   listEmojis(input: ListEmojisInput): [EmojiObject!]!
   getAllEmojisAdmin(boardId: ID): [EmojiObject!]!
 
+  # Board reaction settings (public)
+  getBoardReactionSettings(boardId: ID!): BoardReactionSettings
+
   # Flairs
   boardFlairs(boardId: ID!, flairType: FlairType, activeOnly: Boolean): [FlairTemplate!]!
   manageBoardFlairs(boardId: ID!, flairType: FlairType): [FlairTemplate!]!
@@ -250,7 +253,14 @@ type Mutation {
 
   # Emojis
   createEmoji(input: CreateEmojiInput!): EmojiObject!
+  updateEmoji(emojiId: ID!, input: UpdateEmojiInput!): EmojiObject!
+  uploadEmoji(shortcode: String!, file: Upload!, category: String, boardId: ID, scope: EmojiScope): EmojiObject!
   deleteEmoji(emojiId: ID!): Boolean!
+
+  # Reactions
+  addReaction(input: AddReactionInput!): AddReactionResponse!
+  removeReaction(input: RemoveReactionInput!): RemoveReactionResponse!
+  updateBoardReactionSettings(input: UpdateBoardReactionSettingsInput!): UpdateBoardReactionSettingsResponse!
 
   # Board bans
   banUserFromBoard(input: BoardBanUserInput!): BoardBanResponse!
@@ -1044,6 +1054,76 @@ input ListEmojisInput {
 enum EmojiScope {
   Site
   Board
+}
+
+input UpdateEmojiInput {
+  shortcode: String
+  imageUrl: String
+  altText: String
+  category: String
+  isActive: Boolean
+  keywords: [String!]
+}
+
+# ============================================================
+# Reaction types
+# ============================================================
+
+type Reaction {
+  id: ID!
+  userId: ID!
+  postId: ID
+  commentId: ID
+  emoji: String!
+  score: Int!
+  createdAt: String!
+}
+
+type ReactionAggregate {
+  id: ID!
+  postId: ID
+  commentId: ID
+  emoji: String!
+  count: Int!
+}
+
+type BoardReactionSettings {
+  id: ID!
+  boardId: ID!
+  emojiWeights: JSON!
+  reactionsEnabled: Boolean!
+  reactionEmojis: JSON!
+}
+
+type AddReactionResponse {
+  reaction: Reaction!
+}
+
+type RemoveReactionResponse {
+  success: Boolean!
+}
+
+type UpdateBoardReactionSettingsResponse {
+  settings: BoardReactionSettings!
+}
+
+input AddReactionInput {
+  postId: ID
+  commentId: ID
+  emoji: String!
+}
+
+input RemoveReactionInput {
+  postId: ID
+  commentId: ID
+  emoji: String!
+}
+
+input UpdateBoardReactionSettingsInput {
+  boardId: ID!
+  emojiWeights: JSON
+  isReactionsEnabled: Boolean
+  reactionEmojis: JSON
 }
 
 # ============================================================
