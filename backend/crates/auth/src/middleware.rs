@@ -4,7 +4,8 @@ use futures::future::{ok, LocalBoxFuture, Ready};
 use std::rc::Rc;
 use std::task::{Context, Poll};
 
-use crate::cookies::{ACCESS_COOKIE_NAME, clear_access_cookie};
+use crate::cookies::ACCESS_COOKIE_NAME;
+use crate::errors::AuthError;
 use crate::tokens::validate_access_token;
 use crate::types::AuthenticatedUser;
 
@@ -87,11 +88,18 @@ where
                             });
                             service.call(req).await
                         }
+                        Err(AuthError::ExpiredAccessToken) => {
+                            // Expired token — continue as anonymous but keep the cookie.
+                            // The refresh endpoint needs the expired JWT to extract the
+                            // user ID (decoded with validate_exp = false).
+                            tracing::debug!("Access token expired, continuing as anonymous");
+                            service.call(req).await
+                        }
                         Err(_) => {
-                            // Invalid/expired token — continue as anonymous, clear the bad cookie
+                            // Truly invalid token (bad signature, malformed) — clear it
                             tracing::debug!("Invalid access token in cookie, clearing");
                             let mut res = service.call(req).await?;
-                            res.response_mut().add_cookie(&clear_access_cookie()).ok();
+                            res.response_mut().add_cookie(&crate::cookies::clear_access_cookie()).ok();
                             Ok(res)
                         }
                     }

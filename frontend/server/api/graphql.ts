@@ -43,21 +43,32 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const accessToken = getCookie(event, 'tb_access')
+  // Prefer the refreshed token from SSR middleware (if the middleware already
+  // refreshed during this request) over the original cookie, which would be
+  // the old expired token.
+  const accessToken = event.context?.refreshedAccessToken as string | undefined
+    ?? getCookie(event, 'tb_access')
 
   // Attempt the request
   const result = await forwardGraphQLRequest(gqlEndpoint, body, accessToken)
 
   // Check for authentication errors (HTTP 401 or GraphQL-level auth errors)
   if (result.httpStatus === 401 || hasAuthError(result.data)) {
-    const newAccessToken = await attemptTokenRefresh(event, config.internalApiHost)
-    if (newAccessToken) {
-      // Retry original request with the new token
-      const retry = await forwardGraphQLRequest(gqlEndpoint, body, newAccessToken)
-      return rewriteMediaUrls(retry.data, config.public.domain as string)
+    // If the SSR middleware already refreshed, don't try again — the token
+    // it gave us should have worked. Refreshing a second time would use
+    // the stale cookie and fail (the backend already rotated the token).
+    if (!event.context?.refreshedAccessToken) {
+      const newAccessToken = await attemptTokenRefresh(event, config.internalApiHost)
+      if (newAccessToken) {
+        // Store so any further calls in this render cycle don't re-refresh
+        event.context.refreshedAccessToken = newAccessToken
+        // Retry original request with the new token
+        const retry = await forwardGraphQLRequest(gqlEndpoint, body, newAccessToken)
+        return rewriteMediaUrls(retry.data, config.public.domain as string)
+      }
     }
 
-    // Refresh failed — clear cookies and return the original error
+    // Refresh failed or was already attempted — clear cookies and return the original error
     clearAuthCookies(event)
   }
 

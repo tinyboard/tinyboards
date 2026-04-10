@@ -13,8 +13,14 @@ pub const REFRESH_COOKIE_NAME: &str = "tb_refresh";
 /// browser from sending the cookie to the BFF proxy.
 pub const REFRESH_COOKIE_PATH: &str = "/";
 
-/// Access token lifetime in seconds (15 minutes).
-pub const ACCESS_TOKEN_MAX_AGE: i64 = 900;
+/// Access token cookie lifetime in seconds (7 days).
+///
+/// The JWT inside the cookie has a 15-minute `exp` claim. This longer cookie
+/// lifetime ensures the browser still sends the (expired) cookie to the
+/// refresh endpoint, which decodes it with `validate_exp = false` to extract
+/// the user ID. Without this, the browser deletes the cookie after 15 minutes
+/// and the refresh handler has no way to identify the user.
+pub const ACCESS_TOKEN_MAX_AGE: i64 = 604_800;
 
 /// Refresh token lifetime in seconds (30 days).
 pub const REFRESH_TOKEN_MAX_AGE: i64 = 2_592_000;

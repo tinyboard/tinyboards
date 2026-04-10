@@ -28,7 +28,12 @@ pub fn validate_access_token(token: &str, jwt_secret: &str) -> Result<Claims, Au
     validation.validate_exp = true;
 
     let token_data = decode::<Claims>(token, &key, &validation)
-        .map_err(|_| AuthError::InvalidAccessToken)?;
+        .map_err(|e| {
+            match e.kind() {
+                jsonwebtoken::errors::ErrorKind::ExpiredSignature => AuthError::ExpiredAccessToken,
+                _ => AuthError::InvalidAccessToken,
+            }
+        })?;
 
     Ok(token_data.claims)
 }

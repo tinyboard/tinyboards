@@ -67,6 +67,10 @@ export default defineEventHandler(async (event) => {
   if (refreshToken) {
     const newAccessToken = await attemptTokenRefresh(event, config.internalApiHost, accessToken, refreshToken)
     if (newAccessToken) {
+      // Store the refreshed token so the BFF proxy (graphql.ts) uses it
+      // instead of re-reading the stale cookie from the original request.
+      event.context.refreshedAccessToken = newAccessToken
+
       const result = await fetchUserData(gqlEndpoint, newAccessToken)
       if (result) {
         event.context.auth = result

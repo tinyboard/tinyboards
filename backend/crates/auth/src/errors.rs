@@ -46,6 +46,9 @@ pub enum AuthError {
     #[error("Invalid or expired access token")]
     InvalidAccessToken,
 
+    #[error("Access token expired")]
+    ExpiredAccessToken,
+
     #[error("Invalid or expired refresh token")]
     InvalidRefreshToken,
 
@@ -106,6 +109,7 @@ impl AuthError {
             Self::InvalidPasswordLength => StatusCode::BAD_REQUEST,
             Self::DuplicateUser(_) => StatusCode::CONFLICT,
             Self::InvalidAccessToken => StatusCode::UNAUTHORIZED,
+            Self::ExpiredAccessToken => StatusCode::UNAUTHORIZED,
             Self::InvalidRefreshToken => StatusCode::UNAUTHORIZED,
             Self::SessionExpired => StatusCode::UNAUTHORIZED,
             Self::InvalidResetToken => StatusCode::BAD_REQUEST,
