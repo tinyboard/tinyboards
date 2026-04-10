@@ -66,10 +66,10 @@ async function handleLogout () {
 
       <!-- Right: Auth actions -->
       <div class="flex items-center gap-1.5 sm:gap-2">
-        <!-- Search (always visible) -->
+        <!-- Search (hidden on mobile — in bottom nav) -->
         <NuxtLink
           to="/search"
-          class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
+          class="relative hidden lg:flex items-center justify-center w-9 h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
           aria-label="Search"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -78,19 +78,21 @@ async function handleLogout () {
         </NuxtLink>
 
         <template v-if="authStore.isLoggedIn">
+          <!-- Submit (hidden on mobile — in bottom nav) -->
           <NuxtLink
             to="/submit"
-            class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white rounded hover:bg-white/10 transition-colors no-underline"
+            class="relative hidden lg:flex items-center justify-center w-9 h-9 text-white rounded hover:bg-white/10 transition-colors no-underline"
             aria-label="Submit post"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
           </NuxtLink>
+          <!-- Admin (hidden on mobile — accessible via sidebar) -->
           <NuxtLink
             v-if="authStore.isAdmin"
             to="/admin"
-            class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
+            class="relative hidden lg:flex items-center justify-center w-9 h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
             aria-label="Admin panel"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,9 +100,10 @@ async function handleLogout () {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </NuxtLink>
+          <!-- Inbox (hidden on mobile — in bottom nav) -->
           <NuxtLink
             to="/inbox"
-            class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
+            class="relative hidden lg:flex items-center justify-center w-9 h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
             aria-label="Inbox"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +130,7 @@ async function handleLogout () {
                 size="sm"
               />
               <span class="hidden sm:inline text-sm font-medium text-white">{{ authStore.user?.name }}</span>
-              <svg class="w-3.5 h-3.5 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-3.5 h-3.5 text-white/60 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -198,13 +201,13 @@ async function handleLogout () {
         <template v-else>
           <NuxtLink
             to="/login"
-            class="button button-sm gray no-underline"
+            class="hidden sm:inline-flex items-center px-3 py-1.5 text-sm font-semibold text-white/90 hover:text-white hover:bg-white/10 rounded-lg transition-colors no-underline"
           >
             Log in
           </NuxtLink>
           <NuxtLink
             to="/register"
-            class="button button-sm primary no-underline"
+            class="inline-flex items-center px-3 py-1.5 text-sm font-semibold text-primary bg-white hover:bg-white/90 rounded-lg transition-colors no-underline"
           >
             Sign up
           </NuxtLink>
