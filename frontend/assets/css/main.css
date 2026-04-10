@@ -850,6 +850,68 @@ a:focus:not(:focus-visible) {
   color: #64748b;
 }
 
+/* New activity badge */
+.forum-new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #15803d;
+  background: #dcfce7;
+  flex-shrink: 0;
+}
+
+.dark .forum-new-badge {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+/* Meta row: wraps meta text + participant avatars */
+.forum-thread-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Participant avatar stack */
+.forum-thread-participants {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.forum-participants-overflow {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.dark .forum-participants-overflow {
+  color: #64748b;
+}
+
+/* Last post author name */
+.forum-last-post-author {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+
+.dark .forum-last-post-author {
+  color: #cbd5e1;
+}
+
 /* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;
