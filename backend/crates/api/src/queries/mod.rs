@@ -1,5 +1,6 @@
 pub mod banned_users;
 pub mod board_management;
+pub mod board_members;
 pub mod board_moderators;
 pub mod boards;
 pub mod comments;

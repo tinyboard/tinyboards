@@ -86,8 +86,12 @@ type Query {
     limit: Int
   ): SearchResult!
 
-  # Moderation
+  # Board members
   getBoardModerators(boardId: ID!): [BoardModerator!]!
+  getTopContributors(boardId: ID!, limit: Int): [BoardContributor!]!
+  getWikiContributors(boardId: ID!, limit: Int): [WikiContributor!]!
+
+  # Moderation
   getModeratedBoards(page: Int, limit: Int): [Board!]!
   getBoardSettings(boardId: ID!): BoardSettings!
   getBoardBannedUsers(boardId: ID!, page: Int, limit: Int): [BoardBannedUser!]!
@@ -601,6 +605,18 @@ type BoardModerator {
   permissions: Int!
   rank: Int!
   isInviteAccepted: Boolean!
+}
+
+type BoardContributor {
+  user: User!
+  postScore: Int!
+  commentScore: Int!
+  totalScore: Int!
+}
+
+type WikiContributor {
+  user: User!
+  editCount: Int!
 }
 
 type BoardSettings {
