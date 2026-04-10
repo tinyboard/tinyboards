@@ -56,7 +56,7 @@ function formatNumber (n: number): string {
         <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
           Activity
         </h4>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 text-center sm:text-left">
           <div>
             <div class="text-lg font-bold text-gray-900 tabular-nums">{{ formatNumber(user.postCount ?? 0) }}</div>
             <div class="text-[11px] text-gray-500">Posts</div>

@@ -129,7 +129,7 @@ async function handleDelete (templateId: string) {
     <div v-if="showCreateForm" class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
       <h3 class="text-sm font-medium text-gray-900 mb-4">New Flair</h3>
       <form class="space-y-4" @submit.prevent="handleCreate">
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
             <input v-model="newFlair.templateName" type="text" class="form-input w-full" placeholder="e.g. discussion" required />
@@ -148,7 +148,7 @@ async function handleDelete (templateId: string) {
           </select>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
             <div class="flex items-center gap-2">

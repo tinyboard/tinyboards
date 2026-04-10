@@ -36,13 +36,13 @@ function submitReply (): void {
 
 <template>
   <div
-    class="border-l-2 pl-3 mt-2"
+    class="border-l-2 pl-2 sm:pl-3 mt-2"
     :class="collapsed ? 'border-gray-200' : 'border-gray-300'"
   >
     <!-- Comment header -->
     <div class="flex items-center gap-1 text-xs text-gray-500">
       <button
-        class="text-gray-400 hover:text-gray-600 mr-1 p-1 -m-1 min-w-[28px] text-center"
+        class="text-gray-400 hover:text-gray-600 mr-1 p-2 sm:p-1 -m-1 min-w-[36px] sm:min-w-[28px] text-center"
         @click="collapsed = !collapsed"
       >
         [{{ collapsed ? '+' : '−' }}]

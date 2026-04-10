@@ -135,7 +135,7 @@ const hasLinkPreview = computed(() => {
         <!-- Meta -->
         <NuxtLink
           :to="postUrl(post)"
-          class="text-xs text-gray-400 no-underline hover:text-gray-600 shrink-0 hidden sm:inline"
+          class="text-xs text-gray-400 no-underline hover:text-gray-600 shrink-0"
         >
           {{ post.commentCount }} {{ post.commentCount === 1 ? 'comment' : 'comments' }}
         </NuxtLink>

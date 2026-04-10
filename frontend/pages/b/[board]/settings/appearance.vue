@@ -261,7 +261,7 @@ async function saveSettings () {
       <!-- Colors -->
       <div>
         <h3 class="text-sm font-medium text-gray-700 mb-3">Board Colors</h3>
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-xs text-gray-600 mb-1">Primary</label>
             <div class="flex items-center gap-2">

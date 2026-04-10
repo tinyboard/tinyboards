@@ -32,7 +32,7 @@ async function handleLogout () {
 
 <template>
   <header class="bg-primary sticky top-0 z-50 shadow-md">
-    <div class="max-w-8xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between">
+    <div class="max-w-8xl mx-auto px-3 sm:px-6 2xl:px-12 h-14 flex items-center justify-between">
       <!-- Left: Logo + Nav -->
       <div class="flex items-center gap-4 min-w-0 flex-1">
         <button
@@ -90,7 +90,7 @@ async function handleLogout () {
           <NuxtLink
             v-if="authStore.isAdmin"
             to="/admin"
-            class="relative flex items-center justify-center w-9 h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline hidden sm:flex"
+            class="relative flex items-center justify-center w-10 h-10 sm:w-9 sm:h-9 text-white/70 rounded hover:bg-white/10 hover:text-white transition-colors no-underline"
             aria-label="Admin panel"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,7 +108,7 @@ async function handleLogout () {
             </svg>
             <span
               v-if="authStore.unreadNotificationCount > 0"
-              class="absolute -top-0.5 -right-0.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none"
+              class="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none pointer-events-none"
             >
               {{ authStore.unreadNotificationCount > 99 ? '99+' : authStore.unreadNotificationCount }}
             </span>
@@ -204,7 +204,7 @@ async function handleLogout () {
           </NuxtLink>
           <NuxtLink
             to="/register"
-            class="button button-sm primary no-underline hidden sm:inline-flex"
+            class="button button-sm primary no-underline"
           >
             Sign up
           </NuxtLink>

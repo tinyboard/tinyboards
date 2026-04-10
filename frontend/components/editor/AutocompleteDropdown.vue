@@ -69,7 +69,7 @@ function isCustomEmoji (suggestion: AutocompleteSuggestion): boolean {
     <div
       ref="dropdownRef"
       :style="style"
-      class="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto min-w-[200px] max-w-[320px]"
+      class="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto min-w-[180px] max-w-[min(320px,calc(100vw-2rem))]"
       @mousedown.prevent
     >
       <ul role="listbox" class="py-1">

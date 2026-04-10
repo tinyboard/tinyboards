@@ -83,7 +83,7 @@ function isActive (path: string): boolean {
           </svg>
           <span
             v-if="authStore.unreadNotificationCount > 0"
-            class="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[14px] h-3.5 px-0.5 rounded-full bg-red-500 text-white text-[9px] font-bold leading-none"
+            class="absolute -top-1 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold leading-none pointer-events-none"
           >
             {{ authStore.unreadNotificationCount > 99 ? '99+' : authStore.unreadNotificationCount }}
           </span>

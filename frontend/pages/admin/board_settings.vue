@@ -202,7 +202,7 @@ onMounted(() => {
         <p class="text-xs text-gray-500 mb-3">
           Pre-selected mode when users create a new board. This is a default, not a restriction.
         </p>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             type="button"
             class="text-left rounded-lg border-2 p-4 transition-all"

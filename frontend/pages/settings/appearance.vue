@@ -29,7 +29,7 @@ function selectTheme (theme: string): void {
     <div class="max-w-md">
       <p class="text-sm text-gray-600 mb-4">Choose a theme for your experience.</p>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button
           v-for="theme in themes"
           :key="theme.value"

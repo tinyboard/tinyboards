@@ -69,7 +69,7 @@ async function handlePickerSelect (emoji: string): Promise<void> {
         <button
           v-for="emoji in defaultEmojis"
           :key="emoji"
-          class="w-8 h-8 flex items-center justify-center rounded hover:bg-gray-100 text-base"
+          class="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded hover:bg-gray-100 text-base"
           @click="handlePickerSelect(emoji)"
         >
           {{ emoji }}

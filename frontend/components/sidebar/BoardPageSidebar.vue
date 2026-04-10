@@ -134,7 +134,7 @@ const createButtonLink = computed(() => {
 
       <!-- Stats -->
       <div class="bg-white rounded-lg border border-gray-200 p-4">
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-3 text-center sm:text-left">
           <div>
             <div class="text-lg font-bold text-gray-900 tabular-nums">{{ board.subscribers }}</div>
             <div class="text-[11px] text-gray-500">Members</div>

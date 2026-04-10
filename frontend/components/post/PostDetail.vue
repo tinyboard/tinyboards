@@ -184,7 +184,7 @@ function onClickOutsideMenu (e: Event): void {
         </div>
 
         <!-- Meta -->
-        <div class="flex items-center gap-1 mt-2 text-xs text-gray-500 flex-wrap">
+        <div class="flex items-center gap-1.5 sm:gap-1 mt-2 text-xs text-gray-500 flex-wrap">
           <NuxtLink v-if="post.board" :to="`/b/${post.board.name}`" class="font-medium text-gray-700 no-underline hover:underline">
             b/{{ post.board.name }}
           </NuxtLink>
@@ -229,7 +229,7 @@ function onClickOutsideMenu (e: Event): void {
         </div>
 
         <!-- Action bar: unified user + mod actions -->
-        <div class="flex items-center gap-1 mt-3 text-xs text-gray-500 flex-wrap">
+        <div class="flex items-center gap-1.5 sm:gap-1 mt-3 text-xs text-gray-500 flex-wrap">
           <!-- Comments count -->
           <span class="inline-flex items-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -300,7 +300,7 @@ function onClickOutsideMenu (e: Event): void {
                 </Teleport>
                 <div
                   v-if="showMoreMenu"
-                  class="absolute right-0 sm:right-auto sm:left-0 top-full mt-1 w-48 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
+                  class="absolute left-0 top-full mt-1 w-48 max-w-[calc(100vw-2rem)] bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
                 >
                   <div class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
                     Moderation

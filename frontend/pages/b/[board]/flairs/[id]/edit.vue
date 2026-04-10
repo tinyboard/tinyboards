@@ -148,7 +148,7 @@ async function handleSubmit () {
     </div>
 
     <form v-else class="space-y-5 max-w-2xl" @submit.prevent="handleSubmit">
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
           <input v-model="form.templateName" type="text" class="form-input w-full" required />
@@ -165,7 +165,7 @@ async function handleSubmit () {
         <p class="text-xs text-gray-500 mt-1">Flair type cannot be changed after creation.</p>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Text Color</label>
           <div class="flex items-center gap-2">

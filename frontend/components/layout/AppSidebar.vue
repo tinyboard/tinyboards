@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useUIStore } from '~/stores/ui'
+import { useAuthStore } from '~/stores/auth'
 
 const uiStore = useUIStore()
+const authStore = useAuthStore()
 const route = useRoute()
 
 type SidebarSection = 'home' | 'all' | 'board' | 'user' | 'boards' | 'search' | 'members' | 'default'
@@ -37,7 +39,7 @@ watch(() => uiStore.sidebarOpen, (open) => {
 
 <template>
   <!-- Desktop: static sidebar -->
-  <aside class="hidden lg:block w-80 shrink-0">
+  <aside class="hidden lg:block w-80 xl:w-[22rem] shrink-0">
     <div class="sticky top-20 space-y-0 max-h-[calc(100vh-6rem)] overflow-y-auto py-4 pr-1">
       <SidebarHomeSidebar v-if="currentSection === 'home'" />
       <SidebarAllSidebar v-else-if="currentSection === 'all'" />
@@ -120,6 +122,18 @@ watch(() => uiStore.sidebarOpen, (open) => {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             Members
+          </NuxtLink>
+          <NuxtLink
+            v-if="authStore.isAdmin"
+            to="/admin"
+            class="flex items-center gap-3 px-3 py-3 sm:py-2.5 text-sm font-medium rounded-lg no-underline transition-colors"
+            :class="route.path.startsWith('/admin') ? 'bg-primary/10 text-primary' : 'text-gray-700 hover:bg-gray-100'"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Admin Panel
           </NuxtLink>
         </nav>
 

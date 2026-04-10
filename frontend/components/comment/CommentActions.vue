@@ -174,10 +174,10 @@ function openRemoveDialog (): void {
 </script>
 
 <template>
-  <div class="flex items-center gap-1 mt-1.5 text-xs text-gray-400 flex-wrap">
+  <div class="flex items-center gap-1.5 sm:gap-1 mt-1.5 text-xs text-gray-400 flex-wrap">
     <!-- Upvote -->
     <button
-      class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-primary/10 transition-colors"
+      class="inline-flex items-center gap-0.5 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded hover:bg-primary/10 transition-colors"
       :class="localMyVote === 1 ? 'text-primary' : 'hover:text-primary'"
       @click="vote(1)"
     >
@@ -197,7 +197,7 @@ function openRemoveDialog (): void {
     <!-- Downvote -->
     <button
       v-if="siteStore.enableDownvotes"
-      class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded hover:bg-secondary/10 transition-colors"
+      class="inline-flex items-center gap-0.5 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded hover:bg-secondary/10 transition-colors"
       :class="localMyVote === -1 ? 'text-secondary' : 'hover:text-secondary'"
       @click="vote(-1)"
     >
@@ -211,7 +211,7 @@ function openRemoveDialog (): void {
     <!-- Reply -->
     <button
       v-if="authStore.isLoggedIn"
-      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors"
+      class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded hover:bg-gray-100 hover:text-gray-600 transition-colors"
       @click="emit('toggle-reply')"
     >
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -223,7 +223,7 @@ function openRemoveDialog (): void {
     <!-- Save -->
     <button
       v-if="authStore.isLoggedIn"
-      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors"
+      class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded transition-colors"
       :class="commentSaved ? 'text-primary hover:bg-primary/10' : 'hover:bg-gray-100 hover:text-gray-600'"
       @click="toggleSaveComment"
     >
@@ -236,7 +236,7 @@ function openRemoveDialog (): void {
     <!-- Report (non-own comments) -->
     <button
       v-if="authStore.isLoggedIn && !isOwnComment"
-      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-gray-100 hover:text-red-500 transition-colors"
+      class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded hover:bg-gray-100 hover:text-red-500 transition-colors"
       @click="showReportDialog = true"
     >
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -248,7 +248,7 @@ function openRemoveDialog (): void {
     <!-- Delete (own comments) -->
     <button
       v-if="authStore.isLoggedIn && isOwnComment"
-      class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-gray-100 hover:text-red-500 transition-colors"
+      class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded hover:bg-gray-100 hover:text-red-500 transition-colors"
       @click="showDeleteConfirm = true"
     >
       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,7 +262,7 @@ function openRemoveDialog (): void {
       <span class="text-gray-200 mx-0.5">|</span>
       <div class="relative">
         <button
-          class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded transition-colors"
+          class="inline-flex items-center gap-1 px-2 py-1.5 sm:px-1.5 sm:py-0.5 rounded transition-colors"
           :class="showModMenu ? 'bg-gray-100 text-gray-700' : 'hover:bg-gray-100 hover:text-gray-600'"
           @click="showModMenu = !showModMenu"
         >
@@ -283,7 +283,7 @@ function openRemoveDialog (): void {
         </Teleport>
         <div
           v-if="showModMenu"
-          class="absolute right-0 sm:right-auto sm:left-0 top-full mt-1 w-44 bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
+          class="absolute left-0 top-full mt-1 w-44 max-w-[calc(100vw-2rem)] bg-white rounded-lg border border-gray-200 shadow-lg z-50 py-1"
         >
           <div class="px-3 py-1.5 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
             Moderation

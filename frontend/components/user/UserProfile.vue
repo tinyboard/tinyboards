@@ -82,7 +82,7 @@ defineProps<{
       <p v-else-if="user.bio" class="pb-3 text-sm text-gray-600">{{ user.bio }}</p>
 
       <!-- Stats -->
-      <div class="pb-3 flex flex-wrap gap-5 text-sm text-gray-500">
+      <div class="pb-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-500">
         <span><strong class="text-gray-900">{{ user.postCount }}</strong> posts</span>
         <span><strong class="text-gray-900">{{ user.commentCount }}</strong> comments</span>
         <span title="Post Karma">

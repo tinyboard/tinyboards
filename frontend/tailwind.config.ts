@@ -51,7 +51,7 @@ export default {
         lg: ['16px', '24px'],
       },
       maxWidth: {
-        '8xl': '90rem',
+        '8xl': '96rem',
       },
       typography: (theme: (path: string) => string) => ({
         DEFAULT: {
