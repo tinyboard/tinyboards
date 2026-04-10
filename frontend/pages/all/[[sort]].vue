@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useSiteStore } from '~/stores/site'
 import { usePosts } from '~/composables/usePosts'
+import { useGraphQL } from '~/composables/useGraphQL'
 import { timeAgo, formatDate } from '~/utils/date'
 import type { ListingType, Post } from '~/types/generated'
 
@@ -17,20 +18,34 @@ useSeoMeta({
 
 const route = useRoute()
 
-const activeTab = ref<'feed' | 'threads'>('feed')
+// Check which board modes exist site-wide
+const BOARD_MODES_QUERY = `query { listBoards(limit: 200) { mode } }`
+const { execute: fetchModes } = useGraphQL<{ listBoards: { mode: string }[] }>()
+const modesResult = await fetchModes(BOARD_MODES_QUERY)
+const siteModesSet = new Set(modesResult?.listBoards?.map(b => b.mode) ?? [])
+
+const hasFeedBoards = siteModesSet.has('feed') || siteModesSet.size === 0
+const hasForumBoards = siteModesSet.has('forum')
+const showTabs = hasFeedBoards && hasForumBoards
+
+const activeTab = ref<'feed' | 'threads'>(
+  hasFeedBoards ? 'feed' : (hasForumBoards ? 'threads' : 'feed'),
+)
 
 // Feed posts composable
 const feedPosts = usePosts({
   listingType: 'all' as ListingType,
-  postType: 'feed',
+  postType: hasForumBoards ? 'feed' : undefined,
   basePath: '/all',
 })
 
-// Thread posts composable
-const threadPosts = usePosts({
-  listingType: 'all' as ListingType,
-  postType: 'thread',
-})
+// Thread posts composable (only when forum boards exist)
+const threadPosts = hasForumBoards
+  ? usePosts({
+      listingType: 'all' as ListingType,
+      postType: 'thread',
+    })
+  : null
 
 // Group threads by board for the threads tab
 interface BoardGroup {
@@ -41,6 +56,7 @@ interface BoardGroup {
 }
 
 const threadsByBoard = computed<BoardGroup[]>(() => {
+  if (!threadPosts) return []
   const map = new Map<string, BoardGroup>()
   for (const post of threadPosts.posts.value) {
     const key = post.board?.name ?? 'unknown'
@@ -63,13 +79,17 @@ if (route.params.sort && typeof route.params.sort === 'string') {
 }
 
 // Fetch initial data
-await feedPosts.fetchPosts()
+if (activeTab.value === 'feed') {
+  await feedPosts.fetchPosts()
+} else if (threadPosts) {
+  await threadPosts.fetchPosts()
+}
 
 async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
   activeTab.value = tab
   if (tab === 'feed' && feedPosts.posts.value.length === 0) {
     await feedPosts.fetchPosts()
-  } else if (tab === 'threads' && threadPosts.posts.value.length === 0) {
+  } else if (tab === 'threads' && threadPosts && threadPosts.posts.value.length === 0) {
     threadPosts.sort.value = 'newComments'
     await threadPosts.fetchPosts()
   }
@@ -78,8 +98,8 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
 
 <template>
   <div>
-    <!-- Tab bar -->
-    <div class="pt-4">
+    <!-- Tab bar (only when site has both feed and forum boards) -->
+    <div v-if="showTabs" class="pt-4">
       <div class="flex gap-1 bg-white rounded-lg border border-gray-200 p-1">
         <button
           class="flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors"
@@ -109,7 +129,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Feed tab content -->
-    <div v-show="activeTab === 'feed'">
+    <div v-show="activeTab === 'feed' || (!showTabs && !hasForumBoards)">
       <!-- Sort bar -->
       <div class="pt-4">
         <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
@@ -135,7 +155,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Threads tab content -->
-    <div v-show="activeTab === 'threads'">
+    <div v-if="threadPosts" v-show="activeTab === 'threads' || (!showTabs && hasForumBoards)">
       <div class="pt-4 pb-4">
         <CommonErrorDisplay v-if="threadPosts.error.value" :message="threadPosts.error.value.message" @retry="threadPosts.fetchPosts" />
 

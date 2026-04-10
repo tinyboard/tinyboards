@@ -165,7 +165,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Feed tab content -->
-    <div v-show="activeTab === 'feed' || !authStore.isLoggedIn || (!hasFeedBoards && !hasForumBoards)">
+    <div v-show="activeTab === 'feed' || (!showTabs && !hasForumBoards)">
       <!-- Sort bar -->
       <div class="pt-4">
         <div class="bg-white rounded-lg border border-gray-200 px-3 py-2 flex items-center justify-between mb-4">
@@ -191,7 +191,7 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
     </div>
 
     <!-- Threads tab content -->
-    <div v-if="threadPosts" v-show="activeTab === 'threads'">
+    <div v-if="threadPosts" v-show="activeTab === 'threads' || (!showTabs && hasForumBoards)">
       <div class="pt-4 pb-4">
         <CommonErrorDisplay v-if="threadPosts.error.value" :message="threadPosts.error.value.message" @retry="threadPosts.fetchPosts" />
 
@@ -203,8 +203,8 @@ async function switchTab (tab: 'feed' | 'threads'): Promise<void> {
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
           </div>
-          <p class="text-sm font-medium text-gray-600 mb-1">No discussions yet</p>
-          <p class="text-xs text-gray-400">The forum boards you follow haven't had any activity yet.</p>
+          <p class="text-sm font-medium text-gray-600 mb-1">No threads yet</p>
+          <p class="text-xs text-gray-400">No forum boards have any threads yet.</p>
         </div>
 
         <!-- Threads grouped by board -->
