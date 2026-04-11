@@ -3,6 +3,7 @@ import { searchUnicodeEmojis } from '~/data/emojis'
 import { useMentionAutocomplete } from '~/composables/useMentionAutocomplete'
 import { useBoardMentions } from '~/composables/useBoardMentions'
 import { useEmoji } from '~/composables/useEmoji'
+import type { Board } from '~/types/generated'
 
 export type TriggerType = 'emoji' | 'user' | 'board'
 
@@ -47,14 +48,16 @@ export function useEditorAutocomplete () {
   const userAutocomplete = useMentionAutocomplete()
   const boardAutocomplete = useBoardMentions()
   const customEmoji = useEmoji()
+  const currentBoard = useState<Board | null>('current-board', () => null)
 
-  // Fetch custom emojis once on init
+  // Fetch custom emojis once on init (includes board-scoped emojis when in a board context)
   let customEmojisFetched = false
 
   function ensureCustomEmojis (): void {
     if (!customEmojisFetched) {
       customEmojisFetched = true
-      customEmoji.fetchEmojis()
+      const boardId = currentBoard.value?.id
+      customEmoji.fetchAllAvailableEmojis(boardId)
     }
   }
 
