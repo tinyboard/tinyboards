@@ -36,8 +36,11 @@ function submitReply (): void {
 
 <template>
   <div
-    class="border-l-2 pl-2 sm:pl-3 mt-2"
-    :class="collapsed ? 'border-gray-200' : 'border-gray-300'"
+    class="border-l-2 sm:pl-3 mt-2"
+    :class="[
+      collapsed ? 'border-gray-200' : 'border-gray-300',
+      currentDepth >= 4 ? 'pl-1' : 'pl-2'
+    ]"
   >
     <!-- Comment header -->
     <div class="flex items-center gap-1 text-xs text-gray-500">
