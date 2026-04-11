@@ -65,7 +65,9 @@ pub struct UpdateEmojiInput {
 
 #[derive(Enum, Copy, Clone, Eq, PartialEq)]
 pub enum EmojiScope {
+    #[graphql(name = "Site")]
     Site,
+    #[graphql(name = "Board")]
     Board,
 }
 
