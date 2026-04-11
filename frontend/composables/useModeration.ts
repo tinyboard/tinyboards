@@ -110,6 +110,18 @@ const DISTINGUISH_COMMENT_MUTATION = `
   }
 `
 
+const MARK_NSFW_POST_MUTATION = `
+  mutation MarkNsfwPost($postId: ID!) {
+    markNsfwPost(postId: $postId) { id isNSFW }
+  }
+`
+
+const UNMARK_NSFW_POST_MUTATION = `
+  mutation UnmarkNsfwPost($postId: ID!) {
+    unmarkNsfwPost(postId: $postId) { id isNSFW }
+  }
+`
+
 export { type PostReportView, type CommentReportView }
 
 export function useModeration () {
@@ -236,6 +248,24 @@ export function useModeration () {
     return false
   }
 
+  async function markNsfwPost (postId: string): Promise<boolean> {
+    const toast = useToast()
+    const { execute: exec, error: mutError } = useGraphQL()
+    const result = await exec(MARK_NSFW_POST_MUTATION, { variables: { postId } })
+    if (result) { toast.success('Post marked as NSFW'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to mark post as NSFW')
+    return false
+  }
+
+  async function unmarkNsfwPost (postId: string): Promise<boolean> {
+    const toast = useToast()
+    const { execute: exec, error: mutError } = useGraphQL()
+    const result = await exec(UNMARK_NSFW_POST_MUTATION, { variables: { postId } })
+    if (result) { toast.success('NSFW mark removed'); return true }
+    toast.error(mutError.value?.message ?? 'Failed to remove NSFW mark')
+    return false
+  }
+
   async function distinguishComment (commentId: string): Promise<boolean> {
     const toast = useToast()
     const { execute: exec, error: mutError } = useGraphQL()
@@ -263,5 +293,7 @@ export function useModeration () {
     dismissReport,
     distinguishPost,
     distinguishComment,
+    markNsfwPost,
+    unmarkNsfwPost,
   }
 }

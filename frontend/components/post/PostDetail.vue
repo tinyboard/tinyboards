@@ -20,7 +20,7 @@ const emit = defineEmits<{
 const authStore = useAuthStore()
 const toast = useToast()
 
-const { removePost: doRemovePost, restorePost: doRestorePost, lockPost: doLockPost, unlockPost: doUnlockPost, featurePost: doFeaturePost, distinguishPost: doDistinguishPost } = useModeration()
+const { removePost: doRemovePost, restorePost: doRestorePost, lockPost: doLockPost, unlockPost: doUnlockPost, featurePost: doFeaturePost, distinguishPost: doDistinguishPost, markNsfwPost: doMarkNsfwPost, unmarkNsfwPost: doUnmarkNsfwPost } = useModeration()
 
 const SAVE_MUTATION = `mutation SavePost($postId: ID!) { savePost(postId: $postId) { id isSaved } }`
 const UNSAVE_MUTATION = `mutation UnsavePost($postId: ID!) { unsavePost(postId: $postId) { id isSaved } }`
@@ -117,6 +117,16 @@ async function handleDistinguish (): Promise<void> {
   if (success) emit('post-updated')
 }
 
+async function handleNsfwToggle (): Promise<void> {
+  acting.value = true
+  showMoreMenu.value = false
+  const success = props.post.isNSFW
+    ? await doUnmarkNsfwPost(props.post.id)
+    : await doMarkNsfwPost(props.post.id)
+  acting.value = false
+  if (success) emit('post-updated')
+}
+
 function openRemoveDialog (): void {
   showMoreMenu.value = false
   showRemoveDialog.value = true
@@ -151,37 +161,39 @@ function onClickOutsideMenu (e: Event): void {
         </a>
 
         <!-- Video display (uploaded video file) -->
-        <div v-if="post.image && isImageVideo" class="mt-3">
+        <CommonNsfwBlur v-if="post.image && isImageVideo" :is-nsfw="post.isNSFW" class="mt-3">
           <video
             :src="post.image"
             class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200"
             controls
             preload="metadata"
           />
-        </div>
+        </CommonNsfwBlur>
 
         <!-- Image display -->
-        <div v-if="post.image && !isImageVideo" class="mt-3">
+        <CommonNsfwBlur v-if="post.image && !isImageVideo" :is-nsfw="post.isNSFW" class="mt-3">
           <img
             :src="post.image"
             :alt="post.altText || post.title"
             class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200 object-contain"
           />
-        </div>
+        </CommonNsfwBlur>
 
         <!-- Embed preview -->
-        <div v-if="post.embedTitle || post.embedDescription" class="mt-3 border border-gray-200 rounded-lg p-3 bg-gray-50">
-          <p v-if="post.embedTitle" class="text-sm font-medium text-gray-900">{{ post.embedTitle }}</p>
-          <p v-if="post.embedDescription" class="text-xs text-gray-600 mt-1">{{ post.embedDescription }}</p>
-          <div v-if="post.embedVideoUrl" class="mt-2">
-            <iframe
-              :src="post.embedVideoUrl"
-              class="w-full aspect-video rounded"
-              allowfullscreen
-              loading="lazy"
-            />
+        <CommonNsfwBlur v-if="post.embedTitle || post.embedDescription" :is-nsfw="post.isNSFW" class="mt-3">
+          <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
+            <p v-if="post.embedTitle" class="text-sm font-medium text-gray-900">{{ post.embedTitle }}</p>
+            <p v-if="post.embedDescription" class="text-xs text-gray-600 mt-1">{{ post.embedDescription }}</p>
+            <div v-if="post.embedVideoUrl" class="mt-2">
+              <iframe
+                :src="post.embedVideoUrl"
+                class="w-full aspect-video rounded"
+                allowfullscreen
+                loading="lazy"
+              />
+            </div>
           </div>
-        </div>
+        </CommonNsfwBlur>
 
         <!-- Meta -->
         <div class="flex items-center gap-1.5 sm:gap-1 mt-2 text-xs text-gray-500 flex-wrap">
@@ -330,6 +342,20 @@ function onClickOutsideMenu (e: Event): void {
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     {{ post.isFeaturedBoard ? 'Unpin post' : 'Pin post' }}
+                  </button>
+
+                  <!-- NSFW Toggle -->
+                  <button
+                    class="w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors"
+                    :class="post.isNSFW ? 'text-red-700 hover:bg-red-50' : 'text-gray-700 hover:bg-gray-50'"
+                    :disabled="acting"
+                    @click="handleNsfwToggle"
+                  >
+                    <svg class="w-4 h-4" :class="post.isNSFW ? 'text-red-500' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path v-if="post.isNSFW" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                      <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    {{ post.isNSFW ? 'Unmark NSFW' : 'Mark NSFW' }}
                   </button>
 
                   <!-- Distinguish (own posts only) -->

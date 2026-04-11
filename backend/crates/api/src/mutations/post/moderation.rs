@@ -320,4 +320,100 @@ impl PostModeration {
             .await
             .map_err(|e| e.into())
     }
+
+    /// Mark a post as NSFW (mod/admin action)
+    pub async fn mark_nsfw_post(&self, ctx: &Context<'_>, post_id: ID) -> Result<Post> {
+        let user = permissions::require_auth_not_banned(ctx)?;
+        let pool = ctx.data::<DbPool>()?;
+        let conn = &mut get_conn(pool).await?;
+
+        let post_uuid: Uuid = post_id
+            .parse()
+            .map_err(|_| TinyBoardsError::from_message(400, "Invalid post ID"))?;
+
+        let post: DbPost = posts::table
+            .find(post_uuid)
+            .first(conn)
+            .await
+            .map_err(|_| TinyBoardsError::NotFound("Post not found".into()))?;
+
+        require_mod_or_admin(user, pool, post.board_id, ModPerms::Content, Some(AdminPerms::Content))
+            .await?;
+
+        diesel::update(posts::table.find(post_uuid))
+            .set(&PostUpdateForm {
+                is_nsfw: Some(true),
+                ..Default::default()
+            })
+            .execute(conn)
+            .await
+            .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        diesel::insert_into(moderation_log::table)
+            .values(&ModerationLogInsertForm {
+                moderator_id: user.id,
+                action_type: DbModerationAction::MarkNsfw,
+                target_type: "post".to_string(),
+                target_id: post_uuid,
+                board_id: Some(post.board_id),
+                reason: None,
+                metadata: None,
+                expires_at: None,
+            })
+            .execute(conn)
+            .await
+            .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        load_post_with_counts(conn, post_uuid)
+            .await
+            .map_err(|e| e.into())
+    }
+
+    /// Unmark a post as NSFW (mod/admin action)
+    pub async fn unmark_nsfw_post(&self, ctx: &Context<'_>, post_id: ID) -> Result<Post> {
+        let user = permissions::require_auth_not_banned(ctx)?;
+        let pool = ctx.data::<DbPool>()?;
+        let conn = &mut get_conn(pool).await?;
+
+        let post_uuid: Uuid = post_id
+            .parse()
+            .map_err(|_| TinyBoardsError::from_message(400, "Invalid post ID"))?;
+
+        let post: DbPost = posts::table
+            .find(post_uuid)
+            .first(conn)
+            .await
+            .map_err(|_| TinyBoardsError::NotFound("Post not found".into()))?;
+
+        require_mod_or_admin(user, pool, post.board_id, ModPerms::Content, Some(AdminPerms::Content))
+            .await?;
+
+        diesel::update(posts::table.find(post_uuid))
+            .set(&PostUpdateForm {
+                is_nsfw: Some(false),
+                ..Default::default()
+            })
+            .execute(conn)
+            .await
+            .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        diesel::insert_into(moderation_log::table)
+            .values(&ModerationLogInsertForm {
+                moderator_id: user.id,
+                action_type: DbModerationAction::UnmarkNsfw,
+                target_type: "post".to_string(),
+                target_id: post_uuid,
+                board_id: Some(post.board_id),
+                reason: None,
+                metadata: None,
+                expires_at: None,
+            })
+            .execute(conn)
+            .await
+            .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        load_post_with_counts(conn, post_uuid)
+            .await
+            .map_err(|e| e.into())
+    }
 }

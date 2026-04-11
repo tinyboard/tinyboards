@@ -83,6 +83,8 @@ fn action_to_str(action: &DbModerationAction) -> &'static str {
         DbModerationAction::PurgePost => "purge_post",
         DbModerationAction::PurgeComment => "purge_comment",
         DbModerationAction::PurgeBoard => "purge_board",
+        DbModerationAction::MarkNsfw => "mark_nsfw",
+        DbModerationAction::UnmarkNsfw => "unmark_nsfw",
     }
 }
 

@@ -166,6 +166,8 @@ type Mutation {
   removePost(postId: ID!, reason: String): Post!
   restorePost(postId: ID!): Post!
   distinguishPost(postId: ID!): Post!
+  markNsfwPost(postId: ID!): Post!
+  unmarkNsfwPost(postId: ID!): Post!
 
   # Comments
   createComment(postId: ID!, body: String!, parentId: ID): Comment!

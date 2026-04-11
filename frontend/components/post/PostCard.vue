@@ -124,13 +124,14 @@ const hasLinkPreview = computed(() => {
         </span>
 
         <!-- Compact thumbnail -->
-        <img
-          v-if="post.thumbnailUrl"
-          :src="post.thumbnailUrl"
-          :alt="post.title"
-          class="w-10 h-10 rounded object-cover shrink-0"
-          loading="lazy"
-        />
+        <CommonNsfwBlur v-if="post.thumbnailUrl" :is-nsfw="post.isNSFW" class="shrink-0">
+          <img
+            :src="post.thumbnailUrl"
+            :alt="post.title"
+            class="w-10 h-10 rounded object-cover"
+            loading="lazy"
+          />
+        </CommonNsfwBlur>
 
         <!-- Meta -->
         <NuxtLink
@@ -248,37 +249,40 @@ const hasLinkPreview = computed(() => {
 
           <!-- Video embed (YouTube or direct video) -->
           <ClientOnly>
-            <div v-if="isYouTubeEmbed" class="mt-2 rounded-lg overflow-hidden aspect-video max-w-full sm:max-w-lg">
-              <iframe
-                :src="post.embedVideoUrl!"
-                class="w-full h-full"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowfullscreen
-                loading="lazy"
-              />
-            </div>
-            <div v-else-if="isDirectVideo" class="mt-2 max-w-full sm:max-w-lg">
+            <CommonNsfwBlur v-if="isYouTubeEmbed" :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
+              <div class="rounded-lg overflow-hidden aspect-video">
+                <iframe
+                  :src="post.embedVideoUrl!"
+                  class="w-full h-full"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowfullscreen
+                  loading="lazy"
+                />
+              </div>
+            </CommonNsfwBlur>
+            <CommonNsfwBlur v-else-if="isDirectVideo" :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
               <video
                 :src="post.embedVideoUrl!"
                 class="w-full rounded-lg"
                 controls
                 preload="metadata"
               />
-            </div>
+            </CommonNsfwBlur>
           </ClientOnly>
 
           <!-- Thumbnail image (when no video but thumbnail exists) -->
-          <img
-            v-if="!post.embedVideoUrl && post.thumbnailUrl"
-            :src="post.thumbnailUrl"
-            :alt="post.title"
-            class="mt-2 max-w-full sm:max-w-sm max-h-64 rounded-lg object-cover"
-            loading="lazy"
-          />
+          <CommonNsfwBlur v-if="!post.embedVideoUrl && post.thumbnailUrl" :is-nsfw="post.isNSFW" class="mt-2">
+            <img
+              :src="post.thumbnailUrl"
+              :alt="post.title"
+              class="max-w-full sm:max-w-sm max-h-64 rounded-lg object-cover"
+              loading="lazy"
+            />
+          </CommonNsfwBlur>
 
           <!-- Post video (uploaded video file) -->
-          <div v-if="isImageVideo" class="mt-2 max-w-full sm:max-w-lg">
+          <CommonNsfwBlur v-if="isImageVideo" :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
             <video
               :src="post.image!"
               class="w-full rounded-lg"
@@ -286,35 +290,37 @@ const hasLinkPreview = computed(() => {
               preload="metadata"
               :alt="post.altText || post.title"
             />
-          </div>
+          </CommonNsfwBlur>
 
           <!-- Post image -->
-          <img
-            v-if="post.image && !post.thumbnailUrl && !isImageVideo"
-            :src="post.image"
-            :alt="post.altText || post.title"
-            class="mt-2 max-w-full sm:max-w-sm max-h-64 rounded-lg object-cover"
-            loading="lazy"
-          />
+          <CommonNsfwBlur v-if="post.image && !post.thumbnailUrl && !isImageVideo" :is-nsfw="post.isNSFW" class="mt-2">
+            <img
+              :src="post.image"
+              :alt="post.altText || post.title"
+              class="max-w-full sm:max-w-sm max-h-64 rounded-lg object-cover"
+              loading="lazy"
+            />
+          </CommonNsfwBlur>
 
           <!-- Link preview card (for link posts without video) -->
-          <a
-            v-if="hasLinkPreview && post.url"
-            :href="post.url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="mt-2 block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors no-underline max-w-full sm:max-w-lg"
-          >
-            <div class="px-3 py-2">
-              <p v-if="post.embedTitle" class="text-sm font-medium text-gray-800 line-clamp-1">
-                {{ post.embedTitle }}
-              </p>
-              <p v-if="post.embedDescription" class="text-xs text-gray-500 line-clamp-2 mt-0.5">
-                {{ post.embedDescription }}
-              </p>
-              <p class="text-xs text-gray-400 mt-1">{{ linkHostname }}</p>
-            </div>
-          </a>
+          <CommonNsfwBlur v-if="hasLinkPreview && post.url" :is-nsfw="post.isNSFW" class="mt-2">
+            <a
+              :href="post.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors no-underline max-w-full sm:max-w-lg"
+            >
+              <div class="px-3 py-2">
+                <p v-if="post.embedTitle" class="text-sm font-medium text-gray-800 line-clamp-1">
+                  {{ post.embedTitle }}
+                </p>
+                <p v-if="post.embedDescription" class="text-xs text-gray-500 line-clamp-2 mt-0.5">
+                  {{ post.embedDescription }}
+                </p>
+                <p class="text-xs text-gray-400 mt-1">{{ linkHostname }}</p>
+              </div>
+            </a>
+          </CommonNsfwBlur>
 
           <!-- Body preview (if text post) -->
           <div
