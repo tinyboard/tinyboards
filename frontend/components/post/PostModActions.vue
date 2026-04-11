@@ -12,7 +12,7 @@ const emit = defineEmits<{
   updated: []
 }>()
 
-const { lockPost, unlockPost, featurePost, removePost, restorePost, distinguishPost } = useModeration()
+const { lockPost, unlockPost, featurePost, removePost, restorePost, distinguishPost, markNsfwPost, unmarkNsfwPost } = useModeration()
 
 const authStore = useAuthStore()
 const showRemoveDialog = ref(false)
@@ -24,6 +24,15 @@ const isOwnPost = computed(() => authStore.user?.id === props.post.creatorId)
 async function handleDistinguish (): Promise<void> {
   acting.value = true
   const success = await distinguishPost(props.post.id)
+  acting.value = false
+  if (success) emit('updated')
+}
+
+async function handleNsfwToggle (): Promise<void> {
+  acting.value = true
+  const success = props.post.isNSFW
+    ? await unmarkNsfwPost(props.post.id)
+    : await markNsfwPost(props.post.id)
   acting.value = false
   if (success) emit('updated')
 }
@@ -101,6 +110,20 @@ async function handleRestore (): Promise<void> {
         <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
       </svg>
       {{ post.distinguishedAs ? 'Undistinguish' : 'Distinguish' }}
+    </button>
+
+    <!-- NSFW Toggle -->
+    <button
+      class="inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-gray-100"
+      :class="post.isNSFW ? 'text-red-600 hover:text-red-700' : 'text-gray-500 hover:text-gray-700'"
+      :disabled="acting"
+      @click="handleNsfwToggle"
+    >
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path v-if="post.isNSFW" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" />
+      </svg>
+      {{ post.isNSFW ? 'Unmark NSFW' : 'Mark NSFW' }}
     </button>
 
     <!-- Remove / Restore -->

@@ -168,6 +168,8 @@ pg_enum! {
         PurgePost => b"purge_post",
         PurgeComment => b"purge_comment",
         PurgeBoard => b"purge_board",
+        MarkNsfw => b"mark_nsfw",
+        UnmarkNsfw => b"unmark_nsfw",
     }
 }
 
