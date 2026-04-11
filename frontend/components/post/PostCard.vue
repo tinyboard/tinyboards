@@ -94,7 +94,7 @@ const hasLinkPreview = computed(() => {
         </svg>
 
         <!-- Title -->
-        <h3 class="text-sm leading-snug flex-1 min-w-0 truncate">
+        <h3 class="text-sm leading-snug flex-1 min-w-0 line-clamp-2 sm:line-clamp-1">
           <a
             v-if="post.url"
             :href="post.url"
@@ -140,17 +140,17 @@ const hasLinkPreview = computed(() => {
         >
           {{ post.commentCount }} {{ post.commentCount === 1 ? 'comment' : 'comments' }}
         </NuxtLink>
-        <span class="text-gray-300 hidden sm:inline">&middot;</span>
+        <span class="text-gray-300">&middot;</span>
         <NuxtLink
           v-if="post.creator"
           :to="`/@${post.creator.name}`"
-          class="text-xs text-gray-400 no-underline hover:text-primary shrink-0 hidden sm:inline-flex items-center gap-1"
+          class="text-xs text-gray-400 no-underline hover:text-primary shrink-0 inline-flex items-center gap-1"
         >
           <CommonAvatar
             :src="post.creator.avatar ?? undefined"
             :name="post.creator.name"
             size="xs"
-            class="w-4 h-4"
+            class="w-4 h-4 hidden sm:block"
           />
           {{ post.creator.name }}
         </NuxtLink>
@@ -160,7 +160,7 @@ const hasLinkPreview = computed(() => {
         <NuxtLink
           v-if="post.board"
           :to="`/b/${post.board.name}`"
-          class="text-xs font-medium text-primary/80 no-underline hover:text-primary shrink-0 hidden sm:inline"
+          class="text-xs font-medium text-primary/80 no-underline hover:text-primary shrink-0"
         >
           b/{{ post.board.name }}
         </NuxtLink>

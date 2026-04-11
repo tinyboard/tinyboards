@@ -25,7 +25,7 @@ const initials = computed(() => {
 
 <template>
   <div
-    class="rounded-full overflow-hidden shrink-0 bg-primary/10 flex items-center justify-center"
+    class="rounded-full overflow-hidden shrink-0 bg-gray-200 flex items-center justify-center"
     :class="sizeClasses[size]"
   >
     <img

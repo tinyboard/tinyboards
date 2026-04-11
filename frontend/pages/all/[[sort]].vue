@@ -70,6 +70,10 @@ const threadsByBoard = computed<BoardGroup[]>(() => {
     }
     map.get(key)!.threads.push(post)
   }
+  // Sort pinned threads to the top within each board group
+  for (const group of map.values()) {
+    group.threads.sort((a, b) => (b.isFeaturedBoard ? 1 : 0) - (a.isFeaturedBoard ? 1 : 0))
+  }
   return Array.from(map.values())
 })
 
