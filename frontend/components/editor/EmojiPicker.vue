@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useEmoji } from '~/composables/useEmoji'
+import type { Board } from '~/types/generated'
+
+const props = defineProps<{
+  boardId?: string
+}>()
 
 const emit = defineEmits<{
   select: [emoji: string]
@@ -9,10 +14,12 @@ const emit = defineEmits<{
 
 const search = ref('')
 const activeCategory = ref('custom')
-const { emojis: customEmojis, fetchEmojis } = useEmoji()
+const { emojis: customEmojis, fetchAllAvailableEmojis } = useEmoji()
+const currentBoard = useState<Board | null>('current-board', () => null)
 
 onMounted(() => {
-  fetchEmojis()
+  const boardId = props.boardId ?? currentBoard.value?.id
+  fetchAllAvailableEmojis(boardId)
 })
 
 // Common Unicode emoji organized by category
