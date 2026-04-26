@@ -195,12 +195,33 @@ await fetchBoards()
     <!-- All: feed boards in grid, then forum boards in list -->
     <template v-else>
       <template v-if="filteredBoards.length > 0">
-        <div v-if="feedBoards.length > 0" class="grid gap-3 sm:grid-cols-2">
-          <BoardCard v-for="board in feedBoards" :key="board.id" :board="board" />
-        </div>
-        <div v-if="forumBoards.length > 0" class="space-y-2" :class="{ 'mt-3': feedBoards.length > 0 }">
-          <BoardCard v-for="board in forumBoards" :key="board.id" :board="board" />
-        </div>
+        <template v-if="feedBoards.length > 0">
+          <div v-if="forumBoards.length > 0" class="mb-3 flex items-center gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wider text-blue-700">
+              Feed Boards
+            </span>
+            <span class="text-xs text-gray-400">{{ feedBoards.length }}</span>
+            <div class="flex-1 h-px bg-blue-100"></div>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <BoardCard v-for="board in feedBoards" :key="board.id" :board="board" />
+          </div>
+        </template>
+        <template v-if="forumBoards.length > 0">
+          <div
+            v-if="feedBoards.length > 0"
+            class="mt-6 mb-3 flex items-center gap-2"
+          >
+            <span class="text-xs font-semibold uppercase tracking-wider text-purple-700">
+              Forum Boards
+            </span>
+            <span class="text-xs text-gray-400">{{ forumBoards.length }}</span>
+            <div class="flex-1 h-px bg-purple-100"></div>
+          </div>
+          <div class="space-y-2">
+            <BoardCard v-for="board in forumBoards" :key="board.id" :board="board" />
+          </div>
+        </template>
       </template>
       <p v-else class="text-sm text-gray-500 text-center py-8">No boards found.</p>
     </template>
