@@ -475,4 +475,5 @@ infallible `unwrap()` on date/time values.
 - **Deprecated routes**: `/b/[board]/feed/` and `/b/[board]/threads/` now 301 redirect to `/b/[board]`.
 
 ### 2026-04-26 — NSFW Overlay Polish
-- Replaced the loud red "NSFW – Click to reveal" button in `components/common/NsfwBlur.vue` with a subtle eye-off icon and small "NSFW" label inside a soft pill-shaped backdrop. Content remains blurred and click-to-reveal; tooltip carries the reveal hint.
+- Replaced the loud red "NSFW – Click to reveal" button in `components/common/NsfwBlur.vue` with a subtle eye-off icon. Content remains blurred and click-to-reveal; tooltip carries the reveal hint.
+- NsfwBlur wrapper now sizes to its slot content by default (`inline-block`) so the icon overlays the actual media rather than empty space beside it. Added a `fluid` prop for slots whose children use `w-full` (videos, iframes, link previews, body text) — those keep the block-level full-width behavior. Updated `PostCard.vue` and `PostDetail.vue` accordingly. Body preview text on NSFW text posts is now blurred too.

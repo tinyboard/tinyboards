@@ -161,7 +161,7 @@ function onClickOutsideMenu (e: Event): void {
         </a>
 
         <!-- Video display (uploaded video file) -->
-        <CommonNsfwBlur v-if="post.image && isImageVideo" :is-nsfw="post.isNSFW" class="mt-3">
+        <CommonNsfwBlur v-if="post.image && isImageVideo" fluid :is-nsfw="post.isNSFW" class="mt-3 max-w-full">
           <video
             :src="post.image"
             class="max-w-full max-h-[400px] sm:max-h-[600px] rounded-lg border border-gray-200"
@@ -180,7 +180,7 @@ function onClickOutsideMenu (e: Event): void {
         </CommonNsfwBlur>
 
         <!-- Embed preview -->
-        <CommonNsfwBlur v-if="post.embedTitle || post.embedDescription" :is-nsfw="post.isNSFW" class="mt-3">
+        <CommonNsfwBlur v-if="post.embedTitle || post.embedDescription" fluid :is-nsfw="post.isNSFW" class="mt-3">
           <div class="border border-gray-200 rounded-lg p-3 bg-gray-50">
             <p v-if="post.embedTitle" class="text-sm font-medium text-gray-900">{{ post.embedTitle }}</p>
             <p v-if="post.embedDescription" class="text-xs text-gray-600 mt-1">{{ post.embedDescription }}</p>
@@ -229,11 +229,15 @@ function onClickOutsideMenu (e: Event): void {
         </div>
 
         <!-- Body -->
-        <!-- eslint-disable-next-line vue/no-v-html -->
-        <div v-if="post.bodyHTML" class="prose prose-sm mt-4 max-w-none" v-html="sanitizeHtml(post.bodyHTML)" />
-        <div v-else-if="post.body" class="prose prose-sm mt-4 max-w-none whitespace-pre-wrap">
-          {{ post.body }}
-        </div>
+        <CommonNsfwBlur v-if="post.bodyHTML" fluid :is-nsfw="post.isNSFW" class="block mt-4">
+          <!-- eslint-disable-next-line vue/no-v-html -->
+          <div class="prose prose-sm max-w-none" v-html="sanitizeHtml(post.bodyHTML)" />
+        </CommonNsfwBlur>
+        <CommonNsfwBlur v-else-if="post.body" fluid :is-nsfw="post.isNSFW" class="block mt-4">
+          <div class="prose prose-sm max-w-none whitespace-pre-wrap">
+            {{ post.body }}
+          </div>
+        </CommonNsfwBlur>
 
         <!-- Mobile inline votes -->
         <div class="sm:hidden mt-3">

@@ -249,7 +249,7 @@ const hasLinkPreview = computed(() => {
 
           <!-- Video embed (YouTube or direct video) -->
           <ClientOnly>
-            <CommonNsfwBlur v-if="isYouTubeEmbed" :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
+            <CommonNsfwBlur v-if="isYouTubeEmbed" fluid :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
               <div class="rounded-lg overflow-hidden aspect-video">
                 <iframe
                   :src="post.embedVideoUrl!"
@@ -261,7 +261,7 @@ const hasLinkPreview = computed(() => {
                 />
               </div>
             </CommonNsfwBlur>
-            <CommonNsfwBlur v-else-if="isDirectVideo" :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
+            <CommonNsfwBlur v-else-if="isDirectVideo" fluid :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
               <video
                 :src="post.embedVideoUrl!"
                 class="w-full rounded-lg"
@@ -282,7 +282,7 @@ const hasLinkPreview = computed(() => {
           </CommonNsfwBlur>
 
           <!-- Post video (uploaded video file) -->
-          <CommonNsfwBlur v-if="isImageVideo" :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
+          <CommonNsfwBlur v-if="isImageVideo" fluid :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
             <video
               :src="post.image!"
               class="w-full rounded-lg"
@@ -303,12 +303,12 @@ const hasLinkPreview = computed(() => {
           </CommonNsfwBlur>
 
           <!-- Link preview card (for link posts without video) -->
-          <CommonNsfwBlur v-if="hasLinkPreview && post.url" :is-nsfw="post.isNSFW" class="mt-2">
+          <CommonNsfwBlur v-if="hasLinkPreview && post.url" fluid :is-nsfw="post.isNSFW" class="mt-2 max-w-full sm:max-w-lg">
             <a
               :href="post.url"
               target="_blank"
               rel="noopener noreferrer"
-              class="block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors no-underline max-w-full sm:max-w-lg"
+              class="block border border-gray-200 rounded-lg overflow-hidden hover:border-gray-300 transition-colors no-underline"
             >
               <div class="px-3 py-2">
                 <p v-if="post.embedTitle" class="text-sm font-medium text-gray-800 line-clamp-1">
@@ -323,11 +323,18 @@ const hasLinkPreview = computed(() => {
           </CommonNsfwBlur>
 
           <!-- Body preview (if text post) -->
-          <div
+          <CommonNsfwBlur
             v-if="post.bodyHTML && !post.url"
-            class="text-sm text-gray-500 line-clamp-2 mt-0.5 leading-relaxed prose prose-sm max-w-none [&>*]:m-0"
-            v-html="sanitizeHtml(post.bodyHTML)"
-          />
+            fluid
+            :is-nsfw="post.isNSFW"
+            class="block mt-0.5"
+          >
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div
+              class="text-sm text-gray-500 line-clamp-2 leading-relaxed prose prose-sm max-w-none [&>*]:m-0"
+              v-html="sanitizeHtml(post.bodyHTML)"
+            />
+          </CommonNsfwBlur>
 
           <!-- Flags -->
           <div v-if="post.isNSFW || post.isLocked" class="flex items-center gap-2 mt-1">
