@@ -273,6 +273,7 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
 
     <PostForm
       :board-name="boardName"
+      :board-id="boardId ?? undefined"
       :submit-label="loading || fileUploading ? 'Submitting...' : 'Submit'"
       @submit="handleSubmit"
     />

@@ -112,6 +112,7 @@ async function handleSubmit (data: { title: string; body: string; url: string; f
         <CommonErrorDisplay v-if="uploadError" :message="uploadError.message" class="mb-4" />
         <PostForm
           :board-name="boardName"
+          :board-id="board?.id"
           :submit-label="loading || fileUploading ? 'Posting...' : (board?.mode === 'forum' ? 'Start Discussion' : 'Create Post')"
           @submit="handleSubmit"
         />

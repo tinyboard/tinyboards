@@ -7,6 +7,7 @@ const props = defineProps<{
   postId: string
   loading: boolean
   isModerator?: boolean
+  boardId?: string
 }>()
 
 const emit = defineEmits<{
@@ -52,6 +53,7 @@ const rootComments = computed(() => {
         :comment="comment"
         :post-id="postId"
         :is-moderator="isModerator"
+        :board-id="boardId"
         @reply="(parentId, body) => emit('reply', parentId, body)"
       />
     </div>

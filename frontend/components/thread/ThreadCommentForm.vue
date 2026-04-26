@@ -10,6 +10,7 @@ interface QuotedPost {
 
 defineProps<{
   placeholder?: string
+  boardId?: string
 }>()
 
 const emit = defineEmits<{
@@ -113,6 +114,7 @@ defineExpose({ addQuote })
     <EditorRichTextEditor
       ref="editorRef"
       v-model="body"
+      :board-id="boardId"
       :placeholder="placeholder ?? 'Write your reply...'"
       min-height="150px"
     />

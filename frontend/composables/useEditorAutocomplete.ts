@@ -32,7 +32,7 @@ interface CaretCoords {
   height: number
 }
 
-export function useEditorAutocomplete () {
+export function useEditorAutocomplete (explicitBoardId?: string) {
   const state = ref<AutocompleteState>({
     active: false,
     type: null,
@@ -50,16 +50,46 @@ export function useEditorAutocomplete () {
   const customEmoji = useEmoji()
   const currentBoard = useState<Board | null>('current-board', () => null)
 
-  // Fetch custom emojis once on init (includes board-scoped emojis when in a board context)
   let customEmojisFetched = false
 
   function ensureCustomEmojis (): void {
     if (!customEmojisFetched) {
       customEmojisFetched = true
-      const boardId = currentBoard.value?.id
+      const boardId = explicitBoardId ?? currentBoard.value?.id
       customEmoji.fetchAllAvailableEmojis(boardId)
     }
   }
+
+  function buildEmojiSuggestions (query: string): AutocompleteSuggestion[] {
+    const unicode = searchUnicodeEmojis(query, 6)
+    const custom = customEmoji.emojis.value
+      .filter(e => e.shortcode.includes(query.toLowerCase()))
+      .slice(0, 4)
+
+    return [
+      ...unicode.map(e => ({
+        type: 'emoji' as TriggerType,
+        label: `:${e.shortcode}:`,
+        value: e.emoji,
+        icon: e.emoji,
+      })),
+      ...custom.map(e => ({
+        type: 'emoji' as TriggerType,
+        label: `:${e.shortcode}:`,
+        value: e.shortcode,
+        icon: e.imageUrl,
+        secondary: 'custom',
+      })),
+    ]
+  }
+
+  // Rebuild emoji suggestions when async fetch completes
+  watch(customEmoji.emojis, () => {
+    if (state.value.active && state.value.type === 'emoji') {
+      suggestions.value = buildEmojiSuggestions(state.value.query)
+      selectedIndex.value = 0
+    }
+  })
 
   // Watch user autocomplete results
   watch(userAutocomplete.suggestions, (users) => {
@@ -135,27 +165,7 @@ export function useEditorAutocomplete () {
     // Trigger search based on type
     if (type === 'emoji') {
       ensureCustomEmojis()
-      // Combine unicode and custom emoji results
-      const unicode = searchUnicodeEmojis(query, 6)
-      const custom = customEmoji.emojis.value
-        .filter(e => e.shortcode.includes(query.toLowerCase()))
-        .slice(0, 4)
-
-      suggestions.value = [
-        ...unicode.map(e => ({
-          type: 'emoji' as TriggerType,
-          label: `:${e.shortcode}:`,
-          value: e.emoji,
-          icon: e.emoji,
-        })),
-        ...custom.map(e => ({
-          type: 'emoji' as TriggerType,
-          label: `:${e.shortcode}:`,
-          value: e.shortcode,
-          icon: e.imageUrl,
-          secondary: 'custom',
-        })),
-      ]
+      suggestions.value = buildEmojiSuggestions(query)
       selectedIndex.value = 0
     } else if (type === 'user') {
       userAutocomplete.search(query)

@@ -4,6 +4,7 @@ import { useAuthStore } from '~/stores/auth'
 
 defineProps<{
   placeholder?: string
+  boardId?: string
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +25,7 @@ function handleSubmit (): void {
   <div v-if="authStore.isLoggedIn" class="mt-4">
     <EditorMarkdownEditor
       v-model="body"
+      :board-id="boardId"
       :placeholder="placeholder ?? 'Write a comment...'"
       min-height="80px"
     />

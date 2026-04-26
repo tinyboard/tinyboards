@@ -234,6 +234,7 @@ function handleQuoteOP (author: string, body: string): void {
         <div id="thread-reply-form" class="mt-6">
           <ThreadCommentForm
             ref="commentFormRef"
+            :board-id="post?.board?.id"
             @submit="handleTopLevelComment"
           />
         </div>
@@ -244,7 +245,7 @@ function handleQuoteOP (author: string, body: string): void {
         <PostDetail :post="post" :is-moderator="isModerator" @post-updated="fetchPost" />
 
         <div class="mt-4">
-          <CommentForm @submit="handleTopLevelComment" />
+          <CommentForm :board-id="post?.board?.id" @submit="handleTopLevelComment" />
         </div>
 
         <div class="mt-6">
@@ -254,6 +255,7 @@ function handleQuoteOP (author: string, body: string): void {
             :post-id="postId"
             :loading="commentsLoading"
             :is-moderator="isModerator"
+            :board-id="post?.board?.id"
             @reply="handleReply"
           />
         </div>
