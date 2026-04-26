@@ -12,6 +12,7 @@ const props = defineProps<{
   postId: string
   depth?: number
   isModerator?: boolean
+  boardId?: string
 }>()
 
 const emit = defineEmits<{
@@ -105,6 +106,7 @@ function submitReply (): void {
       <div v-if="showReply && authStore.isLoggedIn" class="mt-2">
         <EditorMarkdownEditor
           v-model="replyBody"
+          :board-id="boardId"
           placeholder="Write a reply..."
           min-height="80px"
         />
@@ -127,6 +129,7 @@ function submitReply (): void {
           :post-id="postId"
           :depth="currentDepth + 1"
           :is-moderator="isModerator"
+          :board-id="boardId"
           @reply="(parentId, body) => emit('reply', parentId, body)"
         />
       </div>

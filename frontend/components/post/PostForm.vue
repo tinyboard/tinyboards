@@ -3,6 +3,7 @@ import { ref } from 'vue'
 
 const props = defineProps<{
   boardName?: string
+  boardId?: string
   initialTitle?: string
   initialBody?: string
   initialUrl?: string
@@ -186,6 +187,7 @@ function handleSubmit (): void {
       </label>
       <EditorRichTextEditor
         v-model="body"
+        :board-id="boardId"
         :placeholder="activeTab === 'link' ? 'Add a description...' : activeTab === 'media' ? 'Add a caption...' : 'Write your post...'"
         min-height="150px"
       />

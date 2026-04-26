@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useGraphQL } from '~/composables/useGraphQL'
+import { useBoard } from '~/composables/useBoard'
 import type { Post } from '~/types/generated'
 
 definePageMeta({ middleware: 'guards' })
 
 const route = useRoute()
 const boardName = route.params.board as string
+const { board: currentBoard } = useBoard()
 
 useHead({ title: `New Thread - ${boardName}` })
 
@@ -89,6 +91,7 @@ async function handleSubmit (): Promise<void> {
           <label class="block text-sm font-medium text-gray-700 mb-1">Opening Post</label>
           <EditorRichTextEditor
             v-model="body"
+            :board-id="currentBoard?.id"
             placeholder="Write the opening post for your thread..."
             min-height="200px"
           />

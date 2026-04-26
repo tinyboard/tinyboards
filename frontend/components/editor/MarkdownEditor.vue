@@ -7,6 +7,7 @@ const props = defineProps<{
   modelValue: string
   placeholder?: string
   minHeight?: string
+  boardId?: string
 }>()
 
 const emit = defineEmits<{
@@ -17,7 +18,7 @@ const content = ref(props.modelValue)
 const textareaRef = ref<HTMLTextAreaElement | null>(null)
 const showPreview = ref(false)
 
-const autocomplete = useEditorAutocomplete()
+const autocomplete = useEditorAutocomplete(props.boardId)
 
 watch(content, (val) => {
   emit('update:modelValue', val)
