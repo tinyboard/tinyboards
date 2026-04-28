@@ -180,7 +180,7 @@ pub async fn process_content_with_emojis(
     max_emojis: Option<usize>,
 ) -> Result<String, TinyBoardsError> {
     use tinyboards_utils::parser::sanitize_html;
-    use crate::helpers::notifications::convert_mentions_to_links;
+    use crate::helpers::notifications::{convert_board_mentions_to_links, convert_mentions_to_links};
 
     let parser = EmojiParser::new(pool, board_id).await?;
 
@@ -195,7 +195,8 @@ pub async fn process_content_with_emojis(
 
     let html_with_emojis = parser.parse_emojis_to_html(&html);
     let processed_html = custom_body_parsing(&html_with_emojis, settings);
-    let with_mentions = convert_mentions_to_links(&processed_html);
+    let with_user_mentions = convert_mentions_to_links(&processed_html);
+    let with_mentions = convert_board_mentions_to_links(&with_user_mentions);
     let final_html = sanitize_html(&with_mentions);
 
     let _usage_task = parser.increment_emoji_usage(&final_html, pool);

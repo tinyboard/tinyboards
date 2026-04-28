@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useGraphQL, useGraphQLMutation } from '~/composables/useGraphQL'
 import { useAuthStore } from '~/stores/auth'
+import { sanitizeHtml } from '~/utils/sanitize'
 
 definePageMeta({ middleware: 'guards' })
 
@@ -12,6 +13,7 @@ interface PrivateMessage {
   id: string
   creatorId: string
   body: string
+  bodyHTML: string
   isRead: boolean
   createdAt: string
 }
@@ -22,6 +24,7 @@ const CONVERSATION_QUERY = `
       id
       creatorId
       body
+      bodyHTML
       isRead
       createdAt
     }
@@ -35,6 +38,7 @@ const SEND_MESSAGE_MUTATION = `
         id
         creatorId
         body
+        bodyHTML
         isRead
         createdAt
       }
@@ -61,7 +65,7 @@ const limit = 50
 const hasMore = ref(false)
 const threadContainer = ref<HTMLElement | null>(null)
 
-useHead({ title: `Conversation` })
+useHead({ title: 'Conversation' })
 
 function formatTimestamp (dateString: string): string {
   const date = new Date(dateString)
@@ -176,12 +180,14 @@ await fetchMessages()
           <div
             class="max-w-[75%] rounded-lg px-3 py-2"
             :class="isOwnMessage(message)
-              ? 'bg-primary text-white'
+              ? 'bg-primary text-white message-bubble--own'
               : 'bg-gray-100 text-gray-900'"
           >
-            <p class="text-sm whitespace-pre-wrap break-words">
-              {{ message.body }}
-            </p>
+            <!-- eslint-disable-next-line vue/no-v-html -->
+            <div
+              class="text-sm break-words message-body"
+              v-html="sanitizeHtml(message.bodyHTML || message.body)"
+            />
             <p
               class="text-[11px] mt-1"
               :class="isOwnMessage(message) ? 'text-white/70' : 'text-gray-400'"
@@ -198,3 +204,25 @@ await fetchMessages()
     </template>
   </div>
 </template>
+
+<style scoped>
+.message-body :deep(p) {
+  margin: 0;
+  white-space: pre-wrap;
+}
+.message-body :deep(p + p) {
+  margin-top: 0.4rem;
+}
+.message-body :deep(a) {
+  text-decoration: underline;
+}
+.message-body :deep(img.emoji) {
+  display: inline-block;
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.2em;
+}
+.message-bubble--own .message-body :deep(a) {
+  color: #fff;
+}
+</style>

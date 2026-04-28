@@ -576,7 +576,9 @@ export type Mutation = {
   hidePost: Post;
   lockPost: Post;
   markAllNotificationsAsRead: MarkNotificationsReadResponse;
+  markMessagesRead: Scalars['Boolean']['output'];
   markNotificationsRead: MarkNotificationsReadResponse;
+  markNsfwPost: Post;
   pinComment: Comment;
   removeBoardModerator: RemoveModeratorResponse;
   removeComment: Comment;
@@ -603,6 +605,7 @@ export type Mutation = {
   unfollowUser: Scalars['Boolean']['output'];
   unhidePost: Post;
   unlockPost: Post;
+  unmarkNsfwPost: Post;
   unsaveComment: Comment;
   unsavePost: Post;
   unsubscribeFromBoard: Scalars['Boolean']['output'];
@@ -869,8 +872,18 @@ export type MutationLockPostArgs = {
 };
 
 
+export type MutationMarkMessagesReadArgs = {
+  messageIds: Array<Scalars['ID']['input']>;
+};
+
+
 export type MutationMarkNotificationsReadArgs = {
   notificationIds: Array<Scalars['ID']['input']>;
+};
+
+
+export type MutationMarkNsfwPostArgs = {
+  postId: Scalars['ID']['input'];
 };
 
 
@@ -1012,6 +1025,11 @@ export type MutationUnhidePostArgs = {
 
 
 export type MutationUnlockPostArgs = {
+  postId: Scalars['ID']['input'];
+};
+
+
+export type MutationUnmarkNsfwPostArgs = {
   postId: Scalars['ID']['input'];
 };
 
