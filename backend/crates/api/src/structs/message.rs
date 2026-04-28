@@ -12,6 +12,10 @@ use crate::{
 #[graphql(complex)]
 pub struct PrivateMessage {
     pub id: ID,
+    #[graphql(name = "creatorId")]
+    pub creator_id: ID,
+    #[graphql(name = "recipientId")]
+    pub recipient_id: Option<ID>,
     pub subject: Option<String>,
     pub body: String,
     pub body_html: String,
@@ -61,6 +65,8 @@ impl From<DbPrivateMessage> for PrivateMessage {
     fn from(msg: DbPrivateMessage) -> Self {
         Self {
             id: msg.id.to_string().into(),
+            creator_id: msg.creator_id.to_string().into(),
+            recipient_id: msg.recipient_id.map(|id| id.to_string().into()),
             subject: msg.subject.clone(),
             body: msg.body.clone(),
             body_html: msg.body_html.clone(),

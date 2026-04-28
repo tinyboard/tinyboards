@@ -94,8 +94,11 @@ async function fetchMessages (): Promise<void> {
     },
   })
   if (result?.getConversation) {
-    hasMore.value = result.getConversation.length > limit
-    messages.value = result.getConversation.slice(0, limit)
+    // Backend returns each page ASC (oldest -> newest). The look-ahead extra
+    // message represents an older page, so slice from the end to drop it.
+    const fetched = result.getConversation
+    hasMore.value = fetched.length > limit
+    messages.value = fetched.length > limit ? fetched.slice(fetched.length - limit) : fetched
     scrollToBottom()
   }
 }
@@ -110,8 +113,10 @@ async function loadOlder (): Promise<void> {
     },
   })
   if (result?.getConversation) {
-    hasMore.value = result.getConversation.length > limit
-    messages.value = [...result.getConversation.slice(0, limit), ...messages.value]
+    const fetched = result.getConversation
+    hasMore.value = fetched.length > limit
+    const chunk = fetched.length > limit ? fetched.slice(fetched.length - limit) : fetched
+    messages.value = [...chunk, ...messages.value]
   }
 }
 

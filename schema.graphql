@@ -206,6 +206,7 @@ type Mutation {
   sendMessage(input: SendMessageInput!): SendMessageResponse!
   editMessage(input: EditMessageInput!): EditMessageResponse!
   deleteMessage(messageId: ID!): Boolean!
+  markMessagesRead(messageIds: [ID!]!): Boolean!
 
   # Notifications
   markNotificationsRead(notificationIds: [ID!]!): MarkNotificationsReadResponse!
