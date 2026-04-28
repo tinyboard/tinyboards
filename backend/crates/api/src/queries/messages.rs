@@ -145,8 +145,11 @@ impl QueryMessages {
         .await
         .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
 
-        // Get messages between the two users
-        let messages: Vec<DbPrivateMessage> = private_messages::table
+        // Pull in DESC + offset order so pagination walks from newest -> oldest,
+        // then reverse the chunk so each page is ASC chronologically. Callers
+        // can prepend older pages as they load, keeping the rendered thread
+        // ordered oldest-at-top, newest-at-bottom.
+        let mut messages: Vec<DbPrivateMessage> = private_messages::table
             .filter(
                 private_messages::creator_id.eq(my_id)
                     .and(private_messages::recipient_id.eq(other_id))
@@ -162,6 +165,8 @@ impl QueryMessages {
             .load(conn)
             .await
             .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
+
+        messages.reverse();
 
         Ok(messages.into_iter().map(PrivateMessage::from).collect())
     }

@@ -205,6 +205,7 @@ type Mutation {
   sendMessage(input: SendMessageInput!): SendMessageResponse!
   editMessage(input: EditMessageInput!): EditMessageResponse!
   deleteMessage(messageId: ID!): Boolean!
+  markMessagesRead(messageIds: [ID!]!): Boolean!
 
   # Notifications
   markNotificationsRead(notificationIds: [ID!]!): MarkNotificationsReadResponse!
@@ -536,9 +537,14 @@ type PrivateMessage {
   recipientId: ID
   subject: String
   body: String!
+  bodyHTML: String!
   isRead: Boolean!
+  isSenderHidden: Boolean!
   createdAt: String!
   updatedAt: String!
+  isDeleted: Boolean!
+  creator: User
+  recipient: User
 }
 
 type MarkNotificationsReadResponse {
