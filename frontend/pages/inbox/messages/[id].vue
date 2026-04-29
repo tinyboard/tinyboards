@@ -218,8 +218,8 @@ await fetchMessages()
 }
 .message-body :deep(img.emoji) {
   display: inline-block;
-  width: 1.875em;
-  height: 1.875em;
+  width: 2.25em;
+  height: 2.25em;
   vertical-align: middle;
 }
 .message-bubble--own .message-body :deep(a) {
