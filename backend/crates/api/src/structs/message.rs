@@ -18,6 +18,7 @@ pub struct PrivateMessage {
     pub recipient_id: Option<ID>,
     pub subject: Option<String>,
     pub body: String,
+    #[graphql(name = "bodyHTML")]
     pub body_html: String,
     pub is_read: bool,
     pub is_sender_hidden: bool,
