@@ -1,5 +1,7 @@
 use diesel::prelude::*;
 use diesel_async::RunQueryDsl;
+use lazy_static::lazy_static;
+use regex::Regex;
 use tinyboards_db::{
     enums::DbNotificationKind,
     models::notification::notifications::NotificationInsertForm,
@@ -186,6 +188,29 @@ pub fn convert_mentions_to_links(text: &str) -> String {
     }
 }
 
+/// Convert b/boardname references in text to HTML links.
+/// Matches `b/<name>` only when it appears at the start of the string or
+/// immediately after whitespace, an opening tag boundary (`>`), or common
+/// punctuation that would precede a fresh token (`(`, `[`). This keeps URLs
+/// like https://example.com/b/foo from being rewritten.
+pub fn convert_board_mentions_to_links(text: &str) -> String {
+    lazy_static! {
+        static ref BOARD_REF_RE: Regex =
+            Regex::new(r"(^|[\s>(\[])b/([A-Za-z0-9_][A-Za-z0-9_.-]{0,29})\b")
+                .expect("compile board mention regex");
+    }
+
+    BOARD_REF_RE
+        .replace_all(text, |caps: &regex::Captures| {
+            let prefix = &caps[1];
+            let name = &caps[2];
+            format!(
+                "{prefix}<a href=\"/b/{name}\" class=\"board-mention\">b/{name}</a>"
+            )
+        })
+        .to_string()
+}
+
 /// Get user IDs for mentioned usernames
 pub async fn get_user_ids_for_mentions(
     pool: &DbPool,
@@ -256,5 +281,48 @@ mod tests {
         let text = "No mentions here";
         let result = convert_mentions_to_links(text);
         assert_eq!(result, text);
+    }
+
+    #[test]
+    fn test_convert_board_mentions_basic() {
+        let text = "Check out b/general for updates";
+        let result = convert_board_mentions_to_links(text);
+        assert!(result.contains("<a href=\"/b/general\" class=\"board-mention\">b/general</a>"));
+        assert!(result.contains("for updates"));
+    }
+
+    #[test]
+    fn test_convert_board_mentions_at_start() {
+        let text = "b/rust is great";
+        let result = convert_board_mentions_to_links(text);
+        assert!(result.starts_with("<a href=\"/b/rust\""));
+    }
+
+    #[test]
+    fn test_convert_board_mentions_does_not_match_inside_url() {
+        let text = "<a href=\"https://example.com/b/foo\">link</a>";
+        let result = convert_board_mentions_to_links(text);
+        assert_eq!(result, text);
+    }
+
+    #[test]
+    fn test_convert_board_mentions_after_html_tag() {
+        let text = "<p>b/news is open</p>";
+        let result = convert_board_mentions_to_links(text);
+        assert!(result.contains("<a href=\"/b/news\""));
+    }
+
+    #[test]
+    fn test_convert_board_mentions_does_not_match_letter_prefix() {
+        let text = "tab/foo bar";
+        let result = convert_board_mentions_to_links(text);
+        assert_eq!(result, text);
+    }
+
+    #[test]
+    fn test_convert_board_mentions_strips_trailing_punct() {
+        let text = "see b/news, it rules";
+        let result = convert_board_mentions_to_links(text);
+        assert!(result.contains("<a href=\"/b/news\" class=\"board-mention\">b/news</a>,"));
     }
 }
