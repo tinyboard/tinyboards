@@ -583,9 +583,8 @@ type BoardModerator {
 
 type BoardContributor {
   user: User!
-  postScore: Int!
-  commentScore: Int!
-  totalScore: Int!
+  postCount: Int!
+  commentCount: Int!
 }
 
 type WikiContributor {

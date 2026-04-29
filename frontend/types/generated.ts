@@ -130,9 +130,8 @@ export type BoardBannedUser = {
 
 export type BoardContributor = {
   __typename?: 'BoardContributor';
-  commentScore: Scalars['Int']['output'];
-  postScore: Scalars['Int']['output'];
-  totalScore: Scalars['Int']['output'];
+  commentCount: Scalars['Int']['output'];
+  postCount: Scalars['Int']['output'];
   user: User;
 };
 

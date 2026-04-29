@@ -37,9 +37,8 @@ interface BoardContributor {
     displayName: string | null
     avatar: string | null
   }
-  postScore: number
-  commentScore: number
-  totalScore: number
+  postCount: number
+  commentCount: number
 }
 
 interface WikiContributor {
@@ -80,7 +79,7 @@ const TOP_CONTRIBUTORS_QUERY = `
   query GetTopContributors($boardId: ID!, $limit: Int) {
     getTopContributors(boardId: $boardId, limit: $limit) {
       user { id name displayName avatar }
-      postScore commentScore totalScore
+      postCount commentCount
     }
   }
 `
@@ -184,6 +183,18 @@ function formatDate (dateStr: string): string {
     day: 'numeric',
   })
 }
+
+// Forum boards count discussions ("threads"); feed boards count posts.
+// Comments are always rendered as "replies" per design.
+function postLabel (count: number): string {
+  const isForum = board.value?.mode === 'forum'
+  if (isForum) return count === 1 ? 'thread' : 'threads'
+  return count === 1 ? 'post' : 'posts'
+}
+
+function replyLabel (count: number): string {
+  return count === 1 ? 'reply' : 'replies'
+}
 </script>
 
 <template>
@@ -257,11 +268,13 @@ function formatDate (dateStr: string): string {
               </NuxtLink>
             </div>
             <div class="flex items-center gap-2 text-xs text-gray-500 shrink-0">
-              <span title="Post score">{{ contributor.postScore.toLocaleString() }} post</span>
+              <span>
+                {{ contributor.postCount.toLocaleString() }} {{ postLabel(contributor.postCount) }}
+              </span>
               <span class="text-gray-300">&middot;</span>
-              <span title="Comment score">{{ contributor.commentScore.toLocaleString() }} comment</span>
-              <span class="text-gray-300">&middot;</span>
-              <span class="font-medium text-gray-700" title="Total score">{{ contributor.totalScore.toLocaleString() }}</span>
+              <span>
+                {{ contributor.commentCount.toLocaleString() }} {{ replyLabel(contributor.commentCount) }}
+              </span>
             </div>
           </div>
         </div>

@@ -218,9 +218,9 @@ await fetchMessages()
 }
 .message-body :deep(img.emoji) {
   display: inline-block;
-  width: 1.25em;
-  height: 1.25em;
-  vertical-align: -0.2em;
+  width: 1.875em;
+  height: 1.875em;
+  vertical-align: middle;
 }
 .message-bubble--own .message-body :deep(a) {
   color: #fff;

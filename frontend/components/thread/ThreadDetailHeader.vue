@@ -263,7 +263,13 @@ function openRemoveDialog (): void {
     <!-- Footer: unified actions -->
     <div class="px-4 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between flex-wrap gap-2">
       <!-- Left: reactions -->
-      <CommonReactionBar target-type="post" :target-id="post.id" :board-id="post.board?.id" />
+      <CommonReactionBar
+        target-type="post"
+        :target-id="post.id"
+        :board-id="post.board?.id"
+        :initial-reactions="post.reactionCounts ?? null"
+        :my-reaction-emoji="post.myReaction?.emoji ?? null"
+      />
 
       <!-- Right: actions -->
       <div class="flex items-center gap-1 text-xs text-gray-500">

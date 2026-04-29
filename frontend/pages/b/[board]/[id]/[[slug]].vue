@@ -50,6 +50,8 @@ const POST_QUERY = `
       isSaved
       thumbnailUrl
       distinguishedAs
+      reactionCounts { emoji count }
+      myReaction { emoji }
       board { id name title icon }
       creator { id name displayName avatar isAdmin }
     }

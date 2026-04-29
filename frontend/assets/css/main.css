@@ -13,15 +13,21 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom emoji styles */
+/* Custom emoji styles — Discord-like sizing */
 img.emoji {
   display: inline-block;
-  width: 1.25em;
-  height: 1.25em;
-  vertical-align: text-bottom;
+  width: 1.875em;
+  height: 1.875em;
+  vertical-align: middle;
   margin: 0 0.1em;
   object-fit: contain;
   background: transparent;
+}
+
+/* Jumbo emoji: when a message contains only emoji(s), render them larger */
+.emoji-jumbo img.emoji {
+  width: 3em;
+  height: 3em;
 }
 
 @layer base {
@@ -616,7 +622,7 @@ a:focus:not(:focus-visible) {
 /* Table-style header row */
 .forum-header {
   display: grid;
-  grid-template-columns: 1fr 80px 120px;
+  grid-template-columns: 1fr 140px 80px 120px;
   gap: 12px;
   padding: 10px 16px 10px 94px; /* left padding aligns with content past avatar (64px + 14px + 16px) */
   background: #f8fafc;
@@ -634,6 +640,7 @@ a:focus:not(:focus-visible) {
   color: #64748b;
 }
 
+.forum-header-participants,
 .forum-header-stats,
 .forum-header-activity {
   text-align: center;
@@ -644,6 +651,7 @@ a:focus:not(:focus-visible) {
     grid-template-columns: 1fr;
     padding-left: 54px; /* 32px avatar + 8px margin + 14px padding */
   }
+  .forum-header-participants,
   .forum-header-stats,
   .forum-header-activity {
     display: none;
@@ -711,6 +719,24 @@ a:focus:not(:focus-visible) {
   min-width: 0;
 }
 
+/* Participants column */
+.forum-thread-participants-col {
+  width: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.forum-participants-empty {
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.dark .forum-participants-empty {
+  color: #475569;
+}
+
 /* Reply count column */
 .forum-thread-stats {
   width: 80px;
@@ -742,6 +768,9 @@ a:focus:not(:focus-visible) {
   .forum-thread-content {
     flex: 1;
     min-width: 0;
+  }
+  .forum-thread-participants-col {
+    display: none;
   }
   .forum-thread-stats {
     width: auto;
@@ -907,14 +936,6 @@ a:focus:not(:focus-visible) {
 .dark .forum-new-badge {
   background: rgba(34, 197, 94, 0.15);
   color: #4ade80;
-}
-
-/* Meta row: wraps meta text + participant avatars */
-.forum-thread-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
 }
 
 /* Participant avatar stack */

@@ -25,6 +25,8 @@ const COMMENTS_QUERY = `
       replyCount
       myVote
       distinguishedAs
+      reactionCounts { emoji count }
+      myReaction { emoji }
       creator {
         id
         name
