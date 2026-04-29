@@ -351,17 +351,17 @@ function handleCustomSelect (shortcode: string, imageUrl: string): void {
 
 .emoji-grid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 2px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
 }
 
 .emoji-btn {
-  width: 34px;
-  height: 34px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 24px;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.1s, transform 0.1s;
@@ -378,8 +378,8 @@ function handleCustomSelect (shortcode: string, imageUrl: string): void {
 }
 
 .custom-emoji-img {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   object-fit: contain;
 }
 </style>

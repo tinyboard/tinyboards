@@ -123,6 +123,7 @@ function getLastReply (threadId: string) {
         <!-- Table header -->
         <div class="forum-header">
           <div class="forum-header-topic">Topic</div>
+          <div class="forum-header-participants">Participants</div>
           <div class="forum-header-stats">Replies</div>
           <div class="forum-header-activity">Last Post</div>
         </div>
@@ -152,27 +153,28 @@ function getLastReply (threadId: string) {
                 </span>
                 <h3 class="forum-thread-title">{{ thread.title }}</h3>
               </div>
-              <div class="forum-thread-meta-row">
-                <p class="forum-thread-meta">
-                  by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
-                  &middot;
-                  <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
-                </p>
-                <div v-if="getParticipants(thread.id).length > 0" class="forum-thread-participants">
-                  <CommonAvatar
-                    v-for="(p, i) in getParticipants(thread.id).slice(0, 4)"
-                    :key="p.id"
-                    :src="p.avatar ?? undefined"
-                    :name="p.displayName || p.name"
-                    size="xs"
-                    :class="{ '-ml-1.5': i > 0 }"
-                    class="ring-2 ring-white"
-                  />
-                  <span v-if="getParticipants(thread.id).length > 4" class="forum-participants-overflow">
-                    +{{ getParticipants(thread.id).length - 4 }}
-                  </span>
-                </div>
+              <p class="forum-thread-meta">
+                by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
+                &middot;
+                <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
+              </p>
+            </div>
+            <div class="forum-thread-participants-col">
+              <div v-if="getParticipants(thread.id).length > 0" class="forum-thread-participants">
+                <CommonAvatar
+                  v-for="(p, i) in getParticipants(thread.id).slice(0, 4)"
+                  :key="p.id"
+                  :src="p.avatar ?? undefined"
+                  :name="p.displayName || p.name"
+                  size="sm"
+                  :class="{ '-ml-2': i > 0 }"
+                  class="ring-2 ring-white"
+                />
+                <span v-if="getParticipants(thread.id).length > 4" class="forum-participants-overflow">
+                  +{{ getParticipants(thread.id).length - 4 }}
+                </span>
               </div>
+              <span v-else class="forum-participants-empty">&mdash;</span>
             </div>
             <div class="forum-thread-stats">
               <span class="forum-stat-number">{{ thread.commentCount }}</span>
@@ -214,27 +216,28 @@ function getLastReply (threadId: string) {
               </span>
               <h3 class="forum-thread-title">{{ thread.title }}</h3>
             </div>
-            <div class="forum-thread-meta-row">
-              <p class="forum-thread-meta">
-                by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
-                &middot;
-                <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
-              </p>
-              <div v-if="getParticipants(thread.id).length > 0" class="forum-thread-participants">
-                <CommonAvatar
-                  v-for="(p, i) in getParticipants(thread.id).slice(0, 4)"
-                  :key="p.id"
-                  :src="p.avatar ?? undefined"
-                  :name="p.displayName || p.name"
-                  size="xs"
-                  :class="{ '-ml-1.5': i > 0 }"
-                  class="ring-2 ring-white"
-                />
-                <span v-if="getParticipants(thread.id).length > 4" class="forum-participants-overflow">
-                  +{{ getParticipants(thread.id).length - 4 }}
-                </span>
-              </div>
+            <p class="forum-thread-meta">
+              by <span class="forum-thread-author">{{ thread.creator?.displayName || thread.creator?.name || 'unknown' }}</span>
+              &middot;
+              <time :datetime="thread.createdAt" :title="thread.createdAt">{{ formatDate(thread.createdAt) }}</time>
+            </p>
+          </div>
+          <div class="forum-thread-participants-col">
+            <div v-if="getParticipants(thread.id).length > 0" class="forum-thread-participants">
+              <CommonAvatar
+                v-for="(p, i) in getParticipants(thread.id).slice(0, 4)"
+                :key="p.id"
+                :src="p.avatar ?? undefined"
+                :name="p.displayName || p.name"
+                size="sm"
+                :class="{ '-ml-2': i > 0 }"
+                class="ring-2 ring-white"
+              />
+              <span v-if="getParticipants(thread.id).length > 4" class="forum-participants-overflow">
+                +{{ getParticipants(thread.id).length - 4 }}
+              </span>
             </div>
+            <span v-else class="forum-participants-empty">&mdash;</span>
           </div>
           <div class="forum-thread-stats">
             <span class="forum-stat-number">{{ thread.commentCount }}</span>

@@ -8,6 +8,11 @@ export interface ReactionCount {
   reacted: boolean
 }
 
+export interface ReactionAggregateInput {
+  emoji: string
+  count: number
+}
+
 const ADD_REACTION = `
   mutation AddReaction($input: AddReactionInput!) {
     addReaction(input: $input) {
@@ -26,6 +31,23 @@ export function useReactions (targetType: 'post' | 'comment', targetId: string) 
   const toast = useToast()
   const reactions = ref<ReactionCount[]>([])
   const acting = ref(false)
+
+  function setInitial (
+    aggregates: ReactionAggregateInput[] | null | undefined,
+    myEmoji: string | null | undefined,
+  ): void {
+    if (!aggregates || aggregates.length === 0) {
+      reactions.value = []
+      return
+    }
+    reactions.value = aggregates
+      .filter(a => a.count > 0)
+      .map(a => ({
+        emoji: a.emoji,
+        count: a.count,
+        reacted: !!myEmoji && a.emoji === myEmoji,
+      }))
+  }
 
   async function addReaction (emoji: string): Promise<boolean> {
     acting.value = true
@@ -92,5 +114,6 @@ export function useReactions (targetType: 'post' | 'comment', targetId: string) 
     addReaction,
     removeReaction,
     toggleReaction,
+    setInitial,
   }
 }

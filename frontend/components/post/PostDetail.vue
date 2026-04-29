@@ -409,7 +409,13 @@ function onClickOutsideMenu (e: Event): void {
 
         <!-- Reactions (threads only) -->
         <div v-if="post.isThread" class="mt-3">
-          <CommonReactionBar target-type="post" :target-id="post.id" :board-id="post.board?.id" />
+          <CommonReactionBar
+            target-type="post"
+            :target-id="post.id"
+            :board-id="post.board?.id"
+            :initial-reactions="post.reactionCounts ?? null"
+            :my-reaction-emoji="post.myReaction?.emoji ?? null"
+          />
         </div>
       </div>
     </div>

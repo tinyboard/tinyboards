@@ -64,16 +64,16 @@ function pickCustom (shortcode: string): void {
           <p class="text-[10px] uppercase tracking-wide text-gray-400 px-1 mb-1">
             Custom
           </p>
-          <div class="grid grid-cols-8 gap-1">
+          <div class="grid grid-cols-7 gap-1">
             <button
               v-for="e in filteredCustom"
               :key="e.id"
               type="button"
-              class="w-7 h-7 flex items-center justify-center rounded hover:bg-gray-100"
+              class="w-9 h-9 flex items-center justify-center rounded hover:bg-gray-100"
               :title="`:${e.shortcode}:`"
               @click="pickCustom(e.shortcode)"
             >
-              <img :src="e.imageUrl" :alt="e.shortcode" class="w-5 h-5 object-contain">
+              <img :src="e.imageUrl" :alt="e.shortcode" class="w-7 h-7 object-contain">
             </button>
           </div>
         </div>

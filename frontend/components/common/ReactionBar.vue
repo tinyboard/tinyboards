@@ -14,10 +14,18 @@ const props = defineProps<{
   targetType: 'post' | 'comment'
   targetId: string
   boardId?: string
+  initialReactions?: { emoji: string; count: number }[] | null
+  myReactionEmoji?: string | null
 }>()
 
 const authStore = useAuthStore()
-const { reactions, acting, toggleReaction, addReaction } = useReactions(props.targetType, props.targetId)
+const { reactions, acting, toggleReaction, addReaction, setInitial } = useReactions(props.targetType, props.targetId)
+
+setInitial(props.initialReactions, props.myReactionEmoji)
+watch(
+  () => [props.initialReactions, props.myReactionEmoji] as const,
+  ([next, my]) => setInitial(next, my),
+)
 
 const showPicker = ref(false)
 const settingsLoaded = ref(false)
@@ -117,7 +125,7 @@ async function handlePickerSelect (entry: ReactionEmojiEntry): Promise<void> {
     <button
       v-for="r in reactions"
       :key="r.emoji"
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors"
+      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors"
       :class="r.reacted
         ? 'border-primary/30 bg-primary/5 text-primary'
         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
@@ -128,10 +136,10 @@ async function handlePickerSelect (entry: ReactionEmojiEntry): Promise<void> {
         v-if="isCustomEmoji(r.emoji) && getCustomEmojiUrl(r.emoji)"
         :src="getCustomEmojiUrl(r.emoji)"
         :alt="r.emoji"
-        class="w-4 h-4 object-contain"
+        class="w-6 h-6 object-contain"
       />
-      <span v-else>{{ r.emoji }}</span>
-      <span class="font-medium">{{ r.count }}</span>
+      <span v-else class="text-base leading-none">{{ r.emoji }}</span>
+      <span class="font-medium text-xs">{{ r.count }}</span>
     </button>
 
     <!-- Add reaction button -->
@@ -152,7 +160,7 @@ async function handlePickerSelect (entry: ReactionEmojiEntry): Promise<void> {
         <button
           v-for="entry in pickerEmojis"
           :key="emojiKey(entry)"
-          class="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center rounded hover:bg-gray-100 text-base"
+          class="w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center rounded hover:bg-gray-100 text-xl"
           :title="entry.type === 'custom' ? `:${entry.shortcode}:` : entry.value"
           @click="handlePickerSelect(entry)"
         >
@@ -160,7 +168,7 @@ async function handlePickerSelect (entry: ReactionEmojiEntry): Promise<void> {
             v-if="entry.type === 'custom' && entry.imageUrl"
             :src="entry.imageUrl"
             :alt="entry.shortcode ?? ''"
-            class="w-6 h-6 object-contain"
+            class="w-8 h-8 object-contain"
           />
           <span v-else>{{ entry.value }}</span>
         </button>

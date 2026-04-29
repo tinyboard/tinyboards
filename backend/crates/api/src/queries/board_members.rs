@@ -20,13 +20,17 @@ use crate::{helpers::permissions, structs::user::User as GqlUser};
 #[derive(Default)]
 pub struct QueryBoardMembers;
 
-/// A user with their contribution score for the board.
+/// A user with their contribution counts for the board.
 #[derive(SimpleObject)]
 pub struct BoardContributor {
     pub user: GqlUser,
-    pub post_score: i64,
-    pub comment_score: i64,
-    pub total_score: i64,
+    /// Number of (non-deleted, non-removed) posts/threads the user has
+    /// authored in this board over the window. Forum boards label this
+    /// as "threads", feed boards label as "posts".
+    pub post_count: i64,
+    /// Number of (non-deleted, non-removed) comments/replies the user
+    /// has authored in this board over the window.
+    pub comment_count: i64,
 }
 
 /// A user who has edited wiki pages in a board.
@@ -58,19 +62,21 @@ impl QueryBoardMembers {
         let limit = limit.unwrap_or(10).min(25);
         let cutoff = Utc::now() - chrono::Duration::days(30);
 
-        // Aggregate post scores per creator in this board over the last 30 days.
+        // Count posts/threads and comments per creator in this board over
+        // the last 30 days, excluding removed/deleted items.
         #[derive(QueryableByName)]
-        struct ScoreRow {
+        struct CountRow {
             #[diesel(sql_type = DieselUuid)]
             creator_id: Uuid,
             #[diesel(sql_type = BigInt)]
             total: i64,
         }
 
-        let post_scores: Vec<ScoreRow> = diesel::sql_query(
-            "SELECT creator_id, COALESCE(SUM(score), 0)::bigint AS total \
-             FROM post_aggregates \
+        let post_counts: Vec<CountRow> = diesel::sql_query(
+            "SELECT creator_id, COUNT(*)::bigint AS total \
+             FROM posts \
              WHERE board_id = $1 AND created_at >= $2 \
+               AND deleted_at IS NULL AND is_removed = false \
              GROUP BY creator_id",
         )
         .bind::<DieselUuid, _>(board_uuid)
@@ -79,13 +85,12 @@ impl QueryBoardMembers {
         .await
         .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
 
-        let comment_scores: Vec<ScoreRow> = diesel::sql_query(
-            "SELECT c.creator_id, COALESCE(SUM(ca.score), 0)::bigint AS total \
-             FROM comments c \
-             INNER JOIN comment_aggregates ca ON ca.comment_id = c.id \
-             WHERE c.board_id = $1 AND c.created_at >= $2 \
-               AND c.deleted_at IS NULL AND c.is_removed = false \
-             GROUP BY c.creator_id",
+        let comment_counts: Vec<CountRow> = diesel::sql_query(
+            "SELECT creator_id, COUNT(*)::bigint AS total \
+             FROM comments \
+             WHERE board_id = $1 AND created_at >= $2 \
+               AND deleted_at IS NULL AND is_removed = false \
+             GROUP BY creator_id",
         )
         .bind::<DieselUuid, _>(board_uuid)
         .bind::<diesel::sql_types::Timestamptz, _>(cutoff)
@@ -93,19 +98,19 @@ impl QueryBoardMembers {
         .await
         .map_err(|e| TinyBoardsError::Database(e.to_string()))?;
 
-        // Merge into a single map: user_id -> (post_score, comment_score).
-        let mut scores: HashMap<Uuid, (i64, i64)> = HashMap::new();
-        for row in &post_scores {
-            scores.entry(row.creator_id).or_insert((0, 0)).0 = row.total;
+        // Merge into a single map: user_id -> (post_count, comment_count).
+        let mut counts: HashMap<Uuid, (i64, i64)> = HashMap::new();
+        for row in &post_counts {
+            counts.entry(row.creator_id).or_insert((0, 0)).0 = row.total;
         }
-        for row in &comment_scores {
-            scores.entry(row.creator_id).or_insert((0, 0)).1 = row.total;
+        for row in &comment_counts {
+            counts.entry(row.creator_id).or_insert((0, 0)).1 = row.total;
         }
 
-        // Sort by total score descending, take top N.
-        let mut ranked: Vec<(Uuid, i64, i64)> = scores
+        // Rank by total contributions (posts + comments) descending.
+        let mut ranked: Vec<(Uuid, i64, i64)> = counts
             .into_iter()
-            .map(|(uid, (ps, cs))| (uid, ps, cs))
+            .map(|(uid, (pc, cc))| (uid, pc, cc))
             .collect();
         ranked.sort_by(|a, b| (b.1 + b.2).cmp(&(a.1 + a.2)));
         ranked.truncate(limit as usize);
@@ -133,14 +138,13 @@ impl QueryBoardMembers {
         // Build output in ranked order.
         let contributors = ranked
             .into_iter()
-            .filter_map(|(uid, ps, cs)| {
+            .filter_map(|(uid, pc, cc)| {
                 let user_db = db_users.iter().find(|u| u.id == uid)?;
                 let agg = aggs.iter().find(|a| a.user_id == uid).cloned();
                 Some(BoardContributor {
                     user: GqlUser::from_db(user_db.clone(), agg),
-                    post_score: ps,
-                    comment_score: cs,
-                    total_score: ps + cs,
+                    post_count: pc,
+                    comment_count: cc,
                 })
             })
             .collect();
