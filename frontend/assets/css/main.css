@@ -16,8 +16,8 @@
 /* Custom emoji styles — Discord-like sizing */
 img.emoji {
   display: inline-block;
-  width: 1.875em;
-  height: 1.875em;
+  width: 2.25em;
+  height: 2.25em;
   vertical-align: middle;
   margin: 0 0.1em;
   object-fit: contain;
@@ -26,8 +26,8 @@ img.emoji {
 
 /* Jumbo emoji: when a message contains only emoji(s), render them larger */
 .emoji-jumbo img.emoji {
-  width: 3em;
-  height: 3em;
+  width: 3.5em;
+  height: 3.5em;
 }
 
 @layer base {

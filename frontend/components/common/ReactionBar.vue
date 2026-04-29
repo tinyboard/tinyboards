@@ -125,7 +125,7 @@ async function handlePickerSelect (entry: ReactionEmojiEntry): Promise<void> {
     <button
       v-for="r in reactions"
       :key="r.emoji"
-      class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm border transition-colors"
+      class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm border transition-colors leading-none"
       :class="r.reacted
         ? 'border-primary/30 bg-primary/5 text-primary'
         : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'"
@@ -136,16 +136,16 @@ async function handlePickerSelect (entry: ReactionEmojiEntry): Promise<void> {
         v-if="isCustomEmoji(r.emoji) && getCustomEmojiUrl(r.emoji)"
         :src="getCustomEmojiUrl(r.emoji)"
         :alt="r.emoji"
-        class="w-6 h-6 object-contain"
+        class="w-7 h-7 object-contain shrink-0"
       />
-      <span v-else class="text-base leading-none">{{ r.emoji }}</span>
+      <span v-else class="text-lg leading-none">{{ r.emoji }}</span>
       <span class="font-medium text-xs">{{ r.count }}</span>
     </button>
 
     <!-- Add reaction button -->
     <div v-if="authStore.isLoggedIn" class="relative">
       <button
-        class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+        class="inline-flex items-center justify-center w-9 h-9 rounded-full text-sm border border-dashed border-gray-300 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
         :disabled="acting"
         @click="showPicker = !showPicker"
       >
